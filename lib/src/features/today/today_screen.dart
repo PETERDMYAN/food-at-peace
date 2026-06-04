@@ -19,6 +19,8 @@ class TodayScreen extends ConsumerWidget {
     final profile = ref.watch(profileProvider);
     final date = ref.watch(selectedDateProvider);
     final isToday = isSameDay(date, dateOnly(DateTime.now()));
+    final healthSupported = ref.watch(healthServiceProvider).isSupported;
+    final healthConnected = ref.watch(healthConnectedProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Food at Peace')),
@@ -40,6 +42,25 @@ class TodayScreen extends ConsumerWidget {
             const SizedBox(height: 12),
           ],
           _CalorieCard(summary: summary),
+          if (healthSupported && !healthConnected) ...[
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              onPressed: () async {
+                final ok =
+                    await ref.read(healthConnectedProvider.notifier).connect();
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(ok
+                        ? 'Apple Health connected'
+                        : 'Health access was not granted'),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.favorite_outline),
+              label: const Text('Connect Apple Health (calories burned)'),
+            ),
+          ],
           const SizedBox(height: 12),
           Row(
             children: [
@@ -202,7 +223,10 @@ class _CalorieCard extends StatelessWidget {
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                   Text(
-                    'Est. burn ~${kcal(summary.expenditure)} kcal/day',
+                    summary.usingHealthData
+                        ? 'Burn ${kcal(summary.expenditure)} kcal · '
+                            '${kcal(summary.activeEnergy)} active via Health'
+                        : 'Est. burn ~${kcal(summary.expenditure)} kcal/day',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: scheme.onSurfaceVariant,
                         ),

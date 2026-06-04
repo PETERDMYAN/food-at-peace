@@ -24,8 +24,18 @@ class NutritionMath {
   }
 
   /// Estimated total daily energy expenditure = BMR × activity multiplier.
+  /// Used as a fallback when no measured health data is available.
   static double estimatedTdee(UserProfile p) =>
       mifflinStJeorBmr(p) * p.activity.multiplier;
+
+  /// Measured expenditure = full-day resting (BMR) + active energy burned
+  /// (e.g. from HealthKit/Garmin so far today). Used in Phase 2 when health
+  /// data is available.
+  static double measuredExpenditure({
+    required double bmr,
+    required double activeEnergy,
+  }) =>
+      bmr + activeEnergy;
 
   /// Daily calorie intake target = expenditure + goal adjustment.
   static double calorieTarget({

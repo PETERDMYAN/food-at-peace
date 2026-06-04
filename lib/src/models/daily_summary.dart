@@ -1,4 +1,5 @@
 import '../nutrition/nutrition_math.dart';
+import 'energy_out.dart';
 import 'food_entry.dart';
 import 'user_profile.dart';
 
@@ -12,6 +13,8 @@ class DailySummary {
     required this.consumedSatFat,
     required this.bmr,
     required this.expenditure,
+    required this.activeEnergy,
+    required this.usingHealthData,
     required this.calorieTarget,
     required this.proteinTarget,
     required this.satFatCap,
@@ -25,8 +28,15 @@ class DailySummary {
   /// Resting metabolic rate (kcal/day).
   final double bmr;
 
-  /// Total energy expenditure (kcal/day). Estimated in Phase 1.
+  /// Total energy expenditure used for the budget (kcal/day).
   final double expenditure;
+
+  /// Measured active energy burned (kcal) when [usingHealthData] is true.
+  final double activeEnergy;
+
+  /// True when expenditure is BMR + measured active energy (HealthKit),
+  /// false when it falls back to the profile estimate.
+  final bool usingHealthData;
 
   final double calorieTarget;
   final double proteinTarget;
@@ -51,10 +61,13 @@ class DailySummary {
   }
 
   /// Builds a summary from a day's [entries] and the user's [profile].
+  /// When [energyOut] is provided, expenditure = BMR + measured active energy;
+  /// otherwise it falls back to the profile's estimated TDEE.
   factory DailySummary.compute({
     required DateTime date,
     required List<FoodEntry> entries,
     required UserProfile profile,
+    EnergyOut? energyOut,
   }) {
     var cal = 0.0, pro = 0.0, sat = 0.0;
     for (final e in entries) {
@@ -62,17 +75,33 @@ class DailySummary {
       pro += e.proteinG;
       sat += e.satFatG;
     }
+
     final bmr = NutritionMath.mifflinStJeorBmr(profile);
-    final tdee = NutritionMath.estimatedTdee(profile);
+    final double expenditure;
+    final double active;
+    final bool usingHealth;
+    if (energyOut != null) {
+      active = energyOut.activeEnergy;
+      expenditure =
+          NutritionMath.measuredExpenditure(bmr: bmr, activeEnergy: active);
+      usingHealth = true;
+    } else {
+      active = 0;
+      expenditure = NutritionMath.estimatedTdee(profile);
+      usingHealth = false;
+    }
+
     final calTarget =
-        NutritionMath.calorieTarget(expenditure: tdee, goal: profile.goal);
+        NutritionMath.calorieTarget(expenditure: expenditure, goal: profile.goal);
     return DailySummary(
       date: date,
       consumedCalories: cal,
       consumedProtein: pro,
       consumedSatFat: sat,
       bmr: bmr,
-      expenditure: tdee,
+      expenditure: expenditure,
+      activeEnergy: active,
+      usingHealthData: usingHealth,
       calorieTarget: calTarget,
       proteinTarget: NutritionMath.proteinTargetG(profile),
       satFatCap: NutritionMath.satFatCapG(calorieTarget: calTarget),

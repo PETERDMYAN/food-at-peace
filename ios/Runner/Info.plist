@@ -70,5 +70,9 @@
 	<string>Food at Peace uses the camera to photograph meals and estimate their nutrition.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Food at Peace reads photos you choose to estimate their nutrition.</string>
+	<key>NSHealthShareUsageDescription</key>
+	<string>Food at Peace reads your active energy burned to work out how many calories you can still eat.</string>
+	<key>NSHealthUpdateUsageDescription</key>
+	<string>Food at Peace does not write health data; this entry is required by the system.</string>
 </dict>
 </plist>

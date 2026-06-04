@@ -4,8 +4,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../data/api_key_store.dart';
 import '../data/claude_vision_client.dart';
 import '../data/food_repository.dart';
+import '../data/health_service.dart';
 import '../data/profile_repository.dart';
 import '../models/daily_summary.dart';
+import '../models/energy_out.dart';
 import '../models/food_entry.dart';
 import '../models/user_profile.dart';
 
@@ -88,11 +90,18 @@ final entriesForSelectedDayProvider = Provider<List<FoodEntry>>((ref) {
 });
 
 /// The computed summary (targets + remaining) for the selected day.
+/// Incorporates measured "calories out" from HealthKit when available.
 final dailySummaryProvider = Provider<DailySummary>((ref) {
   final entries = ref.watch(entriesForSelectedDayProvider);
   final profile = ref.watch(profileProvider);
   final date = ref.watch(selectedDateProvider);
-  return DailySummary.compute(date: date, entries: entries, profile: profile);
+  final energyOut = ref.watch(energyOutProvider).asData?.value;
+  return DailySummary.compute(
+    date: date,
+    entries: entries,
+    profile: profile,
+    energyOut: energyOut,
+  );
 });
 
 DateTime dateOnly(DateTime d) => DateTime(d.year, d.month, d.day);
@@ -135,3 +144,45 @@ final apiKeyProvider =
     NotifierProvider<ApiKeyNotifier, String?>(ApiKeyNotifier.new);
 
 bool hasApiKey(String? key) => key != null && key.trim().isNotEmpty;
+
+// ---- Phase 2: HealthKit calories-out ----
+
+final healthServiceProvider =
+    Provider<HealthService>((ref) => createHealthService());
+
+/// Whether health read access has been granted. The Today screen offers a
+/// button to connect when supported but not yet granted.
+class HealthConnectedNotifier extends Notifier<bool> {
+  @override
+  bool build() {
+    _check();
+    return false;
+  }
+
+  Future<void> _check() async {
+    final service = ref.read(healthServiceProvider);
+    if (!service.isSupported) return;
+    state = await service.hasPermissions();
+  }
+
+  Future<bool> connect() async {
+    final service = ref.read(healthServiceProvider);
+    if (!service.isSupported) return false;
+    final granted = await service.requestPermissions();
+    state = granted;
+    return granted;
+  }
+}
+
+final healthConnectedProvider =
+    NotifierProvider<HealthConnectedNotifier, bool>(
+        HealthConnectedNotifier.new);
+
+/// Measured "calories out" for the selected day (null when unsupported,
+/// not connected, or no data).
+final energyOutProvider = FutureProvider<EnergyOut?>((ref) async {
+  final connected = ref.watch(healthConnectedProvider);
+  if (!connected) return null;
+  final date = ref.watch(selectedDateProvider);
+  return ref.read(healthServiceProvider).readEnergyOut(date);
+});
