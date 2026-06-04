@@ -6,8 +6,8 @@ import '../../nutrition/nutrition_math.dart';
 import '../../providers/providers.dart';
 import '../../util/format.dart';
 
-/// Profile setup (drives all targets) plus placeholders for the upcoming
-/// HealthKit and photo-analysis phases.
+/// Profile setup (drives all targets), the Claude API key, and a placeholder
+/// for the upcoming HealthKit phase.
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
 
@@ -163,19 +163,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             label: const Text('Save profile'),
           ),
           const SizedBox(height: 24),
+          const _ApiKeyCard(),
+          const SizedBox(height: 12),
           const _ComingSoonCard(
             icon: Icons.favorite_outline,
             title: 'Apple Health & Garmin',
             body: 'Soon: pull your real basal + active calories burned so the '
                 'budget updates as you move. (Your Garmin data syncs in via '
                 'Apple Health.)',
-          ),
-          const SizedBox(height: 12),
-          const _ComingSoonCard(
-            icon: Icons.camera_alt_outlined,
-            title: 'Food photo analysis',
-            body: 'Soon: snap a photo and Claude estimates calories, protein, '
-                'and saturated fat for you to confirm.',
           ),
         ],
       ),
@@ -194,6 +189,104 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           children: [Text(label), Text(value)],
         ),
       );
+}
+
+/// Lets the user paste / replace / remove their Anthropic API key.
+class _ApiKeyCard extends ConsumerStatefulWidget {
+  const _ApiKeyCard();
+
+  @override
+  ConsumerState<_ApiKeyCard> createState() => _ApiKeyCardState();
+}
+
+class _ApiKeyCardState extends ConsumerState<_ApiKeyCard> {
+  final _controller = TextEditingController();
+  bool _obscure = true;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    final value = _controller.text.trim();
+    if (value.isEmpty) return;
+    await ref.read(apiKeyProvider.notifier).save(value);
+    _controller.clear();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+        .showSnackBar(const SnackBar(content: Text('API key saved')));
+  }
+
+  Future<void> _clear() async {
+    await ref.read(apiKeyProvider.notifier).clear();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+        .showSnackBar(const SnackBar(content: Text('API key removed')));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final hasKey = hasApiKey(ref.watch(apiKeyProvider));
+    final scheme = Theme.of(context).colorScheme;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.camera_alt_outlined, color: scheme.primary),
+                const SizedBox(width: 8),
+                Text('Food photo analysis (Claude)',
+                    style: Theme.of(context).textTheme.titleSmall),
+                const Spacer(),
+                if (hasKey)
+                  Icon(Icons.check_circle, color: scheme.primary, size: 20),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              hasKey
+                  ? 'API key saved on this device. The Add screen can now '
+                      'estimate nutrition from a photo.'
+                  : 'Add an Anthropic API key to estimate calories, protein, '
+                      'and saturated fat from a photo. Get one at '
+                      'console.anthropic.com.',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _controller,
+              obscureText: _obscure,
+              autocorrect: false,
+              enableSuggestions: false,
+              decoration: InputDecoration(
+                labelText: hasKey ? 'Replace API key' : 'API key (sk-ant-…)',
+                suffixIcon: IconButton(
+                  icon: Icon(
+                      _obscure ? Icons.visibility : Icons.visibility_off),
+                  onPressed: () => setState(() => _obscure = !_obscure),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                FilledButton(onPressed: _save, child: const Text('Save key')),
+                const SizedBox(width: 8),
+                if (hasKey)
+                  TextButton(
+                      onPressed: _clear, child: const Text('Remove')),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _ComingSoonCard extends StatelessWidget {

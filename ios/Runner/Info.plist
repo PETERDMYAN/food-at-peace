@@ -66,5 +66,9 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>Food at Peace uses the camera to photograph meals and estimate their nutrition.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Food at Peace reads photos you choose to estimate their nutrition.</string>
 </dict>
 </plist>

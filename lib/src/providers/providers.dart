@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../data/api_key_store.dart';
+import '../data/claude_vision_client.dart';
 import '../data/food_repository.dart';
 import '../data/profile_repository.dart';
 import '../models/daily_summary.dart';
@@ -97,3 +99,39 @@ DateTime dateOnly(DateTime d) => DateTime(d.year, d.month, d.day);
 
 bool isSameDay(DateTime a, DateTime b) =>
     a.year == b.year && a.month == b.month && a.day == b.day;
+
+// ---- Phase 3: Claude vision photo analysis ----
+
+final apiKeyStoreProvider = Provider<ApiKeyStore>((ref) => ApiKeyStore());
+
+final claudeVisionClientProvider =
+    Provider<ClaudeVisionClient>((ref) => ClaudeVisionClient());
+
+/// The Anthropic API key (null/empty = not set). Loaded from secure storage.
+class ApiKeyNotifier extends Notifier<String?> {
+  @override
+  String? build() {
+    _load();
+    return null;
+  }
+
+  Future<void> _load() async {
+    state = await ref.read(apiKeyStoreProvider).read();
+  }
+
+  Future<void> save(String key) async {
+    final trimmed = key.trim();
+    await ref.read(apiKeyStoreProvider).write(trimmed);
+    state = trimmed;
+  }
+
+  Future<void> clear() async {
+    await ref.read(apiKeyStoreProvider).delete();
+    state = null;
+  }
+}
+
+final apiKeyProvider =
+    NotifierProvider<ApiKeyNotifier, String?>(ApiKeyNotifier.new);
+
+bool hasApiKey(String? key) => key != null && key.trim().isNotEmpty;
