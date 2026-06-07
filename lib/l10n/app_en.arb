@@ -1,0 +1,183 @@
+{
+  "@@locale": "en",
+  "appTitle": "Food at Peace",
+
+  "navToday": "Today",
+  "navHistory": "History",
+  "navSettings": "Settings",
+  "addFood": "Add food",
+  "save": "Save",
+  "ok": "OK",
+  "remove": "Remove",
+  "cancel": "Cancel",
+
+  "caloriesLeftToday": "Calories left today",
+  "overBudget": "Over budget",
+  "budgetEaten": "Budget {budget} · Eaten {eaten}",
+  "@budgetEaten": {
+    "placeholders": {
+      "budget": { "type": "String" },
+      "eaten": { "type": "String" }
+    }
+  },
+  "burnViaHealth": "Burn {burn} kcal · {active} active via Health",
+  "@burnViaHealth": {
+    "placeholders": {
+      "burn": { "type": "String" },
+      "active": { "type": "String" }
+    }
+  },
+  "estBurn": "Est. burn ~{burn} kcal/day",
+  "@estBurn": {
+    "placeholders": {
+      "burn": { "type": "String" }
+    }
+  },
+  "protein": "Protein",
+  "saturatedFat": "Saturated fat",
+  "targetReached": "Target reached",
+  "toGo": "{amount} to go",
+  "@toGo": {
+    "placeholders": {
+      "amount": { "type": "String" }
+    }
+  },
+  "overBy": "Over by {amount}",
+  "@overBy": {
+    "placeholders": {
+      "amount": { "type": "String" }
+    }
+  },
+  "amountLeft": "{amount} left",
+  "@amountLeft": {
+    "placeholders": {
+      "amount": { "type": "String" }
+    }
+  },
+  "todaysFood": "Today's food",
+  "nothingLogged": "Nothing logged yet.\nTap \"Add food\" to start.",
+  "connectHealthGarmin": "Connect Apple Health & Garmin",
+  "appleHealthConnected": "Apple Health connected",
+  "healthNotGranted": "Health access was not granted",
+  "profilePrompt": "Set up your profile in Settings for accurate targets.",
+  "workouts": "Workouts",
+
+  "noHistory": "No history yet.",
+  "kcalValue": "{value} kcal",
+  "@kcalValue": {
+    "placeholders": {
+      "value": { "type": "String" }
+    }
+  },
+  "gramsValue": "{value} g",
+  "@gramsValue": {
+    "placeholders": {
+      "value": { "type": "String" }
+    }
+  },
+
+  "scanPhoto": "Scan a photo with Claude",
+  "foodName": "Food name",
+  "foodNameHint": "e.g. Grilled chicken salad",
+  "enterName": "Enter a name",
+  "meal": "Meal",
+  "caloriesKcal": "Calories (kcal)",
+  "proteinG": "Protein (g)",
+  "saturatedFatG": "Saturated fat (g)",
+  "servingOptional": "Serving (optional)",
+  "servingHint": "e.g. 1 bowl, 200 g",
+  "saveEntry": "Save entry",
+  "required": "Required",
+  "enterValidNumber": "Enter a valid number",
+  "takePhoto": "Take a photo",
+  "chooseFromLibrary": "Choose from library",
+  "cameraError": "Could not open the camera or photo library.",
+  "analysisFailed": "Analysis failed. Please try again.",
+  "addApiKeyTitle": "Add your API key",
+  "addApiKeyBody": "To analyze photos, add an Anthropic API key in Settings first.",
+  "estimatedByClaude": "Estimated by Claude — review & edit below.",
+  "confidenceLabel": "confidence: {value}",
+  "@confidenceLabel": {
+    "placeholders": {
+      "value": { "type": "String" }
+    }
+  },
+  "analyzingPhoto": "Analyzing photo…",
+
+  "profile": "Profile",
+  "sex": "Sex",
+  "age": "Age",
+  "heightCm": "Height (cm)",
+  "weightKg": "Weight (kg)",
+  "activityLevel": "Activity level",
+  "goal": "Goal",
+  "yourTargets": "Your targets",
+  "restingBurn": "Resting burn (BMR)",
+  "estDailyBurn": "Est. daily burn",
+  "dailyCalorieTarget": "Daily calorie target",
+  "proteinTargetLabel": "Protein target",
+  "satFatCap": "Saturated-fat cap",
+  "saveProfile": "Save profile",
+  "profileSaved": "Profile saved",
+  "foodPhotoAnalysis": "Food photo analysis (Claude)",
+  "builtInKeyActive": "A built-in key is active — photo analysis works out of the box. You can paste your own key below to override it.",
+  "apiKeySavedDevice": "API key saved on this device. The Add screen can now estimate nutrition from a photo.",
+  "apiKeyPrompt": "Add an Anthropic API key to estimate calories, protein, and saturated fat from a photo. Get one at console.anthropic.com.",
+  "replaceApiKey": "Replace API key",
+  "apiKeyLabel": "API key (sk-ant-…)",
+  "saveKey": "Save key",
+  "apiKeySavedToast": "API key saved",
+  "apiKeyRemoved": "API key removed",
+  "healthGarminTitle": "Apple Health & Garmin",
+  "healthNotAvailable": "Not available on this platform.",
+  "healthConnectedBody": "Connected. Your budget uses real calories burned (active + resting), your weight auto-syncs from your scale, and logged food is written back to Apple Health. Garmin data flows in via Apple Health.",
+  "healthConnectBody": "Connect Apple Health to use your real calories burned (incl. Garmin), auto-sync your weight, see your workouts, and write logged food back.",
+  "connectAppleHealth": "Connect Apple Health",
+
+  "language": "Language",
+  "languageSystem": "System default",
+  "languageEnglish": "English",
+  "languageChinese": "中文",
+
+  "sexMale": "Male",
+  "sexFemale": "Female",
+  "activitySedentary": "Sedentary",
+  "activityLight": "Lightly active",
+  "activityModerate": "Moderately active",
+  "activityActive": "Active",
+  "activityVeryActive": "Very active",
+  "activitySedentaryHint": "Little or no exercise",
+  "activityLightHint": "Exercise 1-3 days/week",
+  "activityModerateHint": "Exercise 3-5 days/week",
+  "activityActiveHint": "Exercise 6-7 days/week",
+  "activityVeryActiveHint": "Hard exercise or physical job",
+  "goalLose": "Lose weight",
+  "goalMaintain": "Maintain",
+  "goalGain": "Gain muscle",
+  "mealBreakfast": "Breakfast",
+  "mealLunch": "Lunch",
+  "mealDinner": "Dinner",
+  "mealSnack": "Snack",
+
+  "addWeight": "Add weight",
+  "logWeight": "Log weight",
+  "weightSaved": "Weight saved",
+  "latestWeight": "Latest weight",
+  "enterWeight": "Enter your weight",
+  "weightTitle": "Weight",
+  "weightKgValue": "{value} kg",
+  "@weightKgValue": {
+    "placeholders": {
+      "value": { "type": "String" }
+    }
+  },
+
+  "feedback": "Feedback",
+  "feedbackPrompt": "Found a bug or have an idea? We'd love to hear it.",
+  "feedbackHint": "Your feedback…",
+  "yourEmailOptional": "Your email (optional)",
+  "submit": "Submit",
+  "feedbackThanks": "Thanks for your feedback!",
+  "feedbackError": "Couldn't send feedback. Please try again.",
+  "feedbackEmpty": "Please enter some feedback"
+}

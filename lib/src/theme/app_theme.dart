@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 
-/// App-wide theming. A calm green seed fits the "Food at Peace" feel.
+/// App-wide theming. A GXS-style purple seed drives the Material 3 palette.
 class AppTheme {
   AppTheme._();
 
-  static const Color seed = Color(0xFF2E7D5B);
+  /// GXS-inspired violet. Adjust this single value to retune the whole theme.
+  static const Color seed = Color(0xFF6C2BD9);
 
   static ThemeData light() => _base(Brightness.light);
   static ThemeData dark() => _base(Brightness.dark);
