@@ -74,5 +74,7 @@
 	<string>Food at Peace reads your calories burned, body weight, and workouts (including Garmin data via Apple Health) to track how many calories you can still eat.</string>
 	<key>NSHealthUpdateUsageDescription</key>
 	<string>Food at Peace writes the calories, protein, and saturated fat you log so they appear in Apple Health.</string>
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 </dict>
 </plist>
