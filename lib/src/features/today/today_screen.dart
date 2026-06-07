@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:food_at_peace/l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
 
 import '../../models/daily_summary.dart';
 import '../../models/food_entry.dart';
 import '../../providers/providers.dart';
 import '../../util/format.dart';
+import '../../util/l10n_labels.dart';
 
 /// The dashboard: calories remaining, protein & saturated-fat quotas, and the
 /// day's logged food.
@@ -14,6 +16,7 @@ class TodayScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final t = AppLocalizations.of(context);
     final summary = ref.watch(dailySummaryProvider);
     final entries = ref.watch(entriesForSelectedDayProvider);
     final profile = ref.watch(profileProvider);
@@ -22,8 +25,17 @@ class TodayScreen extends ConsumerWidget {
     final healthSupported = ref.watch(healthServiceProvider).isSupported;
     final healthConnected = ref.watch(healthConnectedProvider);
 
+    // Keep profile weight in sync with the latest Apple Health reading
+    // (e.g. a Garmin/Fitdays smart-scale entry).
+    ref.listen<AsyncValue<double?>>(latestWeightProvider, (_, next) {
+      final w = next.asData?.value;
+      if (w != null && (w - profile.weightKg).abs() > 0.1) {
+        ref.read(profileProvider.notifier).save(profile.copyWith(weightKg: w));
+      }
+    });
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Food at Peace')),
+      appBar: AppBar(title: Text(t.appTitle)),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
         children: [
@@ -51,14 +63,13 @@ class TodayScreen extends ConsumerWidget {
                 if (!context.mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text(ok
-                        ? 'Apple Health connected'
-                        : 'Health access was not granted'),
+                    content: Text(
+                        ok ? t.appleHealthConnected : t.healthNotGranted),
                   ),
                 );
               },
               icon: const Icon(Icons.favorite_outline),
-              label: const Text('Connect Apple Health (calories burned)'),
+              label: Text(t.connectHealthGarmin),
             ),
           ],
           const SizedBox(height: 12),
@@ -66,36 +77,36 @@ class TodayScreen extends ConsumerWidget {
             children: [
               Expanded(
                 child: _MacroCard(
-                  label: 'Protein',
+                  label: t.protein,
                   icon: Icons.egg_alt_outlined,
                   consumed: summary.consumedProtein,
                   target: summary.proteinTarget,
                   progress: summary.proteinProgress,
                   footer: summary.hitProtein
-                      ? 'Target reached'
-                      : '${grams(summary.proteinRemaining)} to go',
+                      ? t.targetReached
+                      : t.toGo(t.gramsValue(kcal(summary.proteinRemaining))),
                   over: false,
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: _MacroCard(
-                  label: 'Saturated fat',
+                  label: t.saturatedFat,
                   icon: Icons.water_drop_outlined,
                   consumed: summary.consumedSatFat,
                   target: summary.satFatCap,
                   progress: summary.satFatProgress,
                   footer: summary.isOverSatFat
-                      ? 'Over by ${grams(-summary.satFatRemaining)}'
-                      : '${grams(summary.satFatRemaining)} left',
+                      ? t.overBy(t.gramsValue(kcal(-summary.satFatRemaining)))
+                      : t.amountLeft(t.gramsValue(kcal(summary.satFatRemaining))),
                   over: summary.isOverSatFat,
                 ),
               ),
             ],
           ),
+          const _WorkoutsCard(),
           const SizedBox(height: 20),
-          Text("Today's food",
-              style: Theme.of(context).textTheme.titleMedium),
+          Text(t.todaysFood, style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
           if (entries.isEmpty)
             const _EmptyState()
@@ -130,8 +141,10 @@ class _DateHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    final localeName = Localizations.localeOf(context).toLanguageTag();
     final label =
-        isToday ? 'Today' : DateFormat('EEE, MMM d').format(date);
+        isToday ? t.navToday : DateFormat.MMMEd(localeName).format(date);
     return Row(
       children: [
         IconButton(onPressed: onPrev, icon: const Icon(Icons.chevron_left)),
@@ -158,6 +171,7 @@ class _CalorieCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
     final over = summary.isOverCalories;
     final remaining = summary.caloriesRemaining;
@@ -205,7 +219,7 @@ class _CalorieCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    over ? 'Over budget' : 'Calories left today',
+                    over ? t.overBudget : t.caloriesLeftToday,
                     style: Theme.of(context).textTheme.labelMedium,
                   ),
                   const SizedBox(height: 2),
@@ -218,15 +232,19 @@ class _CalorieCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'Budget ${kcal(summary.calorieTarget)} · '
-                    'Eaten ${kcal(summary.consumedCalories)}',
+                    t.budgetEaten(
+                      kcal(summary.calorieTarget),
+                      kcal(summary.consumedCalories),
+                    ),
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                   Text(
                     summary.usingHealthData
-                        ? 'Burn ${kcal(summary.expenditure)} kcal · '
-                            '${kcal(summary.activeEnergy)} active via Health'
-                        : 'Est. burn ~${kcal(summary.expenditure)} kcal/day',
+                        ? t.burnViaHealth(
+                            kcal(summary.expenditure),
+                            kcal(summary.activeEnergy),
+                          )
+                        : t.estBurn(kcal(summary.expenditure)),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: scheme.onSurfaceVariant,
                         ),
@@ -262,6 +280,7 @@ class _MacroCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
     final color = over ? scheme.error : scheme.primary;
     return Card(
@@ -279,7 +298,7 @@ class _MacroCard extends StatelessWidget {
             ),
             const SizedBox(height: 10),
             Text(
-              '${grams(consumed)} / ${grams(target)}',
+              '${t.gramsValue(kcal(consumed))} / ${t.gramsValue(kcal(target))}',
               style: Theme.of(context).textTheme.titleMedium,
             ),
             const SizedBox(height: 8),
@@ -309,6 +328,7 @@ class _EntryTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Dismissible(
       key: ValueKey(entry.id),
       direction: DismissDirection.endToStart,
@@ -323,11 +343,12 @@ class _EntryTile extends StatelessWidget {
         child: ListTile(
           title: Text(entry.name),
           subtitle: Text(
-            '${entry.mealType.label} · '
-            'P ${grams(entry.proteinG)} · Sat ${grams(entry.satFatG)}',
+            '${entry.mealType.labelOf(t)} · '
+            '${t.protein} ${t.gramsValue(kcal(entry.proteinG))} · '
+            '${t.saturatedFat} ${t.gramsValue(kcal(entry.satFatG))}',
           ),
           trailing: Text(
-            '${kcal(entry.calories)} kcal',
+            t.kcalValue(kcal(entry.calories)),
             style: Theme.of(context).textTheme.titleSmall,
           ),
         ),
@@ -341,11 +362,12 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 32),
       child: Center(
         child: Text(
-          'Nothing logged yet.\nTap "Add food" to start.',
+          t.nothingLogged,
           textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
@@ -356,11 +378,76 @@ class _EmptyState extends StatelessWidget {
   }
 }
 
+/// Today's workouts pulled from Apple Health (e.g. Garmin activities). Renders
+/// nothing when there are none.
+class _WorkoutsCard extends ConsumerWidget {
+  const _WorkoutsCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final t = AppLocalizations.of(context);
+    final workouts = ref.watch(workoutsProvider).asData?.value ?? const [];
+    if (workouts.isEmpty) return const SizedBox.shrink();
+    final scheme = Theme.of(context).colorScheme;
+    return Padding(
+      padding: const EdgeInsets.only(top: 12),
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.directions_run, size: 18, color: scheme.primary),
+                  const SizedBox(width: 6),
+                  Text(t.workouts,
+                      style: Theme.of(context).textTheme.labelLarge),
+                ],
+              ),
+              const SizedBox(height: 8),
+              ...workouts.map(
+                (w) => Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(w.label, overflow: TextOverflow.ellipsis),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        [
+                          _fmtDuration(w.duration),
+                          if (w.energyBurned != null)
+                            t.kcalValue(kcal(w.energyBurned!)),
+                        ].join(' · '),
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+String _fmtDuration(Duration d) {
+  final h = d.inHours;
+  final m = d.inMinutes % 60;
+  return h > 0 ? '${h}h ${m}m' : '${m}m';
+}
+
 class _ProfilePrompt extends StatelessWidget {
   const _ProfilePrompt();
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
     return Card(
       color: scheme.secondaryContainer,
@@ -372,7 +459,7 @@ class _ProfilePrompt extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: Text(
-                'Set up your profile in Settings for accurate targets.',
+                t.profilePrompt,
                 style: TextStyle(color: scheme.onSecondaryContainer),
               ),
             ),

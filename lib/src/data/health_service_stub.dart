@@ -1,4 +1,6 @@
 import '../models/energy_out.dart';
+import '../models/food_entry.dart';
+import '../models/workout_summary.dart';
 import 'health_service.dart';
 
 /// Web (and any non-io platform) fallback: no health store available.
@@ -18,4 +20,16 @@ class _UnsupportedHealthService implements HealthService {
 
   @override
   Future<EnergyOut?> readEnergyOut(DateTime day) async => null;
+
+  @override
+  Future<double?> readLatestWeightKg() async => null;
+
+  @override
+  Future<List<WorkoutSummary>> readWorkouts(DateTime day) async => const [];
+
+  @override
+  Future<bool> writeFood(FoodEntry entry) async => false;
+
+  @override
+  Future<bool> writeWeight(double kg, DateTime when) async => false;
 }

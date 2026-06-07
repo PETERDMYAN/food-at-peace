@@ -82,8 +82,11 @@ class DailySummary {
     final bool usingHealth;
     if (energyOut != null) {
       active = energyOut.activeEnergy;
+      // Use measured resting (basal) energy when a device reported it;
+      // otherwise fall back to the estimated BMR.
+      final resting = energyOut.restingEnergy ?? bmr;
       expenditure =
-          NutritionMath.measuredExpenditure(bmr: bmr, activeEnergy: active);
+          NutritionMath.measuredExpenditure(bmr: resting, activeEnergy: active);
       usingHealth = true;
     } else {
       active = 0;
