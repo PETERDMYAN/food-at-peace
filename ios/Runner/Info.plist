@@ -71,8 +71,8 @@
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Food at Peace reads photos you choose to estimate their nutrition.</string>
 	<key>NSHealthShareUsageDescription</key>
-	<string>Food at Peace reads your active energy burned to work out how many calories you can still eat.</string>
+	<string>Food at Peace reads your calories burned, body weight, and workouts (including Garmin data via Apple Health) to track how many calories you can still eat.</string>
 	<key>NSHealthUpdateUsageDescription</key>
-	<string>Food at Peace does not write health data; this entry is required by the system.</string>
+	<string>Food at Peace writes the calories, protein, and saturated fat you log so they appear in Apple Health.</string>
 </dict>
 </plist>

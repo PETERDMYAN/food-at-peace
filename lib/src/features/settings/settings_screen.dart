@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:food_at_peace/l10n/app_localizations.dart';
+import 'package:intl/intl.dart';
 
 import '../../models/user_profile.dart';
 import '../../nutrition/nutrition_math.dart';
 import '../../providers/providers.dart';
 import '../../util/format.dart';
+import '../../util/l10n_labels.dart';
+import '../feedback/feedback_screen.dart';
 
-/// Profile setup (drives all targets), the Claude API key, and a placeholder
-/// for the upcoming HealthKit phase.
+/// Profile setup (drives all targets), weight log, Claude key, Apple
+/// Health/Garmin, language, and feedback.
 class SettingsScreen extends ConsumerStatefulWidget {
   const SettingsScreen({super.key});
 
@@ -39,14 +43,16 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   void _save() {
+    final t = AppLocalizations.of(context);
     ref.read(profileProvider.notifier).save(_draft.copyWith(isConfigured: true));
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Profile saved')),
+      SnackBar(content: Text(t.profileSaved)),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     final bmr = NutritionMath.mifflinStJeorBmr(_draft);
     final tdee = NutritionMath.estimatedTdee(_draft);
     final calTarget =
@@ -56,20 +62,20 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Settings'),
+        title: Text(t.navSettings),
         actions: [
-          TextButton(onPressed: _save, child: const Text('Save')),
+          TextButton(onPressed: _save, child: Text(t.save)),
         ],
       ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
         children: [
-          Text('Profile', style: Theme.of(context).textTheme.titleMedium),
+          Text(t.profile, style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 12),
-          _label(context, 'Sex'),
+          _label(context, t.sex),
           SegmentedButton<Sex>(
             segments: Sex.values
-                .map((s) => ButtonSegment(value: s, label: Text(s.label)))
+                .map((s) => ButtonSegment(value: s, label: Text(s.labelOf(t))))
                 .toList(),
             selected: {_draft.sex},
             showSelectedIcon: false,
@@ -83,7 +89,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 child: TextField(
                   controller: _age,
                   keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(labelText: 'Age'),
+                  decoration: InputDecoration(labelText: t.age),
                   onChanged: (v) => setState(
                       () => _draft = _draft.copyWith(age: int.tryParse(v))),
                 ),
@@ -93,7 +99,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 child: TextField(
                   controller: _height,
                   keyboardType: TextInputType.number,
-                  decoration: const InputDecoration(labelText: 'Height (cm)'),
+                  decoration: InputDecoration(labelText: t.heightCm),
                   onChanged: (v) => setState(() =>
                       _draft = _draft.copyWith(heightCm: double.tryParse(v))),
                 ),
@@ -104,7 +110,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   controller: _weight,
                   keyboardType:
                       const TextInputType.numberWithOptions(decimal: true),
-                  decoration: const InputDecoration(labelText: 'Weight (kg)'),
+                  decoration: InputDecoration(labelText: t.weightKg),
                   onChanged: (v) => setState(() =>
                       _draft = _draft.copyWith(weightKg: double.tryParse(v))),
                 ),
@@ -112,13 +118,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             ],
           ),
           const SizedBox(height: 16),
-          _label(context, 'Activity level'),
+          _label(context, t.activityLevel),
           Wrap(
             spacing: 8,
             children: ActivityLevel.values
                 .map(
                   (a) => ChoiceChip(
-                    label: Text(a.label),
+                    label: Text(a.labelOf(t)),
                     selected: _draft.activity == a,
                     onSelected: (_) => setState(
                         () => _draft = _draft.copyWith(activity: a)),
@@ -127,10 +133,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 .toList(),
           ),
           const SizedBox(height: 16),
-          _label(context, 'Goal'),
+          _label(context, t.goal),
           SegmentedButton<Goal>(
             segments: Goal.values
-                .map((g) => ButtonSegment(value: g, label: Text(g.label)))
+                .map((g) => ButtonSegment(value: g, label: Text(g.labelOf(t))))
                 .toList(),
             selected: {_draft.goal},
             showSelectedIcon: false,
@@ -144,14 +150,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Your targets',
+                  Text(t.yourTargets,
                       style: Theme.of(context).textTheme.titleSmall),
                   const SizedBox(height: 8),
-                  _statRow('Resting burn (BMR)', '${kcal(bmr)} kcal'),
-                  _statRow('Est. daily burn', '${kcal(tdee)} kcal'),
-                  _statRow('Daily calorie target', '${kcal(calTarget)} kcal'),
-                  _statRow('Protein target', grams(protein)),
-                  _statRow('Saturated-fat cap', grams(satCap)),
+                  _statRow(t.restingBurn, t.kcalValue(kcal(bmr))),
+                  _statRow(t.estDailyBurn, t.kcalValue(kcal(tdee))),
+                  _statRow(t.dailyCalorieTarget, t.kcalValue(kcal(calTarget))),
+                  _statRow(t.proteinTargetLabel, t.gramsValue(kcal(protein))),
+                  _statRow(t.satFatCap, t.gramsValue(kcal(satCap))),
                 ],
               ),
             ),
@@ -160,18 +166,18 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           FilledButton.icon(
             onPressed: _save,
             icon: const Icon(Icons.check),
-            label: const Text('Save profile'),
+            label: Text(t.saveProfile),
           ),
           const SizedBox(height: 24),
+          const _WeightCard(),
+          const SizedBox(height: 12),
           const _ApiKeyCard(),
           const SizedBox(height: 12),
-          const _ComingSoonCard(
-            icon: Icons.favorite_outline,
-            title: 'Apple Health & Garmin',
-            body: 'Soon: pull your real basal + active calories burned so the '
-                'budget updates as you move. (Your Garmin data syncs in via '
-                'Apple Health.)',
-          ),
+          const _HealthCard(),
+          const SizedBox(height: 12),
+          const _LanguageCard(),
+          const SizedBox(height: 12),
+          const _FeedbackTile(),
         ],
       ),
     );
@@ -189,6 +195,171 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           children: [Text(label), Text(value)],
         ),
       );
+}
+
+String _fmtKg(double kg) => kg.toStringAsFixed(1);
+
+/// Logs body weight and shows recent readings.
+class _WeightCard extends ConsumerWidget {
+  const _WeightCard();
+
+  Future<void> _logWeight(BuildContext context, WidgetRef ref) async {
+    final t = AppLocalizations.of(context);
+    final controller = TextEditingController(
+      text: _fmtKg(ref.read(profileProvider).weightKg),
+    );
+    final result = await showDialog<double>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(t.logWeight),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          decoration:
+              InputDecoration(labelText: t.weightKg, hintText: t.enterWeight),
+        ),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(ctx), child: Text(t.cancel)),
+          FilledButton(
+            onPressed: () =>
+                Navigator.pop(ctx, double.tryParse(controller.text.trim())),
+            child: Text(t.save),
+          ),
+        ],
+      ),
+    );
+    if (result == null || result <= 0) return;
+    await ref.read(weightEntriesProvider.notifier).add(result);
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(t.weightSaved)));
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final t = AppLocalizations.of(context);
+    final scheme = Theme.of(context).colorScheme;
+    final entries = ref.watch(weightEntriesProvider);
+    final localeName = Localizations.localeOf(context).toLanguageTag();
+    final latest =
+        entries.isNotEmpty ? entries.first.kg : ref.watch(profileProvider).weightKg;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.monitor_weight_outlined, color: scheme.primary),
+                const SizedBox(width: 8),
+                Text(t.weightTitle,
+                    style: Theme.of(context).textTheme.titleSmall),
+                const Spacer(),
+                Text(t.weightKgValue(_fmtKg(latest)),
+                    style: Theme.of(context).textTheme.titleSmall),
+              ],
+            ),
+            for (final e in entries.take(5))
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(DateFormat.yMMMd(localeName).format(e.timestamp),
+                        style: Theme.of(context).textTheme.bodySmall),
+                    Text(t.weightKgValue(_fmtKg(e.kg)),
+                        style: Theme.of(context).textTheme.bodySmall),
+                  ],
+                ),
+              ),
+            const SizedBox(height: 12),
+            FilledButton.icon(
+              onPressed: () => _logWeight(context, ref),
+              icon: const Icon(Icons.add),
+              label: Text(t.logWeight),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Language selector: follow the system, or force English / Chinese.
+class _LanguageCard extends ConsumerWidget {
+  const _LanguageCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final t = AppLocalizations.of(context);
+    final scheme = Theme.of(context).colorScheme;
+    final selected = ref.watch(localeProvider)?.languageCode ?? 'system';
+
+    void choose(String? v) {
+      ref
+          .read(localeProvider.notifier)
+          .setLocale(v == null || v == 'system' ? null : Locale(v));
+    }
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.language, color: scheme.primary),
+                const SizedBox(width: 8),
+                Text(t.language,
+                    style: Theme.of(context).textTheme.titleSmall),
+              ],
+            ),
+            for (final opt in [
+              ('system', t.languageSystem),
+              ('en', t.languageEnglish),
+              ('zh', t.languageChinese),
+            ])
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: Icon(
+                  selected == opt.$1
+                      ? Icons.radio_button_checked
+                      : Icons.radio_button_unchecked,
+                  color: selected == opt.$1 ? scheme.primary : null,
+                ),
+                title: Text(opt.$2),
+                onTap: () => choose(opt.$1),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Opens the feedback form.
+class _FeedbackTile extends StatelessWidget {
+  const _FeedbackTile();
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    final scheme = Theme.of(context).colorScheme;
+    return Card(
+      child: ListTile(
+        leading: Icon(Icons.feedback_outlined, color: scheme.primary),
+        title: Text(t.feedback),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const FeedbackScreen()),
+        ),
+      ),
+    );
+  }
 }
 
 /// Lets the user paste / replace / remove their Anthropic API key.
@@ -210,25 +381,30 @@ class _ApiKeyCardState extends ConsumerState<_ApiKeyCard> {
   }
 
   Future<void> _save() async {
+    final t = AppLocalizations.of(context);
     final value = _controller.text.trim();
     if (value.isEmpty) return;
     await ref.read(apiKeyProvider.notifier).save(value);
     _controller.clear();
     if (!mounted) return;
     ScaffoldMessenger.of(context)
-        .showSnackBar(const SnackBar(content: Text('API key saved')));
+        .showSnackBar(SnackBar(content: Text(t.apiKeySavedToast)));
   }
 
   Future<void> _clear() async {
+    final t = AppLocalizations.of(context);
     await ref.read(apiKeyProvider.notifier).clear();
     if (!mounted) return;
     ScaffoldMessenger.of(context)
-        .showSnackBar(const SnackBar(content: Text('API key removed')));
+        .showSnackBar(SnackBar(content: Text(t.apiKeyRemoved)));
   }
 
   @override
   Widget build(BuildContext context) {
-    final hasKey = hasApiKey(ref.watch(apiKeyProvider));
+    final t = AppLocalizations.of(context);
+    final key = ref.watch(apiKeyProvider);
+    final hasKey = hasApiKey(key);
+    final builtIn = isBuiltInApiKey(key);
     final scheme = Theme.of(context).colorScheme;
     return Card(
       child: Padding(
@@ -240,21 +416,21 @@ class _ApiKeyCardState extends ConsumerState<_ApiKeyCard> {
               children: [
                 Icon(Icons.camera_alt_outlined, color: scheme.primary),
                 const SizedBox(width: 8),
-                Text('Food photo analysis (Claude)',
-                    style: Theme.of(context).textTheme.titleSmall),
-                const Spacer(),
+                Expanded(
+                  child: Text(t.foodPhotoAnalysis,
+                      style: Theme.of(context).textTheme.titleSmall),
+                ),
                 if (hasKey)
                   Icon(Icons.check_circle, color: scheme.primary, size: 20),
               ],
             ),
             const SizedBox(height: 8),
             Text(
-              hasKey
-                  ? 'API key saved on this device. The Add screen can now '
-                      'estimate nutrition from a photo.'
-                  : 'Add an Anthropic API key to estimate calories, protein, '
-                      'and saturated fat from a photo. Get one at '
-                      'console.anthropic.com.',
+              builtIn
+                  ? t.builtInKeyActive
+                  : hasKey
+                      ? t.apiKeySavedDevice
+                      : t.apiKeyPrompt,
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 12),
@@ -264,7 +440,7 @@ class _ApiKeyCardState extends ConsumerState<_ApiKeyCard> {
               autocorrect: false,
               enableSuggestions: false,
               decoration: InputDecoration(
-                labelText: hasKey ? 'Replace API key' : 'API key (sk-ant-…)',
+                labelText: hasKey ? t.replaceApiKey : t.apiKeyLabel,
                 suffixIcon: IconButton(
                   icon: Icon(
                       _obscure ? Icons.visibility : Icons.visibility_off),
@@ -275,11 +451,10 @@ class _ApiKeyCardState extends ConsumerState<_ApiKeyCard> {
             const SizedBox(height: 8),
             Row(
               children: [
-                FilledButton(onPressed: _save, child: const Text('Save key')),
+                FilledButton(onPressed: _save, child: Text(t.saveKey)),
                 const SizedBox(width: 8),
-                if (hasKey)
-                  TextButton(
-                      onPressed: _clear, child: const Text('Remove')),
+                if (hasKey && !builtIn)
+                  TextButton(onPressed: _clear, child: Text(t.remove)),
               ],
             ),
           ],
@@ -289,49 +464,63 @@ class _ApiKeyCardState extends ConsumerState<_ApiKeyCard> {
   }
 }
 
-class _ComingSoonCard extends StatelessWidget {
-  const _ComingSoonCard({
-    required this.icon,
-    required this.title,
-    required this.body,
-  });
-
-  final IconData icon;
-  final String title;
-  final String body;
+/// Connect/disconnect Apple Health (which also carries Garmin data) and shows
+/// what the app reads and writes.
+class _HealthCard extends ConsumerWidget {
+  const _HealthCard();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final t = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
+    final supported = ref.watch(healthServiceProvider).isSupported;
+    final connected = ref.watch(healthConnectedProvider);
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
-        child: Row(
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(icon, color: scheme.primary),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Text(title,
-                          style: Theme.of(context).textTheme.titleSmall),
-                      const SizedBox(width: 8),
-                      Chip(
-                        label: const Text('Soon'),
-                        visualDensity: VisualDensity.compact,
-                        padding: EdgeInsets.zero,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(body, style: Theme.of(context).textTheme.bodySmall),
-                ],
-              ),
+            Row(
+              children: [
+                Icon(Icons.favorite_outline, color: scheme.primary),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(t.healthGarminTitle,
+                      style: Theme.of(context).textTheme.titleSmall),
+                ),
+                if (connected)
+                  Icon(Icons.check_circle, color: scheme.primary, size: 20),
+              ],
             ),
+            const SizedBox(height: 8),
+            Text(
+              !supported
+                  ? t.healthNotAvailable
+                  : connected
+                      ? t.healthConnectedBody
+                      : t.healthConnectBody,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            if (supported && !connected) ...[
+              const SizedBox(height: 12),
+              FilledButton.icon(
+                onPressed: () async {
+                  final ok = await ref
+                      .read(healthConnectedProvider.notifier)
+                      .connect();
+                  if (!context.mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                          ok ? t.appleHealthConnected : t.healthNotGranted),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.favorite_outline),
+                label: Text(t.connectAppleHealth),
+              ),
+            ],
           ],
         ),
       ),

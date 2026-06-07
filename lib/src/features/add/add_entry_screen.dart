@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:food_at_peace/l10n/app_localizations.dart';
 import 'package:image_picker/image_picker.dart';
 
 import '../../data/claude_vision_client.dart';
@@ -8,6 +9,7 @@ import '../../models/food_analysis.dart';
 import '../../models/food_entry.dart';
 import '../../models/meal_type.dart';
 import '../../providers/providers.dart';
+import '../../util/l10n_labels.dart';
 
 /// Food-entry form. A photo can be scanned with Claude to pre-fill the fields,
 /// which the user then reviews and edits before saving.
@@ -77,6 +79,7 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
   }
 
   Future<void> _scanPhoto() async {
+    final t = AppLocalizations.of(context);
     final key = ref.read(apiKeyProvider);
     if (!hasApiKey(key)) {
       _showKeyNeededDialog();
@@ -94,7 +97,7 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
         imageQuality: 85,
       );
     } catch (_) {
-      _toast('Could not open the camera or photo library.');
+      _toast(t.cameraError);
       return;
     }
     if (file == null) return;
@@ -122,13 +125,14 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
     } on ClaudeApiException catch (e) {
       _toast(e.message);
     } catch (_) {
-      _toast('Analysis failed. Please try again.');
+      if (mounted) _toast(AppLocalizations.of(context).analysisFailed);
     } finally {
       if (mounted) setState(() => _analyzing = false);
     }
   }
 
   Future<ImageSource?> _pickSource() {
+    final t = AppLocalizations.of(context);
     return showModalBottomSheet<ImageSource>(
       context: context,
       builder: (ctx) => SafeArea(
@@ -137,12 +141,12 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
           children: [
             ListTile(
               leading: const Icon(Icons.photo_camera_outlined),
-              title: const Text('Take a photo'),
+              title: Text(t.takePhoto),
               onTap: () => Navigator.pop(ctx, ImageSource.camera),
             ),
             ListTile(
               leading: const Icon(Icons.photo_library_outlined),
-              title: const Text('Choose from library'),
+              title: Text(t.chooseFromLibrary),
               onTap: () => Navigator.pop(ctx, ImageSource.gallery),
             ),
           ],
@@ -166,17 +170,16 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
   }
 
   void _showKeyNeededDialog() {
+    final t = AppLocalizations.of(context);
     showDialog<void>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Add your API key'),
-        content: const Text(
-          'To analyze photos, add an Anthropic API key in Settings first.',
-        ),
+        title: Text(t.addApiKeyTitle),
+        content: Text(t.addApiKeyBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('OK'),
+            child: Text(t.ok),
           ),
         ],
       ),
@@ -185,11 +188,12 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Add food'),
+        title: Text(t.addFood),
         actions: [
-          TextButton(onPressed: _save, child: const Text('Save')),
+          TextButton(onPressed: _save, child: Text(t.save)),
         ],
       ),
       body: Stack(
@@ -202,7 +206,7 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
                 OutlinedButton.icon(
                   onPressed: _analyzing ? null : _scanPhoto,
                   icon: const Icon(Icons.camera_alt_outlined),
-                  label: const Text('Scan a photo with Claude'),
+                  label: Text(t.scanPhoto),
                 ),
                 if (_analysis != null) ...[
                   const SizedBox(height: 12),
@@ -212,20 +216,20 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
                 TextFormField(
                   controller: _name,
                   textCapitalization: TextCapitalization.sentences,
-                  decoration: const InputDecoration(
-                    labelText: 'Food name',
-                    hintText: 'e.g. Grilled chicken salad',
+                  decoration: InputDecoration(
+                    labelText: t.foodName,
+                    hintText: t.foodNameHint,
                   ),
                   validator: (v) =>
-                      (v == null || v.trim().isEmpty) ? 'Enter a name' : null,
+                      (v == null || v.trim().isEmpty) ? t.enterName : null,
                 ),
                 const SizedBox(height: 16),
-                Text('Meal', style: Theme.of(context).textTheme.labelLarge),
+                Text(t.meal, style: Theme.of(context).textTheme.labelLarge),
                 const SizedBox(height: 8),
                 SegmentedButton<MealType>(
                   segments: MealType.values
                       .map((m) =>
-                          ButtonSegment(value: m, label: Text(m.label)))
+                          ButtonSegment(value: m, label: Text(m.labelOf(t))))
                       .toList(),
                   selected: {_mealType},
                   showSelectedIcon: false,
@@ -235,26 +239,26 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
                 const SizedBox(height: 16),
                 _NumberField(
                   controller: _calories,
-                  label: 'Calories (kcal)',
+                  label: t.caloriesKcal,
                   required: true,
                 ),
                 const SizedBox(height: 16),
-                _NumberField(controller: _protein, label: 'Protein (g)'),
+                _NumberField(controller: _protein, label: t.proteinG),
                 const SizedBox(height: 16),
-                _NumberField(controller: _satFat, label: 'Saturated fat (g)'),
+                _NumberField(controller: _satFat, label: t.saturatedFatG),
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _serving,
-                  decoration: const InputDecoration(
-                    labelText: 'Serving (optional)',
-                    hintText: 'e.g. 1 bowl, 200 g',
+                  decoration: InputDecoration(
+                    labelText: t.servingOptional,
+                    hintText: t.servingHint,
                   ),
                 ),
                 const SizedBox(height: 24),
                 FilledButton.icon(
                   onPressed: _save,
                   icon: const Icon(Icons.check),
-                  label: const Text('Save entry'),
+                  label: Text(t.saveEntry),
                 ),
               ],
             ),
@@ -279,6 +283,7 @@ class _NumberField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     return TextFormField(
       controller: controller,
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -289,10 +294,10 @@ class _NumberField extends StatelessWidget {
       validator: (v) {
         final text = v?.trim() ?? '';
         if (text.isEmpty) {
-          return required ? 'Required' : null;
+          return required ? t.required : null;
         }
         final parsed = double.tryParse(text);
-        if (parsed == null || parsed < 0) return 'Enter a valid number';
+        if (parsed == null || parsed < 0) return t.enterValidNumber;
         return null;
       },
     );
@@ -306,10 +311,11 @@ class _AnalysisBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
     final detail = [
       if (analysis.portionDescription.isNotEmpty) analysis.portionDescription,
-      'confidence: ${analysis.confidence}',
+      t.confidenceLabel(analysis.confidence),
     ].join(' · ');
     return Card(
       color: scheme.secondaryContainer,
@@ -325,7 +331,7 @@ class _AnalysisBanner extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Estimated by Claude — review & edit below.',
+                    t.estimatedByClaude,
                     style: TextStyle(color: scheme.onSecondaryContainer),
                   ),
                   const SizedBox(height: 2),
@@ -350,19 +356,20 @@ class _AnalyzingOverlay extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Positioned.fill(
+    final t = AppLocalizations.of(context);
+    return Positioned.fill(
       child: ColoredBox(
         color: Colors.black54,
         child: Center(
           child: Card(
             child: Padding(
-              padding: EdgeInsets.all(24),
+              padding: const EdgeInsets.all(24),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  CircularProgressIndicator(),
-                  SizedBox(height: 16),
-                  Text('Analyzing photo…'),
+                  const CircularProgressIndicator(),
+                  const SizedBox(height: 16),
+                  Text(t.analyzingPhoto),
                 ],
               ),
             ),
