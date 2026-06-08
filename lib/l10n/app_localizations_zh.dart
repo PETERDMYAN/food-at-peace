@@ -57,6 +57,26 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String goalLine(String goal) {
+    return '目标：$goal';
+  }
+
+  @override
+  String goalLineAdjusted(String goal, String adjustment) {
+    return '目标：$goal（$adjustment 千卡/天）';
+  }
+
+  @override
+  String budgetBreakdown(String resting, String active, String adjustment) {
+    return '静息 $resting · 活动 $active · 目标 $adjustment';
+  }
+
+  @override
+  String budgetBreakdownEst(String burn, String adjustment) {
+    return '预计消耗 $burn · 目标 $adjustment';
+  }
+
+  @override
   String get protein => '蛋白质';
 
   @override

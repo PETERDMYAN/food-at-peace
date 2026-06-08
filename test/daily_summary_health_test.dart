@@ -48,4 +48,25 @@ void main() {
     // expenditure = 1698.75 + 300 = 1998.75; lose => -500 => 1498.75
     expect(summary.calorieTarget, closeTo(1498.75, 0.01));
   });
+
+  test('budget uses full-day BMR even when a device reports partial resting',
+      () {
+    final summary = DailySummary.compute(
+      date: DateTime(2026, 1, 1),
+      entries: const [],
+      profile: male, // BMR 1698.75, maintain
+      energyOut: EnergyOut(
+        activeEnergy: 373,
+        restingEnergy: 1411, // measured resting burned so far (partial day)
+        asOf: DateTime(2026, 1, 1, 21),
+      ),
+    );
+    // Burn reflects what's actually been spent so far: measured resting + active.
+    expect(summary.expenditure, closeTo(1411 + 373, 0.01));
+    // Budget is built on a full day's resting (BMR), not the partial measured
+    // resting, + the active energy burned.
+    expect(summary.calorieTarget, closeTo(1698.75 + 373, 0.01));
+    // Calories left follows the budget.
+    expect(summary.caloriesRemaining, closeTo(1698.75 + 373, 0.01));
+  });
 }

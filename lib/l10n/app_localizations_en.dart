@@ -57,6 +57,26 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String goalLine(String goal) {
+    return 'Goal: $goal';
+  }
+
+  @override
+  String goalLineAdjusted(String goal, String adjustment) {
+    return 'Goal: $goal ($adjustment kcal/day)';
+  }
+
+  @override
+  String budgetBreakdown(String resting, String active, String adjustment) {
+    return 'Resting $resting · Active $active · Goal $adjustment';
+  }
+
+  @override
+  String budgetBreakdownEst(String burn, String adjustment) {
+    return 'Est. burn $burn · Goal $adjustment';
+  }
+
+  @override
   String get protein => 'Protein';
 
   @override
