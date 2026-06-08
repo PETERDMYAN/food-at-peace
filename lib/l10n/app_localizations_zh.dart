@@ -189,7 +189,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get addApiKeyTitle => '添加 API 密钥';
 
   @override
-  String get addApiKeyBody => '要分析照片，请先在设置中添加 Anthropic API 密钥。';
+  String get addApiKeyBody => '此版本未启用照片分析。可在设置中添加你自己的 Anthropic API 密钥来扫描照片。';
 
   @override
   String get estimatedByClaude => '由 Claude 估算 — 请在下方查看并修改。';
@@ -251,14 +251,11 @@ class AppLocalizationsZh extends AppLocalizations {
   String get foodPhotoAnalysis => '食物照片分析（Claude）';
 
   @override
-  String get builtInKeyActive => '已启用内置密钥 — 照片分析开箱即用。你也可以在下方粘贴自己的密钥来覆盖。';
-
-  @override
-  String get apiKeySavedDevice => 'API 密钥已保存在本设备。现在可在添加页面通过照片估算营养。';
+  String get apiKeySavedDevice => '正在本设备使用你自己的 Anthropic 密钥。移除后将恢复使用内置分析。';
 
   @override
   String get apiKeyPrompt =>
-      '添加 Anthropic API 密钥即可通过照片估算卡路里、蛋白质和饱和脂肪。可在 console.anthropic.com 获取。';
+      '照片分析开箱即用。高级：添加你自己的 Anthropic API 密钥即可改用你自己的账户 — 可在 console.anthropic.com 获取。';
 
   @override
   String get replaceApiKey => '替换 API 密钥';

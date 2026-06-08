@@ -1,3 +1,4 @@
 {
-  "ANTHROPIC_API_KEY": "sk-ant-REPLACE_WITH_YOUR_KEY"
+  "PROXY_BASE_URL": "https://REPLACE.execute-api.ap-southeast-1.amazonaws.com",
+  "PROXY_APP_TOKEN": "REPLACE_WITH_YOUR_APP_TOKEN"
 }

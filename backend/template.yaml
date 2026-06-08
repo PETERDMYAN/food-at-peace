@@ -1,0 +1,99 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Food at Peace — Claude vision proxy. Holds the Anthropic API key server-side
+  (in SSM Parameter Store) so it never ships inside the app.
+
+Parameters:
+  Model:
+    Type: String
+    Default: claude-sonnet-4-6
+    Description: Anthropic model used for photo analysis.
+  AnthropicKeyParam:
+    Type: String
+    Default: /food-at-peace/anthropic-api-key
+    Description: SSM SecureString parameter that holds the Anthropic API key.
+  AppTokenParam:
+    Type: String
+    Default: /food-at-peace/app-token
+    Description: SSM SecureString parameter that holds the shared app token.
+  CorsAllowOrigin:
+    Type: String
+    Default: "*"
+    Description: Allowed CORS origin. Tighten to your web origin for production.
+
+Globals:
+  Function:
+    Runtime: python3.13
+    Timeout: 30
+    MemorySize: 512
+
+Resources:
+  VisionApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      CorsConfiguration:
+        AllowOrigins:
+          - !Ref CorsAllowOrigin
+        AllowHeaders:
+          - content-type
+          - x-app-token
+        AllowMethods:
+          - POST
+          - OPTIONS
+      # Stage throttling caps the blast radius (and Anthropic spend) if the
+      # endpoint is hammered.
+      DefaultRouteSettings:
+        ThrottlingBurstLimit: 5
+        ThrottlingRateLimit: 2
+
+  VisionFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/
+      Handler: app.handler
+      # NOTE: no ReservedConcurrentExecutions here. New AWS accounts start with a Lambda
+      # concurrency limit of ~10, and reserving any amount would push unreserved capacity
+      # below AWS's minimum of 10 (the function fails to create). The account-wide limit
+      # plus the API Gateway throttling below already cap the blast radius. Once your
+      # account concurrency limit is raised, you can add e.g.
+      # `ReservedConcurrentExecutions: 5` for a hard per-function cap.
+      Environment:
+        Variables:
+          MODEL: !Ref Model
+          ANTHROPIC_KEY_PARAM: !Ref AnthropicKeyParam
+          APP_TOKEN_PARAM: !Ref AppTokenParam
+      Policies:
+        - Statement:
+            - Sid: ReadSecrets
+              Effect: Allow
+              Action: ssm:GetParameter
+              Resource:
+                - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter${AnthropicKeyParam}
+                - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter${AppTokenParam}
+            - Sid: DecryptSecureStrings
+              Effect: Allow
+              Action: kms:Decrypt
+              # Scoped to decryption performed *via SSM only* — least privilege
+              # for the AWS-managed aws/ssm key.
+              Resource: "*"
+              Condition:
+                StringEquals:
+                  kms:ViaService: !Sub ssm.${AWS::Region}.amazonaws.com
+      Events:
+        Analyze:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref VisionApi
+            Path: /analyze
+            Method: POST
+
+Outputs:
+  ProxyBaseUrl:
+    Description: >
+      Base URL of the proxy. Pass this to the app as --dart-define=PROXY_BASE_URL
+      (the app POSTs to <base>/analyze).
+    Value: !Sub https://${VisionApi}.execute-api.${AWS::Region}.amazonaws.com
+  AnalyzeUrl:
+    Description: Full analyze endpoint (for curl / sanity checks).
+    Value: !Sub https://${VisionApi}.execute-api.${AWS::Region}.amazonaws.com/analyze

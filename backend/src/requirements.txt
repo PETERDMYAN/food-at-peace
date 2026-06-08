@@ -1,0 +1,3 @@
+# No third-party dependencies: the handler uses only the standard library
+# (urllib, json, hmac, base64) plus boto3, which is already present in the
+# Lambda Python runtime. Listed here so `sam build` has a requirements file.

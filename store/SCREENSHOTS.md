@@ -16,9 +16,9 @@ export DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer LANG=en_US.UTF-8
 xcrun simctl boot "iPhone 15 Pro Max" 2>/dev/null
 open -a Simulator
 
-# Run the app on it (include your key so the photo-analysis screen works)
+# Run the app on it (proxy config makes the photo-analysis screen work)
 flutter run -d "iPhone 15 Pro Max" \
-  --dart-define=ANTHROPIC_API_KEY=sk-ant-YOUR-REAL-KEY
+  --dart-define-from-file=dart_defines.json
 ```
 
 ## 2. Populate it for good shots

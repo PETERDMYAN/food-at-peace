@@ -413,7 +413,7 @@ abstract class AppLocalizations {
   /// No description provided for @addApiKeyBody.
   ///
   /// In en, this message translates to:
-  /// **'To analyze photos, add an Anthropic API key in Settings first.'**
+  /// **'Photo analysis isn\'t set up in this build. Add your own Anthropic API key in Settings to scan photos.'**
   String get addApiKeyBody;
 
   /// No description provided for @estimatedByClaude.
@@ -530,22 +530,16 @@ abstract class AppLocalizations {
   /// **'Food photo analysis (Claude)'**
   String get foodPhotoAnalysis;
 
-  /// No description provided for @builtInKeyActive.
-  ///
-  /// In en, this message translates to:
-  /// **'A built-in key is active — photo analysis works out of the box. You can paste your own key below to override it.'**
-  String get builtInKeyActive;
-
   /// No description provided for @apiKeySavedDevice.
   ///
   /// In en, this message translates to:
-  /// **'API key saved on this device. The Add screen can now estimate nutrition from a photo.'**
+  /// **'Using your own Anthropic key on this device. Remove it to go back to the built-in analysis.'**
   String get apiKeySavedDevice;
 
   /// No description provided for @apiKeyPrompt.
   ///
   /// In en, this message translates to:
-  /// **'Add an Anthropic API key to estimate calories, protein, and saturated fat from a photo. Get one at console.anthropic.com.'**
+  /// **'Photo analysis works out of the box. Advanced: add your own Anthropic API key to use your own account instead — get one at console.anthropic.com.'**
   String get apiKeyPrompt;
 
   /// No description provided for @replaceApiKey.

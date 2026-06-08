@@ -1,0 +1,17 @@
+{
+  "version": "2.0",
+  "routeKey": "POST /analyze",
+  "rawPath": "/analyze",
+  "headers": {
+    "content-type": "application/json",
+    "x-app-token": "REPLACE_WITH_YOUR_APP_TOKEN"
+  },
+  "requestContext": {
+    "http": {
+      "method": "POST",
+      "path": "/analyze"
+    }
+  },
+  "body": "{\"image\":\"REPLACE_WITH_BASE64_JPEG\",\"mediaType\":\"image/jpeg\"}",
+  "isBase64Encoded": false
+}

@@ -404,7 +404,6 @@ class _ApiKeyCardState extends ConsumerState<_ApiKeyCard> {
     final t = AppLocalizations.of(context);
     final key = ref.watch(apiKeyProvider);
     final hasKey = hasApiKey(key);
-    final builtIn = isBuiltInApiKey(key);
     final scheme = Theme.of(context).colorScheme;
     return Card(
       child: Padding(
@@ -426,11 +425,7 @@ class _ApiKeyCardState extends ConsumerState<_ApiKeyCard> {
             ),
             const SizedBox(height: 8),
             Text(
-              builtIn
-                  ? t.builtInKeyActive
-                  : hasKey
-                      ? t.apiKeySavedDevice
-                      : t.apiKeyPrompt,
+              hasKey ? t.apiKeySavedDevice : t.apiKeyPrompt,
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 12),
@@ -453,7 +448,7 @@ class _ApiKeyCardState extends ConsumerState<_ApiKeyCard> {
               children: [
                 FilledButton(onPressed: _save, child: Text(t.saveKey)),
                 const SizedBox(width: 8),
-                if (hasKey && !builtIn)
+                if (hasKey)
                   TextButton(onPressed: _clear, child: Text(t.remove)),
               ],
             ),
