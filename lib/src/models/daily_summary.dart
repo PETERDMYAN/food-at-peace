@@ -82,11 +82,14 @@ class DailySummary {
     final bool usingHealth;
     if (energyOut != null) {
       active = energyOut.activeEnergy;
-      // Use measured resting (basal) energy when a device reported it;
-      // otherwise fall back to the estimated BMR.
-      final resting = energyOut.restingEnergy ?? bmr;
+      // The resting component must represent a *full day*. The device's
+      // measured basal energy (energyOut.restingEnergy) is only the amount
+      // burned so far today (midnight → now), so using it directly would
+      // understate the budget early in the day and let it creep up as basal
+      // accumulates. Use the full-day estimated BMR for resting and add the
+      // measured active energy, which legitimately accrues through the day.
       expenditure =
-          NutritionMath.measuredExpenditure(bmr: resting, activeEnergy: active);
+          NutritionMath.measuredExpenditure(bmr: bmr, activeEnergy: active);
       usingHealth = true;
     } else {
       active = 0;
