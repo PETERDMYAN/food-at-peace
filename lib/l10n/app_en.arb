@@ -33,6 +33,34 @@
       "burn": { "type": "String" }
     }
   },
+  "goalLine": "Goal: {goal}",
+  "@goalLine": {
+    "placeholders": {
+      "goal": { "type": "String" }
+    }
+  },
+  "goalLineAdjusted": "Goal: {goal} ({adjustment} kcal/day)",
+  "@goalLineAdjusted": {
+    "placeholders": {
+      "goal": { "type": "String" },
+      "adjustment": { "type": "String" }
+    }
+  },
+  "budgetBreakdown": "Resting {resting} · Active {active} · Goal {adjustment}",
+  "@budgetBreakdown": {
+    "placeholders": {
+      "resting": { "type": "String" },
+      "active": { "type": "String" },
+      "adjustment": { "type": "String" }
+    }
+  },
+  "budgetBreakdownEst": "Est. burn {burn} · Goal {adjustment}",
+  "@budgetBreakdownEst": {
+    "placeholders": {
+      "burn": { "type": "String" },
+      "adjustment": { "type": "String" }
+    }
+  },
   "protein": "Protein",
   "saturatedFat": "Saturated fat",
   "targetReached": "Target reached",

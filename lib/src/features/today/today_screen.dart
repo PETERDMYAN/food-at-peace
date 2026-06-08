@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 
 import '../../models/daily_summary.dart';
 import '../../models/food_entry.dart';
+import '../../models/user_profile.dart';
 import '../../providers/providers.dart';
 import '../../util/format.dart';
 import '../../util/l10n_labels.dart';
@@ -53,7 +54,7 @@ class TodayScreen extends ConsumerWidget {
             const _ProfilePrompt(),
             const SizedBox(height: 12),
           ],
-          _CalorieCard(summary: summary),
+          _CalorieCard(summary: summary, goal: profile.goal),
           if (healthSupported && !healthConnected) ...[
             const SizedBox(height: 12),
             OutlinedButton.icon(
@@ -165,9 +166,10 @@ class _DateHeader extends StatelessWidget {
 }
 
 class _CalorieCard extends StatelessWidget {
-  const _CalorieCard({required this.summary});
+  const _CalorieCard({required this.summary, required this.goal});
 
   final DailySummary summary;
+  final Goal goal;
 
   @override
   Widget build(BuildContext context) {
@@ -176,6 +178,15 @@ class _CalorieCard extends StatelessWidget {
     final over = summary.isOverCalories;
     final remaining = summary.caloriesRemaining;
     final accent = over ? scheme.error : scheme.primary;
+    final adj = goal.calorieAdjustment;
+    final adjStr = adj > 0 ? '+${kcal(adj)}' : kcal(adj);
+    final breakdown = summary.usingHealthData
+        ? t.budgetBreakdown(
+            kcal(summary.bmr),
+            kcal(summary.activeEnergy),
+            adjStr,
+          )
+        : t.budgetBreakdownEst(kcal(summary.expenditure), adjStr);
 
     return Card(
       child: Padding(
@@ -239,12 +250,7 @@ class _CalorieCard extends StatelessWidget {
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                   Text(
-                    summary.usingHealthData
-                        ? t.burnViaHealth(
-                            kcal(summary.expenditure),
-                            kcal(summary.activeEnergy),
-                          )
-                        : t.estBurn(kcal(summary.expenditure)),
+                    breakdown,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: scheme.onSurfaceVariant,
                         ),

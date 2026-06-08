@@ -182,6 +182,30 @@ abstract class AppLocalizations {
   /// **'Est. burn ~{burn} kcal/day'**
   String estBurn(String burn);
 
+  /// No description provided for @goalLine.
+  ///
+  /// In en, this message translates to:
+  /// **'Goal: {goal}'**
+  String goalLine(String goal);
+
+  /// No description provided for @goalLineAdjusted.
+  ///
+  /// In en, this message translates to:
+  /// **'Goal: {goal} ({adjustment} kcal/day)'**
+  String goalLineAdjusted(String goal, String adjustment);
+
+  /// No description provided for @budgetBreakdown.
+  ///
+  /// In en, this message translates to:
+  /// **'Resting {resting} · Active {active} · Goal {adjustment}'**
+  String budgetBreakdown(String resting, String active, String adjustment);
+
+  /// No description provided for @budgetBreakdownEst.
+  ///
+  /// In en, this message translates to:
+  /// **'Est. burn {burn} · Goal {adjustment}'**
+  String budgetBreakdownEst(String burn, String adjustment);
+
   /// No description provided for @protein.
   ///
   /// In en, this message translates to:
