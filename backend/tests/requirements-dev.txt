@@ -1,0 +1,6 @@
+# Test-only dependencies (NOT bundled into the Lambda — see src/requirements.txt).
+# Used to forge Apple-style RS256 tokens and run the suite:
+#   python3.13 -m venv .venv && . .venv/bin/activate
+#   pip install -r tests/requirements-dev.txt && pytest
+pytest>=8
+PyJWT[crypto]>=2.8,<3

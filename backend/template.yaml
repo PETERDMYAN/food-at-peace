@@ -21,6 +21,20 @@ Parameters:
     Type: String
     Default: "*"
     Description: Allowed CORS origin. Tighten to your web origin for production.
+  AppleClientId:
+    Type: String
+    Default: ""
+    Description: >
+      Bundle id the iOS app signs in under = the Apple identity token's audience
+      (e.g. com.yourcompany.foodatpeace). Required for Sign in with Apple.
+  SessionKeyParam:
+    Type: String
+    Default: /food-at-peace/session-signing-key
+    Description: SSM SecureString parameter holding the HS256 session-token signing key.
+  SessionTtlDays:
+    Type: Number
+    Default: 60
+    Description: How long an issued session token stays valid (days).
 
 Globals:
   Function:
@@ -38,6 +52,7 @@ Resources:
         AllowHeaders:
           - content-type
           - x-app-token
+          - authorization
         AllowMethods:
           - POST
           - OPTIONS
@@ -88,6 +103,99 @@ Resources:
             Path: /analyze
             Method: POST
 
+  # Sign in with Apple -> app session token. Verifies the Apple identity token
+  # against Apple's public JWKS and mints an HS256 session token (signed with the
+  # SSM session key) that the app sends on every /sync call.
+  AuthFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/
+      Handler: auth.handler
+      Environment:
+        Variables:
+          APPLE_CLIENT_ID: !Ref AppleClientId
+          SESSION_KEY_PARAM: !Ref SessionKeyParam
+          SESSION_TTL_DAYS: !Ref SessionTtlDays
+      Policies:
+        - Statement:
+            - Sid: ReadSessionKey
+              Effect: Allow
+              Action: ssm:GetParameter
+              Resource:
+                - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter${SessionKeyParam}
+            - Sid: DecryptSecureStrings
+              Effect: Allow
+              Action: kms:Decrypt
+              Resource: "*"
+              Condition:
+                StringEquals:
+                  kms:ViaService: !Sub ssm.${AWS::Region}.amazonaws.com
+      Events:
+        AppleSignIn:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref VisionApi
+            Path: /auth/apple
+            Method: POST
+
+  # Per-user data: one item per record. PK = userId, SK = recordType#id
+  # (food#<id>, weight#<id>, or the singleton "profile").
+  SyncTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: userId
+          AttributeType: S
+        - AttributeName: sk
+          AttributeType: S
+      KeySchema:
+        - AttributeName: userId
+          KeyType: HASH
+        - AttributeName: sk
+          KeyType: RANGE
+
+  # Authenticated bidirectional delta sync (food / weight / profile). Verifies
+  # the app session token (HS256, no JWKS) then reads/writes the user's items.
+  SyncFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/
+      Handler: sync.handler
+      Environment:
+        Variables:
+          SYNC_TABLE: !Ref SyncTable
+          SESSION_KEY_PARAM: !Ref SessionKeyParam
+      Policies:
+        - Statement:
+            - Sid: ReadWriteUserData
+              Effect: Allow
+              Action:
+                - dynamodb:GetItem
+                - dynamodb:PutItem
+                - dynamodb:Query
+              Resource:
+                - !GetAtt SyncTable.Arn
+            - Sid: ReadSessionKey
+              Effect: Allow
+              Action: ssm:GetParameter
+              Resource:
+                - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter${SessionKeyParam}
+            - Sid: DecryptSecureStrings
+              Effect: Allow
+              Action: kms:Decrypt
+              Resource: "*"
+              Condition:
+                StringEquals:
+                  kms:ViaService: !Sub ssm.${AWS::Region}.amazonaws.com
+      Events:
+        Sync:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref VisionApi
+            Path: /sync
+            Method: POST
+
 Outputs:
   ProxyBaseUrl:
     Description: >
@@ -97,3 +205,9 @@ Outputs:
   AnalyzeUrl:
     Description: Full analyze endpoint (for curl / sanity checks).
     Value: !Sub https://${VisionApi}.execute-api.${AWS::Region}.amazonaws.com/analyze
+  AppleSignInUrl:
+    Description: Sign in with Apple endpoint (POST the Apple identityToken here).
+    Value: !Sub https://${VisionApi}.execute-api.${AWS::Region}.amazonaws.com/auth/apple
+  SyncUrl:
+    Description: Authenticated delta-sync endpoint (Authorization Bearer session token).
+    Value: !Sub https://${VisionApi}.execute-api.${AWS::Region}.amazonaws.com/sync

@@ -1,3 +1,8 @@
-# No third-party dependencies: the handler uses only the standard library
-# (urllib, json, hmac, base64) plus boto3, which is already present in the
-# Lambda Python runtime. Listed here so `sam build` has a requirements file.
+# No third-party dependencies. All three handlers use only the standard library
+# (urllib, json, hmac, hashlib, base64) plus boto3, which is already present in
+# the Lambda Python runtime. JWT signing/verification (including Apple's RS256
+# identity tokens) is done in src/jwtlite.py with stdlib only — so `sam build`
+# needs no native wheels / Docker and the deploy package stays tiny.
+#
+# Test-only deps (PyJWT, cryptography, pytest) live in tests/requirements-dev.txt
+# and are never bundled into the Lambda.
