@@ -37,6 +37,10 @@ aws ssm put-parameter --name /food-at-peace/anthropic-api-key \
 
 aws ssm put-parameter --name /food-at-peace/app-token \
   --type SecureString --value "$(openssl rand -hex 24)"
+
+# Session-token signing key (for Sign in with Apple — see "Accounts & sync").
+aws ssm put-parameter --name /food-at-peace/session-signing-key \
+  --type SecureString --value "$(openssl rand -hex 32)"
 ```
 
 To rotate either later, re-run with `--overwrite`. The Lambda picks up the new value on
@@ -99,9 +103,32 @@ This makes a *real* Anthropic call, so it needs the SSM secrets and AWS credenti
 > capacity below AWS's minimum and fail the deploy). Add one once your account limit is
 > raised, if you want a hard per-function cap.
 
-> The app token is a stopgap: it ships in the app (like the old key did) but is
-> revocable and scoped, and the guardrails bound the damage. When real user login
-> (Sign in with Apple / Google) lands, swap it for per-user auth.
+> The app token gates the **photo proxy** — it ships in the app (like the old key did)
+> but is revocable + scoped, and the guardrails bound the damage. **Per-user auth now
+> exists for sync** via Sign in with Apple (see "Accounts & sync"); Google is a planned
+> fast-follow.
+
+## Accounts & sync (Sign in with Apple)
+
+Two routes share this stack so a signed-in user's data follows them across devices:
+
+- `POST /auth/apple` — the app sends the Apple **identity token** (+ a nonce).
+  `AuthFunction` verifies it against Apple's public keys (JWKS, RS256; audience = the
+  app **bundle id**, set via the `AppleClientId` parameter), then mints an HS256
+  **session token** signed with `/food-at-peace/session-signing-key`. No Apple private
+  key is needed for the native iOS flow.
+- `POST /sync` — `Authorization: Bearer <sessionToken>`. Bidirectional delta sync of
+  food / weight / profile into `SyncTable` (PK `userId`, SK `recordType#id`),
+  last-write-wins by `updatedAt`, tombstone-aware for deletions.
+
+Deploy needs the signing key (step 1 above) and your bundle id:
+
+```bash
+sam deploy --parameter-overrides AppleClientId=com.yourcompany.foodatpeace
+```
+
+> **`sam build` now installs dependencies.** `src/requirements.txt` lists `PyJWT[crypto]`
+> for token verification, so the build bundles it — it's no longer a no-op.
 
 ## Notes
 
@@ -109,5 +136,5 @@ This makes a *real* Anthropic call, so it needs the SSM secrets and AWS credenti
   — swap models without an app update.
 - **CORS** is configured on the HTTP API (`content-type`, `x-app-token`; `POST`/`OPTIONS`),
   so the Flutter **web** build (`flutter run -d chrome`) can call the proxy too.
-- Adding **DynamoDB** daily-sync later: add the table + a second function/route to
-  [template.yaml](template.yaml); it shares this stack.
+- **DynamoDB sync is implemented** — `SyncTable` + the `/sync` route share this stack
+  (see "Accounts & sync" above).
