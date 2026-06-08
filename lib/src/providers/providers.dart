@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../data/api_key_store.dart';
 import '../data/claude_vision_client.dart';
+import '../data/food_photo_analyzer.dart';
 import '../data/food_repository.dart';
 import '../data/health_service.dart';
 import '../data/profile_repository.dart';
@@ -126,29 +127,27 @@ final apiKeyStoreProvider = Provider<ApiKeyStore>((ref) => ApiKeyStore());
 final claudeVisionClientProvider =
     Provider<ClaudeVisionClient>((ref) => ClaudeVisionClient());
 
-/// A key baked in at build time via --dart-define=ANTHROPIC_API_KEY=… (empty
-/// when not provided). Lets the app analyze photos without anyone pasting a key
-/// in Settings; a key saved in Settings still takes precedence.
-const String bakedInApiKey = String.fromEnvironment('ANTHROPIC_API_KEY');
+/// The AWS vision proxy, baked in at build time via
+/// --dart-define=PROXY_BASE_URL=… and --dart-define=PROXY_APP_TOKEN=… (empty
+/// when not provided). The proxy holds the Anthropic key server-side, so the
+/// app ships no Claude secret on the default path — a URL plus a revocable
+/// token are not the key.
+const String proxyBaseUrl = String.fromEnvironment('PROXY_BASE_URL');
+const String proxyAppToken = String.fromEnvironment('PROXY_APP_TOKEN');
 
-/// The Anthropic API key (null/empty = not set). Prefers a user-saved key from
-/// secure storage, then falls back to the built-in [bakedInApiKey].
+/// The user's own Anthropic API key (null/empty = not set), loaded from secure
+/// storage. Optional: when set, photo analysis calls Anthropic directly with
+/// it; otherwise the app uses the proxy.
 class ApiKeyNotifier extends Notifier<String?> {
   @override
   String? build() {
     _load();
-    return bakedInApiKey.isNotEmpty ? bakedInApiKey : null;
+    return null;
   }
 
   Future<void> _load() async {
     final stored = await ref.read(apiKeyStoreProvider).read();
-    if (stored != null && stored.trim().isNotEmpty) {
-      state = stored.trim();
-    } else if (bakedInApiKey.isNotEmpty) {
-      state = bakedInApiKey;
-    } else {
-      state = null;
-    }
+    state = (stored != null && stored.trim().isNotEmpty) ? stored.trim() : null;
   }
 
   Future<void> save(String key) async {
@@ -159,7 +158,7 @@ class ApiKeyNotifier extends Notifier<String?> {
 
   Future<void> clear() async {
     await ref.read(apiKeyStoreProvider).delete();
-    state = bakedInApiKey.isNotEmpty ? bakedInApiKey : null;
+    state = null;
   }
 }
 
@@ -168,9 +167,19 @@ final apiKeyProvider =
 
 bool hasApiKey(String? key) => key != null && key.trim().isNotEmpty;
 
-/// True when the active key is the built-in one (no user key saved).
-bool isBuiltInApiKey(String? key) =>
-    bakedInApiKey.isNotEmpty && key == bakedInApiKey;
+/// Picks how to analyze a food photo: the user's own key → Anthropic directly;
+/// otherwise the AWS proxy. Null when neither is configured (no user key and no
+/// proxy URL baked in), so the UI can explain that scanning is unavailable.
+final foodPhotoAnalyzerProvider = Provider<FoodPhotoAnalyzer?>((ref) {
+  final userKey = ref.watch(apiKeyProvider);
+  if (hasApiKey(userKey)) {
+    return DirectAnalyzer(ref.watch(claudeVisionClientProvider), userKey!);
+  }
+  if (proxyBaseUrl.isNotEmpty) {
+    return ProxyAnalyzer(baseUrl: proxyBaseUrl, appToken: proxyAppToken);
+  }
+  return null;
+});
 
 // ---- Phase 2: HealthKit calories-out ----
 

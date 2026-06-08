@@ -1,0 +1,14 @@
+version = 0.1
+
+# Deploy defaults so `sam deploy` is one command after the first `--guided` run.
+# Region defaults to Singapore (closest to the app's SGD pricing / users); change
+# it here if you deploy elsewhere.
+[default.deploy.parameters]
+stack_name = "food-at-peace-vision-proxy"
+region = "ap-southeast-1"
+capabilities = "CAPABILITY_IAM"
+resolve_s3 = true
+confirm_changeset = true
+
+[default.build.parameters]
+cached = true

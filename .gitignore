@@ -33,7 +33,7 @@ migrate_working_dir/
 /build/
 /coverage/
 
-# Local secrets — Anthropic key baked in at build via --dart-define-from-file
+# Local build config — proxy URL + app token, injected via --dart-define-from-file
 dart_defines.json
 
 # Symbolication related
@@ -46,3 +46,13 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Backend (AWS SAM / Python) build + test artifacts
+backend/.aws-sam/
+backend/build.toml
+**/__pycache__/
+.pytest_cache/
+
+# Claude Code local settings / runtime artifacts
+.claude/settings.local.json
+.claude/*.lock

@@ -52,29 +52,31 @@ This is what creates your signing certificates (the Mac currently has none).
    - SKU: any unique string, e.g. `foodatpeace-001`
    - Full access
 
-## Step 3 — Build the signed release IPA (with the baked-in Anthropic key)
+## Step 3 — Build the signed release IPA
 
-The "hybrid" key is injected at build time via `--dart-define`; it is **not** in
-the repo. Run this with your real key (or let me run it if you paste the key):
+Photo analysis runs through the AWS proxy (see [`backend/`](backend/README.md)), so
+**no Anthropic key is baked into the build** — only the proxy URL + app token, injected
+at build time via `--dart-define` and **not** in the repo. Deploy the proxy first
+(`backend/README.md`), fill in `dart_defines.json`, then:
 
 ```bash
 export DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer LANG=en_US.UTF-8
 flutter build ipa --release \
-  --dart-define=ANTHROPIC_API_KEY=sk-ant-YOUR-REAL-KEY \
+  --dart-define-from-file=dart_defines.json \
   --export-options-plist=ios/ExportOptions.plist
 ```
 
+- `dart_defines.json` holds `PROXY_BASE_URL` + `PROXY_APP_TOKEN` (git-ignored).
 - Output: `build/ios/ipa/food_at_peace.ipa`
-- ⚠️ A baked key is extractable from the binary and bills your Anthropic account
-  for every user's scans. Use a key with a spend cap, and rotate it later if you
-  switch to bring-your-own-key.
+- The app ships no Claude key. The app token is revocable (rotate it in SSM) and the
+  proxy rate-limits + caps concurrency, so a leaked token has a bounded blast radius.
 - If signing fails on this first run, do the archive once via Xcode GUI instead
   (**Step 3-alt**) — it creates the distribution certificate interactively.
 
 ### Step 3-alt — Archive via Xcode GUI (fallback if CLI signing fails)  **(you)**
 
-> ⚠️ To keep the baked key, first run the CLI build once (it stores the dart-define
-> in `ios/Flutter/Generated.xcconfig`), then archive in Xcode:
+> ⚠️ First run the CLI build once (it stores the `--dart-define` values in
+> `ios/Flutter/Generated.xcconfig`), then archive in Xcode:
 
 1. `open ios/Runner.xcworkspace`
 2. Top device selector → **Any iOS Device (arm64)**
@@ -131,8 +133,9 @@ Your repo is on GitHub (`PETERDMYAN/food-at-peace`). Easiest:
 ## Step 6 — Submit for review  **(you)**
 
 Click **Add for Review → Submit**. First reviews typically take 1–3 days. If the
-reviewer flags the Anthropic key or HealthKit, the review notes already explain
-both; reply in Resolution Center if they need more.
+reviewer flags photo analysis (meal photos are sent to Anthropic via our proxy) or
+HealthKit, the review notes already explain both; reply in Resolution Center if they
+need more.
 
 ---
 

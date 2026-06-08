@@ -80,8 +80,8 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
 
   Future<void> _scanPhoto() async {
     final t = AppLocalizations.of(context);
-    final key = ref.read(apiKeyProvider);
-    if (!hasApiKey(key)) {
+    final analyzer = ref.read(foodPhotoAnalyzerProvider);
+    if (analyzer == null) {
       _showKeyNeededDialog();
       return;
     }
@@ -105,8 +105,7 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
     setState(() => _analyzing = true);
     try {
       final bytes = await file.readAsBytes();
-      final analysis = await ref.read(claudeVisionClientProvider).analyze(
-            apiKey: key!,
+      final analysis = await analyzer.analyze(
             imageBytes: bytes,
             mediaType: _mediaTypeFor(file),
           );

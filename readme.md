@@ -7,9 +7,10 @@ for real calories burned, and speaks **English and 中文**. Built with Flutter.
 
 > **Status:** Phases 1–3 + health expansion + "Phase A" polish are complete in
 > code (manual logging, targets engine, Claude photo analysis, Apple Health/Garmin,
-> purple theme, EN/中文, weight log, feedback). On-device deploy of the health
-> features requires a paid Apple Developer account (see [iOS notes](#ios-notes)).
-> Next up: AWS backend, Apple/Google login, and subscriptions.
+> purple theme, EN/中文, weight log, feedback) and the app now runs on-device on
+> iPhone (paid Apple Developer membership active).
+> The Claude key now lives behind an AWS Lambda proxy (no secret ships in the app).
+> Next up: per-user data sync (DynamoDB), Apple/Google login, and subscriptions.
 
 ## What it does today
 - **Today dashboard** — calories left for the day (progress ring) plus protein and
@@ -31,22 +32,31 @@ for real calories burned, and speaks **English and 中文**. Built with Flutter.
 - **Feedback** — an in-app form that submits to a Google Form.
 
 ## How the targets work
-- **Calories:** resting metabolic rate via Mifflin-St Jeor. When Apple Health is
-  connected, daily burn = measured resting energy (or BMR if a device didn't report
-  it) + measured active energy; otherwise BMR × activity multiplier. Daily target =
-  burn + goal adjustment (lose -500, maintain 0, gain +400). Calories left =
-  target - eaten.
+- **Calorie budget:** a full day's resting energy (Mifflin-St Jeor BMR) + the
+  active energy you've burned (measured via Apple Health, or 0 when it isn't
+  connected) + the goal adjustment (lose -500, maintain 0, gain +400). When Health
+  isn't connected the resting + active part is replaced by BMR × activity
+  multiplier. Calories left = budget - eaten. The budget stays stable through the
+  day so you can plan meals against it.
+- **Burn** (shown beneath the budget) is your *actual* expenditure so far today —
+  measured resting + active energy from Apple Health — so it climbs as the day goes
+  on, independent of the budget.
 - **Protein:** 1.6 g per kg of bodyweight.
 - **Saturated fat:** capped at 10% of the calorie target (US Dietary Guidelines).
 
 ## Photo analysis (Claude)
-`ClaudeVisionClient` calls the Anthropic Messages API, forcing a `log_food` tool for
+Photos are analyzed via Anthropic's Messages API, forcing a `log_food` tool for
 structured output (name / calories / protein / saturated fat / portion / confidence).
-The API key is read in this order:
-1. a key entered in **Settings** (stored in the iOS Keychain), else
-2. a build-time key baked in via `--dart-define` from a git-ignored `dart_defines.json`.
+The Claude key lives **server-side** in an AWS Lambda proxy (see
+[`backend/`](backend/README.md)) — the app ships no key. Which path runs depends on
+Settings:
+1. if the user pastes their **own** key in **Settings** (stored in the iOS Keychain),
+   the app calls Anthropic directly with it (`ClaudeVisionClient` via `DirectAnalyzer`);
+2. otherwise the app calls the proxy (`ProxyAnalyzer`), sending only the photo + a
+   build-time app token (`--dart-define=PROXY_BASE_URL` / `PROXY_APP_TOKEN`).
 
-> Planned: move the key server-side behind an AWS proxy so it never ships in the app.
+The proxy is defined with AWS SAM (Python); deploy + secret setup are in
+[`backend/README.md`](backend/README.md).
 
 ## Localization
 Uses Flutter `gen-l10n`. Strings live in `lib/l10n/app_en.arb` and `app_zh.arb`; run
@@ -64,13 +74,13 @@ the system locale by default and persists a manual choice.
 - [x] English / 中文 localization (follows the system language, with a manual toggle)
 - [x] Manual weight log
 - [x] In-app feedback → Google Form
+- [x] Deploy to iPhone (paid Apple Developer membership active)
+- [x] AWS Lambda vision proxy holds the Claude key server-side (SAM + Python, in
+  `backend/`); the app ships no key
 
 **TODO:**
-- [ ] **Deploy to iPhone** — blocked until the paid Apple Developer membership
-  activates (HealthKit can't be signed on a free Personal Team)
-- [ ] Bake the production Anthropic key into the build (`dart_defines.json`)
-- [ ] **AWS backend** — a Lambda vision proxy that holds the Claude key + DynamoDB
-  for daily tracking data
+- [ ] **Per-user data sync** — DynamoDB for daily tracking data, added to the existing
+  AWS backend (needs login first). The vision-proxy half is done — see `backend/`.
 - [ ] **Login** — Sign in with Apple + Google Sign-In, with per-user sync
 - [ ] **Subscriptions** — SGD 1.99/month (auto-renew) + SGD 3.99 / 100-day
   (non-renewing) via StoreKit IAP, with server-side receipt validation
@@ -91,11 +101,13 @@ flutter gen-l10n          # generate the localization classes
 # Browser (UI + manual logging; no HealthKit / camera):
 flutter run -d chrome
 
-# iOS device (bakes in the Claude key for photo analysis):
-cp dart_defines.example.json dart_defines.json   # then add your ANTHROPIC_API_KEY
+# iOS device (uses the AWS proxy for photo analysis):
+cp dart_defines.example.json dart_defines.json   # then add PROXY_BASE_URL + PROXY_APP_TOKEN
 flutter run -d ios --dart-define-from-file=dart_defines.json
 ```
-`dart_defines.json` is git-ignored, so your key never gets committed.
+`dart_defines.json` is git-ignored. Deploy the proxy first ([`backend/`](backend/README.md)),
+or skip it and paste your own Anthropic key in the app's **Settings** to analyze photos
+via the direct path.
 
 ### Tests & checks
 ```bash
@@ -121,10 +133,12 @@ lib/
                             WorkoutSummary, WeightEntry, MealType, FoodAnalysis
     nutrition/              NutritionMath (BMR, TDEE, targets)
     data/                   Food/Profile/Weight repositories, ApiKeyStore,
-                            ClaudeVisionClient, HealthService (+io/stub), FeedbackService
+                            ClaudeVisionClient + FoodPhotoAnalyzer (proxy/direct),
+                            HealthService (+io/stub), FeedbackService
     providers/              Riverpod providers
     features/               today / add / history / settings / feedback screens
     theme/ util/            theme, formatting, localized enum labels
 test/                       unit + widget tests
 ios/                        Runner + Runner.entitlements (HealthKit)
+backend/                    AWS SAM vision proxy (Lambda, Python) — holds the Claude key
 ```
