@@ -5,15 +5,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../data/api_key_store.dart';
+import '../data/auth_client.dart';
 import '../data/claude_vision_client.dart';
 import '../data/food_photo_analyzer.dart';
 import '../data/food_repository.dart';
 import '../data/health_service.dart';
 import '../data/profile_repository.dart';
+import '../data/session_store.dart';
 import '../data/weight_repository.dart';
 import '../models/daily_summary.dart';
 import '../models/energy_out.dart';
 import '../models/food_entry.dart';
+import '../models/session.dart';
 import '../models/user_profile.dart';
 import '../models/weight_entry.dart';
 import '../models/workout_summary.dart';
@@ -180,6 +183,50 @@ final foodPhotoAnalyzerProvider = Provider<FoodPhotoAnalyzer?>((ref) {
   }
   return null;
 });
+
+// ---- Accounts: Sign in with Apple ----
+
+final sessionStoreProvider = Provider<SessionStore>((ref) => SessionStore());
+
+final authClientProvider =
+    Provider<AuthClient>((ref) => AuthClient(baseUrl: proxyBaseUrl));
+
+/// The current signed-in [Session] (null = signed out). Loads from secure
+/// storage on build; [signIn] runs the native Apple flow + backend exchange.
+class AuthNotifier extends Notifier<Session?> {
+  @override
+  Session? build() {
+    _load();
+    return null;
+  }
+
+  Future<void> _load() async {
+    final store = ref.read(sessionStoreProvider);
+    final session = await store.read();
+    if (session == null) return;
+    if (session.isExpired) {
+      await store.delete(); // drop an expired token
+    } else {
+      state = session;
+    }
+  }
+
+  /// Native Sign in with Apple → backend exchange → persist. Throws
+  /// [SignInCancelled] or [AuthException]; the UI handles both.
+  Future<void> signIn() async {
+    final session = await ref.read(authClientProvider).signInWithApple();
+    await ref.read(sessionStoreProvider).write(session);
+    state = session;
+  }
+
+  Future<void> signOut() async {
+    await ref.read(sessionStoreProvider).delete();
+    state = null;
+  }
+}
+
+final authProvider =
+    NotifierProvider<AuthNotifier, Session?>(AuthNotifier.new);
 
 // ---- Phase 2: HealthKit calories-out ----
 

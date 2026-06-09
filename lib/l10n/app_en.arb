@@ -155,6 +155,16 @@
   "saveKey": "Save key",
   "apiKeySavedToast": "API key saved",
   "apiKeyRemoved": "API key removed",
+  "account": "Account",
+  "signInPrompt": "Sign in to sync your data across devices. Optional — the app works without it.",
+  "signedInAs": "Signed in as {value}",
+  "@signedInAs": {
+    "placeholders": {
+      "value": { "type": "String" }
+    }
+  },
+  "signOut": "Sign out",
+  "signInFailed": "Sign-in failed. Please try again.",
   "healthGarminTitle": "Apple Health & Garmin",
   "healthNotAvailable": "Not available on this platform.",
   "healthConnectedBody": "Connected. Your budget uses real calories burned (active + resting), your weight auto-syncs from your scale, and logged food is written back to Apple Health. Garmin data flows in via Apple Health.",

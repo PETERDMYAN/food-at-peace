@@ -273,6 +273,23 @@ class AppLocalizationsZh extends AppLocalizations {
   String get apiKeyRemoved => 'API 密钥已移除';
 
   @override
+  String get account => '账户';
+
+  @override
+  String get signInPrompt => '登录后可在多设备间同步数据。可选 — 不登录也能使用。';
+
+  @override
+  String signedInAs(String value) {
+    return '已登录：$value';
+  }
+
+  @override
+  String get signOut => '退出登录';
+
+  @override
+  String get signInFailed => '登录失败，请重试。';
+
+  @override
   String get healthGarminTitle => 'Apple 健康与 Garmin';
 
   @override

@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:food_at_peace/l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
+import '../../data/auth_client.dart';
+import '../../models/daily_summary.dart';
 import '../../models/user_profile.dart';
-import '../../nutrition/nutrition_math.dart';
 import '../../providers/providers.dart';
 import '../../util/format.dart';
 import '../../util/l10n_labels.dart';
@@ -44,30 +46,42 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   void _save() {
     final t = AppLocalizations.of(context);
-    ref.read(profileProvider.notifier).save(_draft.copyWith(isConfigured: true));
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(t.profileSaved)),
-    );
+    ref
+        .read(profileProvider.notifier)
+        .save(_draft.copyWith(isConfigured: true));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(t.profileSaved)));
   }
 
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
-    final bmr = NutritionMath.mifflinStJeorBmr(_draft);
-    final tdee = NutritionMath.estimatedTdee(_draft);
-    final calTarget =
-        NutritionMath.calorieTarget(expenditure: tdee, goal: _draft.goal);
-    final protein = NutritionMath.proteinTargetG(_draft);
-    final satCap = NutritionMath.satFatCapG(calorieTarget: calTarget);
+    // Compute the target exactly like the Today budget so the preview matches it
+    // (full-day BMR + measured active when Health is connected, else estimated).
+    final summary = DailySummary.compute(
+      date: dateOnly(DateTime.now()),
+      entries: const [],
+      profile: _draft,
+      energyOut: ref.watch(energyOutProvider).asData?.value,
+    );
+    final adj = _draft.goal.calorieAdjustment;
+    final adjStr = adj > 0 ? '+${kcal(adj)}' : kcal(adj);
+    final breakdown = summary.usingHealthData
+        ? t.budgetBreakdown(
+            kcal(summary.bmr),
+            kcal(summary.activeEnergy),
+            adjStr,
+          )
+        : t.budgetBreakdownEst(kcal(summary.expenditure), adjStr);
 
     return Scaffold(
       appBar: AppBar(
         title: Text(t.navSettings),
-        actions: [
-          TextButton(onPressed: _save, child: Text(t.save)),
-        ],
+        actions: [TextButton(onPressed: _save, child: Text(t.save))],
       ),
       body: ListView(
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
         children: [
           Text(t.profile, style: Theme.of(context).textTheme.titleMedium),
@@ -89,9 +103,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 child: TextField(
                   controller: _age,
                   keyboardType: TextInputType.number,
+                  onTapOutside: (_) => FocusScope.of(context).unfocus(),
                   decoration: InputDecoration(labelText: t.age),
                   onChanged: (v) => setState(
-                      () => _draft = _draft.copyWith(age: int.tryParse(v))),
+                    () => _draft = _draft.copyWith(age: int.tryParse(v)),
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -99,38 +115,30 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 child: TextField(
                   controller: _height,
                   keyboardType: TextInputType.number,
+                  onTapOutside: (_) => FocusScope.of(context).unfocus(),
                   decoration: InputDecoration(labelText: t.heightCm),
-                  onChanged: (v) => setState(() =>
-                      _draft = _draft.copyWith(heightCm: double.tryParse(v))),
+                  onChanged: (v) => setState(
+                    () =>
+                        _draft = _draft.copyWith(heightCm: double.tryParse(v)),
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
               Expanded(
                 child: TextField(
                   controller: _weight,
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
+                  onTapOutside: (_) => FocusScope.of(context).unfocus(),
                   decoration: InputDecoration(labelText: t.weightKg),
-                  onChanged: (v) => setState(() =>
-                      _draft = _draft.copyWith(weightKg: double.tryParse(v))),
+                  onChanged: (v) => setState(
+                    () =>
+                        _draft = _draft.copyWith(weightKg: double.tryParse(v)),
+                  ),
                 ),
               ),
             ],
-          ),
-          const SizedBox(height: 16),
-          _label(context, t.activityLevel),
-          Wrap(
-            spacing: 8,
-            children: ActivityLevel.values
-                .map(
-                  (a) => ChoiceChip(
-                    label: Text(a.labelOf(t)),
-                    selected: _draft.activity == a,
-                    onSelected: (_) => setState(
-                        () => _draft = _draft.copyWith(activity: a)),
-                  ),
-                )
-                .toList(),
           ),
           const SizedBox(height: 16),
           _label(context, t.goal),
@@ -150,14 +158,29 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(t.yourTargets,
-                      style: Theme.of(context).textTheme.titleSmall),
+                  Text(
+                    t.yourTargets,
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
                   const SizedBox(height: 8),
-                  _statRow(t.restingBurn, t.kcalValue(kcal(bmr))),
-                  _statRow(t.estDailyBurn, t.kcalValue(kcal(tdee))),
-                  _statRow(t.dailyCalorieTarget, t.kcalValue(kcal(calTarget))),
-                  _statRow(t.proteinTargetLabel, t.gramsValue(kcal(protein))),
-                  _statRow(t.satFatCap, t.gramsValue(kcal(satCap))),
+                  _statRow(
+                    t.dailyCalorieTarget,
+                    t.kcalValue(kcal(summary.calorieTarget)),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2, bottom: 6),
+                    child: Text(
+                      breakdown,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                  _statRow(
+                    t.proteinTargetLabel,
+                    t.gramsValue(kcal(summary.proteinTarget)),
+                  ),
+                  _statRow(t.satFatCap, t.gramsValue(kcal(summary.satFatCap))),
                 ],
               ),
             ),
@@ -169,6 +192,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             label: Text(t.saveProfile),
           ),
           const SizedBox(height: 24),
+          const _AccountCard(),
+          const SizedBox(height: 12),
           const _WeightCard(),
           const SizedBox(height: 12),
           const _ApiKeyCard(),
@@ -184,17 +209,17 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 
   Widget _label(BuildContext context, String text) => Padding(
-        padding: const EdgeInsets.only(bottom: 8),
-        child: Text(text, style: Theme.of(context).textTheme.labelLarge),
-      );
+    padding: const EdgeInsets.only(bottom: 8),
+    child: Text(text, style: Theme.of(context).textTheme.labelLarge),
+  );
 
   Widget _statRow(String label, String value) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: 4),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [Text(label), Text(value)],
-        ),
-      );
+    padding: const EdgeInsets.symmetric(vertical: 4),
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [Text(label), Text(value)],
+    ),
+  );
 }
 
 String _fmtKg(double kg) => kg.toStringAsFixed(1);
@@ -216,12 +241,16 @@ class _WeightCard extends ConsumerWidget {
           controller: controller,
           autofocus: true,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          decoration:
-              InputDecoration(labelText: t.weightKg, hintText: t.enterWeight),
+          decoration: InputDecoration(
+            labelText: t.weightKg,
+            hintText: t.enterWeight,
+          ),
         ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx), child: Text(t.cancel)),
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(t.cancel),
+          ),
           FilledButton(
             onPressed: () =>
                 Navigator.pop(ctx, double.tryParse(controller.text.trim())),
@@ -233,8 +262,9 @@ class _WeightCard extends ConsumerWidget {
     if (result == null || result <= 0) return;
     await ref.read(weightEntriesProvider.notifier).add(result);
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(t.weightSaved)));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(t.weightSaved)));
   }
 
   @override
@@ -243,8 +273,9 @@ class _WeightCard extends ConsumerWidget {
     final scheme = Theme.of(context).colorScheme;
     final entries = ref.watch(weightEntriesProvider);
     final localeName = Localizations.localeOf(context).toLanguageTag();
-    final latest =
-        entries.isNotEmpty ? entries.first.kg : ref.watch(profileProvider).weightKg;
+    final latest = entries.isNotEmpty
+        ? entries.first.kg
+        : ref.watch(profileProvider).weightKg;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -255,11 +286,15 @@ class _WeightCard extends ConsumerWidget {
               children: [
                 Icon(Icons.monitor_weight_outlined, color: scheme.primary),
                 const SizedBox(width: 8),
-                Text(t.weightTitle,
-                    style: Theme.of(context).textTheme.titleSmall),
+                Text(
+                  t.weightTitle,
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
                 const Spacer(),
-                Text(t.weightKgValue(_fmtKg(latest)),
-                    style: Theme.of(context).textTheme.titleSmall),
+                Text(
+                  t.weightKgValue(_fmtKg(latest)),
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
               ],
             ),
             for (final e in entries.take(5))
@@ -268,10 +303,14 @@ class _WeightCard extends ConsumerWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(DateFormat.yMMMd(localeName).format(e.timestamp),
-                        style: Theme.of(context).textTheme.bodySmall),
-                    Text(t.weightKgValue(_fmtKg(e.kg)),
-                        style: Theme.of(context).textTheme.bodySmall),
+                    Text(
+                      DateFormat.yMMMd(localeName).format(e.timestamp),
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    Text(
+                      t.weightKgValue(_fmtKg(e.kg)),
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
                   ],
                 ),
               ),
@@ -314,8 +353,7 @@ class _LanguageCard extends ConsumerWidget {
               children: [
                 Icon(Icons.language, color: scheme.primary),
                 const SizedBox(width: 8),
-                Text(t.language,
-                    style: Theme.of(context).textTheme.titleSmall),
+                Text(t.language, style: Theme.of(context).textTheme.titleSmall),
               ],
             ),
             for (final opt in [
@@ -354,9 +392,9 @@ class _FeedbackTile extends StatelessWidget {
         leading: Icon(Icons.feedback_outlined, color: scheme.primary),
         title: Text(t.feedback),
         trailing: const Icon(Icons.chevron_right),
-        onTap: () => Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const FeedbackScreen()),
-        ),
+        onTap: () => Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => const FeedbackScreen())),
       ),
     );
   }
@@ -387,16 +425,18 @@ class _ApiKeyCardState extends ConsumerState<_ApiKeyCard> {
     await ref.read(apiKeyProvider.notifier).save(value);
     _controller.clear();
     if (!mounted) return;
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(t.apiKeySavedToast)));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(t.apiKeySavedToast)));
   }
 
   Future<void> _clear() async {
     final t = AppLocalizations.of(context);
     await ref.read(apiKeyProvider.notifier).clear();
     if (!mounted) return;
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(t.apiKeyRemoved)));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(t.apiKeyRemoved)));
   }
 
   @override
@@ -416,8 +456,10 @@ class _ApiKeyCardState extends ConsumerState<_ApiKeyCard> {
                 Icon(Icons.camera_alt_outlined, color: scheme.primary),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Text(t.foodPhotoAnalysis,
-                      style: Theme.of(context).textTheme.titleSmall),
+                  child: Text(
+                    t.foodPhotoAnalysis,
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
                 ),
                 if (hasKey)
                   Icon(Icons.check_circle, color: scheme.primary, size: 20),
@@ -438,7 +480,8 @@ class _ApiKeyCardState extends ConsumerState<_ApiKeyCard> {
                 labelText: hasKey ? t.replaceApiKey : t.apiKeyLabel,
                 suffixIcon: IconButton(
                   icon: Icon(
-                      _obscure ? Icons.visibility : Icons.visibility_off),
+                    _obscure ? Icons.visibility : Icons.visibility_off,
+                  ),
                   onPressed: () => setState(() => _obscure = !_obscure),
                 ),
               ),
@@ -452,6 +495,110 @@ class _ApiKeyCardState extends ConsumerState<_ApiKeyCard> {
                   TextButton(onPressed: _clear, child: Text(t.remove)),
               ],
             ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Sign in with Apple to enable cloud sync (optional — the app works
+/// signed-out). Shows the signed-in account + Sign out when authenticated.
+class _AccountCard extends ConsumerStatefulWidget {
+  const _AccountCard();
+
+  @override
+  ConsumerState<_AccountCard> createState() => _AccountCardState();
+}
+
+class _AccountCardState extends ConsumerState<_AccountCard> {
+  bool _busy = false;
+
+  Future<void> _signIn() async {
+    setState(() => _busy = true);
+    try {
+      await ref.read(authProvider.notifier).signIn();
+    } on SignInCancelled {
+      // user dismissed the Apple sheet — no-op
+    } on AuthException catch (e) {
+      _toast(e.message);
+    } catch (_) {
+      if (mounted) _toast(AppLocalizations.of(context).signInFailed);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  Future<void> _signOut() => ref.read(authProvider.notifier).signOut();
+
+  void _toast(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    final session = ref.watch(authProvider);
+    final scheme = Theme.of(context).colorScheme;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.cloud_outlined, color: scheme.primary),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    t.account,
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                ),
+                if (session != null)
+                  Icon(Icons.check_circle, color: scheme.primary, size: 20),
+              ],
+            ),
+            const SizedBox(height: 8),
+            if (session != null) ...[
+              Text(
+                t.signedInAs(session.email ?? session.userId),
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              const SizedBox(height: 4),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: TextButton(onPressed: _signOut, child: Text(t.signOut)),
+              ),
+            ] else ...[
+              Text(
+                t.signInPrompt,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+              const SizedBox(height: 12),
+              if (_busy)
+                const Center(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(vertical: 8),
+                    child: SizedBox(
+                      height: 24,
+                      width: 24,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  ),
+                )
+              else
+                SignInWithAppleButton(
+                  onPressed: _signIn,
+                  style: Theme.of(context).brightness == Brightness.dark
+                      ? SignInWithAppleButtonStyle.white
+                      : SignInWithAppleButtonStyle.black,
+                ),
+            ],
           ],
         ),
       ),
@@ -481,8 +628,10 @@ class _HealthCard extends ConsumerWidget {
                 Icon(Icons.favorite_outline, color: scheme.primary),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Text(t.healthGarminTitle,
-                      style: Theme.of(context).textTheme.titleSmall),
+                  child: Text(
+                    t.healthGarminTitle,
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
                 ),
                 if (connected)
                   Icon(Icons.check_circle, color: scheme.primary, size: 20),
@@ -493,8 +642,8 @@ class _HealthCard extends ConsumerWidget {
               !supported
                   ? t.healthNotAvailable
                   : connected
-                      ? t.healthConnectedBody
-                      : t.healthConnectBody,
+                  ? t.healthConnectedBody
+                  : t.healthConnectBody,
               style: Theme.of(context).textTheme.bodySmall,
             ),
             if (supported && !connected) ...[
@@ -508,7 +657,8 @@ class _HealthCard extends ConsumerWidget {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(
-                          ok ? t.appleHealthConnected : t.healthNotGranted),
+                        ok ? t.appleHealthConnected : t.healthNotGranted,
+                      ),
                     ),
                   );
                 },
