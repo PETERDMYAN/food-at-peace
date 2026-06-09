@@ -5,12 +5,12 @@ or by **snapping a photo** — see how much you can still eat today, and keep an
 on your protein and saturated-fat quotas. Connects to **Apple Health / Garmin**
 for real calories burned, and speaks **English and 中文**. Built with Flutter.
 
-> **Status:** Phases 1–3 + health expansion + "Phase A" polish are complete in
-> code (manual logging, targets engine, Claude photo analysis, Apple Health/Garmin,
-> purple theme, EN/中文, weight log, feedback) and the app now runs on-device on
-> iPhone (paid Apple Developer membership active).
-> The Claude key now lives behind an AWS Lambda proxy (no secret ships in the app).
-> Next up: per-user data sync (DynamoDB), Apple/Google login, and subscriptions.
+> **Status:** Runs on-device on iPhone (paid Apple Developer membership active) with a
+> redesigned high-contrast UI. Complete: manual + photo logging, the targets engine,
+> Apple Health/Garmin, EN/中文, weight log, feedback, a Trends screen, and **accounts +
+> cloud sync** — Sign in with Apple → an AWS Lambda + DynamoDB backend (the Claude key
+> stays server-side; no secret ships in the app).
+> Next up: Google sign-in, subscriptions, and targets polish.
 
 ## What it does today
 - **Today dashboard** — calories left for the day (progress ring) plus protein and
@@ -70,7 +70,7 @@ the system locale by default and persists a manual choice.
 - [x] Apple Health "calories out" — active + resting energy
 - [x] Claude photo analysis
 - [x] Health expansion — read weight + workouts, write food + weight back
-- [x] GXS-style purple theme
+- [x] High-contrast GXS-violet redesign — dark + light, modern type, floating cards
 - [x] English / 中文 localization (follows the system language, with a manual toggle)
 - [x] Manual weight log
 - [x] In-app feedback → Google Form
@@ -82,13 +82,16 @@ the system locale by default and persists a manual choice.
 - [x] Accounts + sync **app side** — Sign in with Apple UI + auth state, and
   bidirectional sync of food / weight / profile (last-write-wins, tombstone deletes);
   triggers on sign-in / resume / edit / manual. Verified pushing to DynamoDB on device.
+- [x] Trends screen (charts)
 
 **TODO:**
+- [ ] **Targets polish** — show the calorie target as a goal *gap* (±) with edit-all,
+  auto-fill age / height / weight from Apple Health, and drop the manual weight log
 - [ ] **Google Sign-In** — fast-follow: `/auth/google` mirroring `/auth/apple`
 - [ ] **Subscriptions** — SGD 1.99/month (auto-renew) + SGD 3.99 / 100-day
   (non-renewing) via StoreKit IAP, with server-side receipt validation
 - [ ] Confirm the exact GXS purple shade
-- [ ] Later: trends / charts, home-screen widget, reminders, barcode scan, Android
+- [ ] Later: home-screen widget, reminders, barcode scan, Android
 
 ## Tech stack
 - **Flutter / Dart**, iOS first (iPhone), then Android and web.
