@@ -17,9 +17,11 @@ class _FakeApiKeyNotifier extends ApiKeyNotifier {
 void main() {
   group('foodPhotoAnalyzerProvider', () {
     test('uses a DirectAnalyzer when the user has their own key', () {
-      final container = ProviderContainer(overrides: [
-        apiKeyProvider.overrideWith(() => _FakeApiKeyNotifier('sk-ant-user')),
-      ]);
+      final container = ProviderContainer(
+        overrides: [
+          apiKeyProvider.overrideWith(() => _FakeApiKeyNotifier('sk-ant-user')),
+        ],
+      );
       addTearDown(container.dispose);
 
       expect(container.read(foodPhotoAnalyzerProvider), isA<DirectAnalyzer>());
@@ -29,9 +31,11 @@ void main() {
       // proxyBaseUrl is a compile-time const, empty in the test build, so the
       // proxy branch isn't reachable here — ProxyAnalyzer is covered directly in
       // proxy_analyzer_test.dart.
-      final container = ProviderContainer(overrides: [
-        apiKeyProvider.overrideWith(() => _FakeApiKeyNotifier(null)),
-      ]);
+      final container = ProviderContainer(
+        overrides: [
+          apiKeyProvider.overrideWith(() => _FakeApiKeyNotifier(null)),
+        ],
+      );
       addTearDown(container.dispose);
 
       expect(container.read(foodPhotoAnalyzerProvider), isNull);

@@ -49,8 +49,7 @@ void main() {
     expect(summary.calorieTarget, closeTo(1498.75, 0.01));
   });
 
-  test('budget uses full-day BMR even when a device reports partial resting',
-      () {
+  test('budget uses full-day BMR even when a device reports partial resting', () {
     final summary = DailySummary.compute(
       date: DateTime(2026, 1, 1),
       entries: const [],

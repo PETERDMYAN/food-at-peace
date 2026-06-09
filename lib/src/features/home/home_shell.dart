@@ -17,11 +17,7 @@ class HomeShell extends StatefulWidget {
 class _HomeShellState extends State<HomeShell> {
   int _index = 0;
 
-  static const _screens = [
-    TodayScreen(),
-    HistoryScreen(),
-    SettingsScreen(),
-  ];
+  static const _screens = [TodayScreen(), HistoryScreen(), SettingsScreen()];
 
   @override
   Widget build(BuildContext context) {
@@ -31,9 +27,9 @@ class _HomeShellState extends State<HomeShell> {
       floatingActionButton: _index == 2
           ? null
           : FloatingActionButton.extended(
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const AddEntryScreen()),
-              ),
+              onPressed: () => Navigator.of(
+                context,
+              ).push(MaterialPageRoute(builder: (_) => const AddEntryScreen())),
               icon: const Icon(Icons.add),
               label: Text(t.addFood),
             ),

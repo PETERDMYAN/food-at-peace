@@ -57,7 +57,7 @@ void main() {
       final mock = MockClient(
         (req) async => http.Response(
           jsonEncode({
-            'error': {'message': 'That image is too large. Try another photo.'}
+            'error': {'message': 'That image is too large. Try another photo.'},
           }),
           413,
         ),
@@ -73,29 +73,39 @@ void main() {
           imageBytes: Uint8List.fromList([1]),
           mediaType: 'image/jpeg',
         ),
-        throwsA(isA<ClaudeApiException>()
-            .having((e) => e.statusCode, 'statusCode', 413)
-            .having((e) => e.message, 'message', contains('too large'))),
-      );
-    });
-
-    test('falls back to a generic message when the body has no error', () async {
-      final mock = MockClient((req) async => http.Response('not json', 500));
-      final analyzer = ProxyAnalyzer(
-        baseUrl: 'https://x.test',
-        appToken: 't',
-        httpClient: mock,
-      );
-
-      await expectLater(
-        analyzer.analyze(
-          imageBytes: Uint8List.fromList([1]),
-          mediaType: 'image/jpeg',
+        throwsA(
+          isA<ClaudeApiException>()
+              .having((e) => e.statusCode, 'statusCode', 413)
+              .having((e) => e.message, 'message', contains('too large')),
         ),
-        throwsA(isA<ClaudeApiException>()
-            .having((e) => e.message, 'message', 'Analysis failed. Please try again.')),
       );
     });
+
+    test(
+      'falls back to a generic message when the body has no error',
+      () async {
+        final mock = MockClient((req) async => http.Response('not json', 500));
+        final analyzer = ProxyAnalyzer(
+          baseUrl: 'https://x.test',
+          appToken: 't',
+          httpClient: mock,
+        );
+
+        await expectLater(
+          analyzer.analyze(
+            imageBytes: Uint8List.fromList([1]),
+            mediaType: 'image/jpeg',
+          ),
+          throwsA(
+            isA<ClaudeApiException>().having(
+              (e) => e.message,
+              'message',
+              'Analysis failed. Please try again.',
+            ),
+          ),
+        );
+      },
+    );
 
     test('maps a network failure to a friendly error', () async {
       final mock = MockClient((req) async => throw Exception('boom'));

@@ -23,31 +23,35 @@ void main() {
 
     test('female is 166 kcal lower than male for same body', () {
       final female = male.copyWith(sex: Sex.female);
-      final diff = NutritionMath.mifflinStJeorBmr(male) -
+      final diff =
+          NutritionMath.mifflinStJeorBmr(male) -
           NutritionMath.mifflinStJeorBmr(female);
       expect(diff, closeTo(166, 0.01)); // +5 vs -161
     });
   });
 
   test('TDEE applies the activity multiplier', () {
-    expect(
-      NutritionMath.estimatedTdee(male),
-      closeTo(1698.75 * 1.55, 0.01),
-    );
+    expect(NutritionMath.estimatedTdee(male), closeTo(1698.75 * 1.55, 0.01));
   });
 
   group('calorie target by goal', () {
     test('maintain == expenditure', () {
-      expect(NutritionMath.calorieTarget(expenditure: 2000, goal: Goal.maintain),
-          2000);
+      expect(
+        NutritionMath.calorieTarget(expenditure: 2000, goal: Goal.maintain),
+        2000,
+      );
     });
     test('lose subtracts 500', () {
-      expect(NutritionMath.calorieTarget(expenditure: 2000, goal: Goal.lose),
-          1500);
+      expect(
+        NutritionMath.calorieTarget(expenditure: 2000, goal: Goal.lose),
+        1500,
+      );
     });
     test('gain adds 400', () {
-      expect(NutritionMath.calorieTarget(expenditure: 2000, goal: Goal.gain),
-          2400);
+      expect(
+        NutritionMath.calorieTarget(expenditure: 2000, goal: Goal.gain),
+        2400,
+      );
     });
   });
 
@@ -61,14 +65,14 @@ void main() {
 
   group('DailySummary.compute', () {
     FoodEntry entry(double cal, double pro, double sat) => FoodEntry(
-          id: '$cal-$pro-$sat',
-          name: 'x',
-          calories: cal,
-          proteinG: pro,
-          satFatG: sat,
-          mealType: MealType.lunch,
-          timestamp: DateTime(2026, 1, 1),
-        );
+      id: '$cal-$pro-$sat',
+      name: 'x',
+      calories: cal,
+      proteinG: pro,
+      satFatG: sat,
+      mealType: MealType.lunch,
+      timestamp: DateTime(2026, 1, 1),
+    );
 
     test('sums entries and computes remaining', () {
       final summary = DailySummary.compute(
@@ -80,8 +84,10 @@ void main() {
       expect(summary.consumedProtein, 40);
       expect(summary.consumedSatFat, 7);
       expect(summary.proteinRemaining, closeTo(80, 0.01)); // 120 - 40
-      expect(summary.caloriesRemaining,
-          closeTo(summary.calorieTarget - 800, 0.01));
+      expect(
+        summary.caloriesRemaining,
+        closeTo(summary.calorieTarget - 800, 0.01),
+      );
     });
 
     test('empty day has zero consumed and full quota remaining', () {

@@ -21,7 +21,7 @@ class WeightRepository {
   }
 
   Future<void> saveAll(List<WeightEntry> entries) => _prefs.setString(
-        _key,
-        jsonEncode(entries.map((e) => e.toJson()).toList()),
-      );
+    _key,
+    jsonEncode(entries.map((e) => e.toJson()).toList()),
+  );
 }

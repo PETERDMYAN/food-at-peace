@@ -57,7 +57,8 @@ class HealthKitService implements HealthService {
   ({DateTime start, DateTime end}) _window(DateTime day) {
     final start = DateTime(day.year, day.month, day.day);
     final now = DateTime.now();
-    final isToday = start.year == now.year &&
+    final isToday =
+        start.year == now.year &&
         start.month == now.month &&
         start.day == now.day;
     final end = isToday ? now : start.add(const Duration(days: 1));
@@ -152,12 +153,14 @@ class HealthKitService implements HealthService {
     for (final p in points) {
       final value = p.value;
       if (value is! WorkoutHealthValue) continue;
-      workouts.add(WorkoutSummary(
-        activityType: value.workoutActivityType.name,
-        duration: p.dateTo.difference(p.dateFrom),
-        energyBurned: value.totalEnergyBurned?.toDouble(),
-        source: p.sourceName,
-      ));
+      workouts.add(
+        WorkoutSummary(
+          activityType: value.workoutActivityType.name,
+          duration: p.dateTo.difference(p.dateFrom),
+          energyBurned: value.totalEnergyBurned?.toDouble(),
+          source: p.sourceName,
+        ),
+      );
     }
     workouts.sort((a, b) => b.duration.compareTo(a.duration));
     return workouts;

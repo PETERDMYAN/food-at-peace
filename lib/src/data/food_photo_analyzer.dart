@@ -56,8 +56,9 @@ class ProxyAnalyzer implements FoodPhotoAnalyzer {
   final http.Client _http;
 
   Uri get endpoint {
-    final base =
-        baseUrl.endsWith('/') ? baseUrl.substring(0, baseUrl.length - 1) : baseUrl;
+    final base = baseUrl.endsWith('/')
+        ? baseUrl.substring(0, baseUrl.length - 1)
+        : baseUrl;
     return Uri.parse('$base/analyze');
   }
 
@@ -70,10 +71,7 @@ class ProxyAnalyzer implements FoodPhotoAnalyzer {
     try {
       resp = await _http.post(
         endpoint,
-        headers: {
-          'content-type': 'application/json',
-          'x-app-token': appToken,
-        },
+        headers: {'content-type': 'application/json', 'x-app-token': appToken},
         body: jsonEncode({
           'image': base64Encode(imageBytes),
           'mediaType': mediaType,

@@ -69,7 +69,7 @@ void main() {
         () => parseFoodAnalysis({
           'stop_reason': 'end_turn',
           'content': [
-            {'type': 'text', 'text': 'I cannot tell.'}
+            {'type': 'text', 'text': 'I cannot tell.'},
           ],
         }),
         throwsA(isA<ClaudeApiException>()),
@@ -121,7 +121,7 @@ void main() {
       final mock = MockClient(
         (req) async => http.Response(
           jsonEncode({
-            'error': {'type': 'authentication_error', 'message': 'invalid key'}
+            'error': {'type': 'authentication_error', 'message': 'invalid key'},
           }),
           401,
         ),
@@ -133,8 +133,13 @@ void main() {
           imageBytes: Uint8List.fromList([1]),
           mediaType: 'image/jpeg',
         ),
-        throwsA(isA<ClaudeApiException>()
-            .having((e) => e.statusCode, 'statusCode', 401)),
+        throwsA(
+          isA<ClaudeApiException>().having(
+            (e) => e.statusCode,
+            'statusCode',
+            401,
+          ),
+        ),
       );
     });
   });
