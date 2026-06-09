@@ -79,12 +79,11 @@ the system locale by default and persists a manual choice.
   `backend/`); the app ships no key
 - [x] Accounts + sync **backend** — Sign in with Apple (`/auth/apple` → app session
   token) + DynamoDB delta sync (`/sync`), deployed to `ap-southeast-1`
+- [x] Accounts + sync **app side** — Sign in with Apple UI + auth state, and
+  bidirectional sync of food / weight / profile (last-write-wins, tombstone deletes);
+  triggers on sign-in / resume / edit / manual. Verified pushing to DynamoDB on device.
 
 **TODO:**
-- [ ] **Accounts + sync — app side** — wire the app to the deployed backend: Sign in
-  with Apple UI + auth state, then bidirectional sync of food / weight / profile
-  (last-write-wins, tombstone deletes). Backend is done; needs the *Sign in with
-  Apple* capability enabled on the App ID.
 - [ ] **Google Sign-In** — fast-follow: `/auth/google` mirroring `/auth/apple`
 - [ ] **Subscriptions** — SGD 1.99/month (auto-renew) + SGD 3.99 / 100-day
   (non-renewing) via StoreKit IAP, with server-side receipt validation
