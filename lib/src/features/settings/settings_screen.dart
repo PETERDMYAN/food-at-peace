@@ -45,14 +45,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     super.dispose();
   }
 
-  void _save() {
-    final t = AppLocalizations.of(context);
-    ref
-        .read(profileProvider.notifier)
-        .save(_draft.copyWith(isConfigured: true));
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(t.profileSaved)));
+  /// Auto-save: persist (and sync) the profile on every edit — there's no Save
+  /// button. `ProfileNotifier.save` bumps `updatedAt`, which the sync engine
+  /// picks up (debounced) and pushes to the backend.
+  void _apply(UserProfile next) {
+    setState(() => _draft = next);
+    ref.read(profileProvider.notifier).save(next.copyWith(isConfigured: true));
   }
 
   @override
@@ -77,10 +75,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         : t.budgetBreakdownEst(kcal(summary.expenditure), adjStr);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(t.navSettings),
-        actions: [TextButton(onPressed: _save, child: Text(t.save))],
-      ),
+      appBar: AppBar(title: Text(t.navSettings)),
       body: ListView(
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
@@ -94,8 +89,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 .toList(),
             selected: {_draft.sex},
             showSelectedIcon: false,
-            onSelectionChanged: (s) =>
-                setState(() => _draft = _draft.copyWith(sex: s.first)),
+            onSelectionChanged: (s) => _apply(_draft.copyWith(sex: s.first)),
           ),
           const SizedBox(height: 16),
           Row(
@@ -106,9 +100,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   keyboardType: TextInputType.number,
                   onTapOutside: (_) => FocusScope.of(context).unfocus(),
                   decoration: InputDecoration(labelText: t.age),
-                  onChanged: (v) => setState(
-                    () => _draft = _draft.copyWith(age: int.tryParse(v)),
-                  ),
+                  onChanged: (v) =>
+                      _apply(_draft.copyWith(age: int.tryParse(v))),
                 ),
               ),
               const SizedBox(width: 12),
@@ -118,10 +111,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   keyboardType: TextInputType.number,
                   onTapOutside: (_) => FocusScope.of(context).unfocus(),
                   decoration: InputDecoration(labelText: t.heightCm),
-                  onChanged: (v) => setState(
-                    () =>
-                        _draft = _draft.copyWith(heightCm: double.tryParse(v)),
-                  ),
+                  onChanged: (v) =>
+                      _apply(_draft.copyWith(heightCm: double.tryParse(v))),
                 ),
               ),
               const SizedBox(width: 12),
@@ -133,10 +124,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   ),
                   onTapOutside: (_) => FocusScope.of(context).unfocus(),
                   decoration: InputDecoration(labelText: t.weightKg),
-                  onChanged: (v) => setState(
-                    () =>
-                        _draft = _draft.copyWith(weightKg: double.tryParse(v)),
-                  ),
+                  onChanged: (v) =>
+                      _apply(_draft.copyWith(weightKg: double.tryParse(v))),
                 ),
               ),
             ],
@@ -149,8 +138,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 .toList(),
             selected: {_draft.goal},
             showSelectedIcon: false,
-            onSelectionChanged: (s) =>
-                setState(() => _draft = _draft.copyWith(goal: s.first)),
+            onSelectionChanged: (s) => _apply(_draft.copyWith(goal: s.first)),
           ),
           const SizedBox(height: 24),
           Card(
@@ -186,18 +174,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
             ),
           ),
-          const SizedBox(height: 16),
-          FilledButton.icon(
-            onPressed: _save,
-            icon: const Icon(Icons.check),
-            label: Text(t.saveProfile),
-          ),
           const SizedBox(height: 24),
           const _AccountCard(),
           const SizedBox(height: 12),
           const _WeightCard(),
-          const SizedBox(height: 12),
-          const _ApiKeyCard(),
           const SizedBox(height: 12),
           const _HealthCard(),
           const SizedBox(height: 12),
@@ -396,108 +376,6 @@ class _FeedbackTile extends StatelessWidget {
         onTap: () => Navigator.of(
           context,
         ).push(MaterialPageRoute(builder: (_) => const FeedbackScreen())),
-      ),
-    );
-  }
-}
-
-/// Lets the user paste / replace / remove their Anthropic API key.
-class _ApiKeyCard extends ConsumerStatefulWidget {
-  const _ApiKeyCard();
-
-  @override
-  ConsumerState<_ApiKeyCard> createState() => _ApiKeyCardState();
-}
-
-class _ApiKeyCardState extends ConsumerState<_ApiKeyCard> {
-  final _controller = TextEditingController();
-  bool _obscure = true;
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  Future<void> _save() async {
-    final t = AppLocalizations.of(context);
-    final value = _controller.text.trim();
-    if (value.isEmpty) return;
-    await ref.read(apiKeyProvider.notifier).save(value);
-    _controller.clear();
-    if (!mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(t.apiKeySavedToast)));
-  }
-
-  Future<void> _clear() async {
-    final t = AppLocalizations.of(context);
-    await ref.read(apiKeyProvider.notifier).clear();
-    if (!mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(t.apiKeyRemoved)));
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final t = AppLocalizations.of(context);
-    final key = ref.watch(apiKeyProvider);
-    final hasKey = hasApiKey(key);
-    final scheme = Theme.of(context).colorScheme;
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.camera_alt_outlined, color: scheme.primary),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    t.foodPhotoAnalysis,
-                    style: Theme.of(context).textTheme.titleSmall,
-                  ),
-                ),
-                if (hasKey)
-                  Icon(Icons.check_circle, color: scheme.primary, size: 20),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              hasKey ? t.apiKeySavedDevice : t.apiKeyPrompt,
-              style: Theme.of(context).textTheme.bodySmall,
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _controller,
-              obscureText: _obscure,
-              autocorrect: false,
-              enableSuggestions: false,
-              decoration: InputDecoration(
-                labelText: hasKey ? t.replaceApiKey : t.apiKeyLabel,
-                suffixIcon: IconButton(
-                  icon: Icon(
-                    _obscure ? Icons.visibility : Icons.visibility_off,
-                  ),
-                  onPressed: () => setState(() => _obscure = !_obscure),
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                FilledButton(onPressed: _save, child: Text(t.saveKey)),
-                const SizedBox(width: 8),
-                if (hasKey)
-                  TextButton(onPressed: _clear, child: Text(t.remove)),
-              ],
-            ),
-          ],
-        ),
       ),
     );
   }
