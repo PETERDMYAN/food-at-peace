@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import '../../data/auth_client.dart';
+import '../../data/sync_engine.dart';
 import '../../models/daily_summary.dart';
 import '../../models/user_profile.dart';
 import '../../providers/providers.dart';
@@ -271,7 +272,7 @@ class _WeightCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final t = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
-    final entries = ref.watch(weightEntriesProvider);
+    final entries = ref.watch(visibleWeightEntriesProvider);
     final localeName = Localizations.localeOf(context).toLanguageTag();
     final latest = entries.isNotEmpty
         ? entries.first.kg
@@ -531,6 +532,13 @@ class _AccountCardState extends ConsumerState<_AccountCard> {
 
   Future<void> _signOut() => ref.read(authProvider.notifier).signOut();
 
+  String _syncStatus(AppLocalizations t, SyncState sync) {
+    if (sync.phase == SyncPhase.syncing) return t.syncing;
+    if (sync.phase == SyncPhase.error) return sync.error ?? '';
+    final at = sync.lastSyncedAt;
+    return at == null ? '' : t.lastSynced(DateFormat.Hm().format(at));
+  }
+
   void _toast(String message) {
     if (!mounted) return;
     ScaffoldMessenger.of(
@@ -542,6 +550,7 @@ class _AccountCardState extends ConsumerState<_AccountCard> {
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
     final session = ref.watch(authProvider);
+    final sync = ref.watch(syncEngineProvider);
     final scheme = Theme.of(context).colorScheme;
     return Card(
       child: Padding(
@@ -570,6 +579,27 @@ class _AccountCardState extends ConsumerState<_AccountCard> {
                 style: Theme.of(context).textTheme.bodySmall,
               ),
               const SizedBox(height: 4),
+              Row(
+                children: [
+                  TextButton.icon(
+                    onPressed: sync.phase == SyncPhase.syncing
+                        ? null
+                        : () => ref.read(syncEngineProvider.notifier).syncNow(),
+                    icon: const Icon(Icons.sync, size: 18),
+                    label: Text(t.syncNow),
+                  ),
+                  const Spacer(),
+                  Flexible(
+                    child: Text(
+                      _syncStatus(t, sync),
+                      textAlign: TextAlign.end,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
               Align(
                 alignment: Alignment.centerLeft,
                 child: TextButton(onPressed: _signOut, child: Text(t.signOut)),

@@ -290,6 +290,17 @@ class AppLocalizationsZh extends AppLocalizations {
   String get signInFailed => '登录失败，请重试。';
 
   @override
+  String get syncNow => '立即同步';
+
+  @override
+  String get syncing => '同步中…';
+
+  @override
+  String lastSynced(String time) {
+    return '上次同步 $time';
+  }
+
+  @override
   String get healthGarminTitle => 'Apple 健康与 Garmin';
 
   @override

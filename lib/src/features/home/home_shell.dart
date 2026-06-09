@@ -1,23 +1,48 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:food_at_peace/l10n/app_localizations.dart';
 
+import '../../data/sync_engine.dart';
 import '../add/add_entry_screen.dart';
 import '../history/history_screen.dart';
 import '../settings/settings_screen.dart';
 import '../today/today_screen.dart';
 
 /// Root scaffold with the bottom navigation and the global "Add food" button.
-class HomeShell extends StatefulWidget {
+class HomeShell extends ConsumerStatefulWidget {
   const HomeShell({super.key});
 
   @override
-  State<HomeShell> createState() => _HomeShellState();
+  ConsumerState<HomeShell> createState() => _HomeShellState();
 }
 
-class _HomeShellState extends State<HomeShell> {
+class _HomeShellState extends ConsumerState<HomeShell>
+    with WidgetsBindingObserver {
   int _index = 0;
 
   static const _screens = [TodayScreen(), HistoryScreen(), SettingsScreen()];
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    // Instantiate the sync engine so its sign-in / edit listeners are active
+    // for the whole app session (it keeps itself alive).
+    ref.read(syncEngineProvider);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      ref.read(syncEngineProvider.notifier).syncNow();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {

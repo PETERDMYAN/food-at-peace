@@ -165,6 +165,14 @@
   },
   "signOut": "Sign out",
   "signInFailed": "Sign-in failed. Please try again.",
+  "syncNow": "Sync now",
+  "syncing": "Syncing…",
+  "lastSynced": "Last synced {time}",
+  "@lastSynced": {
+    "placeholders": {
+      "time": { "type": "String" }
+    }
+  },
   "healthGarminTitle": "Apple Health & Garmin",
   "healthNotAvailable": "Not available on this platform.",
   "healthConnectedBody": "Connected. Your budget uses real calories burned (active + resting), your weight auto-syncs from your scale, and logged food is written back to Apple Health. Garmin data flows in via Apple Health.",
