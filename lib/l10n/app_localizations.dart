@@ -104,6 +104,24 @@ abstract class AppLocalizations {
   /// **'Food at Peace'**
   String get appTitle;
 
+  /// No description provided for @greetMorning.
+  ///
+  /// In en, this message translates to:
+  /// **'Good morning, {name}'**
+  String greetMorning(String name);
+
+  /// No description provided for @greetAfternoon.
+  ///
+  /// In en, this message translates to:
+  /// **'Good afternoon, {name}'**
+  String greetAfternoon(String name);
+
+  /// No description provided for @greetEvening.
+  ///
+  /// In en, this message translates to:
+  /// **'Good evening, {name}'**
+  String greetEvening(String name);
+
   /// No description provided for @navToday.
   ///
   /// In en, this message translates to:

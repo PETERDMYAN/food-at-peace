@@ -1,6 +1,9 @@
 {
   "@@locale": "zh",
   "appTitle": "Food at Peace",
+  "greetMorning": "早上好，{name}",
+  "greetAfternoon": "下午好，{name}",
+  "greetEvening": "晚上好，{name}",
 
   "navToday": "今天",
   "navHistory": "历史",

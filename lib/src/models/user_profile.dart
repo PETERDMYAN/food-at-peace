@@ -72,6 +72,7 @@ class UserProfile {
     required this.activity,
     required this.goal,
     this.isConfigured = false,
+    this.name,
     this.updatedAt,
     this.calorieTargetOverride,
     this.proteinTargetOverride,
@@ -85,6 +86,10 @@ class UserProfile {
   final ActivityLevel activity;
   final Goal goal;
   final bool isConfigured;
+
+  /// The user's display name, captured from Sign in with Apple on first
+  /// sign-in (null until then). Synced with the profile.
+  final String? name;
 
   /// Optional manual target overrides (null = use the computed value). They
   /// drive the Today screen and sync with the profile.
@@ -121,6 +126,7 @@ class UserProfile {
     ActivityLevel? activity,
     Goal? goal,
     bool? isConfigured,
+    String? name,
     DateTime? updatedAt,
     Object? calorieTargetOverride = _keep,
     Object? proteinTargetOverride = _keep,
@@ -134,6 +140,7 @@ class UserProfile {
       activity: activity ?? this.activity,
       goal: goal ?? this.goal,
       isConfigured: isConfigured ?? this.isConfigured,
+      name: name ?? this.name,
       updatedAt: updatedAt ?? this.updatedAt,
       calorieTargetOverride: identical(calorieTargetOverride, _keep)
           ? this.calorieTargetOverride
@@ -155,6 +162,7 @@ class UserProfile {
         'activity': activity.name,
         'goal': goal.name,
         'isConfigured': isConfigured,
+        'name': name,
         'updatedAt': updatedAt?.toIso8601String(),
         'calorieTargetOverride': calorieTargetOverride,
         'proteinTargetOverride': proteinTargetOverride,
@@ -169,6 +177,7 @@ class UserProfile {
         activity: ActivityLevel.values.byName(json['activity'] as String),
         goal: Goal.values.byName(json['goal'] as String),
         isConfigured: (json['isConfigured'] as bool?) ?? true,
+        name: json['name'] as String?,
         updatedAt: json['updatedAt'] != null
             ? DateTime.parse(json['updatedAt'] as String)
             : null,

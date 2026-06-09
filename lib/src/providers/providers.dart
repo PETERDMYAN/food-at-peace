@@ -230,9 +230,20 @@ class AuthNotifier extends Notifier<Session?> {
   /// Native Sign in with Apple → backend exchange → persist. Throws
   /// [SignInCancelled] or [AuthException]; the UI handles both.
   Future<void> signIn() async {
-    final session = await ref.read(authClientProvider).signInWithApple();
+    final (session, name) =
+        await ref.read(authClientProvider).signInWithApple();
     await ref.read(sessionStoreProvider).write(session);
     state = session;
+    // Apple only shares the name on first sign-in — persist it on the profile
+    // (which syncs to the backend) so the greeting works on every device.
+    if (name != null && name.isNotEmpty) {
+      final profile = ref.read(profileProvider);
+      if (profile.name != name) {
+        await ref
+            .read(profileProvider.notifier)
+            .save(profile.copyWith(name: name));
+      }
+    }
   }
 
   Future<void> signOut() async {

@@ -10,6 +10,17 @@ import '../../providers/providers.dart';
 import '../../util/format.dart';
 import '../../util/l10n_labels.dart';
 
+/// "Good morning / afternoon / evening, {name}" by the local hour, or the app
+/// title when there's no name yet.
+String greetingTitle(AppLocalizations t, String? name) {
+  final n = name?.trim();
+  if (n == null || n.isEmpty) return t.appTitle;
+  final hour = DateTime.now().hour;
+  if (hour < 12) return t.greetMorning(n);
+  if (hour < 18) return t.greetAfternoon(n);
+  return t.greetEvening(n);
+}
+
 /// The dashboard: calories remaining, protein & saturated-fat quotas, and the
 /// day's logged food.
 class TodayScreen extends ConsumerWidget {
@@ -36,7 +47,7 @@ class TodayScreen extends ConsumerWidget {
     });
 
     return Scaffold(
-      appBar: AppBar(title: Text(t.appTitle)),
+      appBar: AppBar(title: Text(greetingTitle(t, profile.name))),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
         children: [
