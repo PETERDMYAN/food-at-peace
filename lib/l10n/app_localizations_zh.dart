@@ -30,7 +30,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get navToday => '今天';
 
   @override
-  String get navHistory => '历史';
+  String get navTrends => '趋势';
 
   @override
   String get navSettings => '设置';
@@ -98,6 +98,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get saturatedFat => '饱和脂肪';
 
   @override
+  String get calories => '卡路里';
+
+  @override
+  String get chartActual => '实际';
+
+  @override
+  String get chartTarget => '目标';
+
+  @override
   String get targetReached => '已达目标';
 
   @override
@@ -137,7 +146,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get workouts => '锻炼';
 
   @override
-  String get noHistory => '暂无历史记录。';
+  String get noTrendsYet => '暂无数据。\n记录一些食物即可查看趋势。';
 
   @override
   String kcalValue(String value) {

@@ -128,11 +128,11 @@ abstract class AppLocalizations {
   /// **'Today'**
   String get navToday;
 
-  /// No description provided for @navHistory.
+  /// No description provided for @navTrends.
   ///
   /// In en, this message translates to:
-  /// **'History'**
-  String get navHistory;
+  /// **'Trends'**
+  String get navTrends;
 
   /// No description provided for @navSettings.
   ///
@@ -236,6 +236,24 @@ abstract class AppLocalizations {
   /// **'Saturated fat'**
   String get saturatedFat;
 
+  /// No description provided for @calories.
+  ///
+  /// In en, this message translates to:
+  /// **'Calories'**
+  String get calories;
+
+  /// No description provided for @chartActual.
+  ///
+  /// In en, this message translates to:
+  /// **'Actual'**
+  String get chartActual;
+
+  /// No description provided for @chartTarget.
+  ///
+  /// In en, this message translates to:
+  /// **'Target'**
+  String get chartTarget;
+
   /// No description provided for @targetReached.
   ///
   /// In en, this message translates to:
@@ -302,11 +320,11 @@ abstract class AppLocalizations {
   /// **'Workouts'**
   String get workouts;
 
-  /// No description provided for @noHistory.
+  /// No description provided for @noTrendsYet.
   ///
   /// In en, this message translates to:
-  /// **'No history yet.'**
-  String get noHistory;
+  /// **'No data yet.\nLog some food to see your trends.'**
+  String get noTrendsYet;
 
   /// No description provided for @kcalValue.
   ///

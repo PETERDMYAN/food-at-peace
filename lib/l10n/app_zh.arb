@@ -6,7 +6,7 @@
   "greetEvening": "晚上好，{name}",
 
   "navToday": "今天",
-  "navHistory": "历史",
+  "navTrends": "趋势",
   "navSettings": "设置",
   "addFood": "添加食物",
   "save": "保存",
@@ -25,6 +25,9 @@
   "budgetBreakdownEst": "预计消耗 {burn} · 目标 {adjustment}",
   "protein": "蛋白质",
   "saturatedFat": "饱和脂肪",
+  "calories": "卡路里",
+  "chartActual": "实际",
+  "chartTarget": "目标",
   "targetReached": "已达目标",
   "toGo": "还差 {amount}",
   "overBy": "超出 {amount}",
@@ -37,7 +40,7 @@
   "profilePrompt": "在设置中完善个人资料，以获得准确的目标。",
   "workouts": "锻炼",
 
-  "noHistory": "暂无历史记录。",
+  "noTrendsYet": "暂无数据。\n记录一些食物即可查看趋势。",
   "kcalValue": "{value} 千卡",
   "gramsValue": "{value} 克",
 

@@ -4,11 +4,11 @@ import 'package:food_at_peace/l10n/app_localizations.dart';
 
 import '../../data/sync_engine.dart';
 import '../add/add_entry_screen.dart';
-import '../history/history_screen.dart';
 import '../settings/settings_screen.dart';
 import '../today/today_screen.dart';
+import '../trends/trends_screen.dart';
 
-/// Root scaffold with the bottom navigation and the global "Add food" button.
+/// Root scaffold with the bottom navigation and the Today "Add food" button.
 class HomeShell extends ConsumerStatefulWidget {
   const HomeShell({super.key});
 
@@ -20,7 +20,7 @@ class _HomeShellState extends ConsumerState<HomeShell>
     with WidgetsBindingObserver {
   int _index = 0;
 
-  static const _screens = [TodayScreen(), HistoryScreen(), SettingsScreen()];
+  static const _screens = [TodayScreen(), TrendsScreen(), SettingsScreen()];
 
   @override
   void initState() {
@@ -49,15 +49,16 @@ class _HomeShellState extends ConsumerState<HomeShell>
     final t = AppLocalizations.of(context);
     return Scaffold(
       body: IndexedStack(index: _index, children: _screens),
-      floatingActionButton: _index == 2
-          ? null
-          : FloatingActionButton.extended(
+      // Logging food only makes sense from Today; Trends and Settings hide it.
+      floatingActionButton: _index == 0
+          ? FloatingActionButton.extended(
               onPressed: () => Navigator.of(
                 context,
               ).push(MaterialPageRoute(builder: (_) => const AddEntryScreen())),
               icon: const Icon(Icons.add),
               label: Text(t.addFood),
-            ),
+            )
+          : null,
       bottomNavigationBar: NavigationBar(
         selectedIndex: _index,
         onDestinationSelected: (i) => setState(() => _index = i),
@@ -68,9 +69,9 @@ class _HomeShellState extends ConsumerState<HomeShell>
             label: t.navToday,
           ),
           NavigationDestination(
-            icon: const Icon(Icons.history_outlined),
-            selectedIcon: const Icon(Icons.history),
-            label: t.navHistory,
+            icon: const Icon(Icons.insights_outlined),
+            selectedIcon: const Icon(Icons.insights),
+            label: t.navTrends,
           ),
           NavigationDestination(
             icon: const Icon(Icons.settings_outlined),
