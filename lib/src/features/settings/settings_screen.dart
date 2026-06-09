@@ -86,6 +86,10 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       profile: _draft,
       energyOut: ref.watch(energyOutProvider).asData?.value,
     );
+    // The calorie field edits an absolute target but stores a *goal gap*
+    // (target − burn), so it tracks future burn changes like the goal does.
+    final budgetBase =
+        summary.computedCalorieTarget - _draft.goal.calorieAdjustment;
     return Scaffold(
       appBar: AppBar(title: Text(t.navSettings)),
       body: ListView(
@@ -172,9 +176,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       labelText: t.dailyCalorieTarget,
                       suffixText: 'kcal',
                     ),
-                    onChanged: (v) => _apply(
-                      _draft.copyWith(calorieTargetOverride: _parseTarget(v)),
-                    ),
+                    onChanged: (v) {
+                      final abs = _parseTarget(v);
+                      _apply(
+                        _draft.copyWith(
+                          calorieGoalOverride:
+                              abs == null ? null : abs - budgetBase,
+                        ),
+                      );
+                    },
                   ),
                   Padding(
                     padding: const EdgeInsets.only(top: 4, bottom: 4),

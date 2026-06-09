@@ -74,7 +74,7 @@ class UserProfile {
     this.isConfigured = false,
     this.name,
     this.updatedAt,
-    this.calorieTargetOverride,
+    this.calorieGoalOverride,
     this.proteinTargetOverride,
     this.satFatTargetOverride,
   });
@@ -93,7 +93,7 @@ class UserProfile {
 
   /// Optional manual target overrides (null = use the computed value). They
   /// drive the Today screen and sync with the profile.
-  final double? calorieTargetOverride;
+  final double? calorieGoalOverride;
   final double? proteinTargetOverride;
   final double? satFatTargetOverride;
 
@@ -128,7 +128,7 @@ class UserProfile {
     bool? isConfigured,
     String? name,
     DateTime? updatedAt,
-    Object? calorieTargetOverride = _keep,
+    Object? calorieGoalOverride = _keep,
     Object? proteinTargetOverride = _keep,
     Object? satFatTargetOverride = _keep,
   }) {
@@ -142,9 +142,9 @@ class UserProfile {
       isConfigured: isConfigured ?? this.isConfigured,
       name: name ?? this.name,
       updatedAt: updatedAt ?? this.updatedAt,
-      calorieTargetOverride: identical(calorieTargetOverride, _keep)
-          ? this.calorieTargetOverride
-          : (calorieTargetOverride as num?)?.toDouble(),
+      calorieGoalOverride: identical(calorieGoalOverride, _keep)
+          ? this.calorieGoalOverride
+          : (calorieGoalOverride as num?)?.toDouble(),
       proteinTargetOverride: identical(proteinTargetOverride, _keep)
           ? this.proteinTargetOverride
           : (proteinTargetOverride as num?)?.toDouble(),
@@ -164,7 +164,7 @@ class UserProfile {
         'isConfigured': isConfigured,
         'name': name,
         'updatedAt': updatedAt?.toIso8601String(),
-        'calorieTargetOverride': calorieTargetOverride,
+        'calorieGoalOverride': calorieGoalOverride,
         'proteinTargetOverride': proteinTargetOverride,
         'satFatTargetOverride': satFatTargetOverride,
       };
@@ -181,8 +181,8 @@ class UserProfile {
         updatedAt: json['updatedAt'] != null
             ? DateTime.parse(json['updatedAt'] as String)
             : null,
-        calorieTargetOverride:
-            (json['calorieTargetOverride'] as num?)?.toDouble(),
+        calorieGoalOverride:
+            (json['calorieGoalOverride'] as num?)?.toDouble(),
         proteinTargetOverride:
             (json['proteinTargetOverride'] as num?)?.toDouble(),
         satFatTargetOverride: (json['satFatTargetOverride'] as num?)?.toDouble(),

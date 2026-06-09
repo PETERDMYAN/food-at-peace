@@ -15,7 +15,7 @@
   },
 
   "navToday": "Today",
-  "navHistory": "History",
+  "navTrends": "Trends",
   "navSettings": "Settings",
   "addFood": "Add food",
   "save": "Save",
@@ -75,6 +75,9 @@
   },
   "protein": "Protein",
   "saturatedFat": "Saturated fat",
+  "calories": "Calories",
+  "chartActual": "Actual",
+  "chartTarget": "Target",
   "targetReached": "Target reached",
   "toGo": "{amount} to go",
   "@toGo": {
@@ -102,7 +105,7 @@
   "profilePrompt": "Set up your profile in Settings for accurate targets.",
   "workouts": "Workouts",
 
-  "noHistory": "No history yet.",
+  "noTrendsYet": "No data yet.\nLog some food to see your trends.",
   "kcalValue": "{value} kcal",
   "@kcalValue": {
     "placeholders": {

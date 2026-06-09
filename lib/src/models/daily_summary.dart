@@ -129,7 +129,7 @@ class DailySummary {
       usingHealthData: usingHealth,
       // Effective targets respect a manual override; the computed values stay
       // available (computedCalorieTarget) for the Settings reference text.
-      calorieTarget: profile.calorieTargetOverride ?? computedCal,
+      calorieTarget: profile.calorieGoalOverride ?? computedCal,
       computedCalorieTarget: computedCal,
       proteinTarget: profile.proteinTargetOverride ?? computedProtein,
       satFatCap: profile.satFatTargetOverride ?? computedSatFat,

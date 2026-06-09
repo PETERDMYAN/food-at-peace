@@ -54,7 +54,7 @@ void main() {
       date: DateTime(2026, 1, 1),
       entries: const [],
       profile: male.copyWith(
-        calorieTargetOverride: 2000,
+        calorieGoalOverride: 2000,
         proteinTargetOverride: 150,
         satFatTargetOverride: 25,
       ),

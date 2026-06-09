@@ -30,7 +30,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navToday => 'Today';
 
   @override
-  String get navHistory => 'History';
+  String get navTrends => 'Trends';
 
   @override
   String get navSettings => 'Settings';
@@ -98,6 +98,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get saturatedFat => 'Saturated fat';
 
   @override
+  String get calories => 'Calories';
+
+  @override
+  String get chartActual => 'Actual';
+
+  @override
+  String get chartTarget => 'Target';
+
+  @override
   String get targetReached => 'Target reached';
 
   @override
@@ -138,7 +147,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get workouts => 'Workouts';
 
   @override
-  String get noHistory => 'No history yet.';
+  String get noTrendsYet => 'No data yet.\nLog some food to see your trends.';
 
   @override
   String kcalValue(String value) {
