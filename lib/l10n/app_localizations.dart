@@ -500,6 +500,12 @@ abstract class AppLocalizations {
   /// **'Daily calorie target'**
   String get dailyCalorieTarget;
 
+  /// No description provided for @estBurnDailyTarget.
+  ///
+  /// In en, this message translates to:
+  /// **'Est. burn {burn} · Daily target {target}'**
+  String estBurnDailyTarget(String burn, String target);
+
   /// No description provided for @proteinTargetLabel.
   ///
   /// In en, this message translates to:

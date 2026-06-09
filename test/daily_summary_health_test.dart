@@ -49,6 +49,25 @@ void main() {
     expect(summary.calorieTarget, closeTo(1498.75, 0.01));
   });
 
+  test('manual target overrides win; computed target stays for reference', () {
+    final summary = DailySummary.compute(
+      date: DateTime(2026, 1, 1),
+      entries: const [],
+      profile: male.copyWith(
+        calorieTargetOverride: 2000,
+        proteinTargetOverride: 150,
+        satFatTargetOverride: 25,
+      ),
+    );
+    // Effective targets use the overrides...
+    expect(summary.calorieTarget, 2000);
+    expect(summary.proteinTarget, 150);
+    expect(summary.satFatCap, 25);
+    expect(summary.caloriesRemaining, 2000); // nothing eaten
+    // ...while the auto-computed target stays available for the reference text.
+    expect(summary.computedCalorieTarget, closeTo(1698.75 * 1.55, 0.01));
+  });
+
   test('budget uses full-day BMR even when a device reports partial resting', () {
     final summary = DailySummary.compute(
       date: DateTime(2026, 1, 1),

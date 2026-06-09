@@ -73,6 +73,9 @@ class UserProfile {
     required this.goal,
     this.isConfigured = false,
     this.updatedAt,
+    this.calorieTargetOverride,
+    this.proteinTargetOverride,
+    this.satFatTargetOverride,
   });
 
   final Sex sex;
@@ -82,6 +85,12 @@ class UserProfile {
   final ActivityLevel activity;
   final Goal goal;
   final bool isConfigured;
+
+  /// Optional manual target overrides (null = use the computed value). They
+  /// drive the Today screen and sync with the profile.
+  final double? calorieTargetOverride;
+  final double? proteinTargetOverride;
+  final double? satFatTargetOverride;
 
   /// Sync metadata: when the profile was last saved (null until first save).
   final DateTime? updatedAt;
@@ -99,6 +108,11 @@ class UserProfile {
     isConfigured: false,
   );
 
+  /// Sentinel so [copyWith] can tell "leave as-is" from "set to null" for the
+  /// nullable target overrides (e.g. clearing a field reverts to the computed
+  /// value).
+  static const Object _keep = Object();
+
   UserProfile copyWith({
     Sex? sex,
     int? age,
@@ -108,6 +122,9 @@ class UserProfile {
     Goal? goal,
     bool? isConfigured,
     DateTime? updatedAt,
+    Object? calorieTargetOverride = _keep,
+    Object? proteinTargetOverride = _keep,
+    Object? satFatTargetOverride = _keep,
   }) {
     return UserProfile(
       sex: sex ?? this.sex,
@@ -118,6 +135,15 @@ class UserProfile {
       goal: goal ?? this.goal,
       isConfigured: isConfigured ?? this.isConfigured,
       updatedAt: updatedAt ?? this.updatedAt,
+      calorieTargetOverride: identical(calorieTargetOverride, _keep)
+          ? this.calorieTargetOverride
+          : (calorieTargetOverride as num?)?.toDouble(),
+      proteinTargetOverride: identical(proteinTargetOverride, _keep)
+          ? this.proteinTargetOverride
+          : (proteinTargetOverride as num?)?.toDouble(),
+      satFatTargetOverride: identical(satFatTargetOverride, _keep)
+          ? this.satFatTargetOverride
+          : (satFatTargetOverride as num?)?.toDouble(),
     );
   }
 
@@ -130,6 +156,9 @@ class UserProfile {
         'goal': goal.name,
         'isConfigured': isConfigured,
         'updatedAt': updatedAt?.toIso8601String(),
+        'calorieTargetOverride': calorieTargetOverride,
+        'proteinTargetOverride': proteinTargetOverride,
+        'satFatTargetOverride': satFatTargetOverride,
       };
 
   factory UserProfile.fromJson(Map<String, dynamic> json) => UserProfile(
@@ -143,5 +172,10 @@ class UserProfile {
         updatedAt: json['updatedAt'] != null
             ? DateTime.parse(json['updatedAt'] as String)
             : null,
+        calorieTargetOverride:
+            (json['calorieTargetOverride'] as num?)?.toDouble(),
+        proteinTargetOverride:
+            (json['proteinTargetOverride'] as num?)?.toDouble(),
+        satFatTargetOverride: (json['satFatTargetOverride'] as num?)?.toDouble(),
       );
 }
