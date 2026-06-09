@@ -16,6 +16,7 @@ class DailySummary {
     required this.activeEnergy,
     required this.usingHealthData,
     required this.calorieTarget,
+    required this.computedCalorieTarget,
     required this.proteinTarget,
     required this.satFatCap,
   });
@@ -41,6 +42,11 @@ class DailySummary {
   final bool usingHealthData;
 
   final double calorieTarget;
+
+  /// The auto-computed calorie target (budget burn + goal adjustment), ignoring
+  /// any manual override — shown as reference in Settings.
+  final double computedCalorieTarget;
+
   final double proteinTarget;
   final double satFatCap;
 
@@ -106,10 +112,12 @@ class DailySummary {
       usingHealth = false;
     }
 
-    final calTarget = NutritionMath.calorieTarget(
+    final computedCal = NutritionMath.calorieTarget(
       expenditure: budgetBase,
       goal: profile.goal,
     );
+    final computedProtein = NutritionMath.proteinTargetG(profile);
+    final computedSatFat = NutritionMath.satFatCapG(calorieTarget: computedCal);
     return DailySummary(
       date: date,
       consumedCalories: cal,
@@ -119,9 +127,12 @@ class DailySummary {
       expenditure: expenditure,
       activeEnergy: active,
       usingHealthData: usingHealth,
-      calorieTarget: calTarget,
-      proteinTarget: NutritionMath.proteinTargetG(profile),
-      satFatCap: NutritionMath.satFatCapG(calorieTarget: calTarget),
+      // Effective targets respect a manual override; the computed values stay
+      // available (computedCalorieTarget) for the Settings reference text.
+      calorieTarget: profile.calorieTargetOverride ?? computedCal,
+      computedCalorieTarget: computedCal,
+      proteinTarget: profile.proteinTargetOverride ?? computedProtein,
+      satFatCap: profile.satFatTargetOverride ?? computedSatFat,
     );
   }
 }

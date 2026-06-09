@@ -143,6 +143,13 @@
   "restingBurn": "Resting burn (BMR)",
   "estDailyBurn": "Est. daily burn",
   "dailyCalorieTarget": "Daily calorie target",
+  "estBurnDailyTarget": "Est. burn {burn} · Daily target {target}",
+  "@estBurnDailyTarget": {
+    "placeholders": {
+      "burn": { "type": "String" },
+      "target": { "type": "String" }
+    }
+  },
   "proteinTargetLabel": "Protein target",
   "satFatCap": "Saturated-fat cap",
   "saveProfile": "Save profile",
