@@ -12,6 +12,21 @@ class AppLocalizationsZh extends AppLocalizations {
   String get appTitle => 'Food at Peace';
 
   @override
+  String greetMorning(String name) {
+    return '早上好，$name';
+  }
+
+  @override
+  String greetAfternoon(String name) {
+    return '下午好，$name';
+  }
+
+  @override
+  String greetEvening(String name) {
+    return '晚上好，$name';
+  }
+
+  @override
   String get navToday => '今天';
 
   @override

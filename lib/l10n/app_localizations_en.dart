@@ -12,6 +12,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get appTitle => 'Food at Peace';
 
   @override
+  String greetMorning(String name) {
+    return 'Good morning, $name';
+  }
+
+  @override
+  String greetAfternoon(String name) {
+    return 'Good afternoon, $name';
+  }
+
+  @override
+  String greetEvening(String name) {
+    return 'Good evening, $name';
+  }
+
+  @override
   String get navToday => 'Today';
 
   @override

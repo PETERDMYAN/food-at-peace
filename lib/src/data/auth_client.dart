@@ -41,9 +41,11 @@ class AuthClient {
   }
 
   /// Runs the native Apple flow, then exchanges the identity token for a
-  /// [Session]. Throws [SignInCancelled] if the user aborts, or [AuthException]
-  /// on a backend/network failure.
-  Future<Session> signInWithApple() async {
+  /// [Session]. Returns the session plus the user's full name — Apple only
+  /// provides the name on the *first* sign-in, so the caller should persist it.
+  /// Throws [SignInCancelled] if the user aborts, or [AuthException] on a
+  /// backend/network failure.
+  Future<(Session, String?)> signInWithApple() async {
     final rawNonce = _randomNonce();
     // Apple embeds this hash in the identity token's `nonce` claim; the server
     // re-hashes the raw nonce we send and compares — guards against replay.
@@ -73,11 +75,13 @@ class AuthClient {
       credential.familyName,
     ].whereType<String>().join(' ').trim();
 
-    return exchange(
+    final name = fullName.isEmpty ? null : fullName;
+    final session = await exchange(
       identityToken: identityToken,
       rawNonce: rawNonce,
-      fullName: fullName.isEmpty ? null : fullName,
+      fullName: name,
     );
+    return (session, name);
   }
 
   /// Exchanges a verified Apple [identityToken] (+ the raw nonce) for a

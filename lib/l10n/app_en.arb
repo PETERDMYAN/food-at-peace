@@ -1,6 +1,18 @@
 {
   "@@locale": "en",
   "appTitle": "Food at Peace",
+  "greetMorning": "Good morning, {name}",
+  "@greetMorning": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "greetAfternoon": "Good afternoon, {name}",
+  "@greetAfternoon": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "greetEvening": "Good evening, {name}",
+  "@greetEvening": {
+    "placeholders": { "name": { "type": "String" } }
+  },
 
   "navToday": "Today",
   "navHistory": "History",
