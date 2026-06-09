@@ -276,6 +276,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get apiKeyRemoved => 'API key removed';
 
   @override
+  String get account => 'Account';
+
+  @override
+  String get signInPrompt =>
+      'Sign in to sync your data across devices. Optional — the app works without it.';
+
+  @override
+  String signedInAs(String value) {
+    return 'Signed in as $value';
+  }
+
+  @override
+  String get signOut => 'Sign out';
+
+  @override
+  String get signInFailed => 'Sign-in failed. Please try again.';
+
+  @override
   String get healthGarminTitle => 'Apple Health & Garmin';
 
   @override

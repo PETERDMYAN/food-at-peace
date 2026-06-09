@@ -572,6 +572,36 @@ abstract class AppLocalizations {
   /// **'API key removed'**
   String get apiKeyRemoved;
 
+  /// No description provided for @account.
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get account;
+
+  /// No description provided for @signInPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to sync your data across devices. Optional — the app works without it.'**
+  String get signInPrompt;
+
+  /// No description provided for @signedInAs.
+  ///
+  /// In en, this message translates to:
+  /// **'Signed in as {value}'**
+  String signedInAs(String value);
+
+  /// No description provided for @signOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out'**
+  String get signOut;
+
+  /// No description provided for @signInFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign-in failed. Please try again.'**
+  String get signInFailed;
+
   /// No description provided for @healthGarminTitle.
   ///
   /// In en, this message translates to:
