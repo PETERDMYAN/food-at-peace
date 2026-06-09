@@ -34,15 +34,13 @@ class NutritionMath {
   static double measuredExpenditure({
     required double bmr,
     required double activeEnergy,
-  }) =>
-      bmr + activeEnergy;
+  }) => bmr + activeEnergy;
 
   /// Daily calorie intake target = expenditure + goal adjustment.
   static double calorieTarget({
     required double expenditure,
     required Goal goal,
-  }) =>
-      expenditure + goal.calorieAdjustment;
+  }) => expenditure + goal.calorieAdjustment;
 
   /// Daily protein target in grams.
   static double proteinTargetG(UserProfile p) => proteinPerKg * p.weightKg;

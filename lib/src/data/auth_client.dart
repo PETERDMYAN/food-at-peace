@@ -27,15 +27,16 @@ class AuthException implements Exception {
 /// our own app [Session] via the backend `/auth/apple` endpoint.
 class AuthClient {
   AuthClient({required this.baseUrl, http.Client? httpClient})
-      : _http = httpClient ?? http.Client();
+    : _http = httpClient ?? http.Client();
 
   /// Same base URL as the vision proxy; `/auth/apple` lives on the same API.
   final String baseUrl;
   final http.Client _http;
 
   Uri get endpoint {
-    final base =
-        baseUrl.endsWith('/') ? baseUrl.substring(0, baseUrl.length - 1) : baseUrl;
+    final base = baseUrl.endsWith('/')
+        ? baseUrl.substring(0, baseUrl.length - 1)
+        : baseUrl;
     return Uri.parse('$base/auth/apple');
   }
 
@@ -67,10 +68,10 @@ class AuthClient {
       throw AuthException('Apple did not return an identity token.');
     }
 
-    final fullName = [credential.givenName, credential.familyName]
-        .whereType<String>()
-        .join(' ')
-        .trim();
+    final fullName = [
+      credential.givenName,
+      credential.familyName,
+    ].whereType<String>().join(' ').trim();
 
     return exchange(
       identityToken: identityToken,
@@ -119,7 +120,10 @@ class AuthClient {
     const chars =
         'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._';
     final rand = Random.secure();
-    return List.generate(length, (_) => chars[rand.nextInt(chars.length)]).join();
+    return List.generate(
+      length,
+      (_) => chars[rand.nextInt(chars.length)],
+    ).join();
   }
 }
 

@@ -4,8 +4,7 @@ import '../models/workout_summary.dart';
 // Picks the real HealthKit/Health Connect implementation on mobile, and a
 // no-op stub on web — so `package:health` (which is mobile-only) never reaches
 // the web compile.
-import 'health_service_stub.dart'
-    if (dart.library.io) 'health_service_io.dart';
+import 'health_service_stub.dart' if (dart.library.io) 'health_service_io.dart';
 
 /// Reads "calories out", weight and workouts from the platform health store,
 /// and writes logged food back to it. On iOS this is Apple Health (HealthKit),

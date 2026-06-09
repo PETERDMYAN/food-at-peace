@@ -8,7 +8,7 @@ import '../models/session.dart';
 /// mirroring [ApiKeyStore].
 class SessionStore {
   SessionStore([FlutterSecureStorage? storage])
-      : _storage = storage ?? const FlutterSecureStorage();
+    : _storage = storage ?? const FlutterSecureStorage();
 
   final FlutterSecureStorage _storage;
   static const _key = 'app_session_v1';

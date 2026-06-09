@@ -71,8 +71,9 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
         now.minute,
         now.second,
       ),
-      servingDescription:
-          _serving.text.trim().isEmpty ? null : _serving.text.trim(),
+      servingDescription: _serving.text.trim().isEmpty
+          ? null
+          : _serving.text.trim(),
     );
     ref.read(foodEntriesProvider.notifier).add(entry);
     Navigator.of(context).pop();
@@ -106,9 +107,9 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
     try {
       final bytes = await file.readAsBytes();
       final analysis = await analyzer.analyze(
-            imageBytes: bytes,
-            mediaType: _mediaTypeFor(file),
-          );
+        imageBytes: bytes,
+        mediaType: _mediaTypeFor(file),
+      );
       if (!mounted) return;
       setState(() {
         _analysis = analysis;
@@ -164,8 +165,9 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
 
   void _toast(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   void _showKeyNeededDialog() {
@@ -176,10 +178,7 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
         title: Text(t.addApiKeyTitle),
         content: Text(t.addApiKeyBody),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(t.ok),
-          ),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(t.ok)),
         ],
       ),
     );
@@ -191,9 +190,7 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(t.addFood),
-        actions: [
-          TextButton(onPressed: _save, child: Text(t.save)),
-        ],
+        actions: [TextButton(onPressed: _save, child: Text(t.save))],
       ),
       body: Stack(
         children: [
@@ -227,8 +224,10 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
                 const SizedBox(height: 8),
                 SegmentedButton<MealType>(
                   segments: MealType.values
-                      .map((m) =>
-                          ButtonSegment(value: m, label: Text(m.labelOf(t))))
+                      .map(
+                        (m) =>
+                            ButtonSegment(value: m, label: Text(m.labelOf(t))),
+                      )
                       .toList(),
                   selected: {_mealType},
                   showSelectedIcon: false,
@@ -286,9 +285,7 @@ class _NumberField extends StatelessWidget {
     return TextFormField(
       controller: controller,
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
-      inputFormatters: [
-        FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-      ],
+      inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9.]'))],
       decoration: InputDecoration(labelText: label),
       validator: (v) {
         final text = v?.trim() ?? '';
@@ -337,8 +334,8 @@ class _AnalysisBanner extends StatelessWidget {
                   Text(
                     detail,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: scheme.onSecondaryContainer,
-                        ),
+                      color: scheme.onSecondaryContainer,
+                    ),
                   ),
                 ],
               ),

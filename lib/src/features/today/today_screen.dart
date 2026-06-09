@@ -59,13 +59,15 @@ class TodayScreen extends ConsumerWidget {
             const SizedBox(height: 12),
             OutlinedButton.icon(
               onPressed: () async {
-                final ok =
-                    await ref.read(healthConnectedProvider.notifier).connect();
+                final ok = await ref
+                    .read(healthConnectedProvider.notifier)
+                    .connect();
                 if (!context.mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(
-                        ok ? t.appleHealthConnected : t.healthNotGranted),
+                      ok ? t.appleHealthConnected : t.healthNotGranted,
+                    ),
                   ),
                 );
               },
@@ -99,7 +101,9 @@ class TodayScreen extends ConsumerWidget {
                   progress: summary.satFatProgress,
                   footer: summary.isOverSatFat
                       ? t.overBy(t.gramsValue(kcal(-summary.satFatRemaining)))
-                      : t.amountLeft(t.gramsValue(kcal(summary.satFatRemaining))),
+                      : t.amountLeft(
+                          t.gramsValue(kcal(summary.satFatRemaining)),
+                        ),
                   over: summary.isOverSatFat,
                 ),
               ),
@@ -144,8 +148,9 @@ class _DateHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
     final localeName = Localizations.localeOf(context).toLanguageTag();
-    final label =
-        isToday ? t.navToday : DateFormat.MMMEd(localeName).format(date);
+    final label = isToday
+        ? t.navToday
+        : DateFormat.MMMEd(localeName).format(date);
     return Row(
       children: [
         IconButton(onPressed: onPrev, icon: const Icon(Icons.chevron_left)),
@@ -236,10 +241,10 @@ class _CalorieCard extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     kcal(remaining.abs()),
-                    style: Theme.of(context)
-                        .textTheme
-                        .displaySmall
-                        ?.copyWith(color: accent, fontWeight: FontWeight.bold),
+                    style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                      color: accent,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 6),
                   Text(
@@ -252,8 +257,8 @@ class _CalorieCard extends StatelessWidget {
                   Text(
                     breakdown,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: scheme.onSurfaceVariant,
-                        ),
+                      color: scheme.onSurfaceVariant,
+                    ),
                   ),
                 ],
               ),
@@ -376,8 +381,8 @@ class _EmptyState extends StatelessWidget {
           t.nothingLogged,
           textAlign: TextAlign.center,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
         ),
       ),
     );
@@ -407,8 +412,10 @@ class _WorkoutsCard extends ConsumerWidget {
                 children: [
                   Icon(Icons.directions_run, size: 18, color: scheme.primary),
                   const SizedBox(width: 6),
-                  Text(t.workouts,
-                      style: Theme.of(context).textTheme.labelLarge),
+                  Text(
+                    t.workouts,
+                    style: Theme.of(context).textTheme.labelLarge,
+                  ),
                 ],
               ),
               const SizedBox(height: 8),

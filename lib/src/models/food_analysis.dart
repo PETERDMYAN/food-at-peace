@@ -35,7 +35,8 @@ class FoodAnalysis {
           (input['portionDescription'] as String?)?.trim() ?? '',
       confidence:
           (input['confidence'] as String?)?.trim().toLowerCase() ?? 'medium',
-      items: (input['items'] as List?)?.map((e) => e.toString()).toList() ??
+      items:
+          (input['items'] as List?)?.map((e) => e.toString()).toList() ??
           const [],
       notes: (input['notes'] as String?)?.trim(),
     );

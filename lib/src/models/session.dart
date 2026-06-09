@@ -22,16 +22,16 @@ class Session {
   bool get isExpired => DateTime.now().isAfter(expiresAt);
 
   Map<String, dynamic> toJson() => {
-        'token': token,
-        'userId': userId,
-        'email': email,
-        'expiresAt': expiresAt.toIso8601String(),
-      };
+    'token': token,
+    'userId': userId,
+    'email': email,
+    'expiresAt': expiresAt.toIso8601String(),
+  };
 
   factory Session.fromJson(Map<String, dynamic> json) => Session(
-        token: json['token'] as String,
-        userId: json['userId'] as String,
-        email: json['email'] as String?,
-        expiresAt: DateTime.parse(json['expiresAt'] as String),
-      );
+    token: json['token'] as String,
+    userId: json['userId'] as String,
+    email: json['email'] as String?,
+    expiresAt: DateTime.parse(json['expiresAt'] as String),
+  );
 }

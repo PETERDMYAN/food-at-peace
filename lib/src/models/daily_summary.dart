@@ -94,8 +94,10 @@ class DailySummary {
       expenditure = restingSoFar + active;
       // The budget is built on a *full day's* resting energy (BMR) so it stays
       // stable through the day for planning, plus the active energy burned.
-      budgetBase =
-          NutritionMath.measuredExpenditure(bmr: bmr, activeEnergy: active);
+      budgetBase = NutritionMath.measuredExpenditure(
+        bmr: bmr,
+        activeEnergy: active,
+      );
       usingHealth = true;
     } else {
       active = 0;
@@ -104,8 +106,10 @@ class DailySummary {
       usingHealth = false;
     }
 
-    final calTarget =
-        NutritionMath.calorieTarget(expenditure: budgetBase, goal: profile.goal);
+    final calTarget = NutritionMath.calorieTarget(
+      expenditure: budgetBase,
+      goal: profile.goal,
+    );
     return DailySummary(
       date: date,
       consumedCalories: cal,

@@ -43,7 +43,7 @@ class ClaudeApiException implements Exception {
 /// tool via `tool_choice`.
 class ClaudeVisionClient {
   ClaudeVisionClient({http.Client? httpClient, this.model = defaultModel})
-      : _http = httpClient ?? http.Client();
+    : _http = httpClient ?? http.Client();
 
   /// Good vision + reasoning at moderate cost. Swap to 'claude-haiku-4-5'
   /// for the cheapest option.
@@ -117,7 +117,7 @@ Map<String, dynamic> buildRequestBody({
         'type': 'text',
         'text': _systemPrompt,
         'cache_control': {'type': 'ephemeral'},
-      }
+      },
     ],
     'tools': [
       {
@@ -144,8 +144,7 @@ Map<String, dynamic> buildRequestBody({
             },
             'proteinG': {
               'type': 'number',
-              'description':
-                  'Estimated grams of protein for the full portion.',
+              'description': 'Estimated grams of protein for the full portion.',
             },
             'satFatG': {
               'type': 'number',
@@ -176,7 +175,7 @@ Map<String, dynamic> buildRequestBody({
             'confidence',
           ],
         },
-      }
+      },
     ],
     'tool_choice': {'type': 'tool', 'name': ClaudeVisionClient.toolName},
     'messages': [
@@ -193,7 +192,7 @@ Map<String, dynamic> buildRequestBody({
           },
           {'type': 'text', 'text': _userPrompt},
         ],
-      }
+      },
     ],
   };
 }
