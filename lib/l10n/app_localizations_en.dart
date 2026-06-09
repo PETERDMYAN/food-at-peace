@@ -294,6 +294,17 @@ class AppLocalizationsEn extends AppLocalizations {
   String get signInFailed => 'Sign-in failed. Please try again.';
 
   @override
+  String get syncNow => 'Sync now';
+
+  @override
+  String get syncing => 'Syncing…';
+
+  @override
+  String lastSynced(String time) {
+    return 'Last synced $time';
+  }
+
+  @override
   String get healthGarminTitle => 'Apple Health & Garmin';
 
   @override

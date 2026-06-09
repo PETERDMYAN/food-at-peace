@@ -41,26 +41,37 @@ class FoodEntriesNotifier extends Notifier<List<FoodEntry>> {
   List<FoodEntry> build() => ref.read(foodRepositoryProvider).loadAll();
 
   Future<void> add(FoodEntry entry) async {
-    state = [...state, entry];
+    final stamped = entry.copyWith(updatedAt: DateTime.now());
+    state = [...state, stamped];
     await ref.read(foodRepositoryProvider).saveAll(state);
     // Mirror the entry into Apple Health (best-effort) when connected.
     if (ref.read(healthConnectedProvider)) {
-      unawaited(ref.read(healthServiceProvider).writeFood(entry));
+      unawaited(ref.read(healthServiceProvider).writeFood(stamped));
     }
   }
 
+  /// Soft delete: keep a tombstone (deleted=true) so the removal syncs to other
+  /// devices instead of the entry "resurrecting" on the next pull.
   Future<void> remove(String id) async {
-    state = state.where((e) => e.id != id).toList();
+    final now = DateTime.now();
+    state = [
+      for (final e in state)
+        if (e.id == id) e.copyWith(deleted: true, updatedAt: now) else e,
+    ];
     await ref.read(foodRepositoryProvider).saveAll(state);
   }
 
   Future<void> update(FoodEntry entry) async {
+    final stamped = entry.copyWith(updatedAt: DateTime.now());
     state = [
       for (final e in state)
-        if (e.id == entry.id) entry else e,
+        if (e.id == stamped.id) stamped else e,
     ];
     await ref.read(foodRepositoryProvider).saveAll(state);
   }
+
+  /// Re-reads from storage — used by the sync engine after merging server changes.
+  void reload() => state = ref.read(foodRepositoryProvider).loadAll();
 }
 
 final foodEntriesProvider =
@@ -86,9 +97,12 @@ class ProfileNotifier extends Notifier<UserProfile> {
   UserProfile build() => ref.read(profileRepositoryProvider).load();
 
   Future<void> save(UserProfile profile) async {
-    state = profile;
-    await ref.read(profileRepositoryProvider).save(profile);
+    final stamped = profile.copyWith(updatedAt: DateTime.now());
+    state = stamped;
+    await ref.read(profileRepositoryProvider).save(stamped);
   }
+
+  void reload() => state = ref.read(profileRepositoryProvider).load();
 }
 
 final profileProvider =
@@ -98,7 +112,9 @@ final profileProvider =
 final entriesForSelectedDayProvider = Provider<List<FoodEntry>>((ref) {
   final all = ref.watch(foodEntriesProvider);
   final date = ref.watch(selectedDateProvider);
-  final list = all.where((e) => isSameDay(e.timestamp, date)).toList()
+  final list = all
+      .where((e) => !e.deleted && isSameDay(e.timestamp, date))
+      .toList()
     ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
   return list;
 });
@@ -340,8 +356,12 @@ class WeightEntriesNotifier extends Notifier<List<WeightEntry>> {
   /// recalc, and mirrors it to Apple Health (best-effort) when connected.
   Future<void> add(double kg) async {
     final now = DateTime.now();
-    final entry =
-        WeightEntry(id: now.microsecondsSinceEpoch.toString(), kg: kg, timestamp: now);
+    final entry = WeightEntry(
+      id: now.microsecondsSinceEpoch.toString(),
+      kg: kg,
+      timestamp: now,
+      updatedAt: now,
+    );
     state = [entry, ...state];
     await ref.read(weightRepositoryProvider).saveAll(state);
 
@@ -353,8 +373,19 @@ class WeightEntriesNotifier extends Notifier<List<WeightEntry>> {
       unawaited(ref.read(healthServiceProvider).writeWeight(kg, now));
     }
   }
+
+  void reload() => state = ref.read(weightRepositoryProvider).loadAll()
+    ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
 }
 
 final weightEntriesProvider =
     NotifierProvider<WeightEntriesNotifier, List<WeightEntry>>(
         WeightEntriesNotifier.new);
+
+/// Non-deleted food entries (tombstones hidden), for list UIs like History.
+final visibleFoodEntriesProvider = Provider<List<FoodEntry>>(
+    (ref) => ref.watch(foodEntriesProvider).where((e) => !e.deleted).toList());
+
+/// Non-deleted weight readings (tombstones hidden), newest first.
+final visibleWeightEntriesProvider = Provider<List<WeightEntry>>(
+    (ref) => ref.watch(weightEntriesProvider).where((e) => !e.deleted).toList());

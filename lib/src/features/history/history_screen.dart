@@ -12,7 +12,7 @@ class HistoryScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final all = ref.watch(foodEntriesProvider);
+    final all = ref.watch(visibleFoodEntriesProvider);
 
     final byDay = <DateTime, List<FoodEntry>>{};
     for (final e in all) {

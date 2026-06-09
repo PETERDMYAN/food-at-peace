@@ -72,6 +72,7 @@ class UserProfile {
     required this.activity,
     required this.goal,
     this.isConfigured = false,
+    this.updatedAt,
   });
 
   final Sex sex;
@@ -81,6 +82,12 @@ class UserProfile {
   final ActivityLevel activity;
   final Goal goal;
   final bool isConfigured;
+
+  /// Sync metadata: when the profile was last saved (null until first save).
+  final DateTime? updatedAt;
+
+  DateTime get syncUpdatedAt =>
+      updatedAt ?? DateTime.fromMillisecondsSinceEpoch(0);
 
   static const UserProfile defaultProfile = UserProfile(
     sex: Sex.male,
@@ -100,6 +107,7 @@ class UserProfile {
     ActivityLevel? activity,
     Goal? goal,
     bool? isConfigured,
+    DateTime? updatedAt,
   }) {
     return UserProfile(
       sex: sex ?? this.sex,
@@ -109,6 +117,7 @@ class UserProfile {
       activity: activity ?? this.activity,
       goal: goal ?? this.goal,
       isConfigured: isConfigured ?? this.isConfigured,
+      updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 
@@ -120,6 +129,7 @@ class UserProfile {
         'activity': activity.name,
         'goal': goal.name,
         'isConfigured': isConfigured,
+        'updatedAt': updatedAt?.toIso8601String(),
       };
 
   factory UserProfile.fromJson(Map<String, dynamic> json) => UserProfile(
@@ -130,5 +140,8 @@ class UserProfile {
         activity: ActivityLevel.values.byName(json['activity'] as String),
         goal: Goal.values.byName(json['goal'] as String),
         isConfigured: (json['isConfigured'] as bool?) ?? true,
+        updatedAt: json['updatedAt'] != null
+            ? DateTime.parse(json['updatedAt'] as String)
+            : null,
       );
 }

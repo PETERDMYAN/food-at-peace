@@ -16,6 +16,8 @@ class FoodEntry {
     required this.timestamp,
     this.source = FoodSource.manual,
     this.servingDescription,
+    this.updatedAt,
+    this.deleted = false,
   });
 
   final String id;
@@ -28,6 +30,14 @@ class FoodEntry {
   final FoodSource source;
   final String? servingDescription;
 
+  /// Sync metadata: when this row last changed, and whether it's a tombstone.
+  /// [updatedAt] is null for rows created before sync existed; [syncUpdatedAt]
+  /// falls back to [timestamp] for those.
+  final DateTime? updatedAt;
+  final bool deleted;
+
+  DateTime get syncUpdatedAt => updatedAt ?? timestamp;
+
   FoodEntry copyWith({
     String? name,
     double? calories,
@@ -37,6 +47,8 @@ class FoodEntry {
     DateTime? timestamp,
     FoodSource? source,
     String? servingDescription,
+    DateTime? updatedAt,
+    bool? deleted,
   }) {
     return FoodEntry(
       id: id,
@@ -48,6 +60,8 @@ class FoodEntry {
       timestamp: timestamp ?? this.timestamp,
       source: source ?? this.source,
       servingDescription: servingDescription ?? this.servingDescription,
+      updatedAt: updatedAt ?? this.updatedAt,
+      deleted: deleted ?? this.deleted,
     );
   }
 
@@ -61,6 +75,8 @@ class FoodEntry {
         'timestamp': timestamp.toIso8601String(),
         'source': source.name,
         'servingDescription': servingDescription,
+        'updatedAt': updatedAt?.toIso8601String(),
+        'deleted': deleted,
       };
 
   factory FoodEntry.fromJson(Map<String, dynamic> json) => FoodEntry(
@@ -74,5 +90,9 @@ class FoodEntry {
         source: FoodSource.values
             .byName((json['source'] as String?) ?? FoodSource.manual.name),
         servingDescription: json['servingDescription'] as String?,
+        updatedAt: json['updatedAt'] != null
+            ? DateTime.parse(json['updatedAt'] as String)
+            : null,
+        deleted: (json['deleted'] as bool?) ?? false,
       );
 }

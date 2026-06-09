@@ -602,6 +602,24 @@ abstract class AppLocalizations {
   /// **'Sign-in failed. Please try again.'**
   String get signInFailed;
 
+  /// No description provided for @syncNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync now'**
+  String get syncNow;
+
+  /// No description provided for @syncing.
+  ///
+  /// In en, this message translates to:
+  /// **'Syncing…'**
+  String get syncing;
+
+  /// No description provided for @lastSynced.
+  ///
+  /// In en, this message translates to:
+  /// **'Last synced {time}'**
+  String lastSynced(String time);
+
   /// No description provided for @healthGarminTitle.
   ///
   /// In en, this message translates to:
