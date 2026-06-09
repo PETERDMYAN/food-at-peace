@@ -127,9 +127,11 @@ class DailySummary {
       expenditure: expenditure,
       activeEnergy: active,
       usingHealthData: usingHealth,
-      // Effective targets respect a manual override; the computed values stay
-      // available (computedCalorieTarget) for the Settings reference text.
-      calorieTarget: profile.calorieGoalOverride ?? computedCal,
+      // Calorie target = burn + a goal gap (override, else the goal's default
+      // adjustment). Protein / sat-fat overrides are absolute. The computed
+      // values stay available (computedCalorieTarget) for the Settings reference.
+      calorieTarget: budgetBase +
+          (profile.calorieGoalOverride ?? profile.goal.calorieAdjustment),
       computedCalorieTarget: computedCal,
       proteinTarget: profile.proteinTargetOverride ?? computedProtein,
       satFatCap: profile.satFatTargetOverride ?? computedSatFat,
