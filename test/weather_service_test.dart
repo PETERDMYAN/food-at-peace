@@ -51,6 +51,36 @@ void main() {
     });
   });
 
+  group('WeatherService.ipCoords (fallback)', () {
+    test('parses lat/lon from the IP geolocation response', () async {
+      final mock = MockClient((req) async {
+        expect(req.url.host, 'ipapi.co');
+        return http.Response(
+          jsonEncode({
+            'latitude': 1.29,
+            'longitude': 103.85,
+            'city': 'Singapore',
+          }),
+          200,
+        );
+      });
+      final coords = await WeatherService(client: mock).ipCoords();
+      expect(coords, isNotNull);
+      expect(coords!.$1, 1.29);
+      expect(coords.$2, 103.85);
+    });
+
+    test('returns null on a rate-limit/error response', () async {
+      final mock = MockClient(
+        (req) async => http.Response(
+          jsonEncode({'error': true, 'reason': 'RateLimited'}),
+          200,
+        ),
+      );
+      expect(await WeatherService(client: mock).ipCoords(), isNull);
+    });
+  });
+
   group('weatherConditionFromCode', () {
     test('maps representative WMO codes', () {
       expect(weatherConditionFromCode(0), WeatherCondition.clear);
