@@ -38,4 +38,7 @@ class _UnsupportedHealthService implements HealthService {
 
   @override
   Future<bool> writeWeight(double kg, DateTime when) async => false;
+
+  @override
+  Future<bool> writeHeight(double cm) async => false;
 }

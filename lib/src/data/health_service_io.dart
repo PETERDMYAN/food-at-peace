@@ -32,7 +32,7 @@ class HealthKitService implements HealthService {
     HealthDataAccess.READ, // active energy
     HealthDataAccess.READ, // basal energy
     HealthDataAccess.READ_WRITE, // weight (read latest + log new)
-    HealthDataAccess.READ, // height
+    HealthDataAccess.READ_WRITE, // height (read latest + write edits)
     HealthDataAccess.READ, // date of birth (→ age)
     HealthDataAccess.READ, // workouts
     HealthDataAccess.WRITE, // dietary energy
@@ -275,6 +275,24 @@ class HealthKitService implements HealthService {
         type: HealthDataType.WEIGHT,
         startTime: when,
         endTime: when,
+        recordingMethod: RecordingMethod.manual,
+      );
+    } catch (_) {
+      return false;
+    }
+  }
+
+  @override
+  Future<bool> writeHeight(double cm) async {
+    if (!isSupported) return false;
+    await _health.configure();
+    final now = DateTime.now();
+    try {
+      return await _health.writeHealthData(
+        value: cm / 100, // HEIGHT is stored in metres
+        type: HealthDataType.HEIGHT,
+        startTime: now,
+        endTime: now,
         recordingMethod: RecordingMethod.manual,
       );
     } catch (_) {

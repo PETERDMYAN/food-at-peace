@@ -27,6 +27,42 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get goodMorning => 'Good morning';
+
+  @override
+  String get goodAfternoon => 'Good afternoon';
+
+  @override
+  String get goodEvening => 'Good evening';
+
+  @override
+  String get weatherClear => 'Clear';
+
+  @override
+  String get weatherPartlyCloudy => 'Partly cloudy';
+
+  @override
+  String get weatherCloudy => 'Cloudy';
+
+  @override
+  String get weatherFog => 'Fog';
+
+  @override
+  String get weatherDrizzle => 'Drizzle';
+
+  @override
+  String get weatherRain => 'Rain';
+
+  @override
+  String get weatherSnow => 'Snow';
+
+  @override
+  String get weatherThunder => 'Thunderstorm';
+
+  @override
+  String get editProfile => 'Edit profile';
+
+  @override
   String get onboardingWelcomeTitle => 'Welcome to\nFood at Peace';
 
   @override

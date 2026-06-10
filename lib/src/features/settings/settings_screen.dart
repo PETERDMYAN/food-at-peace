@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:food_at_peace/l10n/app_localizations.dart';
@@ -33,10 +35,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final t = AppLocalizations.of(context);
     final gap = profile.calorieGoalOverride ?? profile.goal.calorieAdjustment;
     final cal = TextEditingController(text: gap.round().toString());
-    final protein =
-        TextEditingController(text: summary.proteinTarget.round().toString());
-    final satFat =
-        TextEditingController(text: summary.satFatCap.round().toString());
+    final protein = TextEditingController(
+      text: summary.proteinTarget.round().toString(),
+    );
+    final satFat = TextEditingController(
+      text: summary.satFatCap.round().toString(),
+    );
     InputDecoration dec(String label, String suffix) =>
         InputDecoration(labelText: label, suffixText: suffix);
     final action = await showDialog<String>(
@@ -140,8 +144,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
         children: [
-          Text(t.profile, style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 8),
           _ProfileStatsCard(profile: profile),
           const SizedBox(height: 16),
           Card(
@@ -205,10 +207,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     t.proteinTargetLabel,
                     t.gramsValue(kcal(summary.proteinTarget)),
                   ),
-                  _statRow(
-                    t.satFatCap,
-                    t.gramsValue(kcal(summary.satFatCap)),
-                  ),
+                  _statRow(t.satFatCap, t.gramsValue(kcal(summary.satFatCap))),
                 ],
               ),
             ),
@@ -225,43 +224,147 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       ),
     );
   }
-
 }
 
-/// Read-only age / height / weight — sourced from Apple Health, refreshed daily.
-class _ProfileStatsCard extends StatelessWidget {
+/// Age / height / weight, synced from Apple Health and editable via the pen.
+/// Edits write height + weight back to Apple Health (age can't be — it's a
+/// read-only HealthKit characteristic).
+class _ProfileStatsCard extends ConsumerStatefulWidget {
   const _ProfileStatsCard({required this.profile});
 
   final UserProfile profile;
 
   @override
+  ConsumerState<_ProfileStatsCard> createState() => _ProfileStatsCardState();
+}
+
+class _ProfileStatsCardState extends ConsumerState<_ProfileStatsCard> {
+  Future<void> _edit() async {
+    final t = AppLocalizations.of(context);
+    final p = ref.read(profileProvider);
+    final age = TextEditingController(text: p.age.toString());
+    final height = TextEditingController(text: p.heightCm.round().toString());
+    final weight = TextEditingController(
+      text: p.weightKg.truncateToDouble() == p.weightKg
+          ? p.weightKg.round().toString()
+          : p.weightKg.toStringAsFixed(1),
+    );
+    InputDecoration dec(String label, [String? suffix]) =>
+        InputDecoration(labelText: label, suffixText: suffix);
+    final save = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(t.editProfile),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: age,
+              keyboardType: TextInputType.number,
+              decoration: dec(t.age),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: height,
+              keyboardType: TextInputType.number,
+              decoration: dec(t.heightTitle, 'cm'),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: weight,
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
+              decoration: dec(t.weightTitle, 'kg'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(t.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(t.save),
+          ),
+        ],
+      ),
+    );
+    if (save == true) {
+      final p2 = ref.read(profileProvider);
+      final newAge = int.tryParse(age.text.trim()) ?? p2.age;
+      final newHeight = double.tryParse(height.text.trim()) ?? p2.heightCm;
+      final newWeight = double.tryParse(weight.text.trim()) ?? p2.weightKg;
+      await ref
+          .read(profileProvider.notifier)
+          .save(
+            p2.copyWith(
+              age: newAge,
+              heightCm: newHeight,
+              weightKg: newWeight,
+              isConfigured: true,
+            ),
+          );
+      // Write height + weight back to Apple Health (best-effort).
+      if (ref.read(healthConnectedProvider)) {
+        final svc = ref.read(healthServiceProvider);
+        unawaited(svc.writeWeight(newWeight, DateTime.now()));
+        unawaited(svc.writeHeight(newHeight));
+      }
+    }
+    age.dispose();
+    height.dispose();
+    weight.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
+    final profile = widget.profile;
     return Card(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+        padding: const EdgeInsets.fromLTRB(16, 12, 8, 14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
                 Expanded(
-                  child: _MiniStat(value: '${profile.age}', label: t.age),
-                ),
-                Expanded(
-                  child: _MiniStat(
-                    value: '${profile.heightCm.round()} cm',
-                    label: t.heightTitle,
+                  child: Text(
+                    t.profile,
+                    style: Theme.of(context).textTheme.titleSmall,
                   ),
                 ),
-                Expanded(
-                  child: _MiniStat(
-                    value: '${kcal(profile.weightKg)} kg',
-                    label: t.weightTitle,
-                  ),
+                IconButton(
+                  icon: const Icon(Icons.edit_outlined, size: 20),
+                  tooltip: t.editProfile,
+                  onPressed: _edit,
                 ),
               ],
+            ),
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _MiniStat(value: '${profile.age}', label: t.age),
+                  ),
+                  Expanded(
+                    child: _MiniStat(
+                      value: '${profile.heightCm.round()} cm',
+                      label: t.heightTitle,
+                    ),
+                  ),
+                  Expanded(
+                    child: _MiniStat(
+                      value: '${kcal(profile.weightKg)} kg',
+                      label: t.weightTitle,
+                    ),
+                  ),
+                ],
+              ),
             ),
             const SizedBox(height: 10),
             Row(

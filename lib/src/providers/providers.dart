@@ -12,12 +12,14 @@ import '../data/food_repository.dart';
 import '../data/health_service.dart';
 import '../data/profile_repository.dart';
 import '../data/session_store.dart';
+import '../data/weather_service.dart';
 import '../data/weight_repository.dart';
 import '../models/daily_summary.dart';
 import '../models/energy_out.dart';
 import '../models/food_entry.dart';
 import '../models/session.dart';
 import '../models/user_profile.dart';
+import '../models/weather.dart';
 import '../models/weight_entry.dart';
 import '../models/workout_summary.dart';
 
@@ -346,6 +348,17 @@ final workoutsProvider = FutureProvider<List<WorkoutSummary>>((ref) async {
   final date = ref.watch(selectedDateProvider);
   return ref.read(healthServiceProvider).readWorkouts(date);
 });
+
+// ---- Weather (local, for the Today header) ----
+
+final weatherServiceProvider =
+    Provider<WeatherService>((ref) => WeatherService());
+
+/// Current local weather (null when location is denied/unavailable or offline).
+/// Resolved once per app session; refreshable via `ref.invalidate`.
+final weatherProvider = FutureProvider<Weather?>(
+  (ref) => ref.read(weatherServiceProvider).current(),
+);
 
 // ---- App language ----
 

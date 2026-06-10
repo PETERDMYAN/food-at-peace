@@ -27,6 +27,42 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get goodMorning => '早上好';
+
+  @override
+  String get goodAfternoon => '下午好';
+
+  @override
+  String get goodEvening => '晚上好';
+
+  @override
+  String get weatherClear => '晴';
+
+  @override
+  String get weatherPartlyCloudy => '局部多云';
+
+  @override
+  String get weatherCloudy => '多云';
+
+  @override
+  String get weatherFog => '雾';
+
+  @override
+  String get weatherDrizzle => '小雨';
+
+  @override
+  String get weatherRain => '雨';
+
+  @override
+  String get weatherSnow => '雪';
+
+  @override
+  String get weatherThunder => '雷暴';
+
+  @override
+  String get editProfile => '编辑资料';
+
+  @override
   String get onboardingWelcomeTitle => '欢迎使用\nFood at Peace';
 
   @override
