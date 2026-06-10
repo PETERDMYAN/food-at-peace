@@ -122,6 +122,102 @@ abstract class AppLocalizations {
   /// **'Good evening, {name}'**
   String greetEvening(String name);
 
+  /// No description provided for @onboardingWelcomeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome to\nFood at Peace'**
+  String get onboardingWelcomeTitle;
+
+  /// No description provided for @onboardingWelcomeBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Track calories and macros with a calm, simple daily view.'**
+  String get onboardingWelcomeBody;
+
+  /// No description provided for @onboardingNameTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'What should we call you?'**
+  String get onboardingNameTitle;
+
+  /// No description provided for @onboardingNameBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in with Apple to bring your name in, or just type it. We\'ll greet you by name each day.'**
+  String get onboardingNameBody;
+
+  /// No description provided for @onboardingNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Your name'**
+  String get onboardingNameLabel;
+
+  /// No description provided for @onboardingNameManual.
+  ///
+  /// In en, this message translates to:
+  /// **'Or enter it manually'**
+  String get onboardingNameManual;
+
+  /// No description provided for @onboardingGoalTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'What\'s your goal?'**
+  String get onboardingGoalTitle;
+
+  /// No description provided for @onboardingGoalBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This sets your daily calorie gap. You can change it anytime.'**
+  String get onboardingGoalBody;
+
+  /// No description provided for @onboardingHealthTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect Apple Health'**
+  String get onboardingHealthTitle;
+
+  /// No description provided for @onboardingHealthBody.
+  ///
+  /// In en, this message translates to:
+  /// **'We\'ll read your age, height, weight and calories burned from Apple Health (including Garmin) to keep your targets accurate — refreshed daily.'**
+  String get onboardingHealthBody;
+
+  /// No description provided for @onboardingHealthConnected.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected — your stats will stay in sync.'**
+  String get onboardingHealthConnected;
+
+  /// No description provided for @perDayKcal.
+  ///
+  /// In en, this message translates to:
+  /// **'{value} kcal/day'**
+  String perDayKcal(String value);
+
+  /// No description provided for @continueLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get continueLabel;
+
+  /// No description provided for @getStarted.
+  ///
+  /// In en, this message translates to:
+  /// **'Get started'**
+  String get getStarted;
+
+  /// No description provided for @skip.
+  ///
+  /// In en, this message translates to:
+  /// **'Skip'**
+  String get skip;
+
+  /// No description provided for @back.
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get back;
+
   /// No description provided for @navToday.
   ///
   /// In en, this message translates to:

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:food_at_peace/l10n/app_localizations.dart';
 
 import '../../data/sync_engine.dart';
+import '../../providers/providers.dart';
 import '../add/add_entry_screen.dart';
 import '../settings/settings_screen.dart';
 import '../today/today_screen.dart';
@@ -29,6 +30,10 @@ class _HomeShellState extends ConsumerState<HomeShell>
     // Instantiate the sync engine so its sign-in / edit listeners are active
     // for the whole app session (it keeps itself alive).
     ref.read(syncEngineProvider);
+    // Pull age / height / weight from Apple Health on launch (best-effort).
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(profileProvider.notifier).refreshFromHealth();
+    });
   }
 
   @override
@@ -41,6 +46,7 @@ class _HomeShellState extends ConsumerState<HomeShell>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       ref.read(syncEngineProvider.notifier).syncNow();
+      ref.read(profileProvider.notifier).refreshFromHealth();
     }
   }
 

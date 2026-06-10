@@ -103,6 +103,29 @@ class ProfileNotifier extends Notifier<UserProfile> {
   }
 
   void reload() => state = ref.read(profileRepositoryProvider).load();
+
+  /// Pulls age (from date of birth), height and weight from Apple Health and
+  /// updates the profile when they differ. Runs on launch / resume / connect so
+  /// the profile tracks Health "daily". No-op when Health isn't connected.
+  Future<void> refreshFromHealth() async {
+    if (!ref.read(healthConnectedProvider)) return;
+    final service = ref.read(healthServiceProvider);
+    if (!service.isSupported) return;
+    final age = await service.readAge();
+    final heightCm = await service.readHeightCm();
+    final weightKg = await service.readLatestWeightKg();
+    var next = state;
+    if (age != null && age != next.age) {
+      next = next.copyWith(age: age);
+    }
+    if (heightCm != null && (heightCm - next.heightCm).abs() > 0.5) {
+      next = next.copyWith(heightCm: heightCm);
+    }
+    if (weightKg != null && (weightKg - next.weightKg).abs() > 0.1) {
+      next = next.copyWith(weightKg: weightKg);
+    }
+    if (!identical(next, state)) await save(next);
+  }
 }
 
 final profileProvider =
@@ -287,6 +310,8 @@ class HealthConnectedNotifier extends Notifier<bool> {
     state = granted;
     if (granted) {
       await ref.read(sharedPreferencesProvider).setBool(_prefsKey, true);
+      // Pull age / height / weight from Health right away.
+      unawaited(ref.read(profileProvider.notifier).refreshFromHealth());
     }
     return granted;
   }
@@ -400,3 +425,24 @@ final visibleFoodEntriesProvider = Provider<List<FoodEntry>>(
 /// Non-deleted weight readings (tombstones hidden), newest first.
 final visibleWeightEntriesProvider = Provider<List<WeightEntry>>(
     (ref) => ref.watch(weightEntriesProvider).where((e) => !e.deleted).toList());
+
+// ---- Onboarding ----
+
+/// Whether the first-run onboarding has been completed. Persisted so it only
+/// shows once. Kept separate from `profile.isConfigured` so a signed-out user
+/// who skips the flow still isn't sent back through it.
+class OnboardingNotifier extends Notifier<bool> {
+  static const _prefsKey = 'onboarding_complete';
+
+  @override
+  bool build() =>
+      ref.read(sharedPreferencesProvider).getBool(_prefsKey) ?? false;
+
+  Future<void> complete() async {
+    state = true;
+    await ref.read(sharedPreferencesProvider).setBool(_prefsKey, true);
+  }
+}
+
+final onboardingCompleteProvider =
+    NotifierProvider<OnboardingNotifier, bool>(OnboardingNotifier.new);

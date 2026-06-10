@@ -25,6 +25,12 @@ class _UnsupportedHealthService implements HealthService {
   Future<double?> readLatestWeightKg() async => null;
 
   @override
+  Future<int?> readAge() async => null;
+
+  @override
+  Future<double?> readHeightCm() async => null;
+
+  @override
   Future<List<WorkoutSummary>> readWorkouts(DateTime day) async => const [];
 
   @override

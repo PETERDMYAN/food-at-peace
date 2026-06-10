@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'l10n/app_localizations.dart';
 import 'src/features/home/home_shell.dart';
+import 'src/features/onboarding/onboarding_screen.dart';
 import 'src/providers/providers.dart';
 import 'src/theme/app_theme.dart';
 
@@ -13,6 +14,7 @@ class FoodAtPeaceApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // null locale = follow the iOS system language (Chinese → zh, else en).
     final locale = ref.watch(localeProvider);
+    final onboarded = ref.watch(onboardingCompleteProvider);
     return MaterialApp(
       onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
       debugShowCheckedModeBanner: false,
@@ -21,7 +23,7 @@ class FoodAtPeaceApp extends ConsumerWidget {
       locale: locale,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
-      home: const HomeShell(),
+      home: onboarded ? const HomeShell() : const OnboardingScreen(),
     );
   }
 }

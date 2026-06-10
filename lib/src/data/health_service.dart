@@ -29,6 +29,13 @@ abstract interface class HealthService {
   /// via Apple Health), or null if unavailable.
   Future<double?> readLatestWeightKg();
 
+  /// The user's age in whole years, derived from Apple Health's date-of-birth
+  /// characteristic. Null if unavailable / not permitted / not set.
+  Future<int?> readAge();
+
+  /// The most recent height in centimetres, or null if unavailable.
+  Future<double?> readHeightCm();
+
   /// Workouts recorded on [day] (e.g. Garmin activities), longest first.
   Future<List<WorkoutSummary>> readWorkouts(DateTime day);
 

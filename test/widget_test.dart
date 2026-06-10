@@ -14,7 +14,8 @@ void main() {
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.reset);
 
-    SharedPreferences.setMockInitialValues({});
+    // A returning user has already onboarded → boots straight to the dashboard.
+    SharedPreferences.setMockInitialValues({'onboarding_complete': true});
     final prefs = await SharedPreferences.getInstance();
 
     await tester.pumpWidget(
@@ -36,5 +37,26 @@ void main() {
 
     // Empty state before anything is logged.
     expect(find.textContaining('Nothing logged yet'), findsOneWidget);
+  });
+
+  testWidgets('first run shows onboarding (not the dashboard)', (tester) async {
+    tester.view.physicalSize = const Size(1200, 2600);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.reset);
+
+    // No onboarding flag → first run → onboarding gate.
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+        child: const FoodAtPeaceApp(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('Continue'), findsOneWidget);
+    expect(find.text('Add food'), findsNothing);
   });
 }
