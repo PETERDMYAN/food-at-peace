@@ -278,6 +278,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dailyCalorieTarget => 'Daily calorie target';
 
   @override
+  String get calorieGapTarget => 'Calorie gap target';
+
+  @override
   String estBurnDailyTarget(String burn, String target) {
     return 'Est. burn $burn · Daily target $target';
   }

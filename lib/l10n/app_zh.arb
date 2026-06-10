@@ -82,6 +82,7 @@
   "restingBurn": "静息消耗（BMR）",
   "estDailyBurn": "预计每日消耗",
   "dailyCalorieTarget": "每日卡路里目标",
+  "calorieGapTarget": "卡路里缺口目标",
   "estBurnDailyTarget": "预计消耗 {burn} · 每日目标 {target}",
   "proteinTargetLabel": "蛋白质目标",
   "satFatCap": "饱和脂肪上限",

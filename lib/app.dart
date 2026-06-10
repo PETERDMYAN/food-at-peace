@@ -16,9 +16,8 @@ class FoodAtPeaceApp extends ConsumerWidget {
     return MaterialApp(
       onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.light(),
-      // Always light — dark mode removed.
-      themeMode: ThemeMode.light,
+      // Always dark — GXS-style. (No light theme / no system toggle.)
+      theme: AppTheme.dark(),
       locale: locale,
       localizationsDelegates: AppLocalizations.localizationsDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
