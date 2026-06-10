@@ -10,7 +10,8 @@ import '../../providers/providers.dart';
 import '../../util/format.dart';
 
 /// Trends: daily charts comparing actual intake against the current target for
-/// calories, protein, and saturated fat over the recent days.
+/// calories, protein, and saturated fat over a selectable window, with
+/// prev/next paging through earlier windows.
 class TrendsScreen extends ConsumerStatefulWidget {
   const TrendsScreen({super.key});
 
@@ -19,15 +20,21 @@ class TrendsScreen extends ConsumerStatefulWidget {
 }
 
 class _TrendsScreenState extends ConsumerState<TrendsScreen> {
-  /// Selectable windows (days), ending today (inclusive).
-  static const _options = [7, 14, 30];
-  int _days = 30;
+  /// Selectable window lengths in days.
+  static const _options = [1, 7, 30];
+
+  /// The current window length.
+  int _period = 7;
+
+  /// How many whole windows back from "now" we're viewing (0 = current).
+  int _offset = 0;
 
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
     final entries = ref.watch(visibleFoodEntriesProvider);
     final profile = ref.watch(profileProvider);
+    final localeName = Localizations.localeOf(context).toLanguageTag();
 
     // Sum each metric per day.
     final totals = <DateTime, _DayTotals>{};
@@ -38,17 +45,17 @@ class _TrendsScreenState extends ConsumerState<TrendsScreen> {
       acc.satFat += e.satFatG;
     }
 
-    // Continuous daily axis: the selected window ending today (inclusive).
+    // The window: [start..end], shifted back by `_offset` whole windows.
     final today = dateOnly(DateTime.now());
-    final start = today.subtract(Duration(days: _days - 1));
+    final end = today.subtract(Duration(days: _offset * _period));
+    final start = end.subtract(Duration(days: _period - 1));
     final days = <DateTime>[
-      for (var d = start; !d.isAfter(today); d = d.add(const Duration(days: 1)))
+      for (var d = start; !d.isAfter(end); d = d.add(const Duration(days: 1)))
         d,
     ];
 
-    // A stable target reference from the current profile. Historical days have
-    // no per-day HealthKit reading, so the target uses the profile's estimated
-    // burn — the same baseline the Today screen falls back to.
+    // Target reference from the current profile (historical days have no
+    // per-day HealthKit reading, so use the estimated burn baseline).
     final target = DailySummary.compute(
       date: today,
       entries: const [],
@@ -59,8 +66,6 @@ class _TrendsScreenState extends ConsumerState<TrendsScreen> {
     List<double> seriesOf(double Function(_DayTotals) pick) => [
       for (final d in days) totals[d] == null ? 0.0 : pick(totals[d]!),
     ];
-    // Days (with food logged) where the target was met: under the cap for
-    // calories / saturated fat, at-or-above for protein.
     int metDays(double Function(_DayTotals) pick, double tgt, bool cap) =>
         days.where((d) {
           final tot = totals[d];
@@ -68,6 +73,12 @@ class _TrendsScreenState extends ConsumerState<TrendsScreen> {
           final v = pick(tot);
           return cap ? v <= tgt : v >= tgt;
         }).length;
+
+    final rangeLabel = _period == 1
+        ? DateFormat.MMMEd(localeName).format(end)
+        : '${DateFormat.MMMd(localeName).format(start)} – '
+              '${DateFormat.MMMd(localeName).format(end)}';
+    final canGoNext = _offset > 0;
 
     return Scaffold(
       appBar: AppBar(title: Text(t.navTrends)),
@@ -80,12 +91,40 @@ class _TrendsScreenState extends ConsumerState<TrendsScreen> {
                 for (final d in _options)
                   ButtonSegment(value: d, label: Text(t.daysCount(d))),
               ],
-              selected: {_days},
+              selected: {_period},
               showSelectedIcon: false,
-              onSelectionChanged: (s) => setState(() => _days = s.first),
+              onSelectionChanged: (s) => setState(() {
+                _period = s.first;
+                _offset = 0; // jump back to the present on a period change
+              }),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 8),
+          // Prev / range / next pager.
+          Row(
+            children: [
+              IconButton(
+                onPressed: () => setState(() => _offset++),
+                icon: const Icon(Icons.chevron_left),
+                tooltip: MaterialLocalizations.of(context).previousPageTooltip,
+              ),
+              Expanded(
+                child: Text(
+                  rangeLabel,
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
+              ),
+              IconButton(
+                onPressed: canGoNext
+                    ? () => setState(() => _offset--)
+                    : null,
+                icon: const Icon(Icons.chevron_right),
+                tooltip: MaterialLocalizations.of(context).nextPageTooltip,
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
           if (loggedDays == 0)
             Padding(
               padding: const EdgeInsets.only(top: 48),
@@ -161,16 +200,9 @@ class _TrendCard extends StatelessWidget {
   final List<DateTime> days;
   final List<double> values;
   final double target;
-
-  /// Days on target, out of the days with food logged in the window.
   final int metDays;
   final int loggedDays;
-
-  /// Whether the metric is measured in kcal (vs grams) — for label formatting.
   final bool kcalUnit;
-
-  /// True when exceeding the target is "bad" (calories, saturated fat) so those
-  /// bars turn red; false when more is fine (protein).
   final bool cap;
 
   @override
@@ -236,8 +268,7 @@ class _TrendCard extends StatelessWidget {
 }
 
 /// The plot: y-axis labels, bottom-anchored bars, a dashed target line, a sparse
-/// row of date labels, and touch-to-inspect — tap or drag across the chart to
-/// read a day's value against the target.
+/// row of date labels, and touch-to-inspect — tap or drag to read a day's value.
 class _ChartArea extends StatefulWidget {
   const _ChartArea({
     required this.days,
@@ -264,19 +295,36 @@ class _ChartAreaState extends State<_ChartArea> {
   static const double _yAxisWidth = 34;
   static const double _yAxisGap = 6;
 
-  /// The day the user is inspecting (null = none).
-  int? _selected;
+  final GlobalKey _plotKey = GlobalKey();
 
-  void _selectAt(double dx, double width) {
+  /// The day being inspected (null = none) and the measured plot width.
+  int? _selected;
+  double? _plotWidth;
+
+  void _selectAt(double dx) {
+    final box = _plotKey.currentContext?.findRenderObject() as RenderBox?;
+    if (box == null) return;
+    final w = box.size.width;
     final n = widget.values.length;
-    if (n == 0 || width <= 0) return;
-    final i = (dx / width * n).floor().clamp(0, n - 1);
-    if (i != _selected) setState(() => _selected = i);
+    if (n == 0 || w <= 0) return;
+    final i = (dx / w * n).floor().clamp(0, n - 1);
+    if (i != _selected || w != _plotWidth) {
+      setState(() {
+        _selected = i;
+        _plotWidth = w;
+      });
+    }
+  }
+
+  @override
+  void didUpdateWidget(_ChartArea old) {
+    super.didUpdateWidget(old);
+    // Clear a stale selection when the window/series changes.
+    if (old.values.length != widget.values.length) _selected = null;
   }
 
   @override
   Widget build(BuildContext context) {
-    final t = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final labelStyle = theme.textTheme.labelSmall?.copyWith(
@@ -285,7 +333,6 @@ class _ChartAreaState extends State<_ChartArea> {
 
     final localeName = Localizations.localeOf(context).toLanguageTag();
     final df = DateFormat.Md(localeName);
-    final dfFull = DateFormat.MMMd(localeName);
     final values = widget.values;
     final maxY = widget.maxY;
     final target = widget.target;
@@ -293,8 +340,8 @@ class _ChartAreaState extends State<_ChartArea> {
     final labelled = _labelIndices(n);
     final targetFactor = (target / maxY).clamp(0.0, 1.0);
 
-    String fmt(double v) =>
-        widget.kcalUnit ? t.kcalValue(kcal(v)) : t.gramsValue(kcal(v));
+    Color barColor(Color base, bool dim) =>
+        dim ? base.withValues(alpha: 0.35) : base;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -317,83 +364,79 @@ class _ChartAreaState extends State<_ChartArea> {
               ),
               const SizedBox(width: _yAxisGap),
               Expanded(
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    final plotWidth = constraints.maxWidth;
-                    return GestureDetector(
-                      behavior: HitTestBehavior.opaque,
-                      onTapUp: (d) => _selectAt(d.localPosition.dx, plotWidth),
-                      onHorizontalDragStart: (d) =>
-                          _selectAt(d.localPosition.dx, plotWidth),
-                      onHorizontalDragUpdate: (d) =>
-                          _selectAt(d.localPosition.dx, plotWidth),
-                      child: Stack(
-                        children: [
-                          // Baseline at zero.
-                          Positioned(
-                            left: 0,
-                            right: 0,
-                            bottom: 0,
-                            child: Container(
-                              height: 1,
-                              color: scheme.outlineVariant,
-                            ),
-                          ),
-                          // Bars — vibrant violet gradient; over-cap days go red.
-                          Positioned.fill(
-                            child: Row(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                for (var i = 0; i < n; i++)
-                                  Expanded(
-                                    child: _BarColumn(
-                                      heightFactor:
-                                          (values[i] / maxY).clamp(0.0, 1.0),
-                                      color: scheme.error,
-                                      gradient: widget.cap && values[i] > target
-                                          ? null
-                                          : LinearGradient(
-                                              begin: Alignment.bottomCenter,
-                                              end: Alignment.topCenter,
-                                              colors: [
-                                                scheme.primary,
-                                                scheme.secondary,
-                                              ],
-                                            ),
-                                      dimmed: _selected != null &&
-                                          _selected != i,
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          ),
-                          // Target line — high-contrast magenta so it reads.
-                          Positioned(
-                            left: 0,
-                            right: 0,
-                            bottom: targetFactor * _plotHeight,
-                            child: SizedBox(
-                              height: 2,
-                              child: CustomPaint(
-                                painter:
-                                    _DashedLinePainter(color: scheme.tertiary),
-                              ),
-                            ),
-                          ),
-                          // Touch-to-inspect overlay.
-                          if (_selected != null)
-                            ..._inspectOverlay(
-                              context,
-                              plotWidth,
-                              scheme,
-                              t,
-                              dfFull,
-                              fmt,
-                            ),
-                        ],
+                child: GestureDetector(
+                  key: _plotKey,
+                  behavior: HitTestBehavior.opaque,
+                  onTapUp: (d) => _selectAt(d.localPosition.dx),
+                  onHorizontalDragStart: (d) => _selectAt(d.localPosition.dx),
+                  onHorizontalDragUpdate: (d) => _selectAt(d.localPosition.dx),
+                  child: Stack(
+                    children: [
+                      // Baseline at zero.
+                      Positioned(
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        child: Container(
+                          height: 1,
+                          color: scheme.outlineVariant,
+                        ),
                       ),
-                    );
-                  },
+                      // Bars — vibrant violet gradient; over-cap days go red;
+                      // non-selected dim while inspecting.
+                      Positioned.fill(
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            for (var i = 0; i < n; i++)
+                              Expanded(
+                                child: _BarColumn(
+                                  heightFactor: (values[i] / maxY).clamp(
+                                    0.0,
+                                    1.0,
+                                  ),
+                                  over: widget.cap && values[i] > target,
+                                  overColor: barColor(
+                                    scheme.error,
+                                    _selected != null && _selected != i,
+                                  ),
+                                  gradient: LinearGradient(
+                                    begin: Alignment.bottomCenter,
+                                    end: Alignment.topCenter,
+                                    colors: [
+                                      barColor(
+                                        scheme.primary,
+                                        _selected != null && _selected != i,
+                                      ),
+                                      barColor(
+                                        scheme.secondary,
+                                        _selected != null && _selected != i,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                      // Target line.
+                      Positioned(
+                        left: 0,
+                        right: 0,
+                        bottom: targetFactor * _plotHeight,
+                        child: SizedBox(
+                          height: 2,
+                          child: CustomPaint(
+                            painter: _DashedLinePainter(color: scheme.tertiary),
+                          ),
+                        ),
+                      ),
+                      // Touch-to-inspect overlay (positioned once a tap has
+                      // measured the plot width).
+                      if (_selected != null && _plotWidth != null)
+                        ..._inspectOverlay(context, scheme),
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -409,8 +452,10 @@ class _ChartAreaState extends State<_ChartArea> {
                   child: labelled.contains(i)
                       ? FittedBox(
                           fit: BoxFit.scaleDown,
-                          child: Text(df.format(widget.days[i]),
-                              style: labelStyle),
+                          child: Text(
+                            df.format(widget.days[i]),
+                            style: labelStyle,
+                          ),
                         )
                       : const SizedBox.shrink(),
                 ),
@@ -422,28 +467,25 @@ class _ChartAreaState extends State<_ChartArea> {
   }
 
   /// Guide line + value dot + a callout for the selected day.
-  List<Widget> _inspectOverlay(
-    BuildContext context,
-    double plotWidth,
-    ColorScheme scheme,
-    AppLocalizations t,
-    DateFormat dfFull,
-    String Function(double) fmt,
-  ) {
+  List<Widget> _inspectOverlay(BuildContext context, ColorScheme scheme) {
+    final t = AppLocalizations.of(context);
+    final text = Theme.of(context).textTheme;
+    final width = _plotWidth!;
     final i = _selected!;
     final n = widget.values.length;
     final value = widget.values[i];
-    final barCenter = (i + 0.5) / n * plotWidth;
+    final barCenter = (i + 0.5) / n * width;
     final heightFactor = (value / widget.maxY).clamp(0.0, 1.0);
     final over = widget.cap && value > widget.target;
     final dotColor = over ? scheme.error : scheme.primary;
 
-    const tipW = 120.0;
-    final tipLeft = (barCenter - tipW / 2).clamp(0.0, plotWidth - tipW);
-    final text = Theme.of(context).textTheme;
+    String fmt(double v) =>
+        widget.kcalUnit ? t.kcalValue(kcal(v)) : t.gramsValue(kcal(v));
+
+    const tipW = 124.0;
+    final tipLeft = (barCenter - tipW / 2).clamp(0.0, width - tipW);
 
     return [
-      // Vertical guide line.
       Positioned(
         left: barCenter - 0.5,
         top: 0,
@@ -453,7 +495,6 @@ class _ChartAreaState extends State<_ChartArea> {
           color: scheme.tertiary.withValues(alpha: 0.55),
         ),
       ),
-      // Value dot at the bar top.
       Positioned(
         left: barCenter - 4,
         bottom: heightFactor * _plotHeight - 4,
@@ -467,7 +508,6 @@ class _ChartAreaState extends State<_ChartArea> {
           ),
         ),
       ),
-      // Callout: date · actual value · target.
       Positioned(
         left: tipLeft,
         top: 0,
@@ -484,7 +524,9 @@ class _ChartAreaState extends State<_ChartArea> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                dfFull.format(widget.days[i]),
+                DateFormat.MMMd(
+                  Localizations.localeOf(context).toLanguageTag(),
+                ).format(widget.days[i]),
                 style: text.labelSmall?.copyWith(color: scheme.onSurfaceVariant),
               ),
               const SizedBox(height: 2),
@@ -511,17 +553,15 @@ class _ChartAreaState extends State<_ChartArea> {
 class _BarColumn extends StatelessWidget {
   const _BarColumn({
     required this.heightFactor,
-    required this.color,
-    this.gradient,
-    this.dimmed = false,
+    required this.over,
+    required this.overColor,
+    required this.gradient,
   });
 
   final double heightFactor;
-  final Color color;
-  final Gradient? gradient;
-
-  /// Faded when another bar is being inspected, so the selected one stands out.
-  final bool dimmed;
+  final bool over;
+  final Color overColor;
+  final Gradient gradient;
 
   @override
   Widget build(BuildContext context) {
@@ -531,15 +571,11 @@ class _BarColumn extends StatelessWidget {
         alignment: Alignment.bottomCenter,
         heightFactor: heightFactor,
         widthFactor: 1,
-        child: AnimatedOpacity(
-          duration: const Duration(milliseconds: 120),
-          opacity: dimmed ? 0.4 : 1,
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              color: gradient == null ? color : null,
-              gradient: gradient,
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(3)),
-            ),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            color: over ? overColor : null,
+            gradient: over ? null : gradient,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(3)),
           ),
         ),
       ),
