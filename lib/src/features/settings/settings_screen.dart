@@ -71,10 +71,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(ctx, 'auto'),
-            child: Text(t.useAutomatic),
-          ),
-          TextButton(
             onPressed: () => Navigator.pop(ctx, 'cancel'),
             child: Text(t.cancel),
           ),
@@ -85,27 +81,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         ],
       ),
     );
-    if (mounted) {
-      final notifier = ref.read(profileProvider.notifier);
-      if (action == 'save') {
-        notifier.save(
-          profile.copyWith(
-            isConfigured: true,
-            calorieGoalOverride: _parseTarget(cal.text),
-            proteinTargetOverride: _parseTarget(protein.text),
-            satFatTargetOverride: _parseTarget(satFat.text),
-          ),
-        );
-      } else if (action == 'auto') {
-        notifier.save(
-          profile.copyWith(
-            isConfigured: true,
-            calorieGoalOverride: null,
-            proteinTargetOverride: null,
-            satFatTargetOverride: null,
-          ),
-        );
-      }
+    if (mounted && action == 'save') {
+      ref.read(profileProvider.notifier).save(
+            profile.copyWith(
+              isConfigured: true,
+              calorieGoalOverride: _parseTarget(cal.text),
+              proteinTargetOverride: _parseTarget(protein.text),
+              satFatTargetOverride: _parseTarget(satFat.text),
+            ),
+          );
     }
     cal.dispose();
     protein.dispose();
@@ -304,6 +288,7 @@ class _ProfileStatsCardState extends ConsumerState<_ProfileStatsCard> {
               heightCm: newHeight,
               weightKg: newWeight,
               isConfigured: true,
+              ageManuallySet: true,
             ),
           );
       // Write height + weight back to Apple Health (best-effort).

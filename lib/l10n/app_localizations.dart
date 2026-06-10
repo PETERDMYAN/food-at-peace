@@ -425,13 +425,13 @@ abstract class AppLocalizations {
   /// No description provided for @budgetBreakdown.
   ///
   /// In en, this message translates to:
-  /// **'Resting {resting} · Active {active} · Goal {adjustment}'**
+  /// **'Resting {resting} · Active {active} · Gap {adjustment}'**
   String budgetBreakdown(String resting, String active, String adjustment);
 
   /// No description provided for @budgetBreakdownEst.
   ///
   /// In en, this message translates to:
-  /// **'Est. burn {burn} · Goal {adjustment}'**
+  /// **'Est. burn {burn} · Gap {adjustment}'**
   String budgetBreakdownEst(String burn, String adjustment);
 
   /// No description provided for @protein.

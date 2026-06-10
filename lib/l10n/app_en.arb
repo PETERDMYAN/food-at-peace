@@ -97,7 +97,7 @@
       "adjustment": { "type": "String" }
     }
   },
-  "budgetBreakdown": "Resting {resting} · Active {active} · Goal {adjustment}",
+  "budgetBreakdown": "Resting {resting} · Active {active} · Gap {adjustment}",
   "@budgetBreakdown": {
     "placeholders": {
       "resting": { "type": "String" },
@@ -105,7 +105,7 @@
       "adjustment": { "type": "String" }
     }
   },
-  "budgetBreakdownEst": "Est. burn {burn} · Goal {adjustment}",
+  "budgetBreakdownEst": "Est. burn {burn} · Gap {adjustment}",
   "@budgetBreakdownEst": {
     "placeholders": {
       "burn": { "type": "String" },

@@ -77,6 +77,7 @@ class UserProfile {
     this.calorieGoalOverride,
     this.proteinTargetOverride,
     this.satFatTargetOverride,
+    this.ageManuallySet = false,
   });
 
   final Sex sex;
@@ -86,6 +87,12 @@ class UserProfile {
   final ActivityLevel activity;
   final Goal goal;
   final bool isConfigured;
+
+  /// True once the user has edited age by hand. Apple Health's date of birth is
+  /// a read-only characteristic (can't be written back), so once set we stop
+  /// overwriting age from Health — otherwise the daily refresh would revert the
+  /// manual edit.
+  final bool ageManuallySet;
 
   /// The user's display name, captured from Sign in with Apple on first
   /// sign-in (null until then). Synced with the profile.
@@ -131,6 +138,7 @@ class UserProfile {
     Object? calorieGoalOverride = _keep,
     Object? proteinTargetOverride = _keep,
     Object? satFatTargetOverride = _keep,
+    bool? ageManuallySet,
   }) {
     return UserProfile(
       sex: sex ?? this.sex,
@@ -142,6 +150,7 @@ class UserProfile {
       isConfigured: isConfigured ?? this.isConfigured,
       name: name ?? this.name,
       updatedAt: updatedAt ?? this.updatedAt,
+      ageManuallySet: ageManuallySet ?? this.ageManuallySet,
       calorieGoalOverride: identical(calorieGoalOverride, _keep)
           ? this.calorieGoalOverride
           : (calorieGoalOverride as num?)?.toDouble(),
@@ -167,6 +176,7 @@ class UserProfile {
         'calorieGoalOverride': calorieGoalOverride,
         'proteinTargetOverride': proteinTargetOverride,
         'satFatTargetOverride': satFatTargetOverride,
+        'ageManuallySet': ageManuallySet,
       };
 
   factory UserProfile.fromJson(Map<String, dynamic> json) => UserProfile(
@@ -186,5 +196,6 @@ class UserProfile {
         proteinTargetOverride:
             (json['proteinTargetOverride'] as num?)?.toDouble(),
         satFatTargetOverride: (json['satFatTargetOverride'] as num?)?.toDouble(),
+        ageManuallySet: (json['ageManuallySet'] as bool?) ?? false,
       );
 }

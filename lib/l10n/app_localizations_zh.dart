@@ -191,12 +191,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String budgetBreakdown(String resting, String active, String adjustment) {
-    return '静息 $resting · 活动 $active · 目标 $adjustment';
+    return '静息 $resting · 活动 $active · 缺口 $adjustment';
   }
 
   @override
   String budgetBreakdownEst(String burn, String adjustment) {
-    return '预计消耗 $burn · 目标 $adjustment';
+    return '预计消耗 $burn · 缺口 $adjustment';
   }
 
   @override

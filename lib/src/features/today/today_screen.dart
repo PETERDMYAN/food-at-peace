@@ -5,7 +5,6 @@ import 'package:intl/intl.dart';
 
 import '../../models/daily_summary.dart';
 import '../../models/food_entry.dart';
-import '../../models/user_profile.dart';
 import '../../models/weather.dart';
 import '../../providers/providers.dart';
 import '../../theme/app_theme.dart';
@@ -113,7 +112,10 @@ class TodayScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 12),
                 const _SetupTodos(),
-                _CalorieCard(summary: summary, goal: profile.goal),
+                _CalorieCard(
+                  summary: summary,
+                  gap: profile.calorieGoalOverride ?? profile.goal.calorieAdjustment,
+                ),
                 const SizedBox(height: 12),
                 Row(
                   children: [
@@ -299,10 +301,13 @@ class _DateHeader extends StatelessWidget {
 }
 
 class _CalorieCard extends StatelessWidget {
-  const _CalorieCard({required this.summary, required this.goal});
+  const _CalorieCard({required this.summary, required this.gap});
 
   final DailySummary summary;
-  final Goal goal;
+
+  /// The signed calorie *gap* (override if set, else the goal default) — shown
+  /// as "Gap" and folded into the budget.
+  final double gap;
 
   @override
   Widget build(BuildContext context) {
@@ -310,8 +315,7 @@ class _CalorieCard extends StatelessWidget {
     final text = Theme.of(context).textTheme;
     final over = summary.isOverCalories;
     final remaining = summary.caloriesRemaining;
-    final adj = goal.calorieAdjustment;
-    final adjStr = adj > 0 ? '+${kcal(adj)}' : kcal(adj);
+    final adjStr = gap > 0 ? '+${kcal(gap)}' : kcal(gap);
     final breakdown = summary.usingHealthData
         ? t.budgetBreakdown(
             kcal(summary.bmr),

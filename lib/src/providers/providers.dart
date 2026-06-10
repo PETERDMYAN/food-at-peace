@@ -117,7 +117,9 @@ class ProfileNotifier extends Notifier<UserProfile> {
     final heightCm = await service.readHeightCm();
     final weightKg = await service.readLatestWeightKg();
     var next = state;
-    if (age != null && age != next.age) {
+    // Age from Health's date of birth — but never clobber a manual edit (DOB
+    // can't be written back, so a manual age must win).
+    if (!next.ageManuallySet && age != null && age != next.age) {
       next = next.copyWith(age: age);
     }
     if (heightCm != null && (heightCm - next.heightCm).abs() > 0.5) {

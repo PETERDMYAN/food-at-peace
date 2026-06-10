@@ -225,18 +225,19 @@ class _TrendCard extends StatelessWidget {
           children: [
             Text(
               title,
-              style: theme.textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w600,
+              style: theme.textTheme.labelLarge?.copyWith(
+                color: scheme.onSurfaceVariant,
               ),
             ),
             const SizedBox(height: 2),
             Text(
               t.onTargetDays(metDays, loggedDays),
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: scheme.onSurfaceVariant,
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w800,
+                color: scheme.primary,
               ),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
             Row(
               children: [
                 _LegendSwatch(color: scheme.primary),
