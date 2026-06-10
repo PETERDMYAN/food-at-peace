@@ -19,7 +19,8 @@ for real calories burned, and speaks **English and 中文**. Built with Flutter.
   as a "Finish setting up" checklist on Today.
 - **Today dashboard** — a large time-of-day greeting ("Good evening, …" with an emoji)
   and your local **weather** (animated background reflecting rain/sun/cloud/snow +
-  a temperature/condition chip). A calorie ring (budget = burn + your calorie *gap*),
+  a temperature/condition chip; falls back to an approximate IP location if you
+  decline GPS). A calorie ring (budget = burn + your calorie *gap*),
   protein and saturated-fat cards, and a card of today's workouts.
 - **Add food** — manual entry, or **scan a meal photo** and let Claude estimate the
   calories / protein / saturated fat for you to confirm.
@@ -86,7 +87,8 @@ the system locale by default and persists a manual choice.
 - [x] First-run onboarding (Sign in with Apple or manual name → goal → connect Health)
   plus a "Finish setting up" checklist on Today
 - [x] Today greeting (time-of-day + name) and a location-based animated **weather**
-  header (geolocator + Open-Meteo, no key)
+  header — GPS via geolocator, falling back to an approximate IP lookup when
+  location is denied; conditions from Open-Meteo (no key)
 - [x] Trends — interactive charts (tap / drag to inspect), 1 / 7 / 30-day windows with
   prev/next paging, "on target X/Y" highlight
 - [x] Dark GXS-violet redesign — gradient calorie hero, modern type, floating cards
