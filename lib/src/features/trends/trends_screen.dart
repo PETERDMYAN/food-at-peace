@@ -302,7 +302,7 @@ class _ChartArea extends StatelessWidget {
                         color: scheme.outlineVariant,
                       ),
                     ),
-                    // Bars.
+                    // Bars — vibrant violet gradient; over-cap days go red.
                     Positioned.fill(
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -311,15 +311,23 @@ class _ChartArea extends StatelessWidget {
                             Expanded(
                               child: _BarColumn(
                                 heightFactor: (values[i] / maxY).clamp(0.0, 1.0),
-                                color: cap && values[i] > target
-                                    ? scheme.error
-                                    : scheme.primary,
+                                color: scheme.error,
+                                gradient: cap && values[i] > target
+                                    ? null
+                                    : LinearGradient(
+                                        begin: Alignment.bottomCenter,
+                                        end: Alignment.topCenter,
+                                        colors: [
+                                          scheme.primary,
+                                          scheme.secondary,
+                                        ],
+                                      ),
                               ),
                             ),
                         ],
                       ),
                     ),
-                    // Target line.
+                    // Target line — high-contrast magenta so it reads on dark.
                     Positioned(
                       left: 0,
                       right: 0,
@@ -327,7 +335,7 @@ class _ChartArea extends StatelessWidget {
                       child: SizedBox(
                         height: 2,
                         child: CustomPaint(
-                          painter: _DashedLinePainter(color: scheme.outline),
+                          painter: _DashedLinePainter(color: scheme.tertiary),
                         ),
                       ),
                     ),
@@ -361,10 +369,15 @@ class _ChartArea extends StatelessWidget {
 
 /// A single bottom-anchored bar filling [heightFactor] of the plot height.
 class _BarColumn extends StatelessWidget {
-  const _BarColumn({required this.heightFactor, required this.color});
+  const _BarColumn({
+    required this.heightFactor,
+    required this.color,
+    this.gradient,
+  });
 
   final double heightFactor;
   final Color color;
+  final Gradient? gradient;
 
   @override
   Widget build(BuildContext context) {
@@ -372,11 +385,12 @@ class _BarColumn extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 2),
       child: FractionallySizedBox(
         alignment: Alignment.bottomCenter,
-        heightFactor: heightFactor,
+        heightFactor: heightFactor == 0 ? 0.012 : heightFactor,
         widthFactor: 1,
         child: DecoratedBox(
           decoration: BoxDecoration(
-            color: color,
+            color: gradient == null ? color : null,
+            gradient: gradient,
             borderRadius: const BorderRadius.vertical(top: Radius.circular(3)),
           ),
         ),
@@ -428,8 +442,8 @@ class _DashedLinePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
       ..color = color
-      ..strokeWidth = 1.5;
-    const dash = 5.0, gap = 4.0;
+      ..strokeWidth = 2;
+    const dash = 6.0, gap = 4.0;
     final y = size.height / 2;
     for (var x = 0.0; x < size.width; x += dash + gap) {
       canvas.drawLine(

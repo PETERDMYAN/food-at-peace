@@ -10,7 +10,6 @@ import '../../models/daily_summary.dart';
 import '../../models/user_profile.dart';
 import '../../providers/providers.dart';
 import '../../util/format.dart';
-import '../../util/l10n_labels.dart';
 import '../feedback/feedback_screen.dart';
 
 /// Profile setup (drives all targets), weight log, Claude key, Apple
@@ -23,36 +22,6 @@ class SettingsScreen extends ConsumerStatefulWidget {
 }
 
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
-  late UserProfile _draft;
-  late final TextEditingController _age;
-  late final TextEditingController _height;
-  late final TextEditingController _weight;
-
-  @override
-  void initState() {
-    super.initState();
-    _draft = ref.read(profileProvider);
-    _age = TextEditingController(text: _draft.age.toString());
-    _height = TextEditingController(text: _draft.heightCm.round().toString());
-    _weight = TextEditingController(text: _draft.weightKg.toString());
-  }
-
-  @override
-  void dispose() {
-    _age.dispose();
-    _height.dispose();
-    _weight.dispose();
-    super.dispose();
-  }
-
-  /// Auto-save: persist (and sync) the profile on every edit — there's no Save
-  /// button. `ProfileNotifier.save` bumps `updatedAt`, which the sync engine
-  /// picks up (debounced) and pushes to the backend.
-  void _apply(UserProfile next) {
-    setState(() => _draft = next);
-    ref.read(profileProvider.notifier).save(next.copyWith(isConfigured: true));
-  }
-
   /// Parses a target field: empty/invalid → null (revert to the computed value).
   double? _parseTarget(String v) =>
       v.trim().isEmpty ? null : double.tryParse(v.trim());
@@ -60,9 +29,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   /// Pen-icon editor: override the targets, or reset them to automatic.
   /// Calorie value is the goal *gap* (e.g. -500 / 0 / +400); protein and
   /// saturated fat are absolute targets. Blank → reset to automatic.
-  Future<void> _editTargets(DailySummary summary) async {
+  Future<void> _editTargets(UserProfile profile, DailySummary summary) async {
     final t = AppLocalizations.of(context);
-    final gap = _draft.calorieGoalOverride ?? _draft.goal.calorieAdjustment;
+    final gap = profile.calorieGoalOverride ?? profile.goal.calorieAdjustment;
     final cal = TextEditingController(text: gap.round().toString());
     final protein =
         TextEditingController(text: summary.proteinTarget.round().toString());
@@ -113,17 +82,20 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       ),
     );
     if (mounted) {
+      final notifier = ref.read(profileProvider.notifier);
       if (action == 'save') {
-        _apply(
-          _draft.copyWith(
+        notifier.save(
+          profile.copyWith(
+            isConfigured: true,
             calorieGoalOverride: _parseTarget(cal.text),
             proteinTargetOverride: _parseTarget(protein.text),
             satFatTargetOverride: _parseTarget(satFat.text),
           ),
         );
       } else if (action == 'auto') {
-        _apply(
-          _draft.copyWith(
+        notifier.save(
+          profile.copyWith(
+            isConfigured: true,
             calorieGoalOverride: null,
             proteinTargetOverride: null,
             satFatTargetOverride: null,
@@ -150,83 +122,27 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
+    final scheme = Theme.of(context).colorScheme;
+    final profile = ref.watch(profileProvider);
     // Compute the target exactly like the Today budget so the preview matches it
     // (full-day BMR + measured active when Health is connected, else estimated).
     final summary = DailySummary.compute(
       date: dateOnly(DateTime.now()),
       entries: const [],
-      profile: _draft,
+      profile: profile,
       energyOut: ref.watch(energyOutProvider).asData?.value,
     );
     // The signed goal gap shown as "Calorie gap target" (override, else the
     // goal default: lose -500 / maintain 0 / gain +400).
-    final gap = _draft.calorieGoalOverride ?? _draft.goal.calorieAdjustment;
+    final gap = profile.calorieGoalOverride ?? profile.goal.calorieAdjustment;
     return Scaffold(
       appBar: AppBar(title: Text(t.navSettings)),
       body: ListView(
-        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
         children: [
           Text(t.profile, style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
-          _label(context, t.sex),
-          SegmentedButton<Sex>(
-            segments: Sex.values
-                .map((s) => ButtonSegment(value: s, label: Text(s.labelOf(t))))
-                .toList(),
-            selected: {_draft.sex},
-            showSelectedIcon: false,
-            onSelectionChanged: (s) => _apply(_draft.copyWith(sex: s.first)),
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _age,
-                  keyboardType: TextInputType.number,
-                  onTapOutside: (_) => FocusScope.of(context).unfocus(),
-                  decoration: InputDecoration(labelText: t.age),
-                  onChanged: (v) =>
-                      _apply(_draft.copyWith(age: int.tryParse(v))),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: TextField(
-                  controller: _height,
-                  keyboardType: TextInputType.number,
-                  onTapOutside: (_) => FocusScope.of(context).unfocus(),
-                  decoration: InputDecoration(labelText: t.heightCm),
-                  onChanged: (v) =>
-                      _apply(_draft.copyWith(heightCm: double.tryParse(v))),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: TextField(
-                  controller: _weight,
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
-                  onTapOutside: (_) => FocusScope.of(context).unfocus(),
-                  decoration: InputDecoration(labelText: t.weightKg),
-                  onChanged: (v) =>
-                      _apply(_draft.copyWith(weightKg: double.tryParse(v))),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          _label(context, t.goal),
-          SegmentedButton<Goal>(
-            segments: Goal.values
-                .map((g) => ButtonSegment(value: g, label: Text(g.labelOf(t))))
-                .toList(),
-            selected: {_draft.goal},
-            showSelectedIcon: false,
-            onSelectionChanged: (s) => _apply(_draft.copyWith(goal: s.first)),
-          ),
+          _ProfileStatsCard(profile: profile),
           const SizedBox(height: 16),
           Card(
             child: Padding(
@@ -245,7 +161,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       IconButton(
                         icon: const Icon(Icons.edit_outlined, size: 20),
                         tooltip: t.editTargets,
-                        onPressed: () => _editTargets(summary),
+                        onPressed: () => _editTargets(profile, summary),
                       ),
                     ],
                   ),
@@ -253,16 +169,36 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     t.calorieGapTarget,
                     t.kcalValue(gap > 0 ? '+${kcal(gap)}' : kcal(gap)),
                   ),
-                  Padding(
-                    padding: const EdgeInsets.only(top: 2, bottom: 6),
-                    child: Text(
-                      t.estBurnDailyTarget(
-                        kcal(summary.expenditure),
-                        kcal(summary.computedCalorieTarget),
+                  Container(
+                    margin: const EdgeInsets.only(top: 8, bottom: 6),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: scheme.surfaceContainerHighest.withValues(
+                        alpha: 0.5,
                       ),
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: scheme.outlineVariant),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(
+                          Icons.info_outline,
+                          size: 16,
+                          color: scheme.onSurfaceVariant,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            t.calorieBudgetExplainer,
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(
+                                  color: scheme.onSurfaceVariant,
+                                  height: 1.3,
+                                ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   _statRow(
@@ -290,10 +226,90 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
-  Widget _label(BuildContext context, String text) => Padding(
-    padding: const EdgeInsets.only(bottom: 8),
-    child: Text(text, style: Theme.of(context).textTheme.labelLarge),
-  );
+}
+
+/// Read-only age / height / weight — sourced from Apple Health, refreshed daily.
+class _ProfileStatsCard extends StatelessWidget {
+  const _ProfileStatsCard({required this.profile});
+
+  final UserProfile profile;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    final scheme = Theme.of(context).colorScheme;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: _MiniStat(value: '${profile.age}', label: t.age),
+                ),
+                Expanded(
+                  child: _MiniStat(
+                    value: '${profile.heightCm.round()} cm',
+                    label: t.heightTitle,
+                  ),
+                ),
+                Expanded(
+                  child: _MiniStat(
+                    value: '${kcal(profile.weightKg)} kg',
+                    label: t.weightTitle,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Icon(Icons.sync, size: 13, color: scheme.onSurfaceVariant),
+                const SizedBox(width: 6),
+                Text(
+                  t.syncedFromHealth,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MiniStat extends StatelessWidget {
+  const _MiniStat({required this.value, required this.label});
+
+  final String value;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          value,
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        Text(
+          label,
+          style: theme.textTheme.labelSmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 /// Language selector: follow the system, or force English / Chinese.

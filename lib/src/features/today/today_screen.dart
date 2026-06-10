@@ -36,8 +36,6 @@ class TodayScreen extends ConsumerWidget {
     final profile = ref.watch(profileProvider);
     final date = ref.watch(selectedDateProvider);
     final isToday = isSameDay(date, dateOnly(DateTime.now()));
-    final healthSupported = ref.watch(healthServiceProvider).isSupported;
-    final healthConnected = ref.watch(healthConnectedProvider);
 
     return Scaffold(
       appBar: AppBar(title: Text(greetingTitle(t, profile.name))),
@@ -54,31 +52,8 @@ class TodayScreen extends ConsumerWidget {
             onToday: () => ref.read(selectedDateProvider.notifier).goToToday(),
           ),
           const SizedBox(height: 12),
-          if (!profile.isConfigured) ...[
-            const _ProfilePrompt(),
-            const SizedBox(height: 12),
-          ],
+          const _SetupTodos(),
           _CalorieCard(summary: summary, goal: profile.goal),
-          if (healthSupported && !healthConnected) ...[
-            const SizedBox(height: 12),
-            OutlinedButton.icon(
-              onPressed: () async {
-                final ok = await ref
-                    .read(healthConnectedProvider.notifier)
-                    .connect();
-                if (!context.mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      ok ? t.appleHealthConnected : t.healthNotGranted,
-                    ),
-                  ),
-                );
-              },
-              icon: const Icon(Icons.favorite_outline),
-              label: Text(t.connectHealthGarmin),
-            ),
-          ],
           const SizedBox(height: 12),
           Row(
             children: [
@@ -368,6 +343,10 @@ class _EntryTile extends StatelessWidget {
       ),
       child: Card(
         child: ListTile(
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 6,
+          ),
           title: Text(entry.name),
           subtitle: Text(
             '${entry.mealType.labelOf(t)} · '
@@ -471,30 +450,173 @@ String _fmtDuration(Duration d) {
   return h > 0 ? '${h}h ${m}m' : '${m}m';
 }
 
-class _ProfilePrompt extends StatelessWidget {
-  const _ProfilePrompt();
+/// A "Finish setting up" checklist of whatever onboarding left undone (name,
+/// Apple Health). Renders nothing once everything's done.
+class _SetupTodos extends ConsumerStatefulWidget {
+  const _SetupTodos();
+
+  @override
+  ConsumerState<_SetupTodos> createState() => _SetupTodosState();
+}
+
+class _SetupTodosState extends ConsumerState<_SetupTodos> {
+  bool _healthBusy = false;
+
+  Future<void> _addName() async {
+    final t = AppLocalizations.of(context);
+    final controller = TextEditingController(
+      text: ref.read(profileProvider).name ?? '',
+    );
+    final result = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(t.onboardingNameTitle),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          textCapitalization: TextCapitalization.words,
+          textInputAction: TextInputAction.done,
+          decoration: InputDecoration(labelText: t.onboardingNameLabel),
+          onSubmitted: (v) => Navigator.pop(ctx, v),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(t.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, controller.text),
+            child: Text(t.save),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    final name = result?.trim();
+    if (name != null && name.isNotEmpty) {
+      final p = ref.read(profileProvider);
+      await ref.read(profileProvider.notifier).save(p.copyWith(name: name));
+    }
+  }
+
+  Future<void> _connectHealth() async {
+    setState(() => _healthBusy = true);
+    try {
+      final ok = await ref.read(healthConnectedProvider.notifier).connect();
+      if (!mounted) return;
+      final t = AppLocalizations.of(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(ok ? t.appleHealthConnected : t.healthNotGranted)),
+      );
+    } finally {
+      if (mounted) setState(() => _healthBusy = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
-    return Card(
-      color: scheme.secondaryContainer,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Icon(Icons.info_outline, color: scheme.onSecondaryContainer),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                t.profilePrompt,
-                style: TextStyle(color: scheme.onSecondaryContainer),
+    final profile = ref.watch(profileProvider);
+    final healthSupported = ref.watch(healthServiceProvider).isSupported;
+    final healthConnected = ref.watch(healthConnectedProvider);
+
+    final items = <Widget>[];
+    if (profile.name == null || profile.name!.trim().isEmpty) {
+      items.add(_TodoRow(
+        icon: Icons.person_outline,
+        title: t.todoAddName,
+        subtitle: t.todoAddNameBody,
+        onTap: _addName,
+      ));
+    }
+    if (healthSupported && !healthConnected) {
+      items.add(_TodoRow(
+        icon: Icons.favorite_outline,
+        title: t.connectAppleHealth,
+        subtitle: t.todoConnectHealthBody,
+        busy: _healthBusy,
+        onTap: _healthBusy ? null : _connectHealth,
+      ));
+    }
+    if (items.isEmpty) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Card(
+        color: scheme.secondaryContainer,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 14, 12, 6),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    Icons.checklist_rounded,
+                    size: 18,
+                    color: scheme.onSecondaryContainer,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    t.finishSetup,
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      color: scheme.onSecondaryContainer,
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ],
+              ...items,
+            ],
+          ),
         ),
       ),
+    );
+  }
+}
+
+class _TodoRow extends StatelessWidget {
+  const _TodoRow({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+    this.busy = false,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback? onTap;
+  final bool busy;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    final onColor = scheme.onSecondaryContainer;
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: CircleAvatar(
+        radius: 16,
+        backgroundColor: onColor.withValues(alpha: 0.12),
+        child: Icon(icon, size: 18, color: onColor),
+      ),
+      title: Text(
+        title,
+        style: TextStyle(color: onColor, fontWeight: FontWeight.w600),
+      ),
+      subtitle: Text(
+        subtitle,
+        style: TextStyle(color: onColor.withValues(alpha: 0.8)),
+      ),
+      trailing: busy
+          ? const SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(strokeWidth: 2),
+            )
+          : Icon(Icons.chevron_right, color: onColor),
+      onTap: onTap,
     );
   }
 }

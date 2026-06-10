@@ -21,6 +21,13 @@
   "getStarted": "开始使用",
   "skip": "跳过",
   "back": "返回",
+  "finishSetup": "完成设置",
+  "todoAddName": "添加你的名字",
+  "todoAddNameBody": "以便每天用名字问候你",
+  "todoConnectHealthBody": "同步年龄、身高、体重和卡路里",
+  "syncedFromHealth": "来自 Apple 健康",
+  "heightTitle": "身高",
+  "calorieBudgetExplainer": "每日卡路里预算 = 基础代谢 + 活动消耗 + 卡路里缺口目标。",
 
   "navToday": "今天",
   "navTrends": "趋势",

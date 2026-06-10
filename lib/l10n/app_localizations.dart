@@ -218,6 +218,48 @@ abstract class AppLocalizations {
   /// **'Back'**
   String get back;
 
+  /// No description provided for @finishSetup.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish setting up'**
+  String get finishSetup;
+
+  /// No description provided for @todoAddName.
+  ///
+  /// In en, this message translates to:
+  /// **'Add your name'**
+  String get todoAddName;
+
+  /// No description provided for @todoAddNameBody.
+  ///
+  /// In en, this message translates to:
+  /// **'So the app can greet you each day'**
+  String get todoAddNameBody;
+
+  /// No description provided for @todoConnectHealthBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Sync your age, height, weight & calories'**
+  String get todoConnectHealthBody;
+
+  /// No description provided for @syncedFromHealth.
+  ///
+  /// In en, this message translates to:
+  /// **'Synced from Apple Health'**
+  String get syncedFromHealth;
+
+  /// No description provided for @heightTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Height'**
+  String get heightTitle;
+
+  /// No description provided for @calorieBudgetExplainer.
+  ///
+  /// In en, this message translates to:
+  /// **'Your daily calorie budget = BMR + active burn + calorie gap target.'**
+  String get calorieBudgetExplainer;
+
   /// No description provided for @navToday.
   ///
   /// In en, this message translates to:
