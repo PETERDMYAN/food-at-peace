@@ -226,6 +226,7 @@ class _TrendCard extends StatelessWidget {
               target: target,
               maxY: maxY,
               cap: cap,
+              kcalUnit: kcalUnit,
             ),
           ],
         ),
@@ -234,15 +235,17 @@ class _TrendCard extends StatelessWidget {
   }
 }
 
-/// The plot: y-axis labels, bottom-anchored bars, a dashed target line, and a
-/// sparse row of date labels.
-class _ChartArea extends StatelessWidget {
+/// The plot: y-axis labels, bottom-anchored bars, a dashed target line, a sparse
+/// row of date labels, and touch-to-inspect — tap or drag across the chart to
+/// read a day's value against the target.
+class _ChartArea extends StatefulWidget {
   const _ChartArea({
     required this.days,
     required this.values,
     required this.target,
     required this.maxY,
     required this.cap,
+    required this.kcalUnit,
   });
 
   final List<DateTime> days;
@@ -250,13 +253,30 @@ class _ChartArea extends StatelessWidget {
   final double target;
   final double maxY;
   final bool cap;
+  final bool kcalUnit;
 
+  @override
+  State<_ChartArea> createState() => _ChartAreaState();
+}
+
+class _ChartAreaState extends State<_ChartArea> {
   static const double _plotHeight = 132;
   static const double _yAxisWidth = 34;
   static const double _yAxisGap = 6;
 
+  /// The day the user is inspecting (null = none).
+  int? _selected;
+
+  void _selectAt(double dx, double width) {
+    final n = widget.values.length;
+    if (n == 0 || width <= 0) return;
+    final i = (dx / width * n).floor().clamp(0, n - 1);
+    if (i != _selected) setState(() => _selected = i);
+  }
+
   @override
   Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
     final theme = Theme.of(context);
     final scheme = theme.colorScheme;
     final labelStyle = theme.textTheme.labelSmall?.copyWith(
@@ -265,9 +285,16 @@ class _ChartArea extends StatelessWidget {
 
     final localeName = Localizations.localeOf(context).toLanguageTag();
     final df = DateFormat.Md(localeName);
-    final n = days.length;
+    final dfFull = DateFormat.MMMd(localeName);
+    final values = widget.values;
+    final maxY = widget.maxY;
+    final target = widget.target;
+    final n = widget.days.length;
     final labelled = _labelIndices(n);
     final targetFactor = (target / maxY).clamp(0.0, 1.0);
+
+    String fmt(double v) =>
+        widget.kcalUnit ? t.kcalValue(kcal(v)) : t.gramsValue(kcal(v));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -290,56 +317,83 @@ class _ChartArea extends StatelessWidget {
               ),
               const SizedBox(width: _yAxisGap),
               Expanded(
-                child: Stack(
-                  children: [
-                    // Baseline at zero.
-                    Positioned(
-                      left: 0,
-                      right: 0,
-                      bottom: 0,
-                      child: Container(
-                        height: 1,
-                        color: scheme.outlineVariant,
-                      ),
-                    ),
-                    // Bars — vibrant violet gradient; over-cap days go red.
-                    Positioned.fill(
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                child: LayoutBuilder(
+                  builder: (context, constraints) {
+                    final plotWidth = constraints.maxWidth;
+                    return GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTapUp: (d) => _selectAt(d.localPosition.dx, plotWidth),
+                      onHorizontalDragStart: (d) =>
+                          _selectAt(d.localPosition.dx, plotWidth),
+                      onHorizontalDragUpdate: (d) =>
+                          _selectAt(d.localPosition.dx, plotWidth),
+                      child: Stack(
                         children: [
-                          for (var i = 0; i < n; i++)
-                            Expanded(
-                              child: _BarColumn(
-                                heightFactor: (values[i] / maxY).clamp(0.0, 1.0),
-                                color: scheme.error,
-                                gradient: cap && values[i] > target
-                                    ? null
-                                    : LinearGradient(
-                                        begin: Alignment.bottomCenter,
-                                        end: Alignment.topCenter,
-                                        colors: [
-                                          scheme.primary,
-                                          scheme.secondary,
-                                        ],
-                                      ),
+                          // Baseline at zero.
+                          Positioned(
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            child: Container(
+                              height: 1,
+                              color: scheme.outlineVariant,
+                            ),
+                          ),
+                          // Bars — vibrant violet gradient; over-cap days go red.
+                          Positioned.fill(
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                for (var i = 0; i < n; i++)
+                                  Expanded(
+                                    child: _BarColumn(
+                                      heightFactor:
+                                          (values[i] / maxY).clamp(0.0, 1.0),
+                                      color: scheme.error,
+                                      gradient: widget.cap && values[i] > target
+                                          ? null
+                                          : LinearGradient(
+                                              begin: Alignment.bottomCenter,
+                                              end: Alignment.topCenter,
+                                              colors: [
+                                                scheme.primary,
+                                                scheme.secondary,
+                                              ],
+                                            ),
+                                      dimmed: _selected != null &&
+                                          _selected != i,
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                          // Target line — high-contrast magenta so it reads.
+                          Positioned(
+                            left: 0,
+                            right: 0,
+                            bottom: targetFactor * _plotHeight,
+                            child: SizedBox(
+                              height: 2,
+                              child: CustomPaint(
+                                painter:
+                                    _DashedLinePainter(color: scheme.tertiary),
                               ),
+                            ),
+                          ),
+                          // Touch-to-inspect overlay.
+                          if (_selected != null)
+                            ..._inspectOverlay(
+                              context,
+                              plotWidth,
+                              scheme,
+                              t,
+                              dfFull,
+                              fmt,
                             ),
                         ],
                       ),
-                    ),
-                    // Target line — high-contrast magenta so it reads on dark.
-                    Positioned(
-                      left: 0,
-                      right: 0,
-                      bottom: targetFactor * _plotHeight,
-                      child: SizedBox(
-                        height: 2,
-                        child: CustomPaint(
-                          painter: _DashedLinePainter(color: scheme.tertiary),
-                        ),
-                      ),
-                    ),
-                  ],
+                    );
+                  },
                 ),
               ),
             ],
@@ -355,7 +409,8 @@ class _ChartArea extends StatelessWidget {
                   child: labelled.contains(i)
                       ? FittedBox(
                           fit: BoxFit.scaleDown,
-                          child: Text(df.format(days[i]), style: labelStyle),
+                          child: Text(df.format(widget.days[i]),
+                              style: labelStyle),
                         )
                       : const SizedBox.shrink(),
                 ),
@@ -365,6 +420,91 @@ class _ChartArea extends StatelessWidget {
       ],
     );
   }
+
+  /// Guide line + value dot + a callout for the selected day.
+  List<Widget> _inspectOverlay(
+    BuildContext context,
+    double plotWidth,
+    ColorScheme scheme,
+    AppLocalizations t,
+    DateFormat dfFull,
+    String Function(double) fmt,
+  ) {
+    final i = _selected!;
+    final n = widget.values.length;
+    final value = widget.values[i];
+    final barCenter = (i + 0.5) / n * plotWidth;
+    final heightFactor = (value / widget.maxY).clamp(0.0, 1.0);
+    final over = widget.cap && value > widget.target;
+    final dotColor = over ? scheme.error : scheme.primary;
+
+    const tipW = 120.0;
+    final tipLeft = (barCenter - tipW / 2).clamp(0.0, plotWidth - tipW);
+    final text = Theme.of(context).textTheme;
+
+    return [
+      // Vertical guide line.
+      Positioned(
+        left: barCenter - 0.5,
+        top: 0,
+        bottom: 0,
+        child: Container(
+          width: 1,
+          color: scheme.tertiary.withValues(alpha: 0.55),
+        ),
+      ),
+      // Value dot at the bar top.
+      Positioned(
+        left: barCenter - 4,
+        bottom: heightFactor * _plotHeight - 4,
+        child: Container(
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            shape: BoxShape.circle,
+            border: Border.all(color: dotColor, width: 1.5),
+          ),
+        ),
+      ),
+      // Callout: date · actual value · target.
+      Positioned(
+        left: tipLeft,
+        top: 0,
+        child: Container(
+          width: tipW,
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          decoration: BoxDecoration(
+            color: scheme.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: scheme.outlineVariant),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                dfFull.format(widget.days[i]),
+                style: text.labelSmall?.copyWith(color: scheme.onSurfaceVariant),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                fmt(value),
+                style: text.titleSmall?.copyWith(
+                  color: over ? scheme.error : scheme.onSurface,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              Text(
+                '${t.chartTarget} ${fmt(widget.target)}',
+                style: text.labelSmall?.copyWith(color: scheme.onSurfaceVariant),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ];
+  }
 }
 
 /// A single bottom-anchored bar filling [heightFactor] of the plot height.
@@ -373,11 +513,15 @@ class _BarColumn extends StatelessWidget {
     required this.heightFactor,
     required this.color,
     this.gradient,
+    this.dimmed = false,
   });
 
   final double heightFactor;
   final Color color;
   final Gradient? gradient;
+
+  /// Faded when another bar is being inspected, so the selected one stands out.
+  final bool dimmed;
 
   @override
   Widget build(BuildContext context) {
@@ -387,11 +531,15 @@ class _BarColumn extends StatelessWidget {
         alignment: Alignment.bottomCenter,
         heightFactor: heightFactor,
         widthFactor: 1,
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: gradient == null ? color : null,
-            gradient: gradient,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(3)),
+        child: AnimatedOpacity(
+          duration: const Duration(milliseconds: 120),
+          opacity: dimmed ? 0.4 : 1,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: gradient == null ? color : null,
+              gradient: gradient,
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(3)),
+            ),
           ),
         ),
       ),
