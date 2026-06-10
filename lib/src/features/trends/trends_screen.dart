@@ -81,96 +81,98 @@ class _TrendsScreenState extends ConsumerState<TrendsScreen> {
     final canGoNext = _offset > 0;
 
     return Scaffold(
-      appBar: AppBar(title: Text(t.navTrends)),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
-        children: [
-          Center(
-            child: SegmentedButton<int>(
-              segments: [
-                for (final d in _options)
-                  ButtonSegment(value: d, label: Text(t.daysCount(d))),
-              ],
-              selected: {_period},
-              showSelectedIcon: false,
-              onSelectionChanged: (s) => setState(() {
-                _period = s.first;
-                _offset = 0; // jump back to the present on a period change
-              }),
+      body: SafeArea(
+        bottom: false,
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
+          children: [
+            Center(
+              child: SegmentedButton<int>(
+                segments: [
+                  for (final d in _options)
+                    ButtonSegment(value: d, label: Text(t.daysCount(d))),
+                ],
+                selected: {_period},
+                showSelectedIcon: false,
+                onSelectionChanged: (s) => setState(() {
+                  _period = s.first;
+                  _offset = 0; // jump back to the present on a period change
+                }),
+              ),
             ),
-          ),
-          const SizedBox(height: 8),
-          // Prev / range / next pager.
-          Row(
-            children: [
-              IconButton(
-                onPressed: () => setState(() => _offset++),
-                icon: const Icon(Icons.chevron_left),
-                tooltip: MaterialLocalizations.of(context).previousPageTooltip,
-              ),
-              Expanded(
-                child: Text(
-                  rangeLabel,
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.titleSmall,
+            const SizedBox(height: 8),
+            // Prev / range / next pager.
+            Row(
+              children: [
+                IconButton(
+                  onPressed: () => setState(() => _offset++),
+                  icon: const Icon(Icons.chevron_left),
+                  tooltip: MaterialLocalizations.of(
+                    context,
+                  ).previousPageTooltip,
                 ),
+                Expanded(
+                  child: Text(
+                    rangeLabel,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                ),
+                IconButton(
+                  onPressed: canGoNext ? () => setState(() => _offset--) : null,
+                  icon: const Icon(Icons.chevron_right),
+                  tooltip: MaterialLocalizations.of(context).nextPageTooltip,
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            if (loggedDays == 0)
+              Padding(
+                padding: const EdgeInsets.only(top: 48),
+                child: Text(
+                  t.noTrendsYet,
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              )
+            else ...[
+              _TrendCard(
+                title: t.calories,
+                days: days,
+                values: seriesOf((d) => d.calories),
+                target: target.calorieTarget,
+                metDays: metDays((d) => d.calories, target.calorieTarget, true),
+                loggedDays: loggedDays,
+                kcalUnit: true,
+                cap: true,
               ),
-              IconButton(
-                onPressed: canGoNext
-                    ? () => setState(() => _offset--)
-                    : null,
-                icon: const Icon(Icons.chevron_right),
-                tooltip: MaterialLocalizations.of(context).nextPageTooltip,
+              const SizedBox(height: 16),
+              _TrendCard(
+                title: t.protein,
+                days: days,
+                values: seriesOf((d) => d.protein),
+                target: target.proteinTarget,
+                metDays: metDays((d) => d.protein, target.proteinTarget, false),
+                loggedDays: loggedDays,
+                kcalUnit: false,
+                cap: false,
+              ),
+              const SizedBox(height: 16),
+              _TrendCard(
+                title: t.saturatedFat,
+                days: days,
+                values: seriesOf((d) => d.satFat),
+                target: target.satFatCap,
+                metDays: metDays((d) => d.satFat, target.satFatCap, true),
+                loggedDays: loggedDays,
+                kcalUnit: false,
+                cap: true,
               ),
             ],
-          ),
-          const SizedBox(height: 8),
-          if (loggedDays == 0)
-            Padding(
-              padding: const EdgeInsets.only(top: 48),
-              child: Text(
-                t.noTrendsYet,
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-              ),
-            )
-          else ...[
-            _TrendCard(
-              title: t.calories,
-              days: days,
-              values: seriesOf((d) => d.calories),
-              target: target.calorieTarget,
-              metDays: metDays((d) => d.calories, target.calorieTarget, true),
-              loggedDays: loggedDays,
-              kcalUnit: true,
-              cap: true,
-            ),
-            const SizedBox(height: 16),
-            _TrendCard(
-              title: t.protein,
-              days: days,
-              values: seriesOf((d) => d.protein),
-              target: target.proteinTarget,
-              metDays: metDays((d) => d.protein, target.proteinTarget, false),
-              loggedDays: loggedDays,
-              kcalUnit: false,
-              cap: false,
-            ),
-            const SizedBox(height: 16),
-            _TrendCard(
-              title: t.saturatedFat,
-              days: days,
-              values: seriesOf((d) => d.satFat),
-              target: target.satFatCap,
-              metDays: metDays((d) => d.satFat, target.satFatCap, true),
-              loggedDays: loggedDays,
-              kcalUnit: false,
-              cap: true,
-            ),
           ],
-        ],
+        ),
       ),
     );
   }
@@ -223,21 +225,47 @@ class _TrendCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              title,
-              style: theme.textTheme.labelLarge?.copyWith(
-                color: scheme.onSurfaceVariant,
-              ),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    title,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: scheme.primary.withValues(alpha: 0.16),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.check_circle_rounded,
+                        size: 15,
+                        color: scheme.primary,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        t.onTargetShort(metDays, loggedDays),
+                        style: theme.textTheme.labelLarge?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          color: scheme.primary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 2),
-            Text(
-              t.onTargetDays(metDays, loggedDays),
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w800,
-                color: scheme.primary,
-              ),
-            ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             Row(
               children: [
                 _LegendSwatch(color: scheme.primary),
@@ -528,7 +556,9 @@ class _ChartAreaState extends State<_ChartArea> {
                 DateFormat.MMMd(
                   Localizations.localeOf(context).toLanguageTag(),
                 ).format(widget.days[i]),
-                style: text.labelSmall?.copyWith(color: scheme.onSurfaceVariant),
+                style: text.labelSmall?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
               ),
               const SizedBox(height: 2),
               Text(
@@ -540,7 +570,9 @@ class _ChartAreaState extends State<_ChartArea> {
               ),
               Text(
                 '${t.chartTarget} ${fmt(widget.target)}',
-                style: text.labelSmall?.copyWith(color: scheme.onSurfaceVariant),
+                style: text.labelSmall?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
               ),
             ],
           ),

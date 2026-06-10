@@ -10,6 +10,7 @@ import '../../providers/providers.dart';
 import '../../theme/app_theme.dart';
 import '../../util/format.dart';
 import '../../util/l10n_labels.dart';
+import '../../widgets/icon_tile.dart';
 import 'weather_background.dart';
 
 /// "Good morning / afternoon / evening, {name}" by the local hour, or the app
@@ -114,7 +115,9 @@ class TodayScreen extends ConsumerWidget {
                 const _SetupTodos(),
                 _CalorieCard(
                   summary: summary,
-                  gap: profile.calorieGoalOverride ?? profile.goal.calorieAdjustment,
+                  gap:
+                      profile.calorieGoalOverride ??
+                      profile.goal.calorieAdjustment,
                 ),
                 const SizedBox(height: 12),
                 Row(
@@ -122,7 +125,7 @@ class TodayScreen extends ConsumerWidget {
                     Expanded(
                       child: _MacroCard(
                         label: t.protein,
-                        icon: Icons.egg_alt_outlined,
+                        icon: Icons.egg_alt,
                         consumed: summary.consumedProtein,
                         target: summary.proteinTarget,
                         progress: summary.proteinProgress,
@@ -139,7 +142,7 @@ class TodayScreen extends ConsumerWidget {
                     Expanded(
                       child: _MacroCard(
                         label: t.saturatedFat,
-                        icon: Icons.water_drop_outlined,
+                        icon: Icons.water_drop,
                         consumed: summary.consumedSatFat,
                         target: summary.satFatCap,
                         progress: summary.satFatProgress,
@@ -377,9 +380,21 @@ class _CalorieCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  over ? t.overBudget : t.caloriesLeftToday,
-                  style: text.labelMedium?.copyWith(color: white(0.85)),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.local_fire_department,
+                      size: 16,
+                      color: white(0.95),
+                    ),
+                    const SizedBox(width: 5),
+                    Flexible(
+                      child: Text(
+                        over ? t.overBudget : t.caloriesLeftToday,
+                        style: text.labelMedium?.copyWith(color: white(0.85)),
+                      ),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 2),
                 Text(
@@ -444,8 +459,8 @@ class _MacroCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                Icon(icon, size: 18, color: color),
-                const SizedBox(width: 6),
+                IconTile(icon: icon, color: color, size: 34),
+                const SizedBox(width: 10),
                 Text(label, style: Theme.of(context).textTheme.labelLarge),
               ],
             ),

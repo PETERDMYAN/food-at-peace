@@ -128,6 +128,13 @@
       "total": { "type": "int" }
     }
   },
+  "onTargetShort": "{met}/{total} days",
+  "@onTargetShort": {
+    "placeholders": {
+      "met": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
   "editTargets": "Edit targets",
   "useAutomatic": "Use automatic",
   "targetReached": "Target reached",
