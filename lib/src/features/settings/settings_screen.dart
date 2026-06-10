@@ -234,6 +234,7 @@ class _ProfileStatsCardState extends ConsumerState<_ProfileStatsCard> {
   Future<void> _edit() async {
     final t = AppLocalizations.of(context);
     final p = ref.read(profileProvider);
+    final name = TextEditingController(text: p.name ?? '');
     final age = TextEditingController(text: p.age.toString());
     final height = TextEditingController(text: p.heightCm.round().toString());
     final weight = TextEditingController(
@@ -247,29 +248,38 @@ class _ProfileStatsCardState extends ConsumerState<_ProfileStatsCard> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: Text(t.editProfile),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: age,
-              keyboardType: TextInputType.number,
-              decoration: dec(t.age),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: height,
-              keyboardType: TextInputType.number,
-              decoration: dec(t.heightTitle, 'cm'),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: weight,
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: name,
+                textCapitalization: TextCapitalization.words,
+                textInputAction: TextInputAction.next,
+                decoration: dec(t.nickname),
               ),
-              decoration: dec(t.weightTitle, 'kg'),
-            ),
-          ],
+              const SizedBox(height: 12),
+              TextField(
+                controller: age,
+                keyboardType: TextInputType.number,
+                decoration: dec(t.age),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: height,
+                keyboardType: TextInputType.number,
+                decoration: dec(t.heightTitle, 'cm'),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: weight,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                decoration: dec(t.weightTitle, 'kg'),
+              ),
+            ],
+          ),
         ),
         actions: [
           TextButton(
@@ -285,6 +295,7 @@ class _ProfileStatsCardState extends ConsumerState<_ProfileStatsCard> {
     );
     if (save == true) {
       final p2 = ref.read(profileProvider);
+      final newName = name.text.trim();
       final newAge = int.tryParse(age.text.trim()) ?? p2.age;
       final newHeight = double.tryParse(height.text.trim()) ?? p2.heightCm;
       final newWeight = double.tryParse(weight.text.trim()) ?? p2.weightKg;
@@ -292,6 +303,7 @@ class _ProfileStatsCardState extends ConsumerState<_ProfileStatsCard> {
           .read(profileProvider.notifier)
           .save(
             p2.copyWith(
+              name: newName.isEmpty ? null : newName,
               age: newAge,
               heightCm: newHeight,
               weightKg: newWeight,
@@ -306,6 +318,7 @@ class _ProfileStatsCardState extends ConsumerState<_ProfileStatsCard> {
         unawaited(svc.writeHeight(newHeight));
       }
     }
+    name.dispose();
     age.dispose();
     height.dispose();
     weight.dispose();
@@ -337,6 +350,30 @@ class _ProfileStatsCardState extends ConsumerState<_ProfileStatsCard> {
                 ),
               ],
             ),
+            Row(
+              children: [
+                Icon(
+                  Icons.person_outline,
+                  size: 18,
+                  color: scheme.onSurfaceVariant,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    (profile.name?.trim().isNotEmpty ?? false)
+                        ? profile.name!.trim()
+                        : t.todoAddName,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: (profile.name?.trim().isNotEmpty ?? false)
+                          ? null
+                          : scheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
             Padding(
               padding: const EdgeInsets.only(right: 8),
               child: Row(
