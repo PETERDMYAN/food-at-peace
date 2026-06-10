@@ -43,17 +43,14 @@ for real calories burned, and speaks **English and 中文**. Built with Flutter.
 - **Feedback** — an in-app form that submits to a Google Form.
 
 ## How the targets work
-- **Calorie budget:** a full day's resting energy (Mifflin-St Jeor BMR) + the
-  active energy you've burned (measured via Apple Health, or 0 when it isn't
-  connected) + your calorie **gap** (the goal default — lose −500, maintain 0, gain
-  +400 — or a custom value). When Health isn't connected the resting + active part is
-  replaced by BMR × activity multiplier. Calories left = budget − eaten; the budget
-  stays stable through the day so you can plan meals against it. Settings shows this as
-  the **Calorie gap target** and lets you edit the calorie gap, protein target, and
-  saturated-fat cap directly.
-- **Burn** (shown beneath the budget) is your *actual* expenditure so far today —
-  measured resting + active energy from Apple Health — so it climbs as the day goes
-  on, independent of the budget.
+- **Calorie budget = BMR + active + gap.** A full day's resting energy
+  (Mifflin-St Jeor BMR) + the active energy you've burned (measured via Apple
+  Health, or 0 when there's no reading yet / it isn't connected) + your calorie
+  **gap** (the goal default — lose −500, maintain 0, gain +400 — or a custom
+  value). Calories left = budget − eaten; the full-day resting part keeps it
+  stable while it grows as you move. Settings shows this as the **Calorie gap
+  target** and lets you edit the calorie gap, protein target, and saturated-fat
+  cap directly.
 - **Protein:** 1.6 g per kg of bodyweight.
 - **Saturated fat:** capped at 10% of the calorie target (US Dietary Guidelines).
 

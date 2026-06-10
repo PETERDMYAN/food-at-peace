@@ -27,7 +27,7 @@ void main() {
     expect(summary.calorieTarget, closeTo(2198.75, 0.01)); // maintain
   });
 
-  test('falls back to estimated TDEE when no health data', () {
+  test('no health data → budget is BMR + gap (active 0)', () {
     final summary = DailySummary.compute(
       date: DateTime(2026, 1, 1),
       entries: const [],
@@ -35,7 +35,9 @@ void main() {
     );
     expect(summary.usingHealthData, isFalse);
     expect(summary.activeEnergy, 0);
-    expect(summary.expenditure, closeTo(1698.75 * 1.55, 0.01));
+    // No activity-multiplier estimate: budget = BMR + 0 active + maintain(0).
+    expect(summary.calorieTarget, closeTo(1698.75, 0.01));
+    expect(summary.computedCalorieTarget, closeTo(1698.75, 0.01));
   });
 
   test('lose goal subtracts 500 from measured expenditure', () {
@@ -59,12 +61,12 @@ void main() {
         satFatTargetOverride: 25,
       ),
     );
-    // No health → budget base = estimated TDEE (1698.75 * 1.55); target = base + gap.
-    expect(summary.calorieTarget, closeTo(1698.75 * 1.55 - 300, 0.01));
+    // No health → budget base = BMR (1698.75); target = base + gap.
+    expect(summary.calorieTarget, closeTo(1698.75 - 300, 0.01));
     expect(summary.proteinTarget, 150);
     expect(summary.satFatCap, 25);
     // The default-gap (computed) target stays available for the reference text.
-    expect(summary.computedCalorieTarget, closeTo(1698.75 * 1.55, 0.01));
+    expect(summary.computedCalorieTarget, closeTo(1698.75, 0.01));
   });
 
   test('budget uses full-day BMR even when a device reports partial resting', () {

@@ -87,30 +87,18 @@ class DailySummary {
     }
 
     final bmr = NutritionMath.mifflinStJeorBmr(profile);
-    final double expenditure; // actual burn so far — shown as "Burn"
-    final double budgetBase; // full-day expenditure the budget is built on
-    final double active;
-    final bool usingHealth;
-    if (energyOut != null) {
-      active = energyOut.activeEnergy;
-      // "Burn" is what's actually been spent so far today: measured resting
-      // (basal) energy to date — or the estimated BMR if no device reported it —
-      // plus measured active energy.
-      final restingSoFar = energyOut.restingEnergy ?? bmr;
-      expenditure = restingSoFar + active;
-      // The budget is built on a *full day's* resting energy (BMR) so it stays
-      // stable through the day for planning, plus the active energy burned.
-      budgetBase = NutritionMath.measuredExpenditure(
-        bmr: bmr,
-        activeEnergy: active,
-      );
-      usingHealth = true;
-    } else {
-      active = 0;
-      expenditure = NutritionMath.estimatedTdee(profile);
-      budgetBase = expenditure;
-      usingHealth = false;
-    }
+    // The budget is always a full day's resting energy (BMR) + the active
+    // energy burned (measured via Apple Health, or 0 when there's no reading
+    // yet / it isn't connected). It stays stable through the day and grows as
+    // you move — no activity-multiplier estimate.
+    final active = energyOut?.activeEnergy ?? 0;
+    final budgetBase = bmr + active;
+    // "Burn so far": measured resting to date + active when Health has data,
+    // else the resting baseline (BMR).
+    final expenditure = energyOut != null
+        ? (energyOut.restingEnergy ?? bmr) + active
+        : bmr;
+    final usingHealth = energyOut != null;
 
     final computedCal = NutritionMath.calorieTarget(
       expenditure: budgetBase,

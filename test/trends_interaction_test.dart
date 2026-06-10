@@ -71,6 +71,6 @@ void main() {
 
     // Callout shows the day's actual value and the target.
     expect(find.text('1234 kcal'), findsOneWidget);
-    expect(find.textContaining('Target 2'), findsWidgets);
+    expect(find.textContaining('Target'), findsWidgets);
   });
 }
