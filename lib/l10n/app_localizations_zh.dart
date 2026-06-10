@@ -78,6 +78,27 @@ class AppLocalizationsZh extends AppLocalizations {
   String get back => '返回';
 
   @override
+  String get finishSetup => '完成设置';
+
+  @override
+  String get todoAddName => '添加你的名字';
+
+  @override
+  String get todoAddNameBody => '以便每天用名字问候你';
+
+  @override
+  String get todoConnectHealthBody => '同步年龄、身高、体重和卡路里';
+
+  @override
+  String get syncedFromHealth => '来自 Apple 健康';
+
+  @override
+  String get heightTitle => '身高';
+
+  @override
+  String get calorieBudgetExplainer => '每日卡路里预算 = 基础代谢 + 活动消耗 + 卡路里缺口目标。';
+
+  @override
   String get navToday => '今天';
 
   @override

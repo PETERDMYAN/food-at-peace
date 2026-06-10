@@ -82,6 +82,29 @@ class AppLocalizationsEn extends AppLocalizations {
   String get back => 'Back';
 
   @override
+  String get finishSetup => 'Finish setting up';
+
+  @override
+  String get todoAddName => 'Add your name';
+
+  @override
+  String get todoAddNameBody => 'So the app can greet you each day';
+
+  @override
+  String get todoConnectHealthBody =>
+      'Sync your age, height, weight & calories';
+
+  @override
+  String get syncedFromHealth => 'Synced from Apple Health';
+
+  @override
+  String get heightTitle => 'Height';
+
+  @override
+  String get calorieBudgetExplainer =>
+      'Your daily calorie budget = BMR + active burn + calorie gap target.';
+
+  @override
   String get navToday => 'Today';
 
   @override

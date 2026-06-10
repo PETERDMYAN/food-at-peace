@@ -33,6 +33,13 @@
   "getStarted": "Get started",
   "skip": "Skip",
   "back": "Back",
+  "finishSetup": "Finish setting up",
+  "todoAddName": "Add your name",
+  "todoAddNameBody": "So the app can greet you each day",
+  "todoConnectHealthBody": "Sync your age, height, weight & calories",
+  "syncedFromHealth": "Synced from Apple Health",
+  "heightTitle": "Height",
+  "calorieBudgetExplainer": "Your daily calorie budget = BMR + active burn + calorie gap target.",
 
   "navToday": "Today",
   "navTrends": "Trends",
