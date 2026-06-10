@@ -63,6 +63,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get editProfile => 'Edit profile';
 
   @override
+  String get nickname => 'Nickname';
+
+  @override
   String get onboardingWelcomeTitle => 'Welcome to\nFood at Peace';
 
   @override

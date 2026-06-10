@@ -194,6 +194,12 @@ abstract class AppLocalizations {
   /// **'Edit profile'**
   String get editProfile;
 
+  /// No description provided for @nickname.
+  ///
+  /// In en, this message translates to:
+  /// **'Nickname'**
+  String get nickname;
+
   /// No description provided for @onboardingWelcomeTitle.
   ///
   /// In en, this message translates to:

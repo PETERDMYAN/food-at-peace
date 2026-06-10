@@ -28,8 +28,8 @@ for real calories burned, and speaks **English and 中文**. Built with Flutter.
   led by a prominent "on target X/Y days" stat. Switch between **1 / 7 / 30-day**
   windows, page to earlier windows with prev/next, and tap or drag a chart to read
   any day's value against the target.
-- **Settings** — profile (age / height / weight, synced from Apple Health and editable
-  via a pen — edits write height + weight back to Health), editable targets (calorie
+- **Settings** — profile (editable **nickname** + age / height / weight, synced from
+  Apple Health — edits write height + weight back to Health), editable targets (calorie
   gap, protein, saturated-fat cap), account & sync, Apple Health connection, language,
   and feedback.
 - **Apple Health / Garmin** — reads active + resting energy, weight, height, and date

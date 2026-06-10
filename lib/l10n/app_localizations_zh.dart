@@ -63,6 +63,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get editProfile => '编辑资料';
 
   @override
+  String get nickname => '昵称';
+
+  @override
   String get onboardingWelcomeTitle => '欢迎使用\nFood at Peace';
 
   @override
