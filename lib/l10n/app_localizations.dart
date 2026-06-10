@@ -254,6 +254,30 @@ abstract class AppLocalizations {
   /// **'Target'**
   String get chartTarget;
 
+  /// No description provided for @daysCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count}d'**
+  String daysCount(int count);
+
+  /// No description provided for @onTargetDays.
+  ///
+  /// In en, this message translates to:
+  /// **'On target {met}/{total} days'**
+  String onTargetDays(int met, int total);
+
+  /// No description provided for @editTargets.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit targets'**
+  String get editTargets;
+
+  /// No description provided for @useAutomatic.
+  ///
+  /// In en, this message translates to:
+  /// **'Use automatic'**
+  String get useAutomatic;
+
   /// No description provided for @targetReached.
   ///
   /// In en, this message translates to:

@@ -107,6 +107,22 @@ class AppLocalizationsZh extends AppLocalizations {
   String get chartTarget => '目标';
 
   @override
+  String daysCount(int count) {
+    return '$count天';
+  }
+
+  @override
+  String onTargetDays(int met, int total) {
+    return '$total 天中 $met 天达标';
+  }
+
+  @override
+  String get editTargets => '编辑目标';
+
+  @override
+  String get useAutomatic => '使用自动计算';
+
+  @override
   String get targetReached => '已达目标';
 
   @override

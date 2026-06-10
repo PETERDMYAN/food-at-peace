@@ -11,14 +11,20 @@ import '../../util/format.dart';
 
 /// Trends: daily charts comparing actual intake against the current target for
 /// calories, protein, and saturated fat over the recent days.
-class TrendsScreen extends ConsumerWidget {
+class TrendsScreen extends ConsumerStatefulWidget {
   const TrendsScreen({super.key});
 
-  /// How many days the charts span, ending today (inclusive).
-  static const _windowDays = 14;
+  @override
+  ConsumerState<TrendsScreen> createState() => _TrendsScreenState();
+}
+
+class _TrendsScreenState extends ConsumerState<TrendsScreen> {
+  /// Selectable windows (days), ending today (inclusive).
+  static const _options = [7, 14, 30];
+  int _days = 30;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
     final entries = ref.watch(visibleFoodEntriesProvider);
     final profile = ref.watch(profileProvider);
@@ -32,30 +38,9 @@ class TrendsScreen extends ConsumerWidget {
       acc.satFat += e.satFatG;
     }
 
-    if (totals.isEmpty) {
-      return Scaffold(
-        appBar: AppBar(title: Text(t.navTrends)),
-        body: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(32),
-            child: Text(
-              t.noTrendsYet,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ),
-        ),
-      );
-    }
-
-    // Continuous daily axis: from the first logged day (capped to the window)
-    // through today.
+    // Continuous daily axis: the selected window ending today (inclusive).
     final today = dateOnly(DateTime.now());
-    final firstLogged = totals.keys.reduce((a, b) => a.isBefore(b) ? a : b);
-    final windowStart = today.subtract(const Duration(days: _windowDays - 1));
-    final start = firstLogged.isAfter(windowStart) ? firstLogged : windowStart;
+    final start = today.subtract(Duration(days: _days - 1));
     final days = <DateTime>[
       for (var d = start; !d.isAfter(today); d = d.add(const Duration(days: 1)))
         d,
@@ -70,41 +55,82 @@ class TrendsScreen extends ConsumerWidget {
       profile: profile,
     );
 
+    final loggedDays = days.where((d) => totals[d] != null).length;
     List<double> seriesOf(double Function(_DayTotals) pick) => [
       for (final d in days) totals[d] == null ? 0.0 : pick(totals[d]!),
     ];
+    // Days (with food logged) where the target was met: under the cap for
+    // calories / saturated fat, at-or-above for protein.
+    int metDays(double Function(_DayTotals) pick, double tgt, bool cap) =>
+        days.where((d) {
+          final tot = totals[d];
+          if (tot == null) return false;
+          final v = pick(tot);
+          return cap ? v <= tgt : v >= tgt;
+        }).length;
 
     return Scaffold(
       appBar: AppBar(title: Text(t.navTrends)),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
         children: [
-          _TrendCard(
-            title: t.calories,
-            days: days,
-            values: seriesOf((d) => d.calories),
-            target: target.calorieTarget,
-            kcalUnit: true,
-            cap: true,
+          Center(
+            child: SegmentedButton<int>(
+              segments: [
+                for (final d in _options)
+                  ButtonSegment(value: d, label: Text(t.daysCount(d))),
+              ],
+              selected: {_days},
+              showSelectedIcon: false,
+              onSelectionChanged: (s) => setState(() => _days = s.first),
+            ),
           ),
           const SizedBox(height: 16),
-          _TrendCard(
-            title: t.protein,
-            days: days,
-            values: seriesOf((d) => d.protein),
-            target: target.proteinTarget,
-            kcalUnit: false,
-            cap: false,
-          ),
-          const SizedBox(height: 16),
-          _TrendCard(
-            title: t.saturatedFat,
-            days: days,
-            values: seriesOf((d) => d.satFat),
-            target: target.satFatCap,
-            kcalUnit: false,
-            cap: true,
-          ),
+          if (loggedDays == 0)
+            Padding(
+              padding: const EdgeInsets.only(top: 48),
+              child: Text(
+                t.noTrendsYet,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+            )
+          else ...[
+            _TrendCard(
+              title: t.calories,
+              days: days,
+              values: seriesOf((d) => d.calories),
+              target: target.calorieTarget,
+              metDays: metDays((d) => d.calories, target.calorieTarget, true),
+              loggedDays: loggedDays,
+              kcalUnit: true,
+              cap: true,
+            ),
+            const SizedBox(height: 16),
+            _TrendCard(
+              title: t.protein,
+              days: days,
+              values: seriesOf((d) => d.protein),
+              target: target.proteinTarget,
+              metDays: metDays((d) => d.protein, target.proteinTarget, false),
+              loggedDays: loggedDays,
+              kcalUnit: false,
+              cap: false,
+            ),
+            const SizedBox(height: 16),
+            _TrendCard(
+              title: t.saturatedFat,
+              days: days,
+              values: seriesOf((d) => d.satFat),
+              target: target.satFatCap,
+              metDays: metDays((d) => d.satFat, target.satFatCap, true),
+              loggedDays: loggedDays,
+              kcalUnit: false,
+              cap: true,
+            ),
+          ],
         ],
       ),
     );
@@ -125,6 +151,8 @@ class _TrendCard extends StatelessWidget {
     required this.days,
     required this.values,
     required this.target,
+    required this.metDays,
+    required this.loggedDays,
     required this.kcalUnit,
     required this.cap,
   });
@@ -133,6 +161,10 @@ class _TrendCard extends StatelessWidget {
   final List<DateTime> days;
   final List<double> values;
   final double target;
+
+  /// Days on target, out of the days with food logged in the window.
+  final int metDays;
+  final int loggedDays;
 
   /// Whether the metric is measured in kcal (vs grams) — for label formatting.
   final bool kcalUnit;
@@ -163,6 +195,13 @@ class _TrendCard extends StatelessWidget {
               title,
               style: theme.textTheme.titleSmall?.copyWith(
                 fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              t.onTargetDays(metDays, loggedDays),
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: scheme.onSurfaceVariant,
               ),
             ),
             const SizedBox(height: 6),

@@ -78,6 +78,19 @@
   "calories": "Calories",
   "chartActual": "Actual",
   "chartTarget": "Target",
+  "daysCount": "{count}d",
+  "@daysCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "onTargetDays": "On target {met}/{total} days",
+  "@onTargetDays": {
+    "placeholders": {
+      "met": { "type": "int" },
+      "total": { "type": "int" }
+    }
+  },
+  "editTargets": "Edit targets",
+  "useAutomatic": "Use automatic",
   "targetReached": "Target reached",
   "toGo": "{amount} to go",
   "@toGo": {

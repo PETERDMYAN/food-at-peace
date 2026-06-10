@@ -107,6 +107,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get chartTarget => 'Target';
 
   @override
+  String daysCount(int count) {
+    return '${count}d';
+  }
+
+  @override
+  String onTargetDays(int met, int total) {
+    return 'On target $met/$total days';
+  }
+
+  @override
+  String get editTargets => 'Edit targets';
+
+  @override
+  String get useAutomatic => 'Use automatic';
+
+  @override
   String get targetReached => 'Target reached';
 
   @override
