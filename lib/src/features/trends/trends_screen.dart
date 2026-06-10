@@ -211,7 +211,7 @@ class _TrendCard extends StatelessWidget {
                 const SizedBox(width: 5),
                 Text(t.chartActual, style: theme.textTheme.labelSmall),
                 const SizedBox(width: 16),
-                _LegendDash(color: scheme.outline),
+                _LegendDash(color: scheme.tertiary),
                 const SizedBox(width: 5),
                 Text(
                   '${t.chartTarget} · $targetText',
@@ -385,7 +385,7 @@ class _BarColumn extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 2),
       child: FractionallySizedBox(
         alignment: Alignment.bottomCenter,
-        heightFactor: heightFactor == 0 ? 0.012 : heightFactor,
+        heightFactor: heightFactor,
         widthFactor: 1,
         child: DecoratedBox(
           decoration: BoxDecoration(
