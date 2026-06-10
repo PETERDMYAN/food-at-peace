@@ -58,12 +58,12 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       v.trim().isEmpty ? null : double.tryParse(v.trim());
 
   /// Pen-icon editor: override the targets, or reset them to automatic.
-  /// Calories are stored as a goal gap (typed absolute − burn); protein and
-  /// saturated fat are absolute.
-  Future<void> _editTargets(DailySummary summary, double budgetBase) async {
+  /// Calorie value is the goal *gap* (e.g. -500 / 0 / +400); protein and
+  /// saturated fat are absolute targets. Blank → reset to automatic.
+  Future<void> _editTargets(DailySummary summary) async {
     final t = AppLocalizations.of(context);
-    final cal =
-        TextEditingController(text: summary.calorieTarget.round().toString());
+    final gap = _draft.calorieGoalOverride ?? _draft.goal.calorieAdjustment;
+    final cal = TextEditingController(text: gap.round().toString());
     final protein =
         TextEditingController(text: summary.proteinTarget.round().toString());
     final satFat =
@@ -80,7 +80,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             TextField(
               controller: cal,
               keyboardType: TextInputType.number,
-              decoration: dec(t.dailyCalorieTarget, 'kcal'),
+              decoration: dec(t.calorieGapTarget, 'kcal'),
             ),
             const SizedBox(height: 12),
             TextField(
@@ -114,10 +114,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
     if (mounted) {
       if (action == 'save') {
-        final calAbs = _parseTarget(cal.text);
         _apply(
           _draft.copyWith(
-            calorieGoalOverride: calAbs == null ? null : calAbs - budgetBase,
+            calorieGoalOverride: _parseTarget(cal.text),
             proteinTargetOverride: _parseTarget(protein.text),
             satFatTargetOverride: _parseTarget(satFat.text),
           ),
@@ -159,10 +158,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       profile: _draft,
       energyOut: ref.watch(energyOutProvider).asData?.value,
     );
-    // The calorie field edits an absolute target but stores a *goal gap*
-    // (target − burn), so it tracks future burn changes like the goal does.
-    final budgetBase =
-        summary.computedCalorieTarget - _draft.goal.calorieAdjustment;
+    // The signed goal gap shown as "Calorie gap target" (override, else the
+    // goal default: lose -500 / maintain 0 / gain +400).
+    final gap = _draft.calorieGoalOverride ?? _draft.goal.calorieAdjustment;
     return Scaffold(
       appBar: AppBar(title: Text(t.navSettings)),
       body: ListView(
@@ -170,7 +168,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
         children: [
           Text(t.profile, style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           _label(context, t.sex),
           SegmentedButton<Sex>(
             segments: Sex.values
@@ -180,7 +178,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             showSelectedIcon: false,
             onSelectionChanged: (s) => _apply(_draft.copyWith(sex: s.first)),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 10),
           Row(
             children: [
               Expanded(
@@ -219,7 +217,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 10),
           _label(context, t.goal),
           SegmentedButton<Goal>(
             segments: Goal.values
@@ -229,7 +227,7 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             showSelectedIcon: false,
             onSelectionChanged: (s) => _apply(_draft.copyWith(goal: s.first)),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
           Card(
             child: Padding(
               padding: const EdgeInsets.all(16),
@@ -247,13 +245,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       IconButton(
                         icon: const Icon(Icons.edit_outlined, size: 20),
                         tooltip: t.editTargets,
-                        onPressed: () => _editTargets(summary, budgetBase),
+                        onPressed: () => _editTargets(summary),
                       ),
                     ],
                   ),
                   _statRow(
-                    t.dailyCalorieTarget,
-                    t.kcalValue(kcal(summary.calorieTarget)),
+                    t.calorieGapTarget,
+                    t.kcalValue(gap > 0 ? '+${kcal(gap)}' : kcal(gap)),
                   ),
                   Padding(
                     padding: const EdgeInsets.only(top: 2, bottom: 6),

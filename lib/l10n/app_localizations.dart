@@ -560,6 +560,12 @@ abstract class AppLocalizations {
   /// **'Daily calorie target'**
   String get dailyCalorieTarget;
 
+  /// No description provided for @calorieGapTarget.
+  ///
+  /// In en, this message translates to:
+  /// **'Calorie gap target'**
+  String get calorieGapTarget;
+
   /// No description provided for @estBurnDailyTarget.
   ///
   /// In en, this message translates to:

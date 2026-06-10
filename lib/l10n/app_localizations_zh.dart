@@ -276,6 +276,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get dailyCalorieTarget => '每日卡路里目标';
 
   @override
+  String get calorieGapTarget => '卡路里缺口目标';
+
+  @override
   String estBurnDailyTarget(String burn, String target) {
     return '预计消耗 $burn · 每日目标 $target';
   }

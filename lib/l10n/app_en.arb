@@ -171,6 +171,7 @@
   "restingBurn": "Resting burn (BMR)",
   "estDailyBurn": "Est. daily burn",
   "dailyCalorieTarget": "Daily calorie target",
+  "calorieGapTarget": "Calorie gap target",
   "estBurnDailyTarget": "Est. burn {burn} · Daily target {target}",
   "@estBurnDailyTarget": {
     "placeholders": {
