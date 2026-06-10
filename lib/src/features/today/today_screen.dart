@@ -319,13 +319,12 @@ class _CalorieCard extends StatelessWidget {
     final over = summary.isOverCalories;
     final remaining = summary.caloriesRemaining;
     final adjStr = gap > 0 ? '+${kcal(gap)}' : kcal(gap);
-    final breakdown = summary.usingHealthData
-        ? t.budgetBreakdown(
-            kcal(summary.bmr),
-            kcal(summary.activeEnergy),
-            adjStr,
-          )
-        : t.budgetBreakdownEst(kcal(summary.expenditure), adjStr);
+    // Budget = resting (BMR) + active + gap, always.
+    final breakdown = t.budgetBreakdown(
+      kcal(summary.bmr),
+      kcal(summary.activeEnergy),
+      adjStr,
+    );
     // GXS-style gradient hero — white content on the brand violet→magenta.
     Color white(double a) => Colors.white.withValues(alpha: a);
 
