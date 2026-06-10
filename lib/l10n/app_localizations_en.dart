@@ -197,12 +197,12 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String budgetBreakdown(String resting, String active, String adjustment) {
-    return 'Resting $resting · Active $active · Goal $adjustment';
+    return 'Resting $resting · Active $active · Gap $adjustment';
   }
 
   @override
   String budgetBreakdownEst(String burn, String adjustment) {
-    return 'Est. burn $burn · Goal $adjustment';
+    return 'Est. burn $burn · Gap $adjustment';
   }
 
   @override
