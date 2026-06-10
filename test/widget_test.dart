@@ -26,8 +26,8 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    // Unique chrome on the Today screen.
-    expect(find.text('Food at Peace'), findsOneWidget);
+    // Unique chrome on the Today screen: the greeting header + the FAB.
+    expect(find.textContaining('Good '), findsOneWidget);
     expect(find.text('Add food'), findsOneWidget);
 
     // Navigation destinations (labels may also appear in off-stage app bars).

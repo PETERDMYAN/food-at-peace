@@ -45,6 +45,11 @@ abstract interface class HealthService {
 
   /// Writes a body-weight reading (kg) at [when]. Returns whether it succeeded.
   Future<bool> writeWeight(double kg, DateTime when);
+
+  /// Writes a height reading (cm). Returns whether it succeeded. (Apple Health
+  /// stores date of birth as a read-only characteristic, so age can't be
+  /// written back.)
+  Future<bool> writeHeight(double cm);
 }
 
 /// Platform-appropriate instance (real on mobile, stub on web).

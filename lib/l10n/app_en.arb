@@ -13,6 +13,18 @@
   "@greetEvening": {
     "placeholders": { "name": { "type": "String" } }
   },
+  "goodMorning": "Good morning",
+  "goodAfternoon": "Good afternoon",
+  "goodEvening": "Good evening",
+  "weatherClear": "Clear",
+  "weatherPartlyCloudy": "Partly cloudy",
+  "weatherCloudy": "Cloudy",
+  "weatherFog": "Fog",
+  "weatherDrizzle": "Drizzle",
+  "weatherRain": "Rain",
+  "weatherSnow": "Snow",
+  "weatherThunder": "Thunderstorm",
+  "editProfile": "Edit profile",
 
   "onboardingWelcomeTitle": "Welcome to\nFood at Peace",
   "onboardingWelcomeBody": "Track calories and macros with a calm, simple daily view.",

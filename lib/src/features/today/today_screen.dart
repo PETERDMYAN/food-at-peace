@@ -6,10 +6,12 @@ import 'package:intl/intl.dart';
 import '../../models/daily_summary.dart';
 import '../../models/food_entry.dart';
 import '../../models/user_profile.dart';
+import '../../models/weather.dart';
 import '../../providers/providers.dart';
 import '../../theme/app_theme.dart';
 import '../../util/format.dart';
 import '../../util/l10n_labels.dart';
+import 'weather_background.dart';
 
 /// "Good morning / afternoon / evening, {name}" by the local hour, or the app
 /// title when there's no name yet.
@@ -21,6 +23,47 @@ String greetingTitle(AppLocalizations t, String? name) {
   if (hour < 18) return t.greetAfternoon(n);
   return t.greetEvening(n);
 }
+
+/// The greeting line for the Today header — uses the name when known, else a
+/// plain greeting (no trailing comma).
+String greetingLine(AppLocalizations t, String? name) {
+  final n = name?.trim();
+  final hasName = n != null && n.isNotEmpty;
+  final hour = DateTime.now().hour;
+  if (hour < 12) return hasName ? t.greetMorning(n) : t.goodMorning;
+  if (hour < 18) return hasName ? t.greetAfternoon(n) : t.goodAfternoon;
+  return hasName ? t.greetEvening(n) : t.goodEvening;
+}
+
+/// Time-of-day emoji that leads the greeting.
+String greetingEmoji() {
+  final hour = DateTime.now().hour;
+  if (hour < 12) return '🌅';
+  if (hour < 18) return '☀️';
+  return '🌙';
+}
+
+String weatherEmoji(WeatherCondition c, bool isDay) => switch (c) {
+  WeatherCondition.clear => isDay ? '☀️' : '🌙',
+  WeatherCondition.partlyCloudy => isDay ? '⛅' : '☁️',
+  WeatherCondition.cloudy => '☁️',
+  WeatherCondition.fog => '🌫️',
+  WeatherCondition.drizzle => '🌦️',
+  WeatherCondition.rain => '🌧️',
+  WeatherCondition.snow => '❄️',
+  WeatherCondition.thunder => '⛈️',
+};
+
+String weatherLabel(AppLocalizations t, WeatherCondition c) => switch (c) {
+  WeatherCondition.clear => t.weatherClear,
+  WeatherCondition.partlyCloudy => t.weatherPartlyCloudy,
+  WeatherCondition.cloudy => t.weatherCloudy,
+  WeatherCondition.fog => t.weatherFog,
+  WeatherCondition.drizzle => t.weatherDrizzle,
+  WeatherCondition.rain => t.weatherRain,
+  WeatherCondition.snow => t.weatherSnow,
+  WeatherCondition.thunder => t.weatherThunder,
+};
 
 /// The dashboard: calories remaining, protein & saturated-fat quotas, and the
 /// day's logged food.
@@ -36,74 +79,178 @@ class TodayScreen extends ConsumerWidget {
     final profile = ref.watch(profileProvider);
     final date = ref.watch(selectedDateProvider);
     final isToday = isSameDay(date, dateOnly(DateTime.now()));
+    final weather = ref.watch(weatherProvider).asData?.value;
 
     return Scaffold(
-      appBar: AppBar(title: Text(greetingTitle(t, profile.name))),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
+      body: Stack(
         children: [
-          _DateHeader(
-            date: date,
-            isToday: isToday,
-            onPrev: () => ref.read(selectedDateProvider.notifier).shiftDays(-1),
-            onNext: isToday
-                ? null
-                : () => ref.read(selectedDateProvider.notifier).shiftDays(1),
-            onToday: () => ref.read(selectedDateProvider.notifier).goToToday(),
-          ),
-          const SizedBox(height: 12),
-          const _SetupTodos(),
-          _CalorieCard(summary: summary, goal: profile.goal),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: _MacroCard(
-                  label: t.protein,
-                  icon: Icons.egg_alt_outlined,
-                  consumed: summary.consumedProtein,
-                  target: summary.proteinTarget,
-                  progress: summary.proteinProgress,
-                  footer: summary.hitProtein
-                      ? t.targetReached
-                      : t.toGo(t.gramsValue(kcal(summary.proteinRemaining))),
-                  over: false,
-                  accent: scheme.primary,
-                ),
+          if (weather != null)
+            Positioned.fill(
+              child: WeatherBackground(
+                condition: weather.condition,
+                isDay: weather.isDay,
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _MacroCard(
-                  label: t.saturatedFat,
-                  icon: Icons.water_drop_outlined,
-                  consumed: summary.consumedSatFat,
-                  target: summary.satFatCap,
-                  progress: summary.satFatProgress,
-                  footer: summary.isOverSatFat
-                      ? t.overBy(t.gramsValue(kcal(-summary.satFatRemaining)))
-                      : t.amountLeft(
-                          t.gramsValue(kcal(summary.satFatRemaining)),
-                        ),
-                  over: summary.isOverSatFat,
-                  accent: scheme.tertiary,
+            ),
+          SafeArea(
+            bottom: false,
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
+              children: [
+                _GreetingHeader(name: profile.name, weather: weather),
+                const SizedBox(height: 16),
+                _DateHeader(
+                  date: date,
+                  isToday: isToday,
+                  onPrev: () =>
+                      ref.read(selectedDateProvider.notifier).shiftDays(-1),
+                  onNext: isToday
+                      ? null
+                      : () => ref
+                            .read(selectedDateProvider.notifier)
+                            .shiftDays(1),
+                  onToday: () =>
+                      ref.read(selectedDateProvider.notifier).goToToday(),
                 ),
+                const SizedBox(height: 12),
+                const _SetupTodos(),
+                _CalorieCard(summary: summary, goal: profile.goal),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: _MacroCard(
+                        label: t.protein,
+                        icon: Icons.egg_alt_outlined,
+                        consumed: summary.consumedProtein,
+                        target: summary.proteinTarget,
+                        progress: summary.proteinProgress,
+                        footer: summary.hitProtein
+                            ? t.targetReached
+                            : t.toGo(
+                                t.gramsValue(kcal(summary.proteinRemaining)),
+                              ),
+                        over: false,
+                        accent: scheme.primary,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _MacroCard(
+                        label: t.saturatedFat,
+                        icon: Icons.water_drop_outlined,
+                        consumed: summary.consumedSatFat,
+                        target: summary.satFatCap,
+                        progress: summary.satFatProgress,
+                        footer: summary.isOverSatFat
+                            ? t.overBy(
+                                t.gramsValue(kcal(-summary.satFatRemaining)),
+                              )
+                            : t.amountLeft(
+                                t.gramsValue(kcal(summary.satFatRemaining)),
+                              ),
+                        over: summary.isOverSatFat,
+                        accent: scheme.tertiary,
+                      ),
+                    ),
+                  ],
+                ),
+                const _WorkoutsCard(),
+                const SizedBox(height: 20),
+                Text(
+                  t.todaysFood,
+                  style: Theme.of(context).textTheme.titleMedium,
+                ),
+                const SizedBox(height: 8),
+                if (entries.isEmpty)
+                  const _EmptyState()
+                else
+                  ...entries.map(
+                    (e) => _EntryTile(
+                      entry: e,
+                      onDelete: () =>
+                          ref.read(foodEntriesProvider.notifier).remove(e.id),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Big time-of-day greeting with an emoji, plus the local weather chip.
+class _GreetingHeader extends StatelessWidget {
+  const _GreetingHeader({required this.name, required this.weather});
+
+  final String? name;
+  final Weather? weather;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    final text = Theme.of(context).textTheme;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Expanded(
+          child: Text(
+            '${greetingEmoji()} ${greetingLine(t, name)}',
+            style: text.headlineMedium?.copyWith(
+              fontWeight: FontWeight.w800,
+              height: 1.1,
+            ),
+          ),
+        ),
+        if (weather != null) ...[
+          const SizedBox(width: 10),
+          _WeatherChip(weather!),
+        ],
+      ],
+    );
+  }
+}
+
+class _WeatherChip extends StatelessWidget {
+  const _WeatherChip(this.weather);
+
+  final Weather weather;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    final scheme = Theme.of(context).colorScheme;
+    final text = Theme.of(context).textTheme;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerHigh.withValues(alpha: 0.75),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: scheme.outlineVariant),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                weatherEmoji(weather.condition, weather.isDay),
+                style: const TextStyle(fontSize: 16),
+              ),
+              const SizedBox(width: 4),
+              Text(
+                '${weather.tempC.round()}°',
+                style: text.titleMedium?.copyWith(fontWeight: FontWeight.w700),
               ),
             ],
           ),
-          const _WorkoutsCard(),
-          const SizedBox(height: 20),
-          Text(t.todaysFood, style: Theme.of(context).textTheme.titleMedium),
-          const SizedBox(height: 8),
-          if (entries.isEmpty)
-            const _EmptyState()
-          else
-            ...entries.map(
-              (e) => _EntryTile(
-                entry: e,
-                onDelete: () =>
-                    ref.read(foodEntriesProvider.notifier).remove(e.id),
-              ),
-            ),
+          Text(
+            weatherLabel(t, weather.condition),
+            style: text.labelSmall?.copyWith(color: scheme.onSurfaceVariant),
+          ),
         ],
       ),
     );
@@ -506,7 +653,9 @@ class _SetupTodosState extends ConsumerState<_SetupTodos> {
       if (!mounted) return;
       final t = AppLocalizations.of(context);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(ok ? t.appleHealthConnected : t.healthNotGranted)),
+        SnackBar(
+          content: Text(ok ? t.appleHealthConnected : t.healthNotGranted),
+        ),
       );
     } finally {
       if (mounted) setState(() => _healthBusy = false);
@@ -523,21 +672,25 @@ class _SetupTodosState extends ConsumerState<_SetupTodos> {
 
     final items = <Widget>[];
     if (profile.name == null || profile.name!.trim().isEmpty) {
-      items.add(_TodoRow(
-        icon: Icons.person_outline,
-        title: t.todoAddName,
-        subtitle: t.todoAddNameBody,
-        onTap: _addName,
-      ));
+      items.add(
+        _TodoRow(
+          icon: Icons.person_outline,
+          title: t.todoAddName,
+          subtitle: t.todoAddNameBody,
+          onTap: _addName,
+        ),
+      );
     }
     if (healthSupported && !healthConnected) {
-      items.add(_TodoRow(
-        icon: Icons.favorite_outline,
-        title: t.connectAppleHealth,
-        subtitle: t.todoConnectHealthBody,
-        busy: _healthBusy,
-        onTap: _healthBusy ? null : _connectHealth,
-      ));
+      items.add(
+        _TodoRow(
+          icon: Icons.favorite_outline,
+          title: t.connectAppleHealth,
+          subtitle: t.todoConnectHealthBody,
+          busy: _healthBusy,
+          onTap: _healthBusy ? null : _connectHealth,
+        ),
+      );
     }
     if (items.isEmpty) return const SizedBox.shrink();
 
