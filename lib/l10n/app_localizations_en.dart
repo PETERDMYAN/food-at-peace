@@ -27,6 +27,61 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get onboardingWelcomeTitle => 'Welcome to\nFood at Peace';
+
+  @override
+  String get onboardingWelcomeBody =>
+      'Track calories and macros with a calm, simple daily view.';
+
+  @override
+  String get onboardingNameTitle => 'What should we call you?';
+
+  @override
+  String get onboardingNameBody =>
+      'Sign in with Apple to bring your name in, or just type it. We\'ll greet you by name each day.';
+
+  @override
+  String get onboardingNameLabel => 'Your name';
+
+  @override
+  String get onboardingNameManual => 'Or enter it manually';
+
+  @override
+  String get onboardingGoalTitle => 'What\'s your goal?';
+
+  @override
+  String get onboardingGoalBody =>
+      'This sets your daily calorie gap. You can change it anytime.';
+
+  @override
+  String get onboardingHealthTitle => 'Connect Apple Health';
+
+  @override
+  String get onboardingHealthBody =>
+      'We\'ll read your age, height, weight and calories burned from Apple Health (including Garmin) to keep your targets accurate — refreshed daily.';
+
+  @override
+  String get onboardingHealthConnected =>
+      'Connected — your stats will stay in sync.';
+
+  @override
+  String perDayKcal(String value) {
+    return '$value kcal/day';
+  }
+
+  @override
+  String get continueLabel => 'Continue';
+
+  @override
+  String get getStarted => 'Get started';
+
+  @override
+  String get skip => 'Skip';
+
+  @override
+  String get back => 'Back';
+
+  @override
   String get navToday => 'Today';
 
   @override

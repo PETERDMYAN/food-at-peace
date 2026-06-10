@@ -20,6 +20,8 @@ class HealthKitService implements HealthService {
     HealthDataType.ACTIVE_ENERGY_BURNED,
     HealthDataType.BASAL_ENERGY_BURNED,
     HealthDataType.WEIGHT,
+    HealthDataType.HEIGHT,
+    HealthDataType.BIRTH_DATE,
     HealthDataType.WORKOUT,
     HealthDataType.DIETARY_ENERGY_CONSUMED,
     HealthDataType.DIETARY_PROTEIN_CONSUMED,
@@ -30,6 +32,8 @@ class HealthKitService implements HealthService {
     HealthDataAccess.READ, // active energy
     HealthDataAccess.READ, // basal energy
     HealthDataAccess.READ_WRITE, // weight (read latest + log new)
+    HealthDataAccess.READ, // height
+    HealthDataAccess.READ, // date of birth (→ age)
     HealthDataAccess.READ, // workouts
     HealthDataAccess.WRITE, // dietary energy
     HealthDataAccess.WRITE, // dietary protein
@@ -130,6 +134,66 @@ class HealthKitService implements HealthService {
     for (final p in points) {
       final value = p.value;
       if (value is NumericHealthValue) return value.numericValue.toDouble();
+    }
+    return null;
+  }
+
+  @override
+  Future<int?> readAge() async {
+    if (!isSupported) return null;
+    await _health.configure();
+    final now = DateTime.now();
+    final List<HealthDataPoint> points;
+    try {
+      // BIRTH_DATE is a HealthKit characteristic; the date range is ignored
+      // natively, but the API requires one.
+      points = await _health.getHealthDataFromTypes(
+        types: const [HealthDataType.BIRTH_DATE],
+        startTime: DateTime(1900),
+        endTime: now,
+      );
+    } catch (_) {
+      return null;
+    }
+    for (final p in points) {
+      final value = p.value;
+      if (value is! NumericHealthValue) continue;
+      // Native returns the DOB as seconds since the Unix epoch.
+      final dob = DateTime.fromMillisecondsSinceEpoch(
+        (value.numericValue.toDouble() * 1000).round(),
+      );
+      var age = now.year - dob.year;
+      final hadBirthday = now.month > dob.month ||
+          (now.month == dob.month && now.day >= dob.day);
+      if (!hadBirthday) age--;
+      if (age > 0 && age < 120) return age;
+    }
+    return null;
+  }
+
+  @override
+  Future<double?> readHeightCm() async {
+    if (!isSupported) return null;
+    await _health.configure();
+    final now = DateTime.now();
+    final List<HealthDataPoint> points;
+    try {
+      points = await _health.getHealthDataFromTypes(
+        types: const [HealthDataType.HEIGHT],
+        startTime: now.subtract(const Duration(days: 3650)),
+        endTime: now,
+      );
+    } catch (_) {
+      return null;
+    }
+    if (points.isEmpty) return null;
+    points.sort((a, b) => b.dateTo.compareTo(a.dateTo));
+    for (final p in points) {
+      final value = p.value;
+      if (value is! NumericHealthValue) continue;
+      // HEIGHT comes back in metres.
+      final meters = value.numericValue.toDouble();
+      if (meters > 0) return meters * 100;
     }
     return null;
   }

@@ -7,6 +7,7 @@ import '../../models/daily_summary.dart';
 import '../../models/food_entry.dart';
 import '../../models/user_profile.dart';
 import '../../providers/providers.dart';
+import '../../theme/app_theme.dart';
 import '../../util/format.dart';
 import '../../util/l10n_labels.dart';
 
@@ -29,6 +30,7 @@ class TodayScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final t = AppLocalizations.of(context);
+    final scheme = Theme.of(context).colorScheme;
     final summary = ref.watch(dailySummaryProvider);
     final entries = ref.watch(entriesForSelectedDayProvider);
     final profile = ref.watch(profileProvider);
@@ -36,15 +38,6 @@ class TodayScreen extends ConsumerWidget {
     final isToday = isSameDay(date, dateOnly(DateTime.now()));
     final healthSupported = ref.watch(healthServiceProvider).isSupported;
     final healthConnected = ref.watch(healthConnectedProvider);
-
-    // Keep profile weight in sync with the latest Apple Health reading
-    // (e.g. a Garmin/Fitdays smart-scale entry).
-    ref.listen<AsyncValue<double?>>(latestWeightProvider, (_, next) {
-      final w = next.asData?.value;
-      if (w != null && (w - profile.weightKg).abs() > 0.1) {
-        ref.read(profileProvider.notifier).save(profile.copyWith(weightKg: w));
-      }
-    });
 
     return Scaffold(
       appBar: AppBar(title: Text(greetingTitle(t, profile.name))),
@@ -100,6 +93,7 @@ class TodayScreen extends ConsumerWidget {
                       ? t.targetReached
                       : t.toGo(t.gramsValue(kcal(summary.proteinRemaining))),
                   over: false,
+                  accent: scheme.primary,
                 ),
               ),
               const SizedBox(width: 12),
@@ -116,6 +110,7 @@ class TodayScreen extends ConsumerWidget {
                           t.gramsValue(kcal(summary.satFatRemaining)),
                         ),
                   over: summary.isOverSatFat,
+                  accent: scheme.tertiary,
                 ),
               ),
             ],
@@ -190,10 +185,9 @@ class _CalorieCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
-    final scheme = Theme.of(context).colorScheme;
+    final text = Theme.of(context).textTheme;
     final over = summary.isOverCalories;
     final remaining = summary.caloriesRemaining;
-    final accent = over ? scheme.error : scheme.primary;
     final adj = goal.calorieAdjustment;
     final adjStr = adj > 0 ? '+${kcal(adj)}' : kcal(adj);
     final breakdown = summary.usingHealthData
@@ -203,79 +197,88 @@ class _CalorieCard extends StatelessWidget {
             adjStr,
           )
         : t.budgetBreakdownEst(kcal(summary.expenditure), adjStr);
+    // GXS-style gradient hero — white content on the brand violet→magenta.
+    Color white(double a) => Colors.white.withValues(alpha: a);
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Row(
-          children: [
-            SizedBox(
-              width: 96,
-              height: 96,
-              child: Stack(
-                alignment: Alignment.center,
-                children: [
-                  SizedBox(
-                    width: 96,
-                    height: 96,
-                    child: CircularProgressIndicator(
-                      value: 1,
-                      strokeWidth: 9,
-                      color: scheme.surfaceContainerHighest,
-                    ),
+    return Container(
+      decoration: BoxDecoration(
+        gradient: AppTheme.brandGradient,
+        borderRadius: BorderRadius.circular(26),
+        boxShadow: [
+          BoxShadow(
+            color: AppTheme.magenta.withValues(alpha: 0.28),
+            blurRadius: 24,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(20),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 96,
+            height: 96,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                SizedBox(
+                  width: 96,
+                  height: 96,
+                  child: CircularProgressIndicator(
+                    value: 1,
+                    strokeWidth: 9,
+                    color: white(0.25),
                   ),
-                  SizedBox(
-                    width: 96,
-                    height: 96,
-                    child: CircularProgressIndicator(
-                      value: summary.calorieProgress,
-                      strokeWidth: 9,
-                      color: accent,
-                    ),
+                ),
+                SizedBox(
+                  width: 96,
+                  height: 96,
+                  child: CircularProgressIndicator(
+                    value: summary.calorieProgress,
+                    strokeWidth: 9,
+                    color: Colors.white,
                   ),
-                  Text(
-                    '${(summary.calorieProgress * 100).round()}%',
-                    style: Theme.of(context).textTheme.labelLarge,
-                  ),
-                ],
-              ),
+                ),
+                Text(
+                  '${(summary.calorieProgress * 100).round()}%',
+                  style: text.labelLarge?.copyWith(color: Colors.white),
+                ),
+              ],
             ),
-            const SizedBox(width: 20),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    over ? t.overBudget : t.caloriesLeftToday,
-                    style: Theme.of(context).textTheme.labelMedium,
+          ),
+          const SizedBox(width: 20),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  over ? t.overBudget : t.caloriesLeftToday,
+                  style: text.labelMedium?.copyWith(color: white(0.85)),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  kcal(remaining.abs()),
+                  style: text.displaySmall?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    kcal(remaining.abs()),
-                    style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                      color: accent,
-                      fontWeight: FontWeight.bold,
-                    ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  t.budgetEaten(
+                    kcal(summary.calorieTarget),
+                    kcal(summary.consumedCalories),
                   ),
-                  const SizedBox(height: 6),
-                  Text(
-                    t.budgetEaten(
-                      kcal(summary.calorieTarget),
-                      kcal(summary.consumedCalories),
-                    ),
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                  Text(
-                    breakdown,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: scheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ),
+                  style: text.bodySmall?.copyWith(color: white(0.9)),
+                ),
+                Text(
+                  breakdown,
+                  style: text.bodySmall?.copyWith(color: white(0.75)),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -290,6 +293,7 @@ class _MacroCard extends StatelessWidget {
     required this.progress,
     required this.footer,
     required this.over,
+    required this.accent,
   });
 
   final String label;
@@ -299,12 +303,13 @@ class _MacroCard extends StatelessWidget {
   final double progress;
   final String footer;
   final bool over;
+  final Color accent;
 
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
-    final color = over ? scheme.error : scheme.primary;
+    final color = over ? scheme.error : accent;
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),

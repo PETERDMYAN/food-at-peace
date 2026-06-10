@@ -14,6 +14,26 @@
     "placeholders": { "name": { "type": "String" } }
   },
 
+  "onboardingWelcomeTitle": "Welcome to\nFood at Peace",
+  "onboardingWelcomeBody": "Track calories and macros with a calm, simple daily view.",
+  "onboardingNameTitle": "What should we call you?",
+  "onboardingNameBody": "Sign in with Apple to bring your name in, or just type it. We'll greet you by name each day.",
+  "onboardingNameLabel": "Your name",
+  "onboardingNameManual": "Or enter it manually",
+  "onboardingGoalTitle": "What's your goal?",
+  "onboardingGoalBody": "This sets your daily calorie gap. You can change it anytime.",
+  "onboardingHealthTitle": "Connect Apple Health",
+  "onboardingHealthBody": "We'll read your age, height, weight and calories burned from Apple Health (including Garmin) to keep your targets accurate — refreshed daily.",
+  "onboardingHealthConnected": "Connected — your stats will stay in sync.",
+  "perDayKcal": "{value} kcal/day",
+  "@perDayKcal": {
+    "placeholders": { "value": { "type": "String" } }
+  },
+  "continueLabel": "Continue",
+  "getStarted": "Get started",
+  "skip": "Skip",
+  "back": "Back",
+
   "navToday": "Today",
   "navTrends": "Trends",
   "navSettings": "Settings",

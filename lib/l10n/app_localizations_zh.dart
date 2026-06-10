@@ -27,6 +27,57 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get onboardingWelcomeTitle => '欢迎使用\nFood at Peace';
+
+  @override
+  String get onboardingWelcomeBody => '用简洁平静的每日视图记录卡路里与营养。';
+
+  @override
+  String get onboardingNameTitle => '怎么称呼你？';
+
+  @override
+  String get onboardingNameBody => '用 Apple 登录即可带入你的名字，或直接输入。我们每天都会用名字问候你。';
+
+  @override
+  String get onboardingNameLabel => '你的名字';
+
+  @override
+  String get onboardingNameManual => '或手动输入';
+
+  @override
+  String get onboardingGoalTitle => '你的目标是什么？';
+
+  @override
+  String get onboardingGoalBody => '这将设置你的每日卡路里缺口，随时可以更改。';
+
+  @override
+  String get onboardingHealthTitle => '连接 Apple 健康';
+
+  @override
+  String get onboardingHealthBody =>
+      '我们会从 Apple 健康（含 Garmin）读取你的年龄、身高、体重和消耗的卡路里，让目标保持准确——每日刷新。';
+
+  @override
+  String get onboardingHealthConnected => '已连接——你的数据将保持同步。';
+
+  @override
+  String perDayKcal(String value) {
+    return '$value 千卡/天';
+  }
+
+  @override
+  String get continueLabel => '继续';
+
+  @override
+  String get getStarted => '开始使用';
+
+  @override
+  String get skip => '跳过';
+
+  @override
+  String get back => '返回';
+
+  @override
   String get navToday => '今天';
 
   @override
