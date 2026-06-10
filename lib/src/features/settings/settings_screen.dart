@@ -27,9 +27,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   late final TextEditingController _age;
   late final TextEditingController _height;
   late final TextEditingController _weight;
-  late final TextEditingController _calTarget;
-  late final TextEditingController _proteinTarget;
-  late final TextEditingController _satFatTarget;
 
   @override
   void initState() {
@@ -38,18 +35,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     _age = TextEditingController(text: _draft.age.toString());
     _height = TextEditingController(text: _draft.heightCm.round().toString());
     _weight = TextEditingController(text: _draft.weightKg.toString());
-    // Seed the target fields with the effective values (a manual override, else
-    // the auto-computed target) so each shows a sensible default to edit.
-    final s = DailySummary.compute(
-      date: dateOnly(DateTime.now()),
-      entries: const [],
-      profile: _draft,
-      energyOut: ref.read(energyOutProvider).asData?.value,
-    );
-    _calTarget = TextEditingController(text: s.calorieTarget.round().toString());
-    _proteinTarget =
-        TextEditingController(text: s.proteinTarget.round().toString());
-    _satFatTarget = TextEditingController(text: s.satFatCap.round().toString());
   }
 
   @override
@@ -57,9 +42,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     _age.dispose();
     _height.dispose();
     _weight.dispose();
-    _calTarget.dispose();
-    _proteinTarget.dispose();
-    _satFatTarget.dispose();
     super.dispose();
   }
 
@@ -74,6 +56,97 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   /// Parses a target field: empty/invalid → null (revert to the computed value).
   double? _parseTarget(String v) =>
       v.trim().isEmpty ? null : double.tryParse(v.trim());
+
+  /// Pen-icon editor: override the targets, or reset them to automatic.
+  /// Calories are stored as a goal gap (typed absolute − burn); protein and
+  /// saturated fat are absolute.
+  Future<void> _editTargets(DailySummary summary, double budgetBase) async {
+    final t = AppLocalizations.of(context);
+    final cal =
+        TextEditingController(text: summary.calorieTarget.round().toString());
+    final protein =
+        TextEditingController(text: summary.proteinTarget.round().toString());
+    final satFat =
+        TextEditingController(text: summary.satFatCap.round().toString());
+    InputDecoration dec(String label, String suffix) =>
+        InputDecoration(labelText: label, suffixText: suffix);
+    final action = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(t.editTargets),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: cal,
+              keyboardType: TextInputType.number,
+              decoration: dec(t.dailyCalorieTarget, 'kcal'),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: protein,
+              keyboardType: TextInputType.number,
+              decoration: dec(t.proteinTargetLabel, 'g'),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: satFat,
+              keyboardType: TextInputType.number,
+              decoration: dec(t.satFatCap, 'g'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, 'auto'),
+            child: Text(t.useAutomatic),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, 'cancel'),
+            child: Text(t.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, 'save'),
+            child: Text(t.save),
+          ),
+        ],
+      ),
+    );
+    if (mounted) {
+      if (action == 'save') {
+        final calAbs = _parseTarget(cal.text);
+        _apply(
+          _draft.copyWith(
+            calorieGoalOverride: calAbs == null ? null : calAbs - budgetBase,
+            proteinTargetOverride: _parseTarget(protein.text),
+            satFatTargetOverride: _parseTarget(satFat.text),
+          ),
+        );
+      } else if (action == 'auto') {
+        _apply(
+          _draft.copyWith(
+            calorieGoalOverride: null,
+            proteinTargetOverride: null,
+            satFatTargetOverride: null,
+          ),
+        );
+      }
+    }
+    cal.dispose();
+    protein.dispose();
+    satFat.dispose();
+  }
+
+  Widget _statRow(String label, String value) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 4),
+    child: Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(label),
+        Text(value, style: const TextStyle(fontWeight: FontWeight.w600)),
+      ],
+    ),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -163,31 +236,27 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    t.yourTargets,
-                    style: Theme.of(context).textTheme.titleSmall,
-                  ),
-                  const SizedBox(height: 4),
-                  TextField(
-                    controller: _calTarget,
-                    keyboardType: TextInputType.number,
-                    onTapOutside: (_) => FocusScope.of(context).unfocus(),
-                    decoration: InputDecoration(
-                      labelText: t.dailyCalorieTarget,
-                      suffixText: 'kcal',
-                    ),
-                    onChanged: (v) {
-                      final abs = _parseTarget(v);
-                      _apply(
-                        _draft.copyWith(
-                          calorieGoalOverride:
-                              abs == null ? null : abs - budgetBase,
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          t.yourTargets,
+                          style: Theme.of(context).textTheme.titleSmall,
                         ),
-                      );
-                    },
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.edit_outlined, size: 20),
+                        tooltip: t.editTargets,
+                        onPressed: () => _editTargets(summary, budgetBase),
+                      ),
+                    ],
+                  ),
+                  _statRow(
+                    t.dailyCalorieTarget,
+                    t.kcalValue(kcal(summary.calorieTarget)),
                   ),
                   Padding(
-                    padding: const EdgeInsets.only(top: 4, bottom: 4),
+                    padding: const EdgeInsets.only(top: 2, bottom: 6),
                     child: Text(
                       t.estBurnDailyTarget(
                         kcal(summary.expenditure),
@@ -198,42 +267,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                       ),
                     ),
                   ),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _proteinTarget,
-                          keyboardType: TextInputType.number,
-                          onTapOutside: (_) => FocusScope.of(context).unfocus(),
-                          decoration: InputDecoration(
-                            labelText: t.proteinTargetLabel,
-                            suffixText: 'g',
-                          ),
-                          onChanged: (v) => _apply(
-                            _draft.copyWith(
-                              proteinTargetOverride: _parseTarget(v),
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: TextField(
-                          controller: _satFatTarget,
-                          keyboardType: TextInputType.number,
-                          onTapOutside: (_) => FocusScope.of(context).unfocus(),
-                          decoration: InputDecoration(
-                            labelText: t.satFatCap,
-                            suffixText: 'g',
-                          ),
-                          onChanged: (v) => _apply(
-                            _draft.copyWith(
-                              satFatTargetOverride: _parseTarget(v),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
+                  _statRow(
+                    t.proteinTargetLabel,
+                    t.gramsValue(kcal(summary.proteinTarget)),
+                  ),
+                  _statRow(
+                    t.satFatCap,
+                    t.gramsValue(kcal(summary.satFatCap)),
                   ),
                 ],
               ),
@@ -241,8 +281,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           const SizedBox(height: 24),
           const _AccountCard(),
-          const SizedBox(height: 12),
-          const _WeightCard(),
           const SizedBox(height: 12),
           const _HealthCard(),
           const SizedBox(height: 12),
@@ -258,111 +296,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     padding: const EdgeInsets.only(bottom: 8),
     child: Text(text, style: Theme.of(context).textTheme.labelLarge),
   );
-}
-
-String _fmtKg(double kg) => kg.toStringAsFixed(1);
-
-/// Logs body weight and shows recent readings.
-class _WeightCard extends ConsumerWidget {
-  const _WeightCard();
-
-  Future<void> _logWeight(BuildContext context, WidgetRef ref) async {
-    final t = AppLocalizations.of(context);
-    final controller = TextEditingController(
-      text: _fmtKg(ref.read(profileProvider).weightKg),
-    );
-    final result = await showDialog<double>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(t.logWeight),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          keyboardType: const TextInputType.numberWithOptions(decimal: true),
-          decoration: InputDecoration(
-            labelText: t.weightKg,
-            hintText: t.enterWeight,
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(t.cancel),
-          ),
-          FilledButton(
-            onPressed: () =>
-                Navigator.pop(ctx, double.tryParse(controller.text.trim())),
-            child: Text(t.save),
-          ),
-        ],
-      ),
-    );
-    if (result == null || result <= 0) return;
-    await ref.read(weightEntriesProvider.notifier).add(result);
-    if (!context.mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(t.weightSaved)));
-  }
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final t = AppLocalizations.of(context);
-    final scheme = Theme.of(context).colorScheme;
-    final entries = ref.watch(visibleWeightEntriesProvider);
-    final localeName = Localizations.localeOf(context).toLanguageTag();
-    final latest = entries.isNotEmpty
-        ? entries.first.kg
-        : ref.watch(profileProvider).weightKg;
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.monitor_weight_outlined, color: scheme.primary),
-                const SizedBox(width: 8),
-                Text(
-                  t.weightTitle,
-                  style: Theme.of(context).textTheme.titleSmall,
-                ),
-                const Spacer(),
-                Text(
-                  t.weightKgValue(_fmtKg(latest)),
-                  style: Theme.of(context).textTheme.titleSmall,
-                ),
-              ],
-            ),
-            for (final e in entries.take(5))
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      DateFormat.yMMMd(localeName).format(e.timestamp),
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                    Text(
-                      t.weightKgValue(_fmtKg(e.kg)),
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                  ],
-                ),
-              ),
-            const SizedBox(height: 12),
-            FilledButton.icon(
-              onPressed: () => _logWeight(context, ref),
-              icon: const Icon(Icons.add),
-              label: Text(t.logWeight),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }
 
 /// Language selector: follow the system, or force English / Chinese.
