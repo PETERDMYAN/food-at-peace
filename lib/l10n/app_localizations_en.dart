@@ -231,6 +231,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String onTargetShort(int met, int total) {
+    return '$met/$total days';
+  }
+
+  @override
   String get editTargets => 'Edit targets';
 
   @override

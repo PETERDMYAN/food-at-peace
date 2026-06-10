@@ -476,6 +476,12 @@ abstract class AppLocalizations {
   /// **'On target {met}/{total} days'**
   String onTargetDays(int met, int total);
 
+  /// No description provided for @onTargetShort.
+  ///
+  /// In en, this message translates to:
+  /// **'{met}/{total} days'**
+  String onTargetShort(int met, int total);
+
   /// No description provided for @editTargets.
   ///
   /// In en, this message translates to:

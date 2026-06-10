@@ -12,6 +12,7 @@ import '../../models/daily_summary.dart';
 import '../../models/user_profile.dart';
 import '../../providers/providers.dart';
 import '../../util/format.dart';
+import '../../widgets/icon_tile.dart';
 import '../feedback/feedback_screen.dart';
 
 /// Profile setup (drives all targets), weight log, Claude key, Apple
@@ -82,7 +83,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       ),
     );
     if (mounted && action == 'save') {
-      ref.read(profileProvider.notifier).save(
+      ref
+          .read(profileProvider.notifier)
+          .save(
             profile.copyWith(
               isConfigured: true,
               calorieGoalOverride: _parseTarget(cal.text),
@@ -124,87 +127,92 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     // goal default: lose -500 / maintain 0 / gain +400).
     final gap = profile.calorieGoalOverride ?? profile.goal.calorieAdjustment;
     return Scaffold(
-      appBar: AppBar(title: Text(t.navSettings)),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
-        children: [
-          _ProfileStatsCard(profile: profile),
-          const SizedBox(height: 16),
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          t.yourTargets,
-                          style: Theme.of(context).textTheme.titleSmall,
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.edit_outlined, size: 20),
-                        tooltip: t.editTargets,
-                        onPressed: () => _editTargets(profile, summary),
-                      ),
-                    ],
-                  ),
-                  _statRow(
-                    t.calorieGapTarget,
-                    t.kcalValue(gap > 0 ? '+${kcal(gap)}' : kcal(gap)),
-                  ),
-                  Container(
-                    margin: const EdgeInsets.only(top: 8, bottom: 6),
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: scheme.surfaceContainerHighest.withValues(
-                        alpha: 0.5,
-                      ),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: scheme.outlineVariant),
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+      body: SafeArea(
+        bottom: false,
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+          children: [
+            _ProfileStatsCard(profile: profile),
+            const SizedBox(height: 16),
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
                       children: [
-                        Icon(
-                          Icons.info_outline,
-                          size: 16,
-                          color: scheme.onSurfaceVariant,
-                        ),
-                        const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            t.calorieBudgetExplainer,
-                            style: Theme.of(context).textTheme.bodySmall
-                                ?.copyWith(
-                                  color: scheme.onSurfaceVariant,
-                                  height: 1.3,
-                                ),
+                            t.yourTargets,
+                            style: Theme.of(context).textTheme.titleSmall,
                           ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.edit_outlined, size: 20),
+                          tooltip: t.editTargets,
+                          onPressed: () => _editTargets(profile, summary),
                         ),
                       ],
                     ),
-                  ),
-                  _statRow(
-                    t.proteinTargetLabel,
-                    t.gramsValue(kcal(summary.proteinTarget)),
-                  ),
-                  _statRow(t.satFatCap, t.gramsValue(kcal(summary.satFatCap))),
-                ],
+                    _statRow(
+                      t.calorieGapTarget,
+                      t.kcalValue(gap > 0 ? '+${kcal(gap)}' : kcal(gap)),
+                    ),
+                    Container(
+                      margin: const EdgeInsets.only(top: 8, bottom: 6),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: scheme.surfaceContainerHighest.withValues(
+                          alpha: 0.5,
+                        ),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: scheme.outlineVariant),
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(
+                            Icons.info_outline,
+                            size: 16,
+                            color: scheme.onSurfaceVariant,
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              t.calorieBudgetExplainer,
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(
+                                    color: scheme.onSurfaceVariant,
+                                    height: 1.3,
+                                  ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    _statRow(
+                      t.proteinTargetLabel,
+                      t.gramsValue(kcal(summary.proteinTarget)),
+                    ),
+                    _statRow(
+                      t.satFatCap,
+                      t.gramsValue(kcal(summary.satFatCap)),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-          const SizedBox(height: 24),
-          const _AccountCard(),
-          const SizedBox(height: 12),
-          const _HealthCard(),
-          const SizedBox(height: 12),
-          const _LanguageCard(),
-          const SizedBox(height: 12),
-          const _FeedbackTile(),
-        ],
+            const SizedBox(height: 24),
+            const _AccountCard(),
+            const SizedBox(height: 12),
+            const _HealthCard(),
+            const SizedBox(height: 12),
+            const _LanguageCard(),
+            const SizedBox(height: 12),
+            const _FeedbackTile(),
+          ],
+        ),
       ),
     );
   }
@@ -424,8 +432,8 @@ class _LanguageCard extends ConsumerWidget {
           children: [
             Row(
               children: [
-                Icon(Icons.language, color: scheme.primary),
-                const SizedBox(width: 8),
+                IconTile(icon: Icons.language, color: scheme.primary),
+                const SizedBox(width: 12),
                 Text(t.language, style: Theme.of(context).textTheme.titleSmall),
               ],
             ),
@@ -461,13 +469,27 @@ class _FeedbackTile extends StatelessWidget {
     final t = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
     return Card(
-      child: ListTile(
-        leading: Icon(Icons.feedback_outlined, color: scheme.primary),
-        title: Text(t.feedback),
-        trailing: const Icon(Icons.chevron_right),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(26),
         onTap: () => Navigator.of(
           context,
         ).push(MaterialPageRoute(builder: (_) => const FeedbackScreen())),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              IconTile(icon: Icons.feedback, color: scheme.primary),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  t.feedback,
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
+              ),
+              Icon(Icons.chevron_right, color: scheme.onSurfaceVariant),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -530,8 +552,8 @@ class _AccountCardState extends ConsumerState<_AccountCard> {
           children: [
             Row(
               children: [
-                Icon(Icons.cloud_outlined, color: scheme.primary),
-                const SizedBox(width: 8),
+                IconTile(icon: Icons.cloud, color: scheme.primary),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     t.account,
@@ -625,8 +647,8 @@ class _HealthCard extends ConsumerWidget {
           children: [
             Row(
               children: [
-                Icon(Icons.favorite_outline, color: scheme.primary),
-                const SizedBox(width: 8),
+                IconTile(icon: Icons.favorite, color: scheme.primary),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     t.healthGarminTitle,

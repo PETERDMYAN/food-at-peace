@@ -225,6 +225,11 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String onTargetShort(int met, int total) {
+    return '$met/$total 天达标';
+  }
+
+  @override
   String get editTargets => '编辑目标';
 
   @override
