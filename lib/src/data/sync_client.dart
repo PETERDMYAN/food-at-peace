@@ -30,15 +30,20 @@ class SyncPullResult {
 /// changed since then. Pure HTTP — unit-tested with a mock client.
 class SyncClient {
   SyncClient({required this.baseUrl, http.Client? httpClient})
-      : _http = httpClient ?? http.Client();
+    : _http = httpClient ?? http.Client();
 
   final String baseUrl;
   final http.Client _http;
 
-  Uri get endpoint {
-    final base =
-        baseUrl.endsWith('/') ? baseUrl.substring(0, baseUrl.length - 1) : baseUrl;
-    return Uri.parse('$base/sync');
+  Uri get endpoint => _uri('/sync');
+
+  Uri get accountDeleteEndpoint => _uri('/account/delete');
+
+  Uri _uri(String path) {
+    final base = baseUrl.endsWith('/')
+        ? baseUrl.substring(0, baseUrl.length - 1)
+        : baseUrl;
+    return Uri.parse('$base$path');
   }
 
   Future<SyncPullResult> sync({
@@ -87,6 +92,23 @@ class SyncClient {
           ? SyncRecord.fromJson(profileJson.cast<String, dynamic>())
           : null,
     );
+  }
+
+  /// Permanently deletes the signed-in user's account and all their synced
+  /// data server-side (`POST /account/delete` — App Store 5.1.1(v)). Throws
+  /// [SessionExpired] on 401 and [AuthException] on other failures.
+  Future<void> deleteAccount({required String token}) async {
+    final http.Response resp;
+    try {
+      resp = await _http.post(
+        accountDeleteEndpoint,
+        headers: {'authorization': 'Bearer $token'},
+      );
+    } catch (_) {
+      throw AuthException('Network error — check your connection.');
+    }
+    if (resp.statusCode == 401) throw SessionExpired();
+    if (resp.statusCode != 200) throw _syncError(resp.statusCode, resp.body);
   }
 }
 

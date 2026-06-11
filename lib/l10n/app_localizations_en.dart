@@ -507,6 +507,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get signOut => 'Sign out';
 
   @override
+  String get deleteAccount => 'Delete account';
+
+  @override
+  String get deleteAccountBody =>
+      'This permanently removes your account and all synced data from our servers, and signs you out. The data on this device is kept. This can\'t be undone.';
+
+  @override
+  String get accountDeleted => 'Account deleted';
+
+  @override
+  String get deleteAccountFailed =>
+      'Couldn\'t delete the account. Please try again.';
+
+  @override
+  String get deleteAccountSignInAgain =>
+      'Your session had expired, so nothing was deleted. Sign in again, then retry deleting your account.';
+
+  @override
   String get signInFailed => 'Sign-in failed. Please try again.';
 
   @override

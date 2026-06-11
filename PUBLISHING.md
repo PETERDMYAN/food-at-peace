@@ -144,7 +144,10 @@ need more.
 The June 11 rejection (Guideline 1.4.1 — citations for medical information) is
 addressed in build **2**: a **Sources & methodology** screen with primary-source
 citations + disclaimer, linked from Today ("How your budget is calculated") and
-Settings. To resubmit:
+Settings. Build 2 also adds **in-app account deletion** (Settings → Account →
+Delete account; Guideline 5.1.1(v)) backed by a deployed `/account/delete`
+endpoint that wipes the user's server data and revokes pre-deletion session
+tokens. To resubmit:
 
 1. Upload the new build (Steps 3–4; it's versioned `1.0.0 (2)`).
 2. In the rejected version's page, select the new build, paste the refreshed

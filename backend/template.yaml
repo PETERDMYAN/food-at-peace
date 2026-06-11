@@ -196,6 +196,50 @@ Resources:
             Path: /sync
             Method: POST
 
+  # In-app account deletion (App Store Guideline 5.1.1(v)). Verifies the app
+  # session token, then removes every row the user owns in the sync table —
+  # all the server-side data we hold for them.
+  AccountFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/
+      Handler: account.handler
+      Environment:
+        Variables:
+          SYNC_TABLE: !Ref SyncTable
+          SESSION_KEY_PARAM: !Ref SessionKeyParam
+      Policies:
+        - Statement:
+            - Sid: DeleteUserData
+              Effect: Allow
+              Action:
+                - dynamodb:Query
+                - dynamodb:GetItem
+                - dynamodb:PutItem
+                - dynamodb:DeleteItem
+                - dynamodb:BatchWriteItem
+              Resource:
+                - !GetAtt SyncTable.Arn
+            - Sid: ReadSessionKey
+              Effect: Allow
+              Action: ssm:GetParameter
+              Resource:
+                - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter${SessionKeyParam}
+            - Sid: DecryptSecureStrings
+              Effect: Allow
+              Action: kms:Decrypt
+              Resource: "*"
+              Condition:
+                StringEquals:
+                  kms:ViaService: !Sub ssm.${AWS::Region}.amazonaws.com
+      Events:
+        DeleteAccount:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref VisionApi
+            Path: /account/delete
+            Method: POST
+
 Outputs:
   ProxyBaseUrl:
     Description: >
@@ -211,3 +255,6 @@ Outputs:
   SyncUrl:
     Description: Authenticated delta-sync endpoint (Authorization Bearer session token).
     Value: !Sub https://${VisionApi}.execute-api.${AWS::Region}.amazonaws.com/sync
+  AccountDeleteUrl:
+    Description: In-app account deletion endpoint (Authorization Bearer session token).
+    Value: !Sub https://${VisionApi}.execute-api.${AWS::Region}.amazonaws.com/account/delete

@@ -99,6 +99,9 @@ The screen explains each calculation and cites primary sources with tappable lin
 SIGN-IN (optional):
 Sign in with Apple is optional and only enables cross-device sync — every feature works without an account, so no demo account is needed. You can test sign-in with any Apple ID.
 
+ACCOUNT DELETION (Guideline 5.1.1(v)):
+Settings → Account → "Delete account" permanently removes the user's account and all synced data from our server (immediate, server-side deletion — not just a deactivation) and signs them out. It's available in-app whenever the user is signed in.
+
 PHOTO NUTRITION ANALYSIS (Anthropic Claude):
 Photo analysis works out of the box (the API key lives on our server; the app ships none). On the Add screen, tap the camera/photo option, choose or take a photo of a meal, and the app returns an estimate to confirm before logging. (Camera requires a physical device; choosing an existing photo works in Simulator.)
 

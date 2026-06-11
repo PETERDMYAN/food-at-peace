@@ -19,6 +19,7 @@ import json
 import os
 import time
 
+from account import DELETED_MARKER_SK, check_token_not_revoked
 from common import ProxyError, _get_secret, _header, _parse_body, _response
 from session import verify_session_token
 
@@ -134,6 +135,11 @@ def handler(event, context):
         incoming = body.get("changes") or {}
         store = _store()
 
+        # Account deletion revokes all earlier-minted tokens: without this, a
+        # user's *other* still-signed-in device would re-create the deleted
+        # account on its next sync. (The client signs out on this 401.)
+        check_token_not_revoked(claims, store.get(user_id, DELETED_MARKER_SK))
+
         # 1) Apply the client's changes (LWW).
         for rtype in _COLLECTIONS:
             for record in incoming.get(rtype) or []:
@@ -147,7 +153,9 @@ def handler(event, context):
         # 2) Return everything changed since the client's cursor.
         out = {"food": [], "weight": [], "profile": None}
         for item in store.list_for_user(user_id):
-            if int(item["updatedAt"]) <= since:
+            # .get: non-record rows (the account-deletion marker) lack
+            # updatedAt and must never enter the delta.
+            if int(item.get("updatedAt") or 0) <= since:
                 continue
             record = _to_record(item)
             rtype = item.get("type")

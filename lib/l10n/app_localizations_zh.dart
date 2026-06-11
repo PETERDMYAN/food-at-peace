@@ -495,6 +495,22 @@ class AppLocalizationsZh extends AppLocalizations {
   String get signOut => '退出登录';
 
   @override
+  String get deleteAccount => '删除账户';
+
+  @override
+  String get deleteAccountBody =>
+      '这将从我们的服务器永久删除你的账户和所有同步数据，并退出登录。本设备上的数据将保留。此操作无法撤销。';
+
+  @override
+  String get accountDeleted => '账户已删除';
+
+  @override
+  String get deleteAccountFailed => '删除账户失败，请重试。';
+
+  @override
+  String get deleteAccountSignInAgain => '登录已过期，未删除任何数据。请重新登录后再试一次。';
+
+  @override
   String get signInFailed => '登录失败，请重试。';
 
   @override

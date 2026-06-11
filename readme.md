@@ -13,8 +13,9 @@ for real calories burned, and speaks **English and 中文**. Built with Flutter.
 > (the Claude key stays server-side; no secret ships in the app).
 > **App Store:** v1.0 (1) was rejected under Guideline 1.4.1 (citations for health
 > calculations); build **1.0.0 (2)** fixes it with the in-app Sources & methodology
-> screen and refreshed privacy policy/manifest — ready to resubmit (see
-> `PUBLISHING.md`). Next up: in-app account deletion, Google sign-in, subscriptions.
+> screen, adds **in-app account deletion** (Guideline 5.1.1(v)), and refreshes the
+> privacy policy/manifest — ready to resubmit (see `PUBLISHING.md`).
+> Next up: Google sign-in and subscriptions.
 
 ## What it does today
 - **Onboarding** — on first launch: continue with **Sign in with Apple** (pulls your
@@ -35,7 +36,8 @@ for real calories burned, and speaks **English and 中文**. Built with Flutter.
 - **Settings** — profile (editable **nickname** + sex / age / height / weight, synced
   from Apple Health with a **Sync now** button + last-synced time — edits write height
   + weight back to Health), editable goal & targets (each shows how it's calculated;
-  **Use automatic** appears once the profile is reliable), account & sync, Apple Health
+  **Use automatic** appears once the profile is reliable), account & sync (incl.
+  in-app account deletion), Apple Health
   connection, language, and feedback.
 - **Apple Health / Garmin** — reads active + resting energy, weight, height, and date
   of birth (→ age), plus workouts; writes logged food, weight, and height edits back.
@@ -106,18 +108,14 @@ the system locale by default and persists a manual choice.
 - [x] AWS Lambda vision proxy holds the Claude key server-side (SAM + Python, in
   `backend/`); the app ships no key
 - [x] Accounts + sync — Sign in with Apple (`/auth/apple`) + DynamoDB delta sync
-  (`/sync`), deployed to `ap-southeast-1`; app-side bidirectional sync of food /
+  (`/sync`) + in-app account deletion (`/account/delete`, App Store 5.1.1(v)),
+  deployed to `ap-southeast-1`; app-side bidirectional sync of food /
   weight / profile (last-write-wins, tombstones; on sign-in / resume / edit / manual)
 
 **TODO:**
 - [ ] **Resubmit 1.0.0 (2) to App Review** — upload via Xcode Organizer, refresh
   the listing/privacy answers per `store/STORE_LISTING.md`, reply to the 1.4.1
   rejection (see `PUBLISHING.md` → "Resubmitting")
-- [ ] **In-app account deletion** — App Store Guideline 5.1.1(v): apps offering
-  account creation must let users delete the account in-app (needs a backend
-  `DELETE /account` wiping the user's DynamoDB rows + a Settings button).
-  Currently deletion is by email request (covered in the privacy policy) — a
-  reviewer may flag this on a future pass
 - [ ] **Google Sign-In** — fast-follow: `/auth/google` mirroring `/auth/apple`
 - [ ] **Subscriptions** — SGD 1.99/month (auto-renew) + SGD 3.99 / 100-day
   (non-renewing) via StoreKit IAP, with server-side receipt validation
