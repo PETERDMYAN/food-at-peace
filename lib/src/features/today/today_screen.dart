@@ -11,6 +11,7 @@ import '../../theme/app_theme.dart';
 import '../../util/format.dart';
 import '../../util/l10n_labels.dart';
 import '../../widgets/icon_tile.dart';
+import '../sources/sources_screen.dart';
 import 'weather_background.dart';
 
 /// "Good morning / afternoon / evening, {name}" by the local hour, or the app
@@ -158,6 +159,17 @@ class TodayScreen extends ConsumerWidget {
                       ),
                     ),
                   ],
+                ),
+                Center(
+                  child: TextButton.icon(
+                    onPressed: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const SourcesScreen(),
+                      ),
+                    ),
+                    icon: const Icon(Icons.info_outline, size: 16),
+                    label: Text(t.howCalculated),
+                  ),
                 ),
                 const _WorkoutsCard(),
                 const SizedBox(height: 20),

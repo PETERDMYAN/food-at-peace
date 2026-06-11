@@ -14,6 +14,7 @@ import '../../providers/providers.dart';
 import '../../util/format.dart';
 import '../../widgets/icon_tile.dart';
 import '../feedback/feedback_screen.dart';
+import '../sources/sources_screen.dart';
 
 /// Profile setup (drives all targets), weight log, Claude key, Apple
 /// Health/Garmin, language, and feedback.
@@ -203,6 +204,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                 ),
               ),
             ),
+            const SizedBox(height: 12),
+            const _SourcesTile(),
             const SizedBox(height: 24),
             const _AccountCard(),
             const SizedBox(height: 12),
@@ -491,6 +494,41 @@ class _LanguageCard extends ConsumerWidget {
                 onTap: () => choose(opt.$1),
               ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Opens the citations & methodology screen (App Store Guideline 1.4.1).
+class _SourcesTile extends StatelessWidget {
+  const _SourcesTile();
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    final scheme = Theme.of(context).colorScheme;
+    return Card(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(26),
+        onTap: () => Navigator.of(context).push(
+          MaterialPageRoute(builder: (_) => const SourcesScreen()),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              IconTile(icon: Icons.menu_book, color: scheme.primary),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  t.sourcesTitle,
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
+              ),
+              Icon(Icons.chevron_right, color: scheme.onSurfaceVariant),
+            ],
+          ),
         ),
       ),
     );

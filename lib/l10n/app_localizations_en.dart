@@ -66,6 +66,23 @@ class AppLocalizationsEn extends AppLocalizations {
   String get nickname => 'Nickname';
 
   @override
+  String get sourcesTitle => 'Sources & methodology';
+
+  @override
+  String get sourcesIntro =>
+      'How your targets are estimated, with references you can check.';
+
+  @override
+  String get sourcesDisclaimer =>
+      'These are general estimates for healthy adults — not medical advice. Talk to a doctor or registered dietitian before making significant changes, especially if you\'re pregnant, under 18, or managing a health condition.';
+
+  @override
+  String get viewSource => 'View source';
+
+  @override
+  String get howCalculated => 'How your budget is calculated';
+
+  @override
   String get onboardingWelcomeTitle => 'Welcome to\nFood at Peace';
 
   @override

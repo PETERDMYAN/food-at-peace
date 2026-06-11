@@ -54,6 +54,12 @@ for real calories burned, and speaks **English and 中文**. Built with Flutter.
 - **Protein:** 1.6 g per kg of bodyweight.
 - **Saturated fat:** capped at 10% of the calorie target (US Dietary Guidelines).
 
+These are general estimates for healthy adults, **not medical advice**. In-app, a
+**Sources & methodology** screen (linked from both Today and Settings, per App Store
+Guideline 1.4.1) cites the references with tappable links — Mifflin-St Jeor (BMR),
+the Dietary Guidelines for Americans (calorie balance + saturated fat), and the ISSN
+protein position stand — alongside a medical disclaimer.
+
 ## Photo analysis (Claude)
 Photos are analyzed via Anthropic's Messages API, forcing a `log_food` tool for
 structured output (name / calories / protein / saturated fat / portion / confidence).
