@@ -66,6 +66,22 @@ class AppLocalizationsZh extends AppLocalizations {
   String get nickname => '昵称';
 
   @override
+  String get sourcesTitle => '数据来源与方法';
+
+  @override
+  String get sourcesIntro => '你的目标是如何估算的，附可查证的参考资料。';
+
+  @override
+  String get sourcesDisclaimer =>
+      '以上为面向健康成年人的一般估算，并非医疗建议。在做出重大调整前，请咨询医生或注册营养师，尤其是孕期、未满 18 岁或有健康状况时。';
+
+  @override
+  String get viewSource => '查看来源';
+
+  @override
+  String get howCalculated => '预算是如何计算的';
+
+  @override
   String get onboardingWelcomeTitle => '欢迎使用\nFood at Peace';
 
   @override

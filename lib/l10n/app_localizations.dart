@@ -200,6 +200,36 @@ abstract class AppLocalizations {
   /// **'Nickname'**
   String get nickname;
 
+  /// No description provided for @sourcesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sources & methodology'**
+  String get sourcesTitle;
+
+  /// No description provided for @sourcesIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'How your targets are estimated, with references you can check.'**
+  String get sourcesIntro;
+
+  /// No description provided for @sourcesDisclaimer.
+  ///
+  /// In en, this message translates to:
+  /// **'These are general estimates for healthy adults — not medical advice. Talk to a doctor or registered dietitian before making significant changes, especially if you\'re pregnant, under 18, or managing a health condition.'**
+  String get sourcesDisclaimer;
+
+  /// No description provided for @viewSource.
+  ///
+  /// In en, this message translates to:
+  /// **'View source'**
+  String get viewSource;
+
+  /// No description provided for @howCalculated.
+  ///
+  /// In en, this message translates to:
+  /// **'How your budget is calculated'**
+  String get howCalculated;
+
   /// No description provided for @onboardingWelcomeTitle.
   ///
   /// In en, this message translates to:
