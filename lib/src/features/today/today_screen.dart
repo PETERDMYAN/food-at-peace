@@ -507,31 +507,35 @@ class _EntryTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
-    return Dismissible(
-      key: ValueKey(entry.id),
-      direction: DismissDirection.endToStart,
-      onDismissed: (_) => onDelete(),
-      background: Container(
-        alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 24),
-        color: Theme.of(context).colorScheme.errorContainer,
-        child: const Icon(Icons.delete_outline),
-      ),
-      child: Card(
-        child: ListTile(
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 6,
-          ),
-          title: Text(entry.name),
-          subtitle: Text(
-            '${entry.mealType.labelOf(t)} · '
-            '${t.protein} ${t.gramsValue(kcal(entry.proteinG))} · '
-            '${t.saturatedFat} ${t.gramsValue(kcal(entry.satFatG))}',
-          ),
-          trailing: Text(
-            t.kcalValue(kcal(entry.calories)),
-            style: Theme.of(context).textTheme.titleSmall,
+    // Bottom inset separates consecutive entries (cards have no margin).
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Dismissible(
+        key: ValueKey(entry.id),
+        direction: DismissDirection.endToStart,
+        onDismissed: (_) => onDelete(),
+        background: Container(
+          alignment: Alignment.centerRight,
+          padding: const EdgeInsets.only(right: 24),
+          color: Theme.of(context).colorScheme.errorContainer,
+          child: const Icon(Icons.delete_outline),
+        ),
+        child: Card(
+          child: ListTile(
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 6,
+            ),
+            title: Text(entry.name),
+            subtitle: Text(
+              '${entry.mealType.labelOf(t)} · '
+              '${t.protein} ${t.gramsValue(kcal(entry.proteinG))} · '
+              '${t.saturatedFat} ${t.gramsValue(kcal(entry.satFatG))}',
+            ),
+            trailing: Text(
+              t.kcalValue(kcal(entry.calories)),
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
           ),
         ),
       ),
