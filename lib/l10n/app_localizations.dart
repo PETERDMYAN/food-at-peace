@@ -200,6 +200,48 @@ abstract class AppLocalizations {
   /// **'Nickname'**
   String get nickname;
 
+  /// No description provided for @aboutYouTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'About you'**
+  String get aboutYouTitle;
+
+  /// No description provided for @aboutYouBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Sex, age, height and weight power your calorie and protein targets. Anything Apple Health shared is pre-filled — fill in the rest.'**
+  String get aboutYouBody;
+
+  /// No description provided for @todoCompleteProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete your profile'**
+  String get todoCompleteProfile;
+
+  /// No description provided for @todoCompleteProfileBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Sex, age, height & weight set your targets'**
+  String get todoCompleteProfileBody;
+
+  /// No description provided for @autoFromGoal.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto from your goal: {value} kcal'**
+  String autoFromGoal(String value);
+
+  /// No description provided for @autoProteinRule.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto: 1.6 g × {weight} kg = {value} g'**
+  String autoProteinRule(String weight, String value);
+
+  /// No description provided for @autoSatFatRule.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto: 10% of your calorie budget = {value} g'**
+  String autoSatFatRule(String value);
+
   /// No description provided for @sourcesTitle.
   ///
   /// In en, this message translates to:

@@ -1,5 +1,6 @@
 import '../models/energy_out.dart';
 import '../models/food_entry.dart';
+import '../models/user_profile.dart';
 import '../models/workout_summary.dart';
 // Picks the real HealthKit/Health Connect implementation on mobile, and a
 // no-op stub on web — so `package:health` (which is mobile-only) never reaches
@@ -35,6 +36,10 @@ abstract interface class HealthService {
 
   /// The most recent height in centimetres, or null if unavailable.
   Future<double?> readHeightCm();
+
+  /// Biological sex from Apple Health's characteristic (read-only there), or
+  /// null if unavailable / not set / not male-or-female.
+  Future<Sex?> readSex();
 
   /// Workouts recorded on [day] (e.g. Garmin activities), longest first.
   Future<List<WorkoutSummary>> readWorkouts(DateTime day);

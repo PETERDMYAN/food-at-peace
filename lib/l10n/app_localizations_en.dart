@@ -66,6 +66,35 @@ class AppLocalizationsEn extends AppLocalizations {
   String get nickname => 'Nickname';
 
   @override
+  String get aboutYouTitle => 'About you';
+
+  @override
+  String get aboutYouBody =>
+      'Sex, age, height and weight power your calorie and protein targets. Anything Apple Health shared is pre-filled — fill in the rest.';
+
+  @override
+  String get todoCompleteProfile => 'Complete your profile';
+
+  @override
+  String get todoCompleteProfileBody =>
+      'Sex, age, height & weight set your targets';
+
+  @override
+  String autoFromGoal(String value) {
+    return 'Auto from your goal: $value kcal';
+  }
+
+  @override
+  String autoProteinRule(String weight, String value) {
+    return 'Auto: 1.6 g × $weight kg = $value g';
+  }
+
+  @override
+  String autoSatFatRule(String value) {
+    return 'Auto: 10% of your calorie budget = $value g';
+  }
+
+  @override
   String get sourcesTitle => 'Sources & methodology';
 
   @override

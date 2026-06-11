@@ -1,5 +1,6 @@
 import '../models/energy_out.dart';
 import '../models/food_entry.dart';
+import '../models/user_profile.dart';
 import '../models/workout_summary.dart';
 import 'health_service.dart';
 
@@ -29,6 +30,9 @@ class _UnsupportedHealthService implements HealthService {
 
   @override
   Future<double?> readHeightCm() async => null;
+
+  @override
+  Future<Sex?> readSex() async => null;
 
   @override
   Future<List<WorkoutSummary>> readWorkouts(DateTime day) async => const [];

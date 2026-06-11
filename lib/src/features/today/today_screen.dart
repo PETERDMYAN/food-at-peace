@@ -11,6 +11,7 @@ import '../../theme/app_theme.dart';
 import '../../util/format.dart';
 import '../../util/l10n_labels.dart';
 import '../../widgets/icon_tile.dart';
+import '../settings/edit_profile_dialog.dart';
 import '../sources/sources_screen.dart';
 import 'weather_background.dart';
 
@@ -163,9 +164,7 @@ class TodayScreen extends ConsumerWidget {
                 Center(
                   child: TextButton.icon(
                     onPressed: () => Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const SourcesScreen(),
-                      ),
+                      MaterialPageRoute(builder: (_) => const SourcesScreen()),
                     ),
                     icon: const Icon(Icons.info_outline, size: 16),
                     label: Text(t.howCalculated),
@@ -719,6 +718,17 @@ class _SetupTodosState extends ConsumerState<_SetupTodos> {
           subtitle: t.todoConnectHealthBody,
           busy: _healthBusy,
           onTap: _healthBusy ? null : _connectHealth,
+        ),
+      );
+    }
+    // Body details still missing (Health didn't supply them / user skipped).
+    if (!profile.isConfigured) {
+      items.add(
+        _TodoRow(
+          icon: Icons.monitor_weight_outlined,
+          title: t.todoCompleteProfile,
+          subtitle: t.todoCompleteProfileBody,
+          onTap: () => showEditProfileDialog(context, ref),
         ),
       );
     }

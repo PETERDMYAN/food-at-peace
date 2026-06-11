@@ -66,6 +66,34 @@ class AppLocalizationsZh extends AppLocalizations {
   String get nickname => '昵称';
 
   @override
+  String get aboutYouTitle => '关于你';
+
+  @override
+  String get aboutYouBody =>
+      '性别、年龄、身高和体重决定你的卡路里与蛋白质目标。Apple 健康提供的数据已自动填入，其余请补充。';
+
+  @override
+  String get todoCompleteProfile => '完善个人资料';
+
+  @override
+  String get todoCompleteProfileBody => '性别、年龄、身高和体重决定你的目标';
+
+  @override
+  String autoFromGoal(String value) {
+    return '按目标自动：$value 千卡';
+  }
+
+  @override
+  String autoProteinRule(String weight, String value) {
+    return '自动：1.6 克 × $weight 千克 = $value 克';
+  }
+
+  @override
+  String autoSatFatRule(String value) {
+    return '自动：卡路里预算的 10% = $value 克';
+  }
+
+  @override
   String get sourcesTitle => '数据来源与方法';
 
   @override

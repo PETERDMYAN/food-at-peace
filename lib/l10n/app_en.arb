@@ -26,6 +26,25 @@
   "weatherThunder": "Thunderstorm",
   "editProfile": "Edit profile",
   "nickname": "Nickname",
+  "aboutYouTitle": "About you",
+  "aboutYouBody": "Sex, age, height and weight power your calorie and protein targets. Anything Apple Health shared is pre-filled — fill in the rest.",
+  "todoCompleteProfile": "Complete your profile",
+  "todoCompleteProfileBody": "Sex, age, height & weight set your targets",
+  "autoFromGoal": "Auto from your goal: {value} kcal",
+  "@autoFromGoal": {
+    "placeholders": { "value": { "type": "String" } }
+  },
+  "autoProteinRule": "Auto: 1.6 g × {weight} kg = {value} g",
+  "@autoProteinRule": {
+    "placeholders": {
+      "weight": { "type": "String" },
+      "value": { "type": "String" }
+    }
+  },
+  "autoSatFatRule": "Auto: 10% of your calorie budget = {value} g",
+  "@autoSatFatRule": {
+    "placeholders": { "value": { "type": "String" } }
+  },
   "sourcesTitle": "Sources & methodology",
   "sourcesIntro": "How your targets are estimated, with references you can check.",
   "sourcesDisclaimer": "These are general estimates for healthy adults — not medical advice. Talk to a doctor or registered dietitian before making significant changes, especially if you're pregnant, under 18, or managing a health condition.",

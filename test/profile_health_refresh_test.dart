@@ -9,9 +9,10 @@ import 'package:food_at_peace/src/models/user_profile.dart';
 import 'package:food_at_peace/src/models/workout_summary.dart';
 import 'package:food_at_peace/src/providers/providers.dart';
 
-/// A HealthService that reports fixed age/height/weight.
+/// A HealthService that reports fixed sex/age/height/weight.
 class _FakeHealth implements HealthService {
-  _FakeHealth({this.age, this.heightCm, this.weightKg});
+  _FakeHealth({this.sex, this.age, this.heightCm, this.weightKg});
+  final Sex? sex;
   final int? age;
   final double? heightCm;
   final double? weightKg;
@@ -30,6 +31,8 @@ class _FakeHealth implements HealthService {
   Future<int?> readAge() async => age;
   @override
   Future<double?> readHeightCm() async => heightCm;
+  @override
+  Future<Sex?> readSex() async => sex;
   @override
   Future<List<WorkoutSummary>> readWorkouts(DateTime day) async => const [];
   @override
@@ -53,37 +56,52 @@ Future<ProviderContainer> _container(_FakeHealth health) async {
 }
 
 void main() {
-  test('refreshFromHealth updates height/weight, and age when not manual', () async {
+  test('refreshFromHealth pulls sex/age/height/weight and marks the profile '
+      'configured when Health supplied the full picture', () async {
     final c = await _container(
-      _FakeHealth(age: 41, heightCm: 182, weightKg: 79),
+      _FakeHealth(sex: Sex.female, age: 41, heightCm: 182, weightKg: 79),
     );
     addTearDown(c.dispose);
 
     await c
         .read(profileProvider.notifier)
         .save(UserProfile.defaultProfile.copyWith(age: 30));
-    await c.read(profileProvider.notifier).refreshFromHealth();
+    final reads = await c.read(profileProvider.notifier).refreshFromHealth();
 
     final p = c.read(profileProvider);
+    expect(p.sex, Sex.female);
     expect(p.age, 41); // pulled from Health (not manually set)
     expect(p.heightCm, 182);
     expect(p.weightKg, 79);
+    expect(p.isConfigured, isTrue); // full body picture → reliable
+    expect(reads.age, 41); // callers (onboarding) see what Health gave
+    expect(c.read(healthSyncProvider), isNotNull); // sync time stamped
   });
 
-  test('refreshFromHealth does NOT overwrite a manually-set age', () async {
-    final c = await _container(
-      _FakeHealth(age: 41, heightCm: 182, weightKg: 79),
-    );
-    addTearDown(c.dispose);
+  test(
+    'refreshFromHealth does NOT overwrite manually-set age or sex',
+    () async {
+      final c = await _container(
+        _FakeHealth(sex: Sex.female, age: 41, heightCm: 182, weightKg: 79),
+      );
+      addTearDown(c.dispose);
 
-    await c.read(profileProvider.notifier).save(
-          UserProfile.defaultProfile.copyWith(age: 39, ageManuallySet: true),
-        );
-    await c.read(profileProvider.notifier).refreshFromHealth();
+      await c
+          .read(profileProvider.notifier)
+          .save(
+            UserProfile.defaultProfile.copyWith(
+              age: 39,
+              ageManuallySet: true,
+              sexManuallySet: true,
+            ),
+          );
+      await c.read(profileProvider.notifier).refreshFromHealth();
 
-    final p = c.read(profileProvider);
-    expect(p.age, 39); // manual edit preserved
-    expect(p.heightCm, 182); // height/weight still sync
-    expect(p.weightKg, 79);
-  });
+      final p = c.read(profileProvider);
+      expect(p.age, 39); // manual edit preserved
+      expect(p.sex, Sex.male); // manual sex preserved
+      expect(p.heightCm, 182); // height/weight still sync
+      expect(p.weightKg, 79);
+    },
+  );
 }
