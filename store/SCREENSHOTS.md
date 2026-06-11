@@ -26,11 +26,12 @@ flutter run -d "iPhone 15 Pro Max" \
 Add a few realistic food entries and set your profile in Settings so the rings
 and quota cards look full. Suggested 5 screens:
 
-1. **Today** dashboard — calories-left ring + protein/sat-fat cards (with data).
+1. **Today** dashboard — greeting + weather chip, calories-left ring,
+   protein/sat-fat cards (with data).
 2. **Add** — manual entry form.
 3. **Photo analysis** — the estimate/confirm screen after analyzing a meal photo.
-4. **History** — entries grouped by day.
-5. **Settings** — profile with the live targets preview.
+4. **Trends** — the daily charts with the on-target badges (log a few days first).
+5. **Settings** — profile + targets, with the Sources & methodology card visible.
 
 ## 3. Capture (exact 1290×2796 PNGs)
 

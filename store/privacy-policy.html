@@ -16,64 +16,101 @@
 </head>
 <body>
   <h1>Privacy Policy — Food at Peace</h1>
-  <p class="muted">Last updated: June 7, 2026</p>
+  <p class="muted">Last updated: June 11, 2026</p>
 
   <p>
     Food at Peace ("the app", "we") is a calorie and nutrition tracker for iPhone.
     This policy explains what data the app handles and where it goes. The short
-    version: <strong>your nutrition and health data stays on your device.</strong>
-    The app has no accounts, no advertising, and no analytics or tracking SDKs.
+    version: <strong>your data stays on your device by default.</strong> If you
+    choose to sign in, your food log and profile sync through our server so they
+    follow you across devices. The app has no advertising and no analytics or
+    tracking SDKs.
   </p>
 
   <h2>1. Data stored on your device</h2>
   <p>
-    The app stores the following <strong>locally on your iPhone only</strong> (in
-    the app's private storage). It is not transmitted to us and we cannot see it:
+    The app stores the following <strong>locally on your iPhone</strong> (in the
+    app's private storage):
   </p>
   <ul>
-    <li>Your profile: sex, age, height, weight, activity level, and goal — used to calculate your calorie and protein targets.</li>
+    <li>Your profile: nickname, sex, age, height, weight, goal, and any custom
+        targets — used to calculate your calorie and protein targets.</li>
     <li>Food entries you log: calories, protein, saturated fat, meal, serving, and time.</li>
-    <li>Your weight log.</li>
+    <li>Your weight history.</li>
   </ul>
-  <p>You can erase all of it at any time by deleting the app.</p>
-
-  <h2>2. Apple Health (HealthKit)</h2>
   <p>
-    If you grant permission, the app <strong>reads</strong> your active and basal
-    energy burned, body weight, and workouts from Apple Health (this includes
-    Garmin and other data that flows into Apple Health) to estimate how many
-    calories you can still eat. If you allow it, the app also <strong>writes</strong>
-    the calories, protein, and saturated fat you log back to Apple Health.
+    If you never sign in, none of this leaves your device, and you can erase all
+    of it by deleting the app.
+  </p>
+
+  <h2>2. Optional account &amp; cloud sync (Sign in with Apple)</h2>
+  <p>
+    Signing in is <strong>optional</strong> — every feature works without it.
+    If you sign in with Apple to enable cross-device sync:
+  </p>
+  <ul>
+    <li>We receive your Apple user identifier and, if you choose to share them,
+        your name and email address.</li>
+    <li>Your synced content — food entries, weight history, and profile (which can
+        include values originally read from Apple Health, such as weight and
+        height) — is stored on our server (Amazon Web Services, Singapore region)
+        so it can be restored on your other devices.</li>
+    <li>This data is used <strong>solely to provide sync</strong>. It is never
+        used for advertising, analytics, or sold or shared with third parties.</li>
+    <li>Signing out stops syncing. To have your synced data and account deleted
+        from our server, contact us at the address below and we will remove it.</li>
+  </ul>
+
+  <h2>3. Apple Health (HealthKit)</h2>
+  <p>
+    If you grant permission, the app <strong>reads</strong> from Apple Health:
+    active and basal energy burned, body weight, height, date of birth (to derive
+    your age), biological sex, and workouts (this includes Garmin and other data
+    that flows into Apple Health). These power your calorie budget and targets.
+    With permission, the app also <strong>writes back</strong> the food you log
+    (calories, protein, saturated fat) and any weight or height you edit.
   </p>
   <p>
-    This data is read from and written to Apple Health on your device. We do not
-    receive it, and it is never transmitted to our servers (we operate none).
-    Health data is never used for advertising or shared with third parties. Your
-    use of Apple Health is also governed by
+    Health data is read and written on your device. We do not receive raw
+    HealthKit data on our servers. If you enable the optional sync above, the
+    profile values shown in the app (e.g. weight, height, age, sex) are included
+    in your synced profile; nothing else from Apple Health is transmitted. Health
+    data is never used for advertising or shared with third parties. Your use of
+    Apple Health is also governed by
     <a href="https://www.apple.com/legal/privacy/">Apple's Privacy Policy</a>.
   </p>
 
-  <h2>3. Photo nutrition analysis (Anthropic)</h2>
+  <h2>4. Location &amp; weather</h2>
+  <p>
+    The Today screen can show your local weather. If you allow location access,
+    your approximate coordinates are sent to the
+    <a href="https://open-meteo.com/">Open-Meteo</a> weather service to fetch
+    current conditions. If you decline, the app may instead use an approximate,
+    city-level location derived from your IP address (via
+    <a href="https://ipapi.co/">ipapi.co</a>). Your location is used only to
+    display the weather — it is not stored by us, not linked to your identity,
+    and not used for any other purpose. You can decline location access and the
+    app works normally.
+  </p>
+
+  <h2>5. Photo nutrition analysis (Anthropic)</h2>
   <p>
     The optional "analyze a photo" feature lets you take or choose a photo of a
-    meal. When you use it, <strong>that single photo is sent to the Anthropic
-    (Claude) API</strong> to estimate the meal's calories, protein, and saturated
-    fat. The estimate is returned to your device for you to confirm before
-    logging.
+    meal. When you use it, that single photo is sent over an encrypted (HTTPS)
+    connection through our server to the <strong>Anthropic (Claude) API</strong>,
+    which estimates the meal's calories, protein, and saturated fat. The estimate
+    is returned to your device for you to confirm before logging.
   </p>
   <ul>
-    <li>Photos are sent only when you actively trigger an analysis. The app does not upload your photo library.</li>
-    <li>The photo is transmitted over an encrypted (HTTPS) connection solely to produce the estimate.</li>
+    <li>Photos are sent only when you actively trigger an analysis. The app does
+        not upload your photo library.</li>
+    <li>Our server forwards the photo to produce the estimate and does not store it.</li>
     <li>Anthropic's handling of API data is governed by the
         <a href="https://www.anthropic.com/legal/privacy">Anthropic Privacy Policy</a>.
         Anthropic does not train its models on data submitted through its API by default.</li>
   </ul>
-  <p>
-    The Anthropic API key used for this feature is stored securely in the iOS
-    Keychain on your device.
-  </p>
 
-  <h2>4. Feedback you choose to send</h2>
+  <h2>6. Feedback you choose to send</h2>
   <p>
     If you use the in-app feedback form, the message you type is submitted to a
     Google Form so we can read it. Only what you write is sent — providing an
@@ -81,29 +118,38 @@
     information in feedback messages.
   </p>
 
-  <h2>5. What we do NOT do</h2>
+  <h2>7. What we do NOT do</h2>
   <ul>
-    <li>No user accounts or sign-in.</li>
     <li>No advertising and no ad identifiers.</li>
     <li>No analytics, crash-tracking, or third-party tracking SDKs.</li>
-    <li>No selling or sharing of your data. We don't have access to your nutrition or health data in the first place.</li>
+    <li>No selling or sharing of your data with third parties for their purposes.</li>
+    <li>No use of your data for anything beyond running the features described above.</li>
   </ul>
 
-  <h2>6. Children</h2>
+  <h2>8. Health disclaimer</h2>
+  <p>
+    The app's calorie, protein, and saturated-fat figures are general estimates
+    for healthy adults, based on published formulas and guidelines (see the
+    in-app "Sources &amp; methodology" screen). They are not medical advice.
+    Consult a doctor or registered dietitian before making significant dietary
+    changes.
+  </p>
+
+  <h2>9. Children</h2>
   <p>
     The app is not directed to children under 13 and does not knowingly collect
     information from them.
   </p>
 
-  <h2>7. Changes to this policy</h2>
+  <h2>10. Changes to this policy</h2>
   <p>
     We may update this policy as the app evolves. Material changes will be
     reflected by updating the "Last updated" date above.
   </p>
 
-  <h2>8. Contact</h2>
+  <h2>11. Contact</h2>
   <p>
-    Questions about this policy? Contact us at
+    Questions about this policy, or want your synced data deleted? Contact us at
     <a href="mailto:peter.yandongming@gmail.com">peter.yandongming@gmail.com</a>.
   </p>
 </body>

@@ -11,7 +11,10 @@ for real calories burned, and speaks **English and 中文**. Built with Flutter.
 > interactive Trends screen, a local **weather** header, EN/中文, feedback, and
 > **accounts + cloud sync** — Sign in with Apple → an AWS Lambda + DynamoDB backend
 > (the Claude key stays server-side; no secret ships in the app).
-> Next up: Google sign-in and subscriptions.
+> **App Store:** v1.0 (1) was rejected under Guideline 1.4.1 (citations for health
+> calculations); build **1.0.0 (2)** fixes it with the in-app Sources & methodology
+> screen and refreshed privacy policy/manifest — ready to resubmit (see
+> `PUBLISHING.md`). Next up: in-app account deletion, Google sign-in, subscriptions.
 
 ## What it does today
 - **Onboarding** — on first launch: continue with **Sign in with Apple** (pulls your
@@ -107,6 +110,14 @@ the system locale by default and persists a manual choice.
   weight / profile (last-write-wins, tombstones; on sign-in / resume / edit / manual)
 
 **TODO:**
+- [ ] **Resubmit 1.0.0 (2) to App Review** — upload via Xcode Organizer, refresh
+  the listing/privacy answers per `store/STORE_LISTING.md`, reply to the 1.4.1
+  rejection (see `PUBLISHING.md` → "Resubmitting")
+- [ ] **In-app account deletion** — App Store Guideline 5.1.1(v): apps offering
+  account creation must let users delete the account in-app (needs a backend
+  `DELETE /account` wiping the user's DynamoDB rows + a Settings button).
+  Currently deletion is by email request (covered in the privacy policy) — a
+  reviewer may flag this on a future pass
 - [ ] **Google Sign-In** — fast-follow: `/auth/google` mirroring `/auth/apple`
 - [ ] **Subscriptions** — SGD 1.99/month (auto-renew) + SGD 3.99 / 100-day
   (non-renewing) via StoreKit IAP, with server-side receipt validation
