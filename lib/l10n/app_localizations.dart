@@ -962,6 +962,36 @@ abstract class AppLocalizations {
   /// **'Sign out'**
   String get signOut;
 
+  /// No description provided for @deleteAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete account'**
+  String get deleteAccount;
+
+  /// No description provided for @deleteAccountBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This permanently removes your account and all synced data from our servers, and signs you out. The data on this device is kept. This can\'t be undone.'**
+  String get deleteAccountBody;
+
+  /// No description provided for @accountDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Account deleted'**
+  String get accountDeleted;
+
+  /// No description provided for @deleteAccountFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t delete the account. Please try again.'**
+  String get deleteAccountFailed;
+
+  /// No description provided for @deleteAccountSignInAgain.
+  ///
+  /// In en, this message translates to:
+  /// **'Your session had expired, so nothing was deleted. Sign in again, then retry deleting your account.'**
+  String get deleteAccountSignInAgain;
+
   /// No description provided for @signInFailed.
   ///
   /// In en, this message translates to:

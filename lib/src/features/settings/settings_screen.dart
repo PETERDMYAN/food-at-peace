@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import '../../data/auth_client.dart';
+import '../../data/sync_client.dart';
 import '../../data/sync_engine.dart';
 import '../../models/daily_summary.dart';
 import '../../models/user_profile.dart';
@@ -609,6 +610,7 @@ class _AccountCard extends ConsumerStatefulWidget {
 
 class _AccountCardState extends ConsumerState<_AccountCard> {
   bool _busy = false;
+  bool _deleting = false;
 
   Future<void> _signIn() async {
     setState(() => _busy = true);
@@ -626,6 +628,67 @@ class _AccountCardState extends ConsumerState<_AccountCard> {
   }
 
   Future<void> _signOut() => ref.read(authProvider.notifier).signOut();
+
+  /// Confirm → delete the account + synced data server-side → forget the sync
+  /// cursor (so a later sign-in re-pushes everything still on the device) →
+  /// sign out. Data on this device is intentionally kept.
+  Future<void> _deleteAccount() async {
+    final t = AppLocalizations.of(context);
+    final scheme = Theme.of(context).colorScheme;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(t.deleteAccount),
+        content: Text(t.deleteAccountBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(t.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: FilledButton.styleFrom(
+              backgroundColor: scheme.error,
+              foregroundColor: scheme.onError,
+            ),
+            child: Text(t.deleteAccount),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+    // Capture everything before the first await: the card can unmount while
+    // the network call runs (it lives in a lazy ListView), and `ref` must not
+    // be touched after that. The captured notifiers/stores outlive the widget.
+    final session = ref.read(authProvider);
+    if (session == null) return;
+    final client = ref.read(syncClientProvider);
+    final cursor = ref.read(syncCursorStoreProvider);
+    final auth = ref.read(authProvider.notifier);
+    final engine = ref.read(syncEngineProvider.notifier);
+    setState(() => _deleting = true);
+    try {
+      // Quiesce sync first — a debounced or in-flight push racing the delete
+      // would silently repopulate the account (or resurrect the cursor).
+      await engine.suspendForAccountDeletion();
+      await client.deleteAccount(token: session.token);
+      await cursor.clear();
+      await auth.signOut();
+      _toast(t.accountDeleted);
+    } on SessionExpired {
+      // The token was rejected, so NOTHING was deleted server-side. Sign out
+      // (the token is unusable) and be explicit that a retry is needed.
+      await auth.signOut();
+      _toast(t.deleteAccountSignInAgain);
+    } on AuthException catch (e) {
+      _toast(e.message);
+    } catch (_) {
+      _toast(t.deleteAccountFailed);
+    } finally {
+      engine.resumeAfterAccountDeletion();
+      if (mounted) setState(() => _deleting = false);
+    }
+  }
 
   String _syncStatus(AppLocalizations t, SyncState sync) {
     if (sync.phase == SyncPhase.syncing) return t.syncing;
@@ -677,7 +740,7 @@ class _AccountCardState extends ConsumerState<_AccountCard> {
               Row(
                 children: [
                   TextButton.icon(
-                    onPressed: sync.phase == SyncPhase.syncing
+                    onPressed: sync.phase == SyncPhase.syncing || _deleting
                         ? null
                         : () => ref.read(syncEngineProvider.notifier).syncNow(),
                     icon: const Icon(Icons.sync, size: 18),
@@ -695,9 +758,37 @@ class _AccountCardState extends ConsumerState<_AccountCard> {
                   ),
                 ],
               ),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: TextButton(onPressed: _signOut, child: Text(t.signOut)),
+              // Wrap (not Row): at large text scales the two English labels
+              // overflow a narrow card — wrapping drops the delete button to
+              // its own line instead. The SizedBox makes spaceBetween span the
+              // card (a bare Wrap shrinks to its children).
+              SizedBox(
+                width: double.infinity,
+                child: Wrap(
+                  alignment: WrapAlignment.spaceBetween,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    TextButton(
+                      onPressed: _deleting ? null : _signOut,
+                      child: Text(t.signOut),
+                    ),
+                    // In-app account deletion (App Store 5.1.1(v)).
+                    TextButton.icon(
+                      onPressed: _deleting ? null : _deleteAccount,
+                      style: TextButton.styleFrom(
+                        foregroundColor: scheme.error,
+                      ),
+                      icon: _deleting
+                          ? const SizedBox(
+                              width: 14,
+                              height: 14,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Icon(Icons.delete_forever_outlined, size: 18),
+                      label: Text(t.deleteAccount),
+                    ),
+                  ],
+                ),
               ),
             ] else ...[
               Text(

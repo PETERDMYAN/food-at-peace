@@ -31,6 +31,14 @@ class SyncCursorStore {
     await _prefs.setString(_userKey, userId);
     await _prefs.setInt(_msKey, serverTimeMs);
   }
+
+  /// Forgets the cursor entirely — used after account deletion so that a later
+  /// sign-in (even by the same user) starts at 0 and re-pushes everything
+  /// that's still on the device.
+  Future<void> clear() async {
+    await _prefs.remove(_msKey);
+    await _prefs.remove(_userKey);
+  }
 }
 
 // ---- Pure merge (last-write-wins, tombstone-aware) -------------------------
@@ -67,23 +75,23 @@ UserProfile mergeProfile(UserProfile local, SyncRecord? server) {
 // ---- Model <-> record mappers ----------------------------------------------
 
 SyncRecord _foodToRecord(FoodEntry e) => SyncRecord(
-      id: e.id,
-      updatedAtMs: e.syncUpdatedAt.millisecondsSinceEpoch,
-      deleted: e.deleted,
-      data: e.toJson(),
-    );
+  id: e.id,
+  updatedAtMs: e.syncUpdatedAt.millisecondsSinceEpoch,
+  deleted: e.deleted,
+  data: e.toJson(),
+);
 
 FoodEntry _foodFromRecord(SyncRecord r) => FoodEntry.fromJson(r.data).copyWith(
-      updatedAt: DateTime.fromMillisecondsSinceEpoch(r.updatedAtMs),
-      deleted: r.deleted,
-    );
+  updatedAt: DateTime.fromMillisecondsSinceEpoch(r.updatedAtMs),
+  deleted: r.deleted,
+);
 
 SyncRecord _weightToRecord(WeightEntry e) => SyncRecord(
-      id: e.id,
-      updatedAtMs: e.syncUpdatedAt.millisecondsSinceEpoch,
-      deleted: e.deleted,
-      data: e.toJson(),
-    );
+  id: e.id,
+  updatedAtMs: e.syncUpdatedAt.millisecondsSinceEpoch,
+  deleted: e.deleted,
+  data: e.toJson(),
+);
 
 WeightEntry _weightFromRecord(SyncRecord r) =>
     WeightEntry.fromJson(r.data).copyWith(
@@ -92,14 +100,15 @@ WeightEntry _weightFromRecord(SyncRecord r) =>
     );
 
 SyncRecord _profileToRecord(UserProfile p) => SyncRecord(
-      id: 'profile',
-      updatedAtMs: p.syncUpdatedAt.millisecondsSinceEpoch,
-      deleted: false,
-      data: p.toJson(),
-    );
+  id: 'profile',
+  updatedAtMs: p.syncUpdatedAt.millisecondsSinceEpoch,
+  deleted: false,
+  data: p.toJson(),
+);
 
-UserProfile _profileFromRecord(SyncRecord r) => UserProfile.fromJson(r.data)
-    .copyWith(updatedAt: DateTime.fromMillisecondsSinceEpoch(r.updatedAtMs));
+UserProfile _profileFromRecord(SyncRecord r) => UserProfile.fromJson(
+  r.data,
+).copyWith(updatedAt: DateTime.fromMillisecondsSinceEpoch(r.updatedAtMs));
 
 // ---- Engine ----------------------------------------------------------------
 
@@ -117,19 +126,20 @@ class SyncState {
     DateTime? lastSyncedAt,
     String? error,
     bool clearError = false,
-  }) =>
-      SyncState(
-        phase: phase ?? this.phase,
-        lastSyncedAt: lastSyncedAt ?? this.lastSyncedAt,
-        error: clearError ? null : (error ?? this.error),
-      );
+  }) => SyncState(
+    phase: phase ?? this.phase,
+    lastSyncedAt: lastSyncedAt ?? this.lastSyncedAt,
+    error: clearError ? null : (error ?? this.error),
+  );
 }
 
-final syncClientProvider =
-    Provider<SyncClient>((ref) => SyncClient(baseUrl: proxyBaseUrl));
+final syncClientProvider = Provider<SyncClient>(
+  (ref) => SyncClient(baseUrl: proxyBaseUrl),
+);
 
 final syncCursorStoreProvider = Provider<SyncCursorStore>(
-    (ref) => SyncCursorStore(ref.watch(sharedPreferencesProvider)));
+  (ref) => SyncCursorStore(ref.watch(sharedPreferencesProvider)),
+);
 
 /// Best-effort bidirectional sync. Triggers itself on sign-in and after local
 /// edits (debounced); the app also calls [syncNow] on resume and from the
@@ -139,6 +149,22 @@ class SyncEngine extends Notifier<SyncState> {
   Timer? _debounce;
   bool _running = false;
   bool _applyingMerge = false; // suppress self-trigger during a merge reload
+  bool _suspended = false; // account deletion in progress — no syncs allowed
+  Completer<void>? _runningDone; // completes when the in-flight sync ends
+
+  /// Quiesces the engine for account deletion: cancels the pending debounce,
+  /// blocks new syncs, and waits for any in-flight sync to finish — otherwise
+  /// a racing push could repopulate the account mid-deletion (or re-save the
+  /// cursor after it's been cleared).
+  Future<void> suspendForAccountDeletion() async {
+    _suspended = true;
+    _debounce?.cancel();
+    final inFlight = _runningDone;
+    if (inFlight != null) await inFlight.future;
+  }
+
+  /// Re-enables syncing (call from a `finally` after the deletion attempt).
+  void resumeAfterAccountDeletion() => _suspended = false;
 
   @override
   SyncState build() {
@@ -165,14 +191,16 @@ class SyncEngine extends Notifier<SyncState> {
 
   /// Coalesces bursts of edits into a single sync ~2s later.
   void scheduleSync() {
+    if (_suspended) return;
     _debounce?.cancel();
     _debounce = Timer(const Duration(seconds: 2), syncNow);
   }
 
   Future<void> syncNow() async {
     final session = ref.read(authProvider);
-    if (session == null || _running) return;
+    if (_suspended || session == null || _running) return;
     _running = true;
+    _runningDone = Completer<void>();
     state = state.copyWith(phase: SyncPhase.syncing, clearError: true);
     try {
       final cursor = ref.read(syncCursorStoreProvider);
@@ -183,16 +211,18 @@ class SyncEngine extends Notifier<SyncState> {
 
       bool changed(DateTime t) => t.millisecondsSinceEpoch > since;
 
-      final result = await ref.read(syncClientProvider).sync(
+      final result = await ref
+          .read(syncClientProvider)
+          .sync(
             token: session.token,
             sinceMs: since,
             food: [
               for (final e in foodRepo.loadAll())
-                if (changed(e.syncUpdatedAt)) _foodToRecord(e)
+                if (changed(e.syncUpdatedAt)) _foodToRecord(e),
             ],
             weight: [
               for (final e in weightRepo.loadAll())
-                if (changed(e.syncUpdatedAt)) _weightToRecord(e)
+                if (changed(e.syncUpdatedAt)) _weightToRecord(e),
             ],
             profile: changed(profileRepo.load().syncUpdatedAt)
                 ? _profileToRecord(profileRepo.load())
@@ -201,27 +231,33 @@ class SyncEngine extends Notifier<SyncState> {
 
       _applyingMerge = true;
       if (result.food.isNotEmpty) {
-        await foodRepo.saveAll(mergeById<FoodEntry>(
-          local: foodRepo.loadAll(),
-          server: result.food,
-          idOf: (e) => e.id,
-          updatedAtMsOf: (e) => e.syncUpdatedAt.millisecondsSinceEpoch,
-          fromRecord: _foodFromRecord,
-        ));
+        await foodRepo.saveAll(
+          mergeById<FoodEntry>(
+            local: foodRepo.loadAll(),
+            server: result.food,
+            idOf: (e) => e.id,
+            updatedAtMsOf: (e) => e.syncUpdatedAt.millisecondsSinceEpoch,
+            fromRecord: _foodFromRecord,
+          ),
+        );
         ref.read(foodEntriesProvider.notifier).reload();
       }
       if (result.weight.isNotEmpty) {
-        await weightRepo.saveAll(mergeById<WeightEntry>(
-          local: weightRepo.loadAll(),
-          server: result.weight,
-          idOf: (e) => e.id,
-          updatedAtMsOf: (e) => e.syncUpdatedAt.millisecondsSinceEpoch,
-          fromRecord: _weightFromRecord,
-        ));
+        await weightRepo.saveAll(
+          mergeById<WeightEntry>(
+            local: weightRepo.loadAll(),
+            server: result.weight,
+            idOf: (e) => e.id,
+            updatedAtMsOf: (e) => e.syncUpdatedAt.millisecondsSinceEpoch,
+            fromRecord: _weightFromRecord,
+          ),
+        );
         ref.read(weightEntriesProvider.notifier).reload();
       }
       if (result.profile != null) {
-        await profileRepo.save(mergeProfile(profileRepo.load(), result.profile));
+        await profileRepo.save(
+          mergeProfile(profileRepo.load(), result.profile),
+        );
         ref.read(profileProvider.notifier).reload();
       }
       _applyingMerge = false;
@@ -238,14 +274,19 @@ class SyncEngine extends Notifier<SyncState> {
     } catch (e) {
       state = state.copyWith(
         phase: SyncPhase.error,
-        error: e is AuthException ? e.message : 'Sync failed. Please try again.',
+        error: e is AuthException
+            ? e.message
+            : 'Sync failed. Please try again.',
       );
     } finally {
       _applyingMerge = false;
       _running = false;
+      _runningDone?.complete();
+      _runningDone = null;
     }
   }
 }
 
-final syncEngineProvider =
-    NotifierProvider<SyncEngine, SyncState>(SyncEngine.new);
+final syncEngineProvider = NotifierProvider<SyncEngine, SyncState>(
+  SyncEngine.new,
+);
