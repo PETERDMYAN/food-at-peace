@@ -114,7 +114,9 @@ for ready-to-paste copy.
 - **Support URL** and **Privacy Policy URL**: host `store/privacy-policy.html`
   (see below) and paste the URLs.
 - **General → App Privacy**: answer the questionnaire per `STORE_LISTING.md`
-  (Photos → App Functionality; everything else not collected; no tracking).
+  (Health & Fitness / Name / Email / User ID — collected for the optional sync,
+  linked, not tracking; Coarse Location + Photos — App Functionality, not linked;
+  no tracking).
 - **Age rating**: answer all "None" → 4+.
 - **Build**: select the build you uploaded in Step 4.
 - **App Review Information → Notes**: paste the review notes from `STORE_LISTING.md`
@@ -137,6 +139,23 @@ reviewer flags photo analysis (meal photos are sent to Anthropic via our proxy) 
 HealthKit, the review notes already explain both; reply in Resolution Center if they
 need more.
 
+## Resubmitting after the 1.4.1 rejection (June 11, 2026)
+
+The June 11 rejection (Guideline 1.4.1 — citations for medical information) is
+addressed in build **2**: a **Sources & methodology** screen with primary-source
+citations + disclaimer, linked from Today ("How your budget is calculated") and
+Settings. To resubmit:
+
+1. Upload the new build (Steps 3–4; it's versioned `1.0.0 (2)`).
+2. In the rejected version's page, select the new build, paste the refreshed
+   **App Review notes** from `STORE_LISTING.md` (they open with the 1.4.1
+   resolution), and update the **App Privacy** answers (they changed — sync,
+   location).
+3. Re-host the updated `store/privacy-policy.html` (GitHub Pages republishes on
+   push automatically).
+4. **Reply in App Store Connect** to the rejection message so the reviewer sees
+   the fix summary, then Submit.
+
 ---
 
 ## Quick reference
@@ -145,6 +164,6 @@ need more.
 |---|---|
 | Bundle ID | `com.foodatpeace.foodAtPeace` |
 | Team ID | `GJB4AB92L4` |
-| Version / build | `1.0.0` / `1` |
+| Version / build | `1.0.0` / `2` |
 | IPA output | `build/ios/ipa/food_at_peace.ipa` |
 | Build env | `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer LANG=en_US.UTF-8` |
