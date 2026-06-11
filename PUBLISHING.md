@@ -142,14 +142,15 @@ need more.
 ## Resubmitting after the 1.4.1 rejection (June 11, 2026)
 
 The June 11 rejection (Guideline 1.4.1 — citations for medical information) is
-addressed in build **2**: a **Sources & methodology** screen with primary-source
+addressed in build **3**: a **Sources & methodology** screen with primary-source
 citations + disclaimer, linked from Today ("How your budget is calculated") and
-Settings. Build 2 also adds **in-app account deletion** (Settings → Account →
+Settings. Build 3 also adds **in-app account deletion** (Settings → Account →
 Delete account; Guideline 5.1.1(v)) backed by a deployed `/account/delete`
 endpoint that wipes the user's server data and revokes pre-deletion session
-tokens. To resubmit:
+tokens, and the `NSLocationAlwaysAndWhenInUseUsageDescription` purpose string
+(clears upload warning ITMS-90683 from build 2). To resubmit:
 
-1. Upload the new build (Steps 3–4; it's versioned `1.0.0 (2)`).
+1. Upload the new build (Steps 3–4; it's versioned `1.0.0 (3)`).
 2. In the rejected version's page, select the new build, paste the refreshed
    **App Review notes** from `STORE_LISTING.md` (they open with the 1.4.1
    resolution), and update the **App Privacy** answers (they changed — sync,
@@ -167,6 +168,6 @@ tokens. To resubmit:
 |---|---|
 | Bundle ID | `com.foodatpeace.foodAtPeace` |
 | Team ID | `GJB4AB92L4` |
-| Version / build | `1.0.0` / `2` |
+| Version / build | `1.0.0` / `3` |
 | IPA output | `build/ios/ipa/food_at_peace.ipa` |
 | Build env | `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer LANG=en_US.UTF-8` |

@@ -76,6 +76,10 @@
 	<string>Food at Peace writes the calories, protein, and saturated fat you log — plus any height or weight you edit — so they appear in Apple Health.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Food at Peace uses your location to show your local weather on the Today screen.</string>
+	<!-- Required because the location library references the "always" API
+	     (ITMS-90683), even though the app only reads location in use. -->
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Food at Peace uses your location only while you use the app, to show your local weather on the Today screen.</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 </dict>
