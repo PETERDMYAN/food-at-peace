@@ -5,6 +5,7 @@ import 'package:health/health.dart' hide WorkoutSummary;
 
 import '../models/energy_out.dart';
 import '../models/food_entry.dart';
+import '../models/user_profile.dart';
 import '../models/workout_summary.dart';
 import 'health_service.dart';
 
@@ -22,6 +23,7 @@ class HealthKitService implements HealthService {
     HealthDataType.WEIGHT,
     HealthDataType.HEIGHT,
     HealthDataType.BIRTH_DATE,
+    HealthDataType.GENDER,
     HealthDataType.WORKOUT,
     HealthDataType.DIETARY_ENERGY_CONSUMED,
     HealthDataType.DIETARY_PROTEIN_CONSUMED,
@@ -34,6 +36,7 @@ class HealthKitService implements HealthService {
     HealthDataAccess.READ_WRITE, // weight (read latest + log new)
     HealthDataAccess.READ_WRITE, // height (read latest + write edits)
     HealthDataAccess.READ, // date of birth (→ age)
+    HealthDataAccess.READ, // biological sex
     HealthDataAccess.READ, // workouts
     HealthDataAccess.WRITE, // dietary energy
     HealthDataAccess.WRITE, // dietary protein
@@ -163,10 +166,38 @@ class HealthKitService implements HealthService {
         (value.numericValue.toDouble() * 1000).round(),
       );
       var age = now.year - dob.year;
-      final hadBirthday = now.month > dob.month ||
+      final hadBirthday =
+          now.month > dob.month ||
           (now.month == dob.month && now.day >= dob.day);
       if (!hadBirthday) age--;
       if (age > 0 && age < 120) return age;
+    }
+    return null;
+  }
+
+  @override
+  Future<Sex?> readSex() async {
+    if (!isSupported) return null;
+    await _health.configure();
+    final List<HealthDataPoint> points;
+    try {
+      // GENDER is a HealthKit characteristic; the date range is ignored
+      // natively, but the API requires one.
+      points = await _health.getHealthDataFromTypes(
+        types: const [HealthDataType.GENDER],
+        startTime: DateTime(1900),
+        endTime: DateTime.now(),
+      );
+    } catch (_) {
+      return null;
+    }
+    for (final p in points) {
+      final value = p.value;
+      if (value is! NumericHealthValue) continue;
+      // HKBiologicalSex raw values: 0 notSet, 1 female, 2 male, 3 other.
+      final raw = value.numericValue.toInt();
+      if (raw == 1) return Sex.female;
+      if (raw == 2) return Sex.male;
     }
     return null;
   }

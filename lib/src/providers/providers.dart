@@ -78,7 +78,8 @@ class FoodEntriesNotifier extends Notifier<List<FoodEntry>> {
 
 final foodEntriesProvider =
     NotifierProvider<FoodEntriesNotifier, List<FoodEntry>>(
-        FoodEntriesNotifier.new);
+      FoodEntriesNotifier.new,
+    );
 
 /// The day currently shown on the Today screen (date-only, no time).
 class SelectedDateNotifier extends Notifier<DateTime> {
@@ -90,8 +91,9 @@ class SelectedDateNotifier extends Notifier<DateTime> {
   void shiftDays(int days) => state = dateOnly(state.add(Duration(days: days)));
 }
 
-final selectedDateProvider =
-    NotifierProvider<SelectedDateNotifier, DateTime>(SelectedDateNotifier.new);
+final selectedDateProvider = NotifierProvider<SelectedDateNotifier, DateTime>(
+  SelectedDateNotifier.new,
+);
 
 /// The user's profile; persists on save.
 class ProfileNotifier extends Notifier<UserProfile> {
@@ -106,19 +108,26 @@ class ProfileNotifier extends Notifier<UserProfile> {
 
   void reload() => state = ref.read(profileRepositoryProvider).load();
 
-  /// Pulls age (from date of birth), height and weight from Apple Health and
-  /// updates the profile when they differ. Runs on launch / resume / connect so
-  /// the profile tracks Health "daily". No-op when Health isn't connected.
-  Future<void> refreshFromHealth() async {
-    if (!ref.read(healthConnectedProvider)) return;
+  /// Pulls sex, age (from date of birth), height and weight from Apple Health
+  /// and updates the profile when they differ. Runs on launch / resume /
+  /// connect / manual "Sync now" so the profile tracks Health "daily".
+  /// Returns what Health provided (null per field when unavailable) so callers
+  /// like onboarding can prefill; no-op result when Health isn't connected.
+  Future<HealthBodyReads> refreshFromHealth() async {
+    const none = (sex: null, age: null, heightCm: null, weightKg: null);
+    if (!ref.read(healthConnectedProvider)) return none;
     final service = ref.read(healthServiceProvider);
-    if (!service.isSupported) return;
+    if (!service.isSupported) return none;
+    final sex = await service.readSex();
     final age = await service.readAge();
     final heightCm = await service.readHeightCm();
     final weightKg = await service.readLatestWeightKg();
     var next = state;
-    // Age from Health's date of birth — but never clobber a manual edit (DOB
-    // can't be written back, so a manual age must win).
+    // Sex / age come from read-only Health characteristics — never clobber a
+    // manual edit (it would just revert on the next refresh).
+    if (!next.sexManuallySet && sex != null && sex != next.sex) {
+      next = next.copyWith(sex: sex);
+    }
     if (!next.ageManuallySet && age != null && age != next.age) {
       next = next.copyWith(age: age);
     }
@@ -128,21 +137,63 @@ class ProfileNotifier extends Notifier<UserProfile> {
     if (weightKg != null && (weightKg - next.weightKg).abs() > 0.1) {
       next = next.copyWith(weightKg: weightKg);
     }
+    // Health supplied the full body picture → the profile is reliable, so
+    // automatic target calculation can be offered.
+    if (!next.isConfigured &&
+        age != null &&
+        heightCm != null &&
+        weightKg != null) {
+      next = next.copyWith(isConfigured: true);
+    }
     if (!identical(next, state)) await save(next);
+    await ref.read(healthSyncProvider.notifier).markSynced();
+    return (sex: sex, age: age, heightCm: heightCm, weightKg: weightKg);
   }
 }
 
-final profileProvider =
-    NotifierProvider<ProfileNotifier, UserProfile>(ProfileNotifier.new);
+/// What a Health profile refresh managed to read (null = unavailable).
+typedef HealthBodyReads = ({
+  Sex? sex,
+  int? age,
+  double? heightCm,
+  double? weightKg,
+});
+
+/// When the profile was last refreshed from Apple Health (null = never).
+/// Persisted so the Settings card can show it across launches.
+class HealthSyncNotifier extends Notifier<DateTime?> {
+  static const _prefsKey = 'health_last_sync_ms';
+
+  @override
+  DateTime? build() {
+    final ms = ref.read(sharedPreferencesProvider).getInt(_prefsKey);
+    return ms == null ? null : DateTime.fromMillisecondsSinceEpoch(ms);
+  }
+
+  Future<void> markSynced() async {
+    final now = DateTime.now();
+    state = now;
+    await ref
+        .read(sharedPreferencesProvider)
+        .setInt(_prefsKey, now.millisecondsSinceEpoch);
+  }
+}
+
+final healthSyncProvider = NotifierProvider<HealthSyncNotifier, DateTime?>(
+  HealthSyncNotifier.new,
+);
+
+final profileProvider = NotifierProvider<ProfileNotifier, UserProfile>(
+  ProfileNotifier.new,
+);
 
 /// Entries for the selected day, newest first.
 final entriesForSelectedDayProvider = Provider<List<FoodEntry>>((ref) {
   final all = ref.watch(foodEntriesProvider);
   final date = ref.watch(selectedDateProvider);
-  final list = all
-      .where((e) => !e.deleted && isSameDay(e.timestamp, date))
-      .toList()
-    ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
+  final list =
+      all.where((e) => !e.deleted && isSameDay(e.timestamp, date)).toList()
+        ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
   return list;
 });
 
@@ -170,8 +221,9 @@ bool isSameDay(DateTime a, DateTime b) =>
 
 final apiKeyStoreProvider = Provider<ApiKeyStore>((ref) => ApiKeyStore());
 
-final claudeVisionClientProvider =
-    Provider<ClaudeVisionClient>((ref) => ClaudeVisionClient());
+final claudeVisionClientProvider = Provider<ClaudeVisionClient>(
+  (ref) => ClaudeVisionClient(),
+);
 
 /// The AWS vision proxy, baked in at build time via
 /// --dart-define=PROXY_BASE_URL=… and --dart-define=PROXY_APP_TOKEN=… (empty
@@ -208,8 +260,9 @@ class ApiKeyNotifier extends Notifier<String?> {
   }
 }
 
-final apiKeyProvider =
-    NotifierProvider<ApiKeyNotifier, String?>(ApiKeyNotifier.new);
+final apiKeyProvider = NotifierProvider<ApiKeyNotifier, String?>(
+  ApiKeyNotifier.new,
+);
 
 bool hasApiKey(String? key) => key != null && key.trim().isNotEmpty;
 
@@ -231,8 +284,9 @@ final foodPhotoAnalyzerProvider = Provider<FoodPhotoAnalyzer?>((ref) {
 
 final sessionStoreProvider = Provider<SessionStore>((ref) => SessionStore());
 
-final authClientProvider =
-    Provider<AuthClient>((ref) => AuthClient(baseUrl: proxyBaseUrl));
+final authClientProvider = Provider<AuthClient>(
+  (ref) => AuthClient(baseUrl: proxyBaseUrl),
+);
 
 /// The current signed-in [Session] (null = signed out). Loads from secure
 /// storage on build; [signIn] runs the native Apple flow + backend exchange.
@@ -257,8 +311,9 @@ class AuthNotifier extends Notifier<Session?> {
   /// Native Sign in with Apple → backend exchange → persist. Throws
   /// [SignInCancelled] or [AuthException]; the UI handles both.
   Future<void> signIn() async {
-    final (session, name) =
-        await ref.read(authClientProvider).signInWithApple();
+    final (session, name) = await ref
+        .read(authClientProvider)
+        .signInWithApple();
     await ref.read(sessionStoreProvider).write(session);
     state = session;
     // Apple only shares the name on first sign-in — persist it on the profile
@@ -279,13 +334,13 @@ class AuthNotifier extends Notifier<Session?> {
   }
 }
 
-final authProvider =
-    NotifierProvider<AuthNotifier, Session?>(AuthNotifier.new);
+final authProvider = NotifierProvider<AuthNotifier, Session?>(AuthNotifier.new);
 
 // ---- Phase 2: HealthKit calories-out ----
 
-final healthServiceProvider =
-    Provider<HealthService>((ref) => createHealthService());
+final healthServiceProvider = Provider<HealthService>(
+  (ref) => createHealthService(),
+);
 
 /// Whether health access has been granted. Once the user connects we remember
 /// it in prefs — iOS never reveals read-authorization status, so without this
@@ -321,9 +376,9 @@ class HealthConnectedNotifier extends Notifier<bool> {
   }
 }
 
-final healthConnectedProvider =
-    NotifierProvider<HealthConnectedNotifier, bool>(
-        HealthConnectedNotifier.new);
+final healthConnectedProvider = NotifierProvider<HealthConnectedNotifier, bool>(
+  HealthConnectedNotifier.new,
+);
 
 /// Measured "calories out" for the selected day (null when unsupported,
 /// not connected, or no data).
@@ -353,8 +408,9 @@ final workoutsProvider = FutureProvider<List<WorkoutSummary>>((ref) async {
 
 // ---- Weather (local, for the Today header) ----
 
-final weatherServiceProvider =
-    Provider<WeatherService>((ref) => WeatherService());
+final weatherServiceProvider = Provider<WeatherService>(
+  (ref) => WeatherService(),
+);
 
 /// Current local weather (null when location is denied/unavailable or offline).
 /// Resolved once per app session; refreshable via `ref.invalidate`.
@@ -386,8 +442,9 @@ class LocaleNotifier extends Notifier<Locale?> {
   }
 }
 
-final localeProvider =
-    NotifierProvider<LocaleNotifier, Locale?>(LocaleNotifier.new);
+final localeProvider = NotifierProvider<LocaleNotifier, Locale?>(
+  LocaleNotifier.new,
+);
 
 // ---- Weight log ----
 
@@ -418,28 +475,34 @@ class WeightEntriesNotifier extends Notifier<List<WeightEntry>> {
 
     final profile = ref.read(profileProvider);
     if (profile.weightKg != kg) {
-      await ref.read(profileProvider.notifier).save(profile.copyWith(weightKg: kg));
+      await ref
+          .read(profileProvider.notifier)
+          .save(profile.copyWith(weightKg: kg));
     }
     if (ref.read(healthConnectedProvider)) {
       unawaited(ref.read(healthServiceProvider).writeWeight(kg, now));
     }
   }
 
-  void reload() => state = ref.read(weightRepositoryProvider).loadAll()
-    ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
+  void reload() =>
+      state = ref.read(weightRepositoryProvider).loadAll()
+        ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
 }
 
 final weightEntriesProvider =
     NotifierProvider<WeightEntriesNotifier, List<WeightEntry>>(
-        WeightEntriesNotifier.new);
+      WeightEntriesNotifier.new,
+    );
 
 /// Non-deleted food entries (tombstones hidden), for list UIs like History.
 final visibleFoodEntriesProvider = Provider<List<FoodEntry>>(
-    (ref) => ref.watch(foodEntriesProvider).where((e) => !e.deleted).toList());
+  (ref) => ref.watch(foodEntriesProvider).where((e) => !e.deleted).toList(),
+);
 
 /// Non-deleted weight readings (tombstones hidden), newest first.
 final visibleWeightEntriesProvider = Provider<List<WeightEntry>>(
-    (ref) => ref.watch(weightEntriesProvider).where((e) => !e.deleted).toList());
+  (ref) => ref.watch(weightEntriesProvider).where((e) => !e.deleted).toList(),
+);
 
 // ---- Onboarding ----
 
@@ -459,5 +522,6 @@ class OnboardingNotifier extends Notifier<bool> {
   }
 }
 
-final onboardingCompleteProvider =
-    NotifierProvider<OnboardingNotifier, bool>(OnboardingNotifier.new);
+final onboardingCompleteProvider = NotifierProvider<OnboardingNotifier, bool>(
+  OnboardingNotifier.new,
+);

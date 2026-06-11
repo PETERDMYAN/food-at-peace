@@ -10,9 +10,10 @@ import '../../theme/app_theme.dart';
 import '../../util/l10n_labels.dart';
 import '../today/today_screen.dart' show greetingTitle;
 
-/// First-run flow over the brand gradient: name (via Apple or typed), goal, then
-/// connecting Apple Health. Completing it flips [onboardingCompleteProvider], so
-/// the app swaps to the home shell automatically.
+/// First-run flow over the brand gradient: name (via Apple or typed), goal,
+/// connecting Apple Health, then "about you" (sex/age/height/weight —
+/// Health-prefilled, never guessed). Completing it flips
+/// [onboardingCompleteProvider], so the app swaps to the home shell.
 class OnboardingScreen extends ConsumerStatefulWidget {
   const OnboardingScreen({super.key});
 
@@ -21,7 +22,7 @@ class OnboardingScreen extends ConsumerStatefulWidget {
 }
 
 class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
-  static const _pages = 3;
+  static const _pages = 4;
   final _controller = PageController();
   late final TextEditingController _name;
   late Goal _goal;
@@ -30,19 +31,60 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   bool _healthBusy = false;
   bool _finishing = false;
 
+  // "About you" — starts blank (no guessed defaults); prefilled from Apple
+  // Health when it shares the data. _health* remember what Health provided so
+  // a user-typed value can be flagged as a manual edit.
+  final _age = TextEditingController();
+  final _height = TextEditingController();
+  final _weight = TextEditingController();
+  Sex? _sex;
+  Sex? _healthSex;
+  int? _healthAge;
+
   @override
   void initState() {
     super.initState();
     final profile = ref.read(profileProvider);
     _name = TextEditingController(text: profile.name ?? '');
     _goal = profile.goal;
+    // Health may already be connected (e.g. re-onboarding) — prefill.
+    if (ref.read(healthConnectedProvider)) {
+      Future.microtask(_pullFromHealth);
+    }
   }
 
   @override
   void dispose() {
     _controller.dispose();
     _name.dispose();
+    _age.dispose();
+    _height.dispose();
+    _weight.dispose();
     super.dispose();
+  }
+
+  /// Pulls sex/age/height/weight from Apple Health and prefills any "About
+  /// you" fields the user hasn't typed into yet.
+  Future<void> _pullFromHealth() async {
+    final reads = await ref.read(profileProvider.notifier).refreshFromHealth();
+    if (!mounted) return;
+    setState(() {
+      _healthSex = reads.sex;
+      _healthAge = reads.age;
+      _sex ??= reads.sex;
+      if (_age.text.isEmpty && reads.age != null) {
+        _age.text = '${reads.age}';
+      }
+      if (_height.text.isEmpty && reads.heightCm != null) {
+        _height.text = '${reads.heightCm!.round()}';
+      }
+      if (_weight.text.isEmpty && reads.weightKg != null) {
+        final w = reads.weightKg!;
+        _weight.text = w.truncateToDouble() == w
+            ? '${w.round()}'
+            : w.toStringAsFixed(1);
+      }
+    });
   }
 
   void _toast(String message) {
@@ -75,7 +117,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       final ok = await ref.read(healthConnectedProvider.notifier).connect();
       if (!mounted) return;
       final t = AppLocalizations.of(context);
-      if (!ok) _toast(t.healthNotGranted);
+      if (ok) {
+        await _pullFromHealth(); // prefill the "About you" page
+      } else {
+        _toast(t.healthNotGranted);
+      }
     } finally {
       if (mounted) setState(() => _healthBusy = false);
     }
@@ -103,12 +149,35 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     if (_finishing) return;
     setState(() => _finishing = true);
     final name = _name.text.trim();
+    final ageV = int.tryParse(_age.text.trim());
+    final heightV = double.tryParse(_height.text.trim());
+    final weightV = double.tryParse(_weight.text.trim());
     final current = ref.read(profileProvider);
-    await ref.read(profileProvider.notifier).save(
+    await ref
+        .read(profileProvider.notifier)
+        .save(
           current.copyWith(
             name: name.isEmpty ? null : name,
             goal: _goal,
-            isConfigured: true,
+            sex: _sex ?? current.sex,
+            age: ageV ?? current.age,
+            heightCm: heightV ?? current.heightCm,
+            weightKg: weightV ?? current.weightKg,
+            // The profile counts as reliable only once sex/age/height/weight
+            // are all known — skipped fields leave it unconfigured (a Today
+            // TODO asks again) instead of silently guessing.
+            isConfigured:
+                current.isConfigured ||
+                (_sex != null &&
+                    ageV != null &&
+                    heightV != null &&
+                    weightV != null),
+            // A value differing from what Health supplied is a manual edit —
+            // protect it from the daily Health refresh.
+            ageManuallySet:
+                current.ageManuallySet || (ageV != null && ageV != _healthAge),
+            sexManuallySet:
+                current.sexManuallySet || (_sex != null && _sex != _healthSex),
           ),
         );
     // Flips the gate → app.dart rebuilds into HomeShell.
@@ -124,9 +193,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
         // White-on-gradient controls throughout the flow.
         data: Theme.of(context).copyWith(
           textTheme: Theme.of(context).textTheme.apply(
-                bodyColor: Colors.white,
-                displayColor: Colors.white,
-              ),
+            bodyColor: Colors.white,
+            displayColor: Colors.white,
+          ),
           iconTheme: const IconThemeData(color: Colors.white),
         ),
         child: Scaffold(
@@ -157,6 +226,13 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                       _HealthPage(
                         busy: _healthBusy,
                         onConnect: _healthBusy ? null : _connectHealth,
+                      ),
+                      _BodyPage(
+                        sex: _sex,
+                        onSex: (s) => setState(() => _sex = s),
+                        age: _age,
+                        height: _height,
+                        weight: _weight,
                       ),
                     ],
                   ),
@@ -217,7 +293,11 @@ class _TopBar extends StatelessWidget {
 
 /// Shared scrollable page body: a big title, supporting copy, then content.
 class _PageBody extends StatelessWidget {
-  const _PageBody({required this.title, required this.body, required this.child});
+  const _PageBody({
+    required this.title,
+    required this.body,
+    required this.child,
+  });
 
   final String title;
   final String body;
@@ -241,7 +321,9 @@ class _PageBody extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             body,
-            style: text.bodyLarge?.copyWith(color: Colors.white.withValues(alpha: 0.85)),
+            style: text.bodyLarge?.copyWith(
+              color: Colors.white.withValues(alpha: 0.85),
+            ),
           ),
           const SizedBox(height: 28),
           child,
@@ -301,8 +383,8 @@ class _NamePage extends StatelessWidget {
           Text(
             t.onboardingNameManual,
             style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                  color: Colors.white.withValues(alpha: 0.8),
-                ),
+              color: Colors.white.withValues(alpha: 0.8),
+            ),
           ),
           const SizedBox(height: 8),
           TextField(
@@ -318,7 +400,10 @@ class _NamePage extends StatelessWidget {
               hintStyle: TextStyle(color: Colors.white.withValues(alpha: 0.6)),
               filled: true,
               fillColor: Colors.white.withValues(alpha: 0.15),
-              prefixIcon: const Icon(Icons.person_outline, color: Colors.white70),
+              prefixIcon: const Icon(
+                Icons.person_outline,
+                color: Colors.white70,
+              ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(16),
                 borderSide: BorderSide.none,
@@ -333,7 +418,11 @@ class _NamePage extends StatelessWidget {
             const SizedBox(height: 24),
             Row(
               children: [
-                const Icon(Icons.waving_hand_outlined, color: Colors.white70, size: 20),
+                const Icon(
+                  Icons.waving_hand_outlined,
+                  color: Colors.white70,
+                  size: 20,
+                ),
                 const SizedBox(width: 8),
                 Flexible(
                   child: Text(
@@ -386,10 +475,10 @@ class _GoalPage extends StatelessWidget {
   }
 
   static IconData _iconFor(Goal g) => switch (g) {
-        Goal.lose => Icons.trending_down,
-        Goal.maintain => Icons.trending_flat,
-        Goal.gain => Icons.fitness_center,
-      };
+    Goal.lose => Icons.trending_down,
+    Goal.maintain => Icons.trending_flat,
+    Goal.gain => Icons.fitness_center,
+  };
 }
 
 class _GoalCard extends StatelessWidget {
@@ -429,7 +518,9 @@ class _GoalCard extends StatelessWidget {
                     Text(
                       label,
                       style: text.titleMedium?.copyWith(
-                        color: selected ? const Color(0xFF1A0B40) : Colors.white,
+                        color: selected
+                            ? const Color(0xFF1A0B40)
+                            : Colors.white,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -475,8 +566,8 @@ class _HealthPage extends ConsumerWidget {
             Text(
               t.healthNotAvailable,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: Colors.white.withValues(alpha: 0.8),
-                  ),
+                color: Colors.white.withValues(alpha: 0.8),
+              ),
             )
           else if (connected)
             Row(
@@ -511,6 +602,139 @@ class _HealthPage extends ConsumerWidget {
               label: Text(t.connectAppleHealth),
             ),
         ],
+      ),
+    );
+  }
+}
+
+/// "About you": sex, age, height and weight — prefilled from Apple Health when
+/// available, otherwise typed. Skipping leaves the profile unconfigured (a
+/// Today TODO asks again); nothing is guessed.
+class _BodyPage extends StatelessWidget {
+  const _BodyPage({
+    required this.sex,
+    required this.onSex,
+    required this.age,
+    required this.height,
+    required this.weight,
+  });
+
+  final Sex? sex;
+  final ValueChanged<Sex> onSex;
+  final TextEditingController age;
+  final TextEditingController height;
+  final TextEditingController weight;
+
+  Widget _field(
+    BuildContext context,
+    TextEditingController controller,
+    String label, {
+    String? suffix,
+    bool decimal = false,
+  }) {
+    return TextField(
+      controller: controller,
+      keyboardType: TextInputType.numberWithOptions(decimal: decimal),
+      style: const TextStyle(color: Colors.white, fontSize: 18),
+      cursorColor: Colors.white,
+      onTapOutside: (_) => FocusScope.of(context).unfocus(),
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: TextStyle(color: Colors.white.withValues(alpha: 0.75)),
+        suffixText: suffix,
+        suffixStyle: const TextStyle(color: Colors.white70),
+        filled: true,
+        fillColor: Colors.white.withValues(alpha: 0.15),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: BorderSide.none,
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(16),
+          borderSide: const BorderSide(color: Colors.white, width: 1.5),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    return _PageBody(
+      title: t.aboutYouTitle,
+      body: t.aboutYouBody,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              for (final s in Sex.values) ...[
+                Expanded(
+                  child: _SexTile(
+                    label: s.labelOf(t),
+                    icon: s == Sex.male ? Icons.male : Icons.female,
+                    selected: sex == s,
+                    onTap: () => onSex(s),
+                  ),
+                ),
+                if (s != Sex.values.last) const SizedBox(width: 12),
+              ],
+            ],
+          ),
+          const SizedBox(height: 16),
+          _field(context, age, t.age),
+          const SizedBox(height: 12),
+          _field(context, height, t.heightTitle, suffix: 'cm'),
+          const SizedBox(height: 12),
+          _field(context, weight, t.weightTitle, suffix: 'kg', decimal: true),
+        ],
+      ),
+    );
+  }
+}
+
+class _SexTile extends StatelessWidget {
+  const _SexTile({
+    required this.label,
+    required this.icon,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final IconData icon;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white.withValues(alpha: selected ? 0.95 : 0.14),
+      borderRadius: BorderRadius.circular(18),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(18),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                size: 20,
+                color: selected ? AppTheme.violetDeep : Colors.white,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  color: selected ? const Color(0xFF1A0B40) : Colors.white,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

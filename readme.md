@@ -15,8 +15,9 @@ for real calories burned, and speaks **English and 中文**. Built with Flutter.
 
 ## What it does today
 - **Onboarding** — on first launch: continue with **Sign in with Apple** (pulls your
-  name) or type it, pick a goal, and connect Apple Health. Anything you skip shows up
-  as a "Finish setting up" checklist on Today.
+  name) or type it, pick a goal, connect Apple Health, then "About you"
+  (sex / age / height / weight — prefilled from Apple Health, never guessed).
+  Anything you skip shows up as a "Finish setting up" checklist on Today.
 - **Today dashboard** — a large time-of-day greeting ("Good evening, …" with an emoji)
   and your local **weather** (animated background reflecting rain/sun/cloud/snow +
   a temperature/condition chip; falls back to an approximate IP location if you
@@ -28,10 +29,11 @@ for real calories burned, and speaks **English and 中文**. Built with Flutter.
   led by a prominent "on target X/Y days" stat. Switch between **1 / 7 / 30-day**
   windows, page to earlier windows with prev/next, and tap or drag a chart to read
   any day's value against the target.
-- **Settings** — profile (editable **nickname** + age / height / weight, synced from
-  Apple Health — edits write height + weight back to Health), editable targets (calorie
-  gap, protein, saturated-fat cap), account & sync, Apple Health connection, language,
-  and feedback.
+- **Settings** — profile (editable **nickname** + sex / age / height / weight, synced
+  from Apple Health with a **Sync now** button + last-synced time — edits write height
+  + weight back to Health), editable goal & targets (each shows how it's calculated;
+  **Use automatic** appears once the profile is reliable), account & sync, Apple Health
+  connection, language, and feedback.
 - **Apple Health / Garmin** — reads active + resting energy, weight, height, and date
   of birth (→ age), plus workouts; writes logged food, weight, and height edits back.
   Garmin data flows in via Apple Health.
