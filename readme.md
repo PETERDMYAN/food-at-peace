@@ -119,6 +119,9 @@ the system locale by default and persists a manual choice.
 - [ ] **Google Sign-In** — fast-follow: `/auth/google` mirroring `/auth/apple`
 - [ ] **Subscriptions** — SGD 1.99/month (auto-renew) + SGD 3.99 / 100-day
   (non-renewing) via StoreKit IAP, with server-side receipt validation
+- [ ] **Push notifications**
+- [ ] **Recurring food** — log a repeating food entry once and have it recur
+- [ ] **Sharing with friends** — share progress with friends
 - [ ] Later: home-screen widget, reminders, barcode scan, Android
 
 ## Tech stack
