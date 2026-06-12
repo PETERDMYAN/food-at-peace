@@ -139,26 +139,38 @@ reviewer flags photo analysis (meal photos are sent to Anthropic via our proxy) 
 HealthKit, the review notes already explain both; reply in Resolution Center if they
 need more.
 
-## Resubmitting after the 1.4.1 rejection (June 11, 2026)
+## Resubmission after the 1.4.1 rejection — ✅ DONE (June 12, 2026)
 
-The June 11 rejection (Guideline 1.4.1 — citations for medical information) is
-addressed in build **3**: a **Sources & methodology** screen with primary-source
-citations + disclaimer, linked from Today ("How your budget is calculated") and
-Settings. Build 3 also adds **in-app account deletion** (Settings → Account →
-Delete account; Guideline 5.1.1(v)) backed by a deployed `/account/delete`
-endpoint that wipes the user's server data and revokes pre-deletion session
-tokens, and the `NSLocationAlwaysAndWhenInUseUsageDescription` purpose string
-(clears upload warning ITMS-90683 from build 2). To resubmit:
+The June 11 rejection (Guideline 1.4.1 — citations for medical information;
+reviewed on an iPad Air 11-inch M3 with v1.0 build 1) is addressed in build
+**3**: a **Sources & methodology** screen with primary-source citations +
+disclaimer, linked from Today ("How your budget is calculated") and Settings.
+Build 3 also adds **in-app account deletion** (Settings → Account → Delete
+account; Guideline 5.1.1(v)) backed by a deployed `/account/delete` endpoint
+that wipes the user's server data and revokes pre-deletion session tokens, and
+the `NSLocationAlwaysAndWhenInUseUsageDescription` purpose string (clears
+upload warning ITMS-90683 from build 2).
 
-1. Upload the new build (Steps 3–4; it's versioned `1.0.0 (3)`).
-2. In the rejected version's page, select the new build, paste the refreshed
-   **App Review notes** from `STORE_LISTING.md` (they open with the 1.4.1
-   resolution), and update the **App Privacy** answers (they changed — sync,
-   location).
-3. Re-host the updated `store/privacy-policy.html` (GitHub Pages republishes on
-   push automatically).
-4. **Reply in App Store Connect** to the rejection message so the reviewer sees
-   the fix summary, then Submit.
+**Resubmitted June 12, 2026 at 4:28 PM — status "Waiting for Review"** (typical
+verdict ≤48 h, Apple emails the result; the version auto-releases on approval).
+What was done:
+
+1. Build `1.0.0 (3)` uploaded and attached to the iOS 1.0 version.
+2. Replied in App Store Connect to the rejection message with the fix summary.
+3. Refreshed **App Review notes** (open with the 1.4.1 resolution), contact
+   info (incl. phone), keywords, and URLs — all per `STORE_LISTING.md`.
+4. Updated **Description** and **Promotional Text** to the current
+   `STORE_LISTING.md` copy.
+5. Corrected **App Privacy**: Name, Health, and User ID switched to *linked to
+   identity* (Email was already linked); Location/Photos stay not-linked; no
+   tracking. Republished.
+6. Replaced the screenshots with a fresh **6.9″ set** (5 × 1320 × 2868, iPhone
+   16 Pro Max simulator) in order Today · Trends · Add · Sources & methodology ·
+   Settings — files in `store/app-store-screens/`. Note: 1320 × 2868 is only
+   accepted by the **6.9″ slot in Media Manager**; the version page's inline
+   box is the 6.5″ slot and rejects it.
+7. Verified `store/privacy-policy.html` + `support.html` live on GitHub Pages
+   (both 200, policy includes account deletion + sources).
 
 ---
 

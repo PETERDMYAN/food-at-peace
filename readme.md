@@ -12,9 +12,11 @@ for real calories burned, and speaks **English and 中文**. Built with Flutter.
 > **accounts + cloud sync** — Sign in with Apple → an AWS Lambda + DynamoDB backend
 > (the Claude key stays server-side; no secret ships in the app).
 > **App Store:** v1.0 (1) was rejected under Guideline 1.4.1 (citations for health
-> calculations); build **1.0.0 (2)** fixes it with the in-app Sources & methodology
+> calculations); build **1.0.0 (3)** fixes it with the in-app Sources & methodology
 > screen, adds **in-app account deletion** (Guideline 5.1.1(v)), and refreshes the
-> privacy policy/manifest — ready to resubmit (see `PUBLISHING.md`).
+> privacy policy/manifest. **Resubmitted June 12, 2026 — Waiting for Review**, with a
+> fresh 6.9″ screenshot set, updated description, and corrected App Privacy answers;
+> set to auto-release on approval (see `PUBLISHING.md`).
 > Next up: Google sign-in and subscriptions.
 
 ## What it does today
@@ -111,11 +113,13 @@ the system locale by default and persists a manual choice.
   (`/sync`) + in-app account deletion (`/account/delete`, App Store 5.1.1(v)),
   deployed to `ap-southeast-1`; app-side bidirectional sync of food /
   weight / profile (last-write-wins, tombstones; on sign-in / resume / edit / manual)
+- [x] **Resubmitted 1.0.0 (3) to App Review** (June 12, 2026 — **Waiting for Review**):
+  replied to the 1.4.1 rejection, refreshed description/promo + App Privacy answers
+  (Name / Health / User ID → linked to identity), and replaced the screenshots with
+  a 5-shot 6.9″ set (`store/app-store-screens/` — Today, Trends, Add, Sources &
+  methodology, Settings); auto-releases on approval
 
 **TODO:**
-- [ ] **Resubmit 1.0.0 (2) to App Review** — upload via Xcode Organizer, refresh
-  the listing/privacy answers per `store/STORE_LISTING.md`, reply to the 1.4.1
-  rejection (see `PUBLISHING.md` → "Resubmitting")
 - [ ] **Google Sign-In** — fast-follow: `/auth/google` mirroring `/auth/apple`
 - [ ] **Subscriptions** — SGD 1.99/month (auto-renew) + SGD 3.99 / 100-day
   (non-renewing) via StoreKit IAP, with server-side receipt validation

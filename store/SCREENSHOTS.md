@@ -1,5 +1,11 @@
 # Capturing App Store screenshots
 
+> **Current shipped set:** `store/app-store-screens/` — 5 × 1320 × 2868 captured
+> June 12, 2026 on the iPhone 16 Pro Max simulator (iOS 26.5), uploaded to the
+> **6.9″ Display** slot in Media Manager in order: Today · Trends · Add ·
+> Sources & methodology · Settings. (1320 × 2868 is only accepted by the 6.9″
+> slot in Media Manager — the version page's inline box is the 6.5″ slot.)
+
 App Store Connect requires **6.7-inch iPhone** screenshots at **1290 × 2796 px**
 (this one set covers all current iPhone sizes). 1–10 images; the first 3 show in
 search, so lead with your strongest.
