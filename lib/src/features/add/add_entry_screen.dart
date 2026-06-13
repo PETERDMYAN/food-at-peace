@@ -10,6 +10,8 @@ import '../../models/food_entry.dart';
 import '../../models/meal_type.dart';
 import '../../providers/providers.dart';
 import '../../util/l10n_labels.dart';
+import '../../widgets/bean_icon.dart';
+import '../wallet/beans_screen.dart';
 
 /// Food-entry form. A photo can be scanned with Claude to pre-fill the fields,
 /// which the user then reviews and edits before saving.
@@ -86,6 +88,12 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
       _showKeyNeededDialog();
       return;
     }
+    // Each scan costs one Bean (unless unlimited). Out of Beans → paywall; if
+    // they top up there, fall through and continue.
+    if (!ref.read(beansProvider).canAnalyze) {
+      await showBeansPaywall(context, ref);
+      if (!mounted || !ref.read(beansProvider).canAnalyze) return;
+    }
     final source = await _pickSource();
     if (source == null) return;
 
@@ -93,8 +101,11 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
     try {
       file = await ImagePicker().pickImage(
         source: source,
-        maxWidth: 1568,
-        maxHeight: 1568,
+        // 1024px long edge keeps the upload under Anthropic's ~1.15 MP vision
+        // downscale threshold (so we pay actual size, not the ~1,600-token cap)
+        // — smaller payload + lower latency, still plenty for food estimation.
+        maxWidth: 1024,
+        maxHeight: 1024,
         imageQuality: 85,
       );
     } catch (_) {
@@ -122,6 +133,8 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
           _serving.text = analysis.portionDescription;
         }
       });
+      // Charge one Bean for the successful scan.
+      await ref.read(beansProvider.notifier).spendOnPhoto(analysis.name);
     } on ClaudeApiException catch (e) {
       _toast(e.message);
     } catch (_) {
@@ -187,6 +200,7 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
+    final beans = ref.watch(beansProvider);
     return Scaffold(
       appBar: AppBar(
         title: Text(t.addFood),
@@ -204,6 +218,25 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
                   icon: const Icon(Icons.camera_alt_outlined),
                   label: Text(t.scanPhoto),
                 ),
+                // Unlimited subscribers see nothing; everyone else sees how many
+                // scans (Beans) they have left.
+                if (!beans.subscribed)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const BeanIcon(size: 15),
+                        const SizedBox(width: 6),
+                        Text(
+                          t.scansLeft(beans.balance),
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 if (_analysis != null) ...[
                   const SizedBox(height: 12),
                   _AnalysisBanner(analysis: _analysis!),

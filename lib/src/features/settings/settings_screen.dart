@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:food_at_peace/l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import '../../data/auth_client.dart';
@@ -13,10 +14,14 @@ import '../../nutrition/nutrition_math.dart';
 import '../../providers/providers.dart';
 import '../../util/format.dart';
 import '../../util/l10n_labels.dart';
+import '../../widgets/bean_icon.dart';
 import '../../widgets/icon_tile.dart';
+import '../dashboard/dashboard_screen.dart';
 import '../feedback/feedback_screen.dart';
 import '../sources/sources_screen.dart';
+import '../wallet/beans_screen.dart';
 import 'edit_profile_dialog.dart';
+import 'reminders_screen.dart';
 
 /// Profile setup (drives all targets), weight log, Claude key, Apple
 /// Health/Garmin, language, and feedback.
@@ -208,6 +213,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
           children: [
             _ProfileStatsCard(profile: profile),
+            const SizedBox(height: 12),
+            const _BeansTile(),
             const SizedBox(height: 16),
             Card(
               child: Padding(
@@ -285,10 +292,70 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             const SizedBox(height: 12),
             const _HealthCard(),
             const SizedBox(height: 12),
+            const _RemindersTile(),
+            const SizedBox(height: 12),
             const _LanguageCard(),
             const SizedBox(height: 12),
             const _FeedbackTile(),
+            const SizedBox(height: 20),
+            const _VersionFooter(),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// App version at the bottom of Profile. Tapping it 5× opens the owner metrics
+/// dashboard (a hidden entry — not for regular users).
+class _VersionFooter extends StatefulWidget {
+  const _VersionFooter();
+
+  @override
+  State<_VersionFooter> createState() => _VersionFooterState();
+}
+
+class _VersionFooterState extends State<_VersionFooter> {
+  PackageInfo? _info;
+  int _taps = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    PackageInfo.fromPlatform().then((i) {
+      if (mounted) setState(() => _info = i);
+    });
+  }
+
+  void _tap() {
+    _taps++;
+    if (_taps >= 5) {
+      _taps = 0;
+      Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => const DashboardScreen()));
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    final info = _info;
+    final label = info == null
+        ? ''
+        : t.versionLabel(t.appTitle, info.version, info.buildNumber);
+    return Center(
+      child: GestureDetector(
+        onTap: _tap,
+        behavior: HitTestBehavior.opaque,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 8),
+          child: Text(
+            label,
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
         ),
       ),
     );
@@ -523,6 +590,115 @@ class _LanguageCard extends ConsumerWidget {
                 onTap: () => choose(opt.$1),
               ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Beans wallet balance, with the gold gradient mark. Tapping opens the wallet
+/// (balance, top-up, transaction history).
+class _BeansTile extends ConsumerWidget {
+  const _BeansTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final t = AppLocalizations.of(context);
+    final scheme = Theme.of(context).colorScheme;
+    final beans = ref.watch(beansProvider);
+    final status = beans.subscribed
+        ? t.beansUnlimited
+        : t.beansCount(beans.balance);
+    return Card(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(26),
+        onTap: () => Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => const BeansScreen())),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              const BeanIcon(size: 38),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      t.beans,
+                      style: Theme.of(context).textTheme.titleSmall,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      status,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right, color: scheme.onSurfaceVariant),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Entry point to the meal-reminders screen. Shows whether reminders are on and
+/// how many are active.
+class _RemindersTile extends ConsumerWidget {
+  const _RemindersTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final t = AppLocalizations.of(context);
+    final scheme = Theme.of(context).colorScheme;
+    final enabled = ref.watch(remindersEnabledProvider);
+    final activeCount = ref
+        .watch(remindersProvider)
+        .where((r) => r.enabled)
+        .length;
+    final status = enabled ? t.remindersActive(activeCount) : t.remindersOff;
+    return Card(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(26),
+        onTap: () => Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => const RemindersScreen())),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              IconTile(
+                icon: Icons.notifications_active,
+                color: scheme.primary,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      t.reminders,
+                      style: Theme.of(context).textTheme.titleSmall,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      status,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right, color: scheme.onSurfaceVariant),
+            ],
+          ),
         ),
       ),
     );
