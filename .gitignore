@@ -56,3 +56,7 @@ backend/build.toml
 # Claude Code local settings / runtime artifacts
 .claude/settings.local.json
 .claude/*.lock
+
+# App Store Connect API keys — never commit secrets
+*.p8
+AuthKey_*.p8
