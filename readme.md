@@ -152,11 +152,12 @@ the system locale by default and persists a manual choice.
   backend, add an aggregation endpoint the dashboard reads, and pull
   **downloads** from the **App Store Connect API**.
 
-**TODO (Circles of Food — social):**
-- [ ] **Circles of Food** — add friends (invite + accept flow), then see their
-  daily **trends**; friends shown as Instagram-story-style gradient-ring avatars
-  above the Trends graph. Needs a backend for invites + friend-trend sharing
-  (privacy controls). *Not started.*
+- [~] **Circles of Food — client MVP built** — Instagram-story gradient-ring
+  friend avatars on top of the **Trends** graph; **Add** (invite by handle /
+  share link) + **Requests** accept/decline; tap a friend for their trend
+  (today vs target, streak, 7-day adherence). Friends + invites + trend data are
+  **local/mock** — backend TODO: real invite delivery + acceptance and
+  friend-trend sharing gated by each friend's privacy consent.
 
 **TODO (next up):**
 - [ ] **Google Sign-In** — `/auth/google` mirroring `/auth/apple`

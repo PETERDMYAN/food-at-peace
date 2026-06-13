@@ -266,5 +266,25 @@
   "mRevenue": "收入",
   "mRefunds": "退款",
   "mSubscribers": "订阅用户",
-  "versionLabel": "{name} {version} ({build})"
+  "versionLabel": "{name} {version} ({build})",
+
+  "yourCircle": "我的圈子",
+  "addFriend": "添加",
+  "circleRequests": "好友请求",
+  "circleRequestsN": "好友请求（{count}）",
+  "pendingLabel": "待接受",
+  "invitePeople": "添加好友",
+  "inviteShareLink": "分享邀请链接",
+  "inviteLinkCopied": "邀请链接已复制",
+  "inviteHandleLabel": "好友的用户名",
+  "inviteSend": "发送邀请",
+  "inviteSent": "已向 {handle} 发送邀请",
+  "todayLabel": "今天",
+  "streakLabel": "连续天数",
+  "streakDays": "{count} 天",
+  "friendAdherence": "达标 · 近 7 天",
+  "noRequests": "暂无待处理的请求。",
+  "accept": "接受",
+  "decline": "拒绝",
+  "friendAccepted": "{name} 加入了你的圈子 🎉"
 }

@@ -870,4 +870,69 @@ class AppLocalizationsEn extends AppLocalizations {
   String versionLabel(String name, String version, String build) {
     return '$name $version ($build)';
   }
+
+  @override
+  String get yourCircle => 'Your circle';
+
+  @override
+  String get addFriend => 'Add';
+
+  @override
+  String get circleRequests => 'Requests';
+
+  @override
+  String circleRequestsN(int count) {
+    return 'Requests ($count)';
+  }
+
+  @override
+  String get pendingLabel => 'Pending';
+
+  @override
+  String get invitePeople => 'Add a friend';
+
+  @override
+  String get inviteShareLink => 'Share invite link';
+
+  @override
+  String get inviteLinkCopied => 'Invite link copied';
+
+  @override
+  String get inviteHandleLabel => 'Friend\'s handle';
+
+  @override
+  String get inviteSend => 'Send invite';
+
+  @override
+  String inviteSent(String handle) {
+    return 'Invite sent to $handle';
+  }
+
+  @override
+  String get todayLabel => 'Today';
+
+  @override
+  String get streakLabel => 'Streak';
+
+  @override
+  String streakDays(int count) {
+    return '$count days';
+  }
+
+  @override
+  String get friendAdherence => 'On-target · last 7 days';
+
+  @override
+  String get noRequests => 'No pending requests.';
+
+  @override
+  String get accept => 'Accept';
+
+  @override
+  String get decline => 'Decline';
+
+  @override
+  String friendAccepted(String name) {
+    return '$name joined your circle 🎉';
+  }
 }

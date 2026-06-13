@@ -21,6 +21,7 @@ import '../models/daily_summary.dart';
 import '../models/energy_out.dart';
 import '../models/bean_transaction.dart';
 import '../models/food_entry.dart';
+import '../models/friend.dart';
 import '../models/meal_type.dart';
 import '../models/reminder.dart';
 import '../models/session.dart';
@@ -756,6 +757,99 @@ class BeansNotifier extends Notifier<BeansState> {
 
 final beansProvider = NotifierProvider<BeansNotifier, BeansState>(
   BeansNotifier.new,
+);
+
+// ---- Circles of Food (friends) ----
+
+/// The user's "Circle of Food": connected friends + pending invites (incoming /
+/// outgoing). Persisted locally and seeded on first run.
+///
+/// NOTE: invites, acceptance, and friends' trend data are LOCAL/MOCK for the
+/// client MVP. Production needs a backend: real invite delivery + acceptance,
+/// and friend-trend sharing gated by each friend's privacy consent.
+class CircleNotifier extends Notifier<List<Friend>> {
+  static const _key = 'circle_v1';
+  static const _seededKey = 'circle_seeded';
+
+  SharedPreferences get _prefs => ref.read(sharedPreferencesProvider);
+
+  @override
+  List<Friend> build() {
+    final raw = _prefs.getString(_key);
+    if (raw != null && raw.isNotEmpty) {
+      try {
+        return [
+          for (final e in jsonDecode(raw) as List)
+            Friend.fromJson(e as Map<String, dynamic>),
+        ];
+      } catch (_) {}
+    }
+    if (!(_prefs.getBool(_seededKey) ?? false)) {
+      final seed = Friend.seed();
+      _prefs.setBool(_seededKey, true);
+      _prefs.setString(_key, _encode(seed));
+      return seed;
+    }
+    return const [];
+  }
+
+  String _encode(List<Friend> l) => jsonEncode([for (final f in l) f.toJson()]);
+
+  Future<void> _save() => _prefs.setString(_key, _encode(state));
+
+  List<Friend> get connected =>
+      state.where((f) => f.status == FriendStatus.connected).toList();
+  List<Friend> get incoming =>
+      state.where((f) => f.status == FriendStatus.incoming).toList();
+
+  /// Send an invite by @handle (mock outgoing invite).
+  Future<void> invite(String handle) async {
+    final h = handle.trim().replaceAll('@', '');
+    if (h.isEmpty) return;
+    final name = h[0].toUpperCase() + (h.length > 1 ? h.substring(1) : '');
+    state = [
+      ...state,
+      Friend(
+        id: 'f_${DateTime.now().microsecondsSinceEpoch}',
+        name: name,
+        handle: '@$h',
+        status: FriendStatus.outgoing,
+      ),
+    ];
+    await _save();
+  }
+
+  /// Accept an incoming invite — they become connected (with a mock trend).
+  Future<void> accept(String id) async {
+    state = [
+      for (final f in state)
+        if (f.id == id)
+          (f.adherence7d.isEmpty
+              ? Friend.sample(
+                  id: f.id,
+                  name: f.name,
+                  handle: f.handle,
+                  status: FriendStatus.connected,
+                  seed: f.id.hashCode,
+                )
+              : f.copyWith(status: FriendStatus.connected))
+        else
+          f,
+    ];
+    await _save();
+  }
+
+  Future<void> remove(String id) async {
+    state = [
+      for (final f in state)
+        if (f.id != id) f,
+    ];
+    await _save();
+  }
+}
+
+final circleProvider = NotifierProvider<CircleNotifier, List<Friend>>(
+  CircleNotifier.new,
 );
 
 // ---- Owner metrics dashboard ----

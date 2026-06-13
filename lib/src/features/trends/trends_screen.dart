@@ -8,6 +8,7 @@ import 'package:intl/intl.dart';
 import '../../models/daily_summary.dart';
 import '../../providers/providers.dart';
 import '../../util/format.dart';
+import '../circle/circle_strip.dart';
 
 /// Trends: daily charts comparing actual intake against the current target for
 /// calories, protein, and saturated fat over a selectable window, with
@@ -86,6 +87,8 @@ class _TrendsScreenState extends ConsumerState<TrendsScreen> {
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
           children: [
+            const CircleStrip(),
+            const SizedBox(height: 16),
             Center(
               child: SegmentedButton<int>(
                 segments: [

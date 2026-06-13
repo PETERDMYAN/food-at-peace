@@ -422,5 +422,37 @@
       "version": { "type": "String" },
       "build": { "type": "String" }
     }
+  },
+
+  "yourCircle": "Your circle",
+  "addFriend": "Add",
+  "circleRequests": "Requests",
+  "circleRequestsN": "Requests ({count})",
+  "@circleRequestsN": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "pendingLabel": "Pending",
+  "invitePeople": "Add a friend",
+  "inviteShareLink": "Share invite link",
+  "inviteLinkCopied": "Invite link copied",
+  "inviteHandleLabel": "Friend's handle",
+  "inviteSend": "Send invite",
+  "inviteSent": "Invite sent to {handle}",
+  "@inviteSent": {
+    "placeholders": { "handle": { "type": "String" } }
+  },
+  "todayLabel": "Today",
+  "streakLabel": "Streak",
+  "streakDays": "{count} days",
+  "@streakDays": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "friendAdherence": "On-target · last 7 days",
+  "noRequests": "No pending requests.",
+  "accept": "Accept",
+  "decline": "Decline",
+  "friendAccepted": "{name} joined your circle 🎉",
+  "@friendAccepted": {
+    "placeholders": { "name": { "type": "String" } }
   }
 }
