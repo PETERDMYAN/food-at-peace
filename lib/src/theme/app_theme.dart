@@ -26,6 +26,26 @@ class AppTheme {
     end: Alignment.bottomRight,
   );
 
+  /// Iridescent pastel gradient for **Beans** (the in-app credit) — gold → mint
+  /// → sky → lavender, a holographic "jelly bean" sweep. Used for the Bean
+  /// glyph, the balance hero, and top-up CTAs.
+  static const LinearGradient beanGradient = LinearGradient(
+    colors: [
+      Color(0xFFFFD86B), // warm gold
+      Color(0xFF8FE3A8), // mint
+      Color(0xFF74C0FF), // sky
+      Color(0xFFB79CFF), // lavender
+    ],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
+
+  /// Deep ink that stays readable on the pastel bean gradient.
+  static const Color beanInk = Color(0xFF2A2540);
+
+  /// Solid accent sampled from the bean gradient, for CTAs / credited amounts.
+  static const Color beanAccent = Color(0xFF7C93FF);
+
   static ThemeData light() => _build(Brightness.light);
   static ThemeData dark() => _build(Brightness.dark);
 

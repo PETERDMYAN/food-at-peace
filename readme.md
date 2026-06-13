@@ -119,14 +119,49 @@ the system locale by default and persists a manual choice.
   a 5-shot 6.9″ set (`store/app-store-screens/` — Today, Trends, Add, Sources &
   methodology, Settings); auto-releases on approval
 
-**TODO:**
-- [ ] **Google Sign-In** — fast-follow: `/auth/google` mirroring `/auth/apple`
-- [ ] **Subscriptions** — SGD 1.99/month (auto-renew) + SGD 3.99 / 100-day
-  (non-renewing) via StoreKit IAP, with server-side receipt validation
-- [ ] **Push notifications**
+- [x] **Daily meal reminders** — opt-in local notifications (breakfast 8:00 /
+  lunch 12:00 / dinner 19:00 on, snack 22:00 off by default), each editable /
+  toggleable / deletable + "Add reminder"; funny localized per-meal copy;
+  enabled from onboarding or **Settings → Reminders**
+  (`flutter_local_notifications` + `timezone`)
+
+- [~] **Beans (in-app credit) — client foundation built** — 21 free Beans on
+  first launch; 1 Bean per photo scan (Add screen shows "N scans left" unless
+  unlimited); iridescent pastel "jelly-bean" wallet in **Profile → Beans** with
+  balance, transaction history and a paywall offering packs **100 / 200 / 300 /
+  500 / 800 + Custom** and the unlimited plan. Balance + ledger are local
+  (`shared_preferences`); purchase/subscribe are **dev stubs**.
+
+- [~] **Owner metrics dashboard — UI built (sample data)** — Profile → tap the
+  version row 5× → downloads / active / opens (7-day bars) / photos scanned /
+  Beans sold / revenue / refunds / subscribers. `MetricsService` returns sample
+  numbers until analytics is wired.
+
+**TODO (pricing — StoreKit, mind Apple's rules):**
+- [ ] **Beans packs** — each tier (100/200/300/500/800) = a fixed **consumable
+  IAP** product on an Apple price tier. Apple has no arbitrary pricing, so
+  **"Custom" must resolve to a fixed tier** (or be dropped on iOS). Beans are
+  consumed in-app → must use Apple IAP, no external payment. Add **Restore
+  Purchases** + **server-side balance ledger** + receipt validation.
+- [ ] **Unlimited subscription** — SGD 3.99/mo **auto-renewable subscription**;
+  needs the subscription-group setup, required disclosures (Guideline 3.1.2),
+  and **server-side entitlement** (replace the local `subscribed` flag).
+
+**TODO (dashboard — make it real):**
+- [ ] Emit analytics events (`open` / `scan` / `purchase` / `refund`) to the
+  backend, add an aggregation endpoint the dashboard reads, and pull
+  **downloads** from the **App Store Connect API**.
+
+**TODO (Circles of Food — social):**
+- [ ] **Circles of Food** — add friends (invite + accept flow), then see their
+  daily **trends**; friends shown as Instagram-story-style gradient-ring avatars
+  above the Trends graph. Needs a backend for invites + friend-trend sharing
+  (privacy controls). *Not started.*
+
+**TODO (next up):**
+- [ ] **Google Sign-In** — `/auth/google` mirroring `/auth/apple`
 - [ ] **Recurring food** — log a repeating food entry once and have it recur
-- [ ] **Sharing with friends** — share progress with friends
-- [ ] Later: home-screen widget, reminders, barcode scan, Android
+- [ ] Later: home-screen widget, barcode scan, Android
 
 ## Tech stack
 - **Flutter / Dart**, iOS first (iPhone), then Android and web.

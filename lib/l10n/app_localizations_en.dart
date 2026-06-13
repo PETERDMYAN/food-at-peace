@@ -196,7 +196,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navTrends => 'Trends';
 
   @override
-  String get navSettings => 'Settings';
+  String get navSettings => 'Profile';
 
   @override
   String get addFood => 'Add food';
@@ -671,4 +671,203 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get feedbackEmpty => 'Please enter some feedback';
+
+  @override
+  String get reminders => 'Reminders';
+
+  @override
+  String get remindersSubtitle =>
+      'Friendly nudges to log your meals — breakfast, lunch, dinner and a late-night check-in.';
+
+  @override
+  String get remindersEnable => 'Daily meal reminders';
+
+  @override
+  String get remindersDenied =>
+      'Notifications are off for this app. Turn them on in Settings to get reminders.';
+
+  @override
+  String remindersActive(int count) {
+    return '$count on';
+  }
+
+  @override
+  String get remindersOff => 'Off';
+
+  @override
+  String get remindersNone => 'No reminders yet. Add one below.';
+
+  @override
+  String get addReminder => 'Add reminder';
+
+  @override
+  String get onboardingRemindersTitle => 'Stay on track';
+
+  @override
+  String get onboardingRemindersBody =>
+      'We\'ll send light, friendly nudges to log your meals — breakfast, lunch and dinner (plus an optional late-night check-in). Change or turn them off anytime in Settings.';
+
+  @override
+  String get enableReminders => 'Enable reminders';
+
+  @override
+  String get onboardingRemindersEnabled =>
+      'Reminders on — we\'ll help you keep the habit.';
+
+  @override
+  String get reminderBreakfastTitle => 'Breakfast o\'clock 🍳';
+
+  @override
+  String get reminderBreakfastBody =>
+      'Fuel up — then log it before the day runs away with you.';
+
+  @override
+  String get reminderLunchTitle => 'Lunch break! 🥪';
+
+  @override
+  String get reminderLunchBody =>
+      'Whatever\'s on your plate, give it a quick log. Two taps, done.';
+
+  @override
+  String get reminderDinnerTitle => 'Dinner\'s served 🍝';
+
+  @override
+  String get reminderDinnerBody =>
+      'Don\'t let those calories sneak by unlogged — quick, before dessert!';
+
+  @override
+  String get reminderSnackTitle => 'Late-night nibbles? 🌙';
+
+  @override
+  String get reminderSnackBody =>
+      'Snacks count too — no judgment. Pop it in and call it a day.';
+
+  @override
+  String get beans => 'Beans';
+
+  @override
+  String get beansBalance => 'Beans balance';
+
+  @override
+  String get beansUnlimited => 'Unlimited';
+
+  @override
+  String get beansPerScan => '1 Bean per photo scan';
+
+  @override
+  String get beansHistory => 'Transaction history';
+
+  @override
+  String get beansEmpty => 'No transactions yet.';
+
+  @override
+  String get topUp => 'Top up';
+
+  @override
+  String get goUnlimited => 'Go Unlimited';
+
+  @override
+  String get beansGrant => 'Welcome bonus';
+
+  @override
+  String get beansSpend => 'Photo scan';
+
+  @override
+  String get beansPurchase => 'Top-up';
+
+  @override
+  String get beansRefund => 'Refund';
+
+  @override
+  String beansCount(int count) {
+    return '$count Beans';
+  }
+
+  @override
+  String priceSgd(String value) {
+    return 'SGD $value';
+  }
+
+  @override
+  String priceSgdPerMonth(String value) {
+    return 'SGD $value/mo';
+  }
+
+  @override
+  String get paywallTitle => 'You\'re out of Beans';
+
+  @override
+  String get paywallBody =>
+      'Each photo scan uses 1 Bean. Top up or go unlimited to keep scanning your meals.';
+
+  @override
+  String get beansStubNote =>
+      'Demo build — purchases credit instantly; real billing is coming.';
+
+  @override
+  String beansBought(int count) {
+    return 'Added $count Beans';
+  }
+
+  @override
+  String get beansSubscribed => 'Unlimited unlocked 🎉';
+
+  @override
+  String scansLeft(int count) {
+    return '$count scans left';
+  }
+
+  @override
+  String get beansChoosePack => 'Top up Beans';
+
+  @override
+  String get beansCustom => 'Custom';
+
+  @override
+  String get beansCustomTitle => 'Custom top-up';
+
+  @override
+  String get beansCustomLabel => 'Number of Beans';
+
+  @override
+  String get beansBestValue => 'Best value';
+
+  @override
+  String get dashboard => 'Dashboard';
+
+  @override
+  String get dashboardSample =>
+      'Sample data — wire analytics + App Store Connect to see real numbers.';
+
+  @override
+  String get mDownloads => 'Downloads';
+
+  @override
+  String get mActiveToday => 'Active today';
+
+  @override
+  String get mOpens => 'Total opens';
+
+  @override
+  String get mOpens7d => 'Opens · last 7 days';
+
+  @override
+  String get mPhotos => 'Photos scanned';
+
+  @override
+  String get mBeansSold => 'Beans sold';
+
+  @override
+  String get mRevenue => 'Revenue';
+
+  @override
+  String get mRefunds => 'Refunds';
+
+  @override
+  String get mSubscribers => 'Subscribers';
+
+  @override
+  String versionLabel(String name, String version, String build) {
+    return '$name $version ($build)';
+  }
 }

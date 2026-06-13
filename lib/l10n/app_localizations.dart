@@ -425,7 +425,7 @@ abstract class AppLocalizations {
   /// No description provided for @navSettings.
   ///
   /// In en, this message translates to:
-  /// **'Settings'**
+  /// **'Profile'**
   String get navSettings;
 
   /// No description provided for @addFood.
@@ -1273,6 +1273,354 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Please enter some feedback'**
   String get feedbackEmpty;
+
+  /// No description provided for @reminders.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminders'**
+  String get reminders;
+
+  /// No description provided for @remindersSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Friendly nudges to log your meals — breakfast, lunch, dinner and a late-night check-in.'**
+  String get remindersSubtitle;
+
+  /// No description provided for @remindersEnable.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily meal reminders'**
+  String get remindersEnable;
+
+  /// No description provided for @remindersDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications are off for this app. Turn them on in Settings to get reminders.'**
+  String get remindersDenied;
+
+  /// No description provided for @remindersActive.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} on'**
+  String remindersActive(int count);
+
+  /// No description provided for @remindersOff.
+  ///
+  /// In en, this message translates to:
+  /// **'Off'**
+  String get remindersOff;
+
+  /// No description provided for @remindersNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No reminders yet. Add one below.'**
+  String get remindersNone;
+
+  /// No description provided for @addReminder.
+  ///
+  /// In en, this message translates to:
+  /// **'Add reminder'**
+  String get addReminder;
+
+  /// No description provided for @onboardingRemindersTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Stay on track'**
+  String get onboardingRemindersTitle;
+
+  /// No description provided for @onboardingRemindersBody.
+  ///
+  /// In en, this message translates to:
+  /// **'We\'ll send light, friendly nudges to log your meals — breakfast, lunch and dinner (plus an optional late-night check-in). Change or turn them off anytime in Settings.'**
+  String get onboardingRemindersBody;
+
+  /// No description provided for @enableReminders.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable reminders'**
+  String get enableReminders;
+
+  /// No description provided for @onboardingRemindersEnabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Reminders on — we\'ll help you keep the habit.'**
+  String get onboardingRemindersEnabled;
+
+  /// No description provided for @reminderBreakfastTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Breakfast o\'clock 🍳'**
+  String get reminderBreakfastTitle;
+
+  /// No description provided for @reminderBreakfastBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Fuel up — then log it before the day runs away with you.'**
+  String get reminderBreakfastBody;
+
+  /// No description provided for @reminderLunchTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Lunch break! 🥪'**
+  String get reminderLunchTitle;
+
+  /// No description provided for @reminderLunchBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Whatever\'s on your plate, give it a quick log. Two taps, done.'**
+  String get reminderLunchBody;
+
+  /// No description provided for @reminderDinnerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Dinner\'s served 🍝'**
+  String get reminderDinnerTitle;
+
+  /// No description provided for @reminderDinnerBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Don\'t let those calories sneak by unlogged — quick, before dessert!'**
+  String get reminderDinnerBody;
+
+  /// No description provided for @reminderSnackTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Late-night nibbles? 🌙'**
+  String get reminderSnackTitle;
+
+  /// No description provided for @reminderSnackBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Snacks count too — no judgment. Pop it in and call it a day.'**
+  String get reminderSnackBody;
+
+  /// No description provided for @beans.
+  ///
+  /// In en, this message translates to:
+  /// **'Beans'**
+  String get beans;
+
+  /// No description provided for @beansBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'Beans balance'**
+  String get beansBalance;
+
+  /// No description provided for @beansUnlimited.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlimited'**
+  String get beansUnlimited;
+
+  /// No description provided for @beansPerScan.
+  ///
+  /// In en, this message translates to:
+  /// **'1 Bean per photo scan'**
+  String get beansPerScan;
+
+  /// No description provided for @beansHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Transaction history'**
+  String get beansHistory;
+
+  /// No description provided for @beansEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No transactions yet.'**
+  String get beansEmpty;
+
+  /// No description provided for @topUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Top up'**
+  String get topUp;
+
+  /// No description provided for @goUnlimited.
+  ///
+  /// In en, this message translates to:
+  /// **'Go Unlimited'**
+  String get goUnlimited;
+
+  /// No description provided for @beansGrant.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome bonus'**
+  String get beansGrant;
+
+  /// No description provided for @beansSpend.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo scan'**
+  String get beansSpend;
+
+  /// No description provided for @beansPurchase.
+  ///
+  /// In en, this message translates to:
+  /// **'Top-up'**
+  String get beansPurchase;
+
+  /// No description provided for @beansRefund.
+  ///
+  /// In en, this message translates to:
+  /// **'Refund'**
+  String get beansRefund;
+
+  /// No description provided for @beansCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} Beans'**
+  String beansCount(int count);
+
+  /// No description provided for @priceSgd.
+  ///
+  /// In en, this message translates to:
+  /// **'SGD {value}'**
+  String priceSgd(String value);
+
+  /// No description provided for @priceSgdPerMonth.
+  ///
+  /// In en, this message translates to:
+  /// **'SGD {value}/mo'**
+  String priceSgdPerMonth(String value);
+
+  /// No description provided for @paywallTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re out of Beans'**
+  String get paywallTitle;
+
+  /// No description provided for @paywallBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Each photo scan uses 1 Bean. Top up or go unlimited to keep scanning your meals.'**
+  String get paywallBody;
+
+  /// No description provided for @beansStubNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Demo build — purchases credit instantly; real billing is coming.'**
+  String get beansStubNote;
+
+  /// No description provided for @beansBought.
+  ///
+  /// In en, this message translates to:
+  /// **'Added {count} Beans'**
+  String beansBought(int count);
+
+  /// No description provided for @beansSubscribed.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlimited unlocked 🎉'**
+  String get beansSubscribed;
+
+  /// No description provided for @scansLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} scans left'**
+  String scansLeft(int count);
+
+  /// No description provided for @beansChoosePack.
+  ///
+  /// In en, this message translates to:
+  /// **'Top up Beans'**
+  String get beansChoosePack;
+
+  /// No description provided for @beansCustom.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom'**
+  String get beansCustom;
+
+  /// No description provided for @beansCustomTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom top-up'**
+  String get beansCustomTitle;
+
+  /// No description provided for @beansCustomLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Number of Beans'**
+  String get beansCustomLabel;
+
+  /// No description provided for @beansBestValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Best value'**
+  String get beansBestValue;
+
+  /// No description provided for @dashboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Dashboard'**
+  String get dashboard;
+
+  /// No description provided for @dashboardSample.
+  ///
+  /// In en, this message translates to:
+  /// **'Sample data — wire analytics + App Store Connect to see real numbers.'**
+  String get dashboardSample;
+
+  /// No description provided for @mDownloads.
+  ///
+  /// In en, this message translates to:
+  /// **'Downloads'**
+  String get mDownloads;
+
+  /// No description provided for @mActiveToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Active today'**
+  String get mActiveToday;
+
+  /// No description provided for @mOpens.
+  ///
+  /// In en, this message translates to:
+  /// **'Total opens'**
+  String get mOpens;
+
+  /// No description provided for @mOpens7d.
+  ///
+  /// In en, this message translates to:
+  /// **'Opens · last 7 days'**
+  String get mOpens7d;
+
+  /// No description provided for @mPhotos.
+  ///
+  /// In en, this message translates to:
+  /// **'Photos scanned'**
+  String get mPhotos;
+
+  /// No description provided for @mBeansSold.
+  ///
+  /// In en, this message translates to:
+  /// **'Beans sold'**
+  String get mBeansSold;
+
+  /// No description provided for @mRevenue.
+  ///
+  /// In en, this message translates to:
+  /// **'Revenue'**
+  String get mRevenue;
+
+  /// No description provided for @mRefunds.
+  ///
+  /// In en, this message translates to:
+  /// **'Refunds'**
+  String get mRefunds;
+
+  /// No description provided for @mSubscribers.
+  ///
+  /// In en, this message translates to:
+  /// **'Subscribers'**
+  String get mSubscribers;
+
+  /// No description provided for @versionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} {version} ({build})'**
+  String versionLabel(String name, String version, String build);
 }
 
 class _AppLocalizationsDelegate

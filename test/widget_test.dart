@@ -33,7 +33,7 @@ void main() {
     // Navigation destinations (labels may also appear in off-stage app bars).
     expect(find.text('Today'), findsWidgets);
     expect(find.text('Trends'), findsWidgets);
-    expect(find.text('Settings'), findsWidgets);
+    expect(find.text('Profile'), findsWidgets);
 
     // Empty state before anything is logged.
     expect(find.textContaining('Nothing logged yet'), findsOneWidget);

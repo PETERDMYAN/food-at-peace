@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,13 +11,18 @@ import '../data/claude_vision_client.dart';
 import '../data/food_photo_analyzer.dart';
 import '../data/food_repository.dart';
 import '../data/health_service.dart';
+import '../data/metrics_service.dart';
+import '../data/notification_service.dart';
 import '../data/profile_repository.dart';
 import '../data/session_store.dart';
 import '../data/weather_service.dart';
 import '../data/weight_repository.dart';
 import '../models/daily_summary.dart';
 import '../models/energy_out.dart';
+import '../models/bean_transaction.dart';
 import '../models/food_entry.dart';
+import '../models/meal_type.dart';
+import '../models/reminder.dart';
 import '../models/session.dart';
 import '../models/user_profile.dart';
 import '../models/weather.dart';
@@ -524,4 +530,242 @@ class OnboardingNotifier extends Notifier<bool> {
 
 final onboardingCompleteProvider = NotifierProvider<OnboardingNotifier, bool>(
   OnboardingNotifier.new,
+);
+
+// ---- Daily food-logging reminders ----
+
+final notificationServiceProvider = Provider<NotificationService>(
+  (ref) => NotificationService(),
+);
+
+/// The master on/off for meal reminders. Persisted in prefs (default off —
+/// opt-in, and we never schedule before the OS grants permission). Toggling on
+/// requests permission and flips on only if granted; the widget layer then
+/// schedules the (localized) reminders. Off cancels everything.
+class RemindersEnabledNotifier extends Notifier<bool> {
+  static const _prefsKey = 'reminders_enabled';
+
+  @override
+  bool build() =>
+      ref.read(sharedPreferencesProvider).getBool(_prefsKey) ?? false;
+
+  /// Requests OS permission; persists + flips on only if granted. Returns the
+  /// new enabled state so the UI can explain a denial.
+  Future<bool> enable() async {
+    final granted = await ref
+        .read(notificationServiceProvider)
+        .requestPermission();
+    state = granted;
+    await ref.read(sharedPreferencesProvider).setBool(_prefsKey, granted);
+    return granted;
+  }
+
+  Future<void> disable() async {
+    state = false;
+    await ref.read(sharedPreferencesProvider).setBool(_prefsKey, false);
+    await ref.read(notificationServiceProvider).cancelAll();
+  }
+}
+
+final remindersEnabledProvider =
+    NotifierProvider<RemindersEnabledNotifier, bool>(
+      RemindersEnabledNotifier.new,
+    );
+
+/// The user's configured meal reminders (defaults on first run). Persisted as
+/// JSON; mutating it re-persists. Rescheduling the OS notifications after a
+/// change is the caller's job (it needs the l10n for the copy) via
+/// [rescheduleReminders].
+class RemindersNotifier extends Notifier<List<Reminder>> {
+  static const _prefsKey = 'reminders_v1';
+
+  @override
+  List<Reminder> build() {
+    final raw = ref.read(sharedPreferencesProvider).getString(_prefsKey);
+    if (raw == null || raw.isEmpty) return Reminder.defaults();
+    try {
+      final list = jsonDecode(raw) as List;
+      return [
+        for (final e in list) Reminder.fromJson(e as Map<String, dynamic>),
+      ];
+    } catch (_) {
+      return Reminder.defaults();
+    }
+  }
+
+  Future<void> _persist() async {
+    await ref
+        .read(sharedPreferencesProvider)
+        .setString(_prefsKey, jsonEncode([for (final r in state) r.toJson()]));
+  }
+
+  Future<void> add(MealType meal, int hour, int minute) async {
+    final id = 'r${DateTime.now().microsecondsSinceEpoch}';
+    state = [
+      ...state,
+      Reminder(id: id, meal: meal, hour: hour, minute: minute),
+    ];
+    await _persist();
+  }
+
+  Future<void> setTime(String id, int hour, int minute) async {
+    state = [
+      for (final r in state)
+        if (r.id == id) r.copyWith(hour: hour, minute: minute) else r,
+    ];
+    await _persist();
+  }
+
+  Future<void> setEnabled(String id, bool enabled) async {
+    state = [
+      for (final r in state)
+        if (r.id == id) r.copyWith(enabled: enabled) else r,
+    ];
+    await _persist();
+  }
+
+  Future<void> remove(String id) async {
+    state = [
+      for (final r in state)
+        if (r.id != id) r,
+    ];
+    await _persist();
+  }
+}
+
+final remindersProvider = NotifierProvider<RemindersNotifier, List<Reminder>>(
+  RemindersNotifier.new,
+);
+
+// ---- Beans (in-app credit) ----
+
+/// Wallet state: the Beans ledger (newest first) + whether the unlimited
+/// subscription is active. Balance is derived from the ledger so it can never
+/// drift out of sync.
+class BeansState {
+  const BeansState({required this.ledger, required this.subscribed});
+
+  final List<BeanTransaction> ledger;
+  final bool subscribed;
+
+  int get balance => ledger.fold(0, (sum, t) => sum + t.amount);
+
+  /// Unlimited subscribers never run out; otherwise you need a Bean to spend.
+  bool get canAnalyze => subscribed || balance > 0;
+
+  BeansState copyWith({List<BeanTransaction>? ledger, bool? subscribed}) =>
+      BeansState(
+        ledger: ledger ?? this.ledger,
+        subscribed: subscribed ?? this.subscribed,
+      );
+}
+
+/// The Beans wallet. Grants [BeanPricing.signupGrant] free Beans once on first
+/// launch; spends one per photo analysis; records purchases/refunds.
+///
+/// NOTE: balance + entitlement are stored locally (shared_preferences) for now.
+/// Production must move both server-side (a tamper-proof ledger keyed to the
+/// account) with StoreKit receipt validation — otherwise a reinstall resets the
+/// balance and the subscription. [purchasePack]/[subscribeUnlimited] are DEV
+/// STUBS that credit locally; they must be replaced with real StoreKit IAP.
+class BeansNotifier extends Notifier<BeansState> {
+  static const _ledgerKey = 'beans_ledger_v1';
+  static const _subKey = 'beans_subscribed';
+  static const _grantedKey = 'beans_granted';
+
+  SharedPreferences get _prefs => ref.read(sharedPreferencesProvider);
+
+  @override
+  BeansState build() {
+    final raw = _prefs.getString(_ledgerKey);
+    var ledger = <BeanTransaction>[];
+    if (raw != null && raw.isNotEmpty) {
+      try {
+        ledger = [
+          for (final e in jsonDecode(raw) as List)
+            BeanTransaction.fromJson(e as Map<String, dynamic>),
+        ];
+      } catch (_) {}
+    }
+    // First launch → grant the free Beans, exactly once.
+    if (!(_prefs.getBool(_grantedKey) ?? false)) {
+      ledger = [_grant(), ...ledger];
+      _prefs.setBool(_grantedKey, true);
+      _prefs.setString(_ledgerKey, _encode(ledger));
+    }
+    return BeansState(
+      ledger: ledger,
+      subscribed: _prefs.getBool(_subKey) ?? false,
+    );
+  }
+
+  BeanTransaction _grant() => BeanTransaction(
+    id: _id('grant'),
+    type: BeanTxnType.signupGrant,
+    amount: BeanPricing.signupGrant,
+    timestamp: DateTime.now(),
+  );
+
+  String _id(String prefix) =>
+      '${prefix}_${DateTime.now().microsecondsSinceEpoch}';
+
+  String _encode(List<BeanTransaction> l) =>
+      jsonEncode([for (final t in l) t.toJson()]);
+
+  Future<void> _append(BeanTransaction txn) async {
+    state = state.copyWith(ledger: [txn, ...state.ledger]);
+    await _prefs.setString(_ledgerKey, _encode(state.ledger));
+  }
+
+  /// Spend one Bean on a photo analysis. No-op for unlimited subscribers.
+  /// Returns false (without spending) if there aren't enough Beans.
+  Future<bool> spendOnPhoto(String dishNote) async {
+    if (state.subscribed) return true;
+    if (state.balance < BeanPricing.costPerPhoto) return false;
+    await _append(
+      BeanTransaction(
+        id: _id('spend'),
+        type: BeanTxnType.spend,
+        amount: -BeanPricing.costPerPhoto,
+        timestamp: DateTime.now(),
+        note: dishNote.isEmpty ? null : dishNote,
+      ),
+    );
+    return true;
+  }
+
+  /// DEV STUB — credits [beans] locally for [sgd]. Replace with the matching
+  /// StoreKit consumable IAP purchase + server-side receipt validation.
+  Future<void> purchasePack(int beans, double sgd) => _append(
+    BeanTransaction(
+      id: _id('buy'),
+      type: BeanTxnType.purchase,
+      amount: beans,
+      timestamp: DateTime.now(),
+      priceSgd: sgd,
+    ),
+  );
+
+  /// DEV STUB — flips on the unlimited entitlement locally. Replace with a
+  /// StoreKit auto-renewing subscription (SGD 3.99/month) + entitlement check.
+  Future<void> subscribeUnlimited() async {
+    state = state.copyWith(subscribed: true);
+    await _prefs.setBool(_subKey, true);
+  }
+}
+
+final beansProvider = NotifierProvider<BeansNotifier, BeansState>(
+  BeansNotifier.new,
+);
+
+// ---- Owner metrics dashboard ----
+
+final metricsServiceProvider = Provider<MetricsService>(
+  (ref) => MetricsService(),
+);
+
+/// Aggregate product metrics for the owner dashboard (sample data until an
+/// analytics backend is wired — see [MetricsService]).
+final metricsProvider = FutureProvider<AppMetrics>(
+  (ref) => ref.read(metricsServiceProvider).fetch(),
 );

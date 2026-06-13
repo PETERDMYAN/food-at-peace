@@ -80,7 +80,7 @@
 
   "navToday": "Today",
   "navTrends": "Trends",
-  "navSettings": "Settings",
+  "navSettings": "Profile",
   "addFood": "Add food",
   "save": "Save",
   "ok": "OK",
@@ -336,5 +336,91 @@
   "submit": "Submit",
   "feedbackThanks": "Thanks for your feedback!",
   "feedbackError": "Couldn't send feedback. Please try again.",
-  "feedbackEmpty": "Please enter some feedback"
+  "feedbackEmpty": "Please enter some feedback",
+
+  "reminders": "Reminders",
+  "remindersSubtitle": "Friendly nudges to log your meals — breakfast, lunch, dinner and a late-night check-in.",
+  "remindersEnable": "Daily meal reminders",
+  "remindersDenied": "Notifications are off for this app. Turn them on in Settings to get reminders.",
+  "remindersActive": "{count} on",
+  "@remindersActive": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "remindersOff": "Off",
+  "remindersNone": "No reminders yet. Add one below.",
+  "addReminder": "Add reminder",
+  "onboardingRemindersTitle": "Stay on track",
+  "onboardingRemindersBody": "We'll send light, friendly nudges to log your meals — breakfast, lunch and dinner (plus an optional late-night check-in). Change or turn them off anytime in Settings.",
+  "enableReminders": "Enable reminders",
+  "onboardingRemindersEnabled": "Reminders on — we'll help you keep the habit.",
+  "reminderBreakfastTitle": "Breakfast o'clock 🍳",
+  "reminderBreakfastBody": "Fuel up — then log it before the day runs away with you.",
+  "reminderLunchTitle": "Lunch break! 🥪",
+  "reminderLunchBody": "Whatever's on your plate, give it a quick log. Two taps, done.",
+  "reminderDinnerTitle": "Dinner's served 🍝",
+  "reminderDinnerBody": "Don't let those calories sneak by unlogged — quick, before dessert!",
+  "reminderSnackTitle": "Late-night nibbles? 🌙",
+  "reminderSnackBody": "Snacks count too — no judgment. Pop it in and call it a day.",
+
+  "beans": "Beans",
+  "beansBalance": "Beans balance",
+  "beansUnlimited": "Unlimited",
+  "beansPerScan": "1 Bean per photo scan",
+  "beansHistory": "Transaction history",
+  "beansEmpty": "No transactions yet.",
+  "topUp": "Top up",
+  "goUnlimited": "Go Unlimited",
+  "beansGrant": "Welcome bonus",
+  "beansSpend": "Photo scan",
+  "beansPurchase": "Top-up",
+  "beansRefund": "Refund",
+  "beansCount": "{count} Beans",
+  "@beansCount": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "priceSgd": "SGD {value}",
+  "@priceSgd": {
+    "placeholders": { "value": { "type": "String" } }
+  },
+  "priceSgdPerMonth": "SGD {value}/mo",
+  "@priceSgdPerMonth": {
+    "placeholders": { "value": { "type": "String" } }
+  },
+  "paywallTitle": "You're out of Beans",
+  "paywallBody": "Each photo scan uses 1 Bean. Top up or go unlimited to keep scanning your meals.",
+  "beansStubNote": "Demo build — purchases credit instantly; real billing is coming.",
+  "beansBought": "Added {count} Beans",
+  "@beansBought": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "beansSubscribed": "Unlimited unlocked 🎉",
+  "scansLeft": "{count} scans left",
+  "@scansLeft": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "beansChoosePack": "Top up Beans",
+  "beansCustom": "Custom",
+  "beansCustomTitle": "Custom top-up",
+  "beansCustomLabel": "Number of Beans",
+  "beansBestValue": "Best value",
+
+  "dashboard": "Dashboard",
+  "dashboardSample": "Sample data — wire analytics + App Store Connect to see real numbers.",
+  "mDownloads": "Downloads",
+  "mActiveToday": "Active today",
+  "mOpens": "Total opens",
+  "mOpens7d": "Opens · last 7 days",
+  "mPhotos": "Photos scanned",
+  "mBeansSold": "Beans sold",
+  "mRevenue": "Revenue",
+  "mRefunds": "Refunds",
+  "mSubscribers": "Subscribers",
+  "versionLabel": "{name} {version} ({build})",
+  "@versionLabel": {
+    "placeholders": {
+      "name": { "type": "String" },
+      "version": { "type": "String" },
+      "build": { "type": "String" }
+    }
+  }
 }

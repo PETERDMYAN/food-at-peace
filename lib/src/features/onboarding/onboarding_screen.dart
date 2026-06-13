@@ -4,6 +4,7 @@ import 'package:food_at_peace/l10n/app_localizations.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import '../../data/auth_client.dart';
+import '../../data/notification_service.dart';
 import '../../models/user_profile.dart';
 import '../../providers/providers.dart';
 import '../../theme/app_theme.dart';
@@ -22,13 +23,14 @@ class OnboardingScreen extends ConsumerStatefulWidget {
 }
 
 class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
-  static const _pages = 4;
+  static const _pages = 5;
   final _controller = PageController();
   late final TextEditingController _name;
   late Goal _goal;
   int _page = 0;
   bool _appleBusy = false;
   bool _healthBusy = false;
+  bool _remindersBusy = false;
   bool _finishing = false;
 
   // "About you" — starts blank (no guessed defaults); prefilled from Apple
@@ -124,6 +126,26 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       }
     } finally {
       if (mounted) setState(() => _healthBusy = false);
+    }
+  }
+
+  Future<void> _enableReminders() async {
+    setState(() => _remindersBusy = true);
+    try {
+      final granted = await ref.read(remindersEnabledProvider.notifier).enable();
+      if (!mounted) return;
+      if (granted) {
+        await rescheduleReminders(
+          service: ref.read(notificationServiceProvider),
+          enabled: true,
+          reminders: ref.read(remindersProvider),
+          t: AppLocalizations.of(context),
+        );
+      } else {
+        _toast(AppLocalizations.of(context).remindersDenied);
+      }
+    } finally {
+      if (mounted) setState(() => _remindersBusy = false);
     }
   }
 
@@ -226,6 +248,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                       _HealthPage(
                         busy: _healthBusy,
                         onConnect: _healthBusy ? null : _connectHealth,
+                      ),
+                      _RemindersPage(
+                        busy: _remindersBusy,
+                        onEnable: _remindersBusy ? null : _enableReminders,
                       ),
                       _BodyPage(
                         sex: _sex,
@@ -600,6 +626,63 @@ class _HealthPage extends ConsumerWidget {
                     )
                   : const Icon(Icons.favorite_outline),
               label: Text(t.connectAppleHealth),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Opt into the daily meal reminders (breakfast/lunch/dinner, plus an optional
+/// late check-in). Requesting permission flips the master toggle and schedules
+/// the defaults; everything stays editable in Settings afterwards.
+class _RemindersPage extends ConsumerWidget {
+  const _RemindersPage({required this.busy, required this.onEnable});
+
+  final bool busy;
+  final VoidCallback? onEnable;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final t = AppLocalizations.of(context);
+    final enabled = ref.watch(remindersEnabledProvider);
+    return _PageBody(
+      title: t.onboardingRemindersTitle,
+      body: t.onboardingRemindersBody,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (enabled)
+            Row(
+              children: [
+                const Icon(Icons.check_circle, color: Colors.white),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    t.onboardingRemindersEnabled,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                ),
+              ],
+            )
+          else
+            FilledButton.icon(
+              onPressed: onEnable,
+              style: FilledButton.styleFrom(
+                backgroundColor: Colors.white,
+                foregroundColor: AppTheme.violetDeep,
+              ),
+              icon: busy
+                  ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: AppTheme.violetDeep,
+                      ),
+                    )
+                  : const Icon(Icons.notifications_active_outlined),
+              label: Text(t.enableReminders),
             ),
         ],
       ),

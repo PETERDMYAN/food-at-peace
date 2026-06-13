@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:food_at_peace/l10n/app_localizations.dart';
 
+import '../../data/notification_service.dart';
 import '../../data/sync_engine.dart';
 import '../../providers/providers.dart';
 import '../add/add_entry_screen.dart';
@@ -33,7 +34,21 @@ class _HomeShellState extends ConsumerState<HomeShell>
     // Pull age / height / weight from Apple Health on launch (best-effort).
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(profileProvider.notifier).refreshFromHealth();
+      _refreshReminders();
     });
+  }
+
+  /// Re-sync the OS meal reminders on launch/resume so they reflect the latest
+  /// settings and the current language. No-op when reminders are off (disabling
+  /// already cancelled them), which also keeps the plugin untouched in tests.
+  void _refreshReminders() {
+    if (!ref.read(remindersEnabledProvider)) return;
+    rescheduleReminders(
+      service: ref.read(notificationServiceProvider),
+      enabled: true,
+      reminders: ref.read(remindersProvider),
+      t: AppLocalizations.of(context),
+    );
   }
 
   @override
@@ -47,6 +62,7 @@ class _HomeShellState extends ConsumerState<HomeShell>
     if (state == AppLifecycleState.resumed) {
       ref.read(syncEngineProvider.notifier).syncNow();
       ref.read(profileProvider.notifier).refreshFromHealth();
+      _refreshReminders();
     }
   }
 

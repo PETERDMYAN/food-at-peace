@@ -188,7 +188,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get navTrends => '趋势';
 
   @override
-  String get navSettings => '设置';
+  String get navSettings => '我的';
 
   @override
   String get addFood => '添加食物';
@@ -656,4 +656,193 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get feedbackEmpty => '请输入反馈内容';
+
+  @override
+  String get reminders => '提醒';
+
+  @override
+  String get remindersSubtitle => '轻松提醒你记录每一餐——早餐、午餐、晚餐，还有深夜补记。';
+
+  @override
+  String get remindersEnable => '每日用餐提醒';
+
+  @override
+  String get remindersDenied => '本应用的通知已关闭，请在系统「设置」中开启以接收提醒。';
+
+  @override
+  String remindersActive(int count) {
+    return '$count 个已开启';
+  }
+
+  @override
+  String get remindersOff => '已关闭';
+
+  @override
+  String get remindersNone => '还没有提醒，点击下方添加一个。';
+
+  @override
+  String get addReminder => '添加提醒';
+
+  @override
+  String get onboardingRemindersTitle => '保持记录习惯';
+
+  @override
+  String get onboardingRemindersBody =>
+      '我们会发送轻松友好的提醒，帮你记录每一餐——早餐、午餐和晚餐（还有可选的深夜补记）。随时可在设置中调整或关闭。';
+
+  @override
+  String get enableReminders => '开启提醒';
+
+  @override
+  String get onboardingRemindersEnabled => '提醒已开启——我们会帮你养成记录习惯。';
+
+  @override
+  String get reminderBreakfastTitle => '早餐时间到 🍳';
+
+  @override
+  String get reminderBreakfastBody => '先吃饱，再顺手记一笔，别让这一天溜走啦。';
+
+  @override
+  String get reminderLunchTitle => '午休啦！🥪';
+
+  @override
+  String get reminderLunchBody => '不管吃的是什么，花两秒记一下。两下点击，搞定。';
+
+  @override
+  String get reminderDinnerTitle => '开饭咯 🍝';
+
+  @override
+  String get reminderDinnerBody => '别让这些卡路里悄悄溜走——趁还没吃甜点，快记一下！';
+
+  @override
+  String get reminderSnackTitle => '深夜小馋猫？🌙';
+
+  @override
+  String get reminderSnackBody => '零食也要算——我们不评判。记一笔，今天就圆满收工。';
+
+  @override
+  String get beans => '豆子';
+
+  @override
+  String get beansBalance => '豆子余额';
+
+  @override
+  String get beansUnlimited => '无限畅用';
+
+  @override
+  String get beansPerScan => '每次拍照分析消耗 1 颗豆子';
+
+  @override
+  String get beansHistory => '交易记录';
+
+  @override
+  String get beansEmpty => '暂无交易记录。';
+
+  @override
+  String get topUp => '充值';
+
+  @override
+  String get goUnlimited => '升级无限';
+
+  @override
+  String get beansGrant => '新人福利';
+
+  @override
+  String get beansSpend => '拍照分析';
+
+  @override
+  String get beansPurchase => '充值';
+
+  @override
+  String get beansRefund => '退款';
+
+  @override
+  String beansCount(int count) {
+    return '$count 颗豆子';
+  }
+
+  @override
+  String priceSgd(String value) {
+    return 'SGD $value';
+  }
+
+  @override
+  String priceSgdPerMonth(String value) {
+    return 'SGD $value/月';
+  }
+
+  @override
+  String get paywallTitle => '豆子用完啦';
+
+  @override
+  String get paywallBody => '每次拍照分析消耗 1 颗豆子。充值或升级无限，继续记录每一餐。';
+
+  @override
+  String get beansStubNote => '演示版本——购买即时到账，正式支付即将上线。';
+
+  @override
+  String beansBought(int count) {
+    return '已添加 $count 颗豆子';
+  }
+
+  @override
+  String get beansSubscribed => '已解锁无限畅用 🎉';
+
+  @override
+  String scansLeft(int count) {
+    return '剩余 $count 次拍照';
+  }
+
+  @override
+  String get beansChoosePack => '充值豆子';
+
+  @override
+  String get beansCustom => '自定义';
+
+  @override
+  String get beansCustomTitle => '自定义充值';
+
+  @override
+  String get beansCustomLabel => '豆子数量';
+
+  @override
+  String get beansBestValue => '超值';
+
+  @override
+  String get dashboard => '数据看板';
+
+  @override
+  String get dashboardSample => '示例数据——接入分析与 App Store Connect 后可查看真实数据。';
+
+  @override
+  String get mDownloads => '下载量';
+
+  @override
+  String get mActiveToday => '今日活跃';
+
+  @override
+  String get mOpens => '总打开次数';
+
+  @override
+  String get mOpens7d => '打开 · 近 7 天';
+
+  @override
+  String get mPhotos => '拍照分析次数';
+
+  @override
+  String get mBeansSold => '豆子售出';
+
+  @override
+  String get mRevenue => '收入';
+
+  @override
+  String get mRefunds => '退款';
+
+  @override
+  String get mSubscribers => '订阅用户';
+
+  @override
+  String versionLabel(String name, String version, String build) {
+    return '$name $version ($build)';
+  }
 }
