@@ -1621,6 +1621,120 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{name} {version} ({build})'**
   String versionLabel(String name, String version, String build);
+
+  /// No description provided for @yourCircle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your circle'**
+  String get yourCircle;
+
+  /// No description provided for @addFriend.
+  ///
+  /// In en, this message translates to:
+  /// **'Add'**
+  String get addFriend;
+
+  /// No description provided for @circleRequests.
+  ///
+  /// In en, this message translates to:
+  /// **'Requests'**
+  String get circleRequests;
+
+  /// No description provided for @circleRequestsN.
+  ///
+  /// In en, this message translates to:
+  /// **'Requests ({count})'**
+  String circleRequestsN(int count);
+
+  /// No description provided for @pendingLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending'**
+  String get pendingLabel;
+
+  /// No description provided for @invitePeople.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a friend'**
+  String get invitePeople;
+
+  /// No description provided for @inviteShareLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Share invite link'**
+  String get inviteShareLink;
+
+  /// No description provided for @inviteLinkCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite link copied'**
+  String get inviteLinkCopied;
+
+  /// No description provided for @inviteHandleLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Friend\'s handle'**
+  String get inviteHandleLabel;
+
+  /// No description provided for @inviteSend.
+  ///
+  /// In en, this message translates to:
+  /// **'Send invite'**
+  String get inviteSend;
+
+  /// No description provided for @inviteSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Invite sent to {handle}'**
+  String inviteSent(String handle);
+
+  /// No description provided for @todayLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get todayLabel;
+
+  /// No description provided for @streakLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Streak'**
+  String get streakLabel;
+
+  /// No description provided for @streakDays.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} days'**
+  String streakDays(int count);
+
+  /// No description provided for @friendAdherence.
+  ///
+  /// In en, this message translates to:
+  /// **'On-target · last 7 days'**
+  String get friendAdherence;
+
+  /// No description provided for @noRequests.
+  ///
+  /// In en, this message translates to:
+  /// **'No pending requests.'**
+  String get noRequests;
+
+  /// No description provided for @accept.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept'**
+  String get accept;
+
+  /// No description provided for @decline.
+  ///
+  /// In en, this message translates to:
+  /// **'Decline'**
+  String get decline;
+
+  /// No description provided for @friendAccepted.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} joined your circle 🎉'**
+  String friendAccepted(String name);
 }
 
 class _AppLocalizationsDelegate

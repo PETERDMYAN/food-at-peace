@@ -845,4 +845,69 @@ class AppLocalizationsZh extends AppLocalizations {
   String versionLabel(String name, String version, String build) {
     return '$name $version ($build)';
   }
+
+  @override
+  String get yourCircle => '我的圈子';
+
+  @override
+  String get addFriend => '添加';
+
+  @override
+  String get circleRequests => '好友请求';
+
+  @override
+  String circleRequestsN(int count) {
+    return '好友请求（$count）';
+  }
+
+  @override
+  String get pendingLabel => '待接受';
+
+  @override
+  String get invitePeople => '添加好友';
+
+  @override
+  String get inviteShareLink => '分享邀请链接';
+
+  @override
+  String get inviteLinkCopied => '邀请链接已复制';
+
+  @override
+  String get inviteHandleLabel => '好友的用户名';
+
+  @override
+  String get inviteSend => '发送邀请';
+
+  @override
+  String inviteSent(String handle) {
+    return '已向 $handle 发送邀请';
+  }
+
+  @override
+  String get todayLabel => '今天';
+
+  @override
+  String get streakLabel => '连续天数';
+
+  @override
+  String streakDays(int count) {
+    return '$count 天';
+  }
+
+  @override
+  String get friendAdherence => '达标 · 近 7 天';
+
+  @override
+  String get noRequests => '暂无待处理的请求。';
+
+  @override
+  String get accept => '接受';
+
+  @override
+  String get decline => '拒绝';
+
+  @override
+  String friendAccepted(String name) {
+    return '$name 加入了你的圈子 🎉';
+  }
 }
