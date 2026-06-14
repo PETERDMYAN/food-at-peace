@@ -35,6 +35,46 @@ void main() {
     });
   });
 
+  group('languageDirective', () {
+    test('is empty for null, English, or an unknown locale', () {
+      expect(languageDirective(null), '');
+      expect(languageDirective('en'), '');
+      expect(languageDirective('fr'), '');
+    });
+
+    test('requests Simplified Chinese for zh and its regional variants', () {
+      expect(languageDirective('zh'), contains('Simplified Chinese'));
+      expect(languageDirective('zh-Hans'), contains('Simplified Chinese'));
+      expect(languageDirective('zh_CN'), contains('Simplified Chinese'));
+    });
+
+    test('only mutates the user prompt — the cached system prefix is stable', () {
+      String userText(Map<String, dynamic> b) {
+        final content =
+            ((b['messages'] as List).first as Map)['content'] as List;
+        final text =
+            content.lastWhere((x) => (x as Map)['type'] == 'text') as Map;
+        return text['text'] as String;
+      }
+
+      final en = buildRequestBody(
+        base64Image: 'A',
+        mediaType: 'image/jpeg',
+        model: 'm',
+      );
+      final zh = buildRequestBody(
+        base64Image: 'A',
+        mediaType: 'image/jpeg',
+        model: 'm',
+        lang: 'zh',
+      );
+      expect(userText(en), isNot(contains('Simplified Chinese')));
+      expect(userText(zh), contains('Simplified Chinese'));
+      // Same cache_control'd system prefix → prompt caching still hits.
+      expect(en['system'], zh['system']);
+    });
+  });
+
   group('parseFoodAnalysis', () {
     test('reads the log_food tool_use input', () {
       final analysis = parseFoodAnalysis({

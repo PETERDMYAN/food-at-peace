@@ -364,12 +364,10 @@
 
   "beans": "Beans",
   "beansBalance": "Beans balance",
-  "beansUnlimited": "Unlimited",
   "beansPerScan": "1 Bean per photo scan",
   "beansHistory": "Transaction history",
   "beansEmpty": "No transactions yet.",
   "topUp": "Top up",
-  "goUnlimited": "Go Unlimited",
   "beansGrant": "Welcome bonus",
   "beansSpend": "Photo scan",
   "beansPurchase": "Top-up",
@@ -382,18 +380,13 @@
   "@priceSgd": {
     "placeholders": { "value": { "type": "String" } }
   },
-  "priceSgdPerMonth": "SGD {value}/mo",
-  "@priceSgdPerMonth": {
-    "placeholders": { "value": { "type": "String" } }
-  },
   "paywallTitle": "You're out of Beans",
-  "paywallBody": "Each photo scan uses 1 Bean. Top up or go unlimited to keep scanning your meals.",
+  "paywallBody": "Each photo scan uses 1 Bean. Top up to keep scanning your meals.",
   "beansStubNote": "Demo build — purchases credit instantly; real billing is coming.",
   "beansBought": "Added {count} Beans",
   "@beansBought": {
     "placeholders": { "count": { "type": "int" } }
   },
-  "beansSubscribed": "Unlimited unlocked 🎉",
   "scansLeft": "{count} scans left",
   "@scansLeft": {
     "placeholders": { "count": { "type": "int" } }
@@ -414,7 +407,6 @@
   "mBeansSold": "Beans sold",
   "mRevenue": "Revenue",
   "mRefunds": "Refunds",
-  "mSubscribers": "Subscribers",
   "versionLabel": "{name} {version} ({build})",
   "@versionLabel": {
     "placeholders": {

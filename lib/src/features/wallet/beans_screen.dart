@@ -8,9 +8,8 @@ import '../../providers/providers.dart';
 import '../../theme/app_theme.dart';
 import '../../widgets/bean_icon.dart';
 
-/// The Beans wallet: a gradient balance hero, top-up / go-unlimited actions,
-/// and the full transaction history (welcome bonus, photo scans, purchases,
-/// refunds).
+/// The Beans wallet: a gradient balance hero, a top-up action, and the full
+/// transaction history (welcome bonus, photo scans, purchases, refunds).
 class BeansScreen extends ConsumerWidget {
   const BeansScreen({super.key});
 
@@ -25,30 +24,17 @@ class BeansScreen extends ConsumerWidget {
         children: [
           _BalanceHero(beans: beans),
           const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: FilledButton.icon(
-                  onPressed: () => showBeansPaywall(context, ref),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppTheme.beanAccent,
-                    foregroundColor: Colors.white,
-                  ),
-                  icon: const Icon(Icons.add),
-                  label: Text(t.topUp),
-                ),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: () => showBeansPaywall(context, ref),
+              style: FilledButton.styleFrom(
+                backgroundColor: AppTheme.beanAccent,
+                foregroundColor: Colors.white,
               ),
-              if (!beans.subscribed) ...[
-                const SizedBox(width: 12),
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () => showBeansPaywall(context, ref),
-                    icon: const Icon(Icons.all_inclusive),
-                    label: Text(t.goUnlimited),
-                  ),
-                ),
-              ],
-            ],
+              icon: const Icon(Icons.add),
+              label: Text(t.topUp),
+            ),
           ),
           const SizedBox(height: 24),
           Text(t.beansHistory, style: Theme.of(context).textTheme.titleSmall),
@@ -105,20 +91,19 @@ class _BalanceHero extends StatelessWidget {
           ),
           const SizedBox(height: 14),
           Text(
-            beans.subscribed ? t.beansUnlimited : '${beans.balance}',
+            '${beans.balance}',
             style: text.displaySmall?.copyWith(
               color: AppTheme.beanInk,
               fontWeight: FontWeight.w800,
               fontSize: 44,
             ),
           ),
-          if (!beans.subscribed)
-            Text(
-              t.beansPerScan,
-              style: text.bodySmall?.copyWith(
-                color: AppTheme.beanInk.withValues(alpha: 0.7),
-              ),
+          Text(
+            t.beansPerScan,
+            style: text.bodySmall?.copyWith(
+              color: AppTheme.beanInk.withValues(alpha: 0.7),
             ),
+          ),
         ],
       ),
     );
@@ -172,11 +157,10 @@ class _TxnRow extends StatelessWidget {
 }
 
 /// Bottom-sheet paywall shown when out of Beans (or from the wallet's top-up
-/// buttons): buy a 100-Bean pack or go unlimited.
+/// button): buy a Bean pack.
 ///
-/// DEV STUB: the buttons credit locally and pop. Replace the
-/// `purchasePack()` / `subscribeUnlimited()` calls with real StoreKit IAP +
-/// receipt validation before shipping.
+/// DEV STUB: the buttons credit locally and pop. Replace the `purchasePack()`
+/// call with real StoreKit IAP + receipt validation before shipping.
 Future<void> showBeansPaywall(BuildContext context, WidgetRef ref) {
   return showModalBottomSheet<void>(
     context: context,
@@ -257,78 +241,12 @@ class _PaywallSheet extends StatelessWidget {
                 }
               },
             ),
-            const SizedBox(height: 18),
-            _PlanCard(
-              title: t.beansUnlimited,
-              price: t.priceSgdPerMonth(
-                BeanPricing.subscriptionSgdPerMonth.toStringAsFixed(2),
-              ),
-              highlighted: true,
-              onTap: () async {
-                await notifier.subscribeUnlimited();
-                if (context.mounted) Navigator.pop(context);
-                toast(t.beansSubscribed);
-              },
-            ),
             const SizedBox(height: 14),
             Text(
               t.beansStubNote,
               textAlign: TextAlign.center,
               style: text.labelSmall?.copyWith(
                 color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _PlanCard extends StatelessWidget {
-  const _PlanCard({
-    required this.title,
-    required this.price,
-    required this.highlighted,
-    required this.onTap,
-  });
-
-  final String title;
-  final String price;
-  final bool highlighted;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final text = Theme.of(context).textTheme;
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
-        decoration: BoxDecoration(
-          gradient: highlighted ? AppTheme.beanGradient : null,
-          color: highlighted ? null : Theme.of(context).colorScheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Row(
-          children: [
-            BeanIcon(size: highlighted ? 30 : 26),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Text(
-                title,
-                style: text.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  color: highlighted ? AppTheme.beanInk : null,
-                ),
-              ),
-            ),
-            Text(
-              price,
-              style: text.titleMedium?.copyWith(
-                fontWeight: FontWeight.w800,
-                color: highlighted ? AppTheme.beanInk : null,
               ),
             ),
           ],

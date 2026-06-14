@@ -749,9 +749,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get beansBalance => 'Beans balance';
 
   @override
-  String get beansUnlimited => 'Unlimited';
-
-  @override
   String get beansPerScan => '1 Bean per photo scan';
 
   @override
@@ -762,9 +759,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get topUp => 'Top up';
-
-  @override
-  String get goUnlimited => 'Go Unlimited';
 
   @override
   String get beansGrant => 'Welcome bonus';
@@ -789,16 +783,11 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String priceSgdPerMonth(String value) {
-    return 'SGD $value/mo';
-  }
-
-  @override
   String get paywallTitle => 'You\'re out of Beans';
 
   @override
   String get paywallBody =>
-      'Each photo scan uses 1 Bean. Top up or go unlimited to keep scanning your meals.';
+      'Each photo scan uses 1 Bean. Top up to keep scanning your meals.';
 
   @override
   String get beansStubNote =>
@@ -808,9 +797,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String beansBought(int count) {
     return 'Added $count Beans';
   }
-
-  @override
-  String get beansSubscribed => 'Unlimited unlocked 🎉';
 
   @override
   String scansLeft(int count) {
@@ -862,9 +848,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get mRefunds => 'Refunds';
-
-  @override
-  String get mSubscribers => 'Subscribers';
 
   @override
   String versionLabel(String name, String version, String build) {

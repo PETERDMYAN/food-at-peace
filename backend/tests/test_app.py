@@ -58,6 +58,30 @@ def test_build_request_body_carries_image_and_cached_system_prompt():
     assert body["system"][0]["cache_control"] == {"type": "ephemeral"}
 
 
+def test_language_directive_defaults_to_english():
+    assert app.language_directive(None) == ""
+    assert app.language_directive("en") == ""
+    assert app.language_directive("fr") == ""
+
+
+def test_language_directive_zh_variants_request_chinese():
+    for code in ("zh", "zh-Hans", "zh_CN", "ZH"):
+        assert "Simplified Chinese" in app.language_directive(code)
+
+
+def test_build_request_body_localizes_user_prompt_only_when_lang_set():
+    def user_text(body):
+        blocks = body["messages"][0]["content"]
+        return next(b for b in blocks if b["type"] == "text")["text"]
+
+    en = app.build_request_body("A", "image/jpeg", "m")
+    zh = app.build_request_body("A", "image/jpeg", "m", lang="zh")
+    assert "Simplified Chinese" not in user_text(en)
+    assert "Simplified Chinese" in user_text(zh)
+    # The cache_control'd system prefix is identical regardless of language.
+    assert en["system"] == zh["system"]
+
+
 def test_parse_tool_input_reads_log_food():
     out = app.parse_tool_input(_anthropic_tool_response(name="Chicken salad"))
     assert out["name"] == "Chicken salad"
@@ -111,6 +135,17 @@ def test_handler_happy_path(monkeypatch):
     # The Anthropic call received the configured key + built body.
     assert captured["api_key"] == "sk-ant-test"
     assert captured["body"]["tool_choice"]["name"] == "log_food"
+
+
+def test_handler_forwards_lang_to_the_prompt(monkeypatch):
+    captured = _stub_anthropic(monkeypatch)
+    resp = app.handler(
+        _event({"image": "AAAA", "mediaType": "image/jpeg", "lang": "zh"}), None
+    )
+    assert resp["statusCode"] == 200
+    blocks = captured["body"]["messages"][0]["content"]
+    text = next(b for b in blocks if b["type"] == "text")["text"]
+    assert "Simplified Chinese" in text
 
 
 def test_handler_surfaces_anthropic_error(monkeypatch):

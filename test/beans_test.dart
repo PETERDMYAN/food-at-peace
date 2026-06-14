@@ -14,7 +14,6 @@ void main() {
     expect(BeanPricing.signupGrant, 21);
     expect(BeanPricing.packBeans, 100);
     expect(BeanPricing.packPriceSgd, 1.99);
-    expect(BeanPricing.subscriptionSgdPerMonth, 3.99);
     expect(BeanPricing.costPerPhoto, 1);
   });
 
@@ -25,36 +24,25 @@ void main() {
         _txn(BeanTxnType.purchase, 100),
         _txn(BeanTxnType.signupGrant, 21),
       ],
-      subscribed: false,
     );
     expect(state.balance, 120);
   });
 
   group('canAnalyze', () {
     test('true when Beans remain', () {
-      final s = BeansState(
-        ledger: [_txn(BeanTxnType.signupGrant, 21)],
-        subscribed: false,
-      );
+      final s = BeansState(ledger: [_txn(BeanTxnType.signupGrant, 21)]);
       expect(s.canAnalyze, isTrue);
     });
 
-    test('false at zero balance without a subscription', () {
+    test('false at zero balance', () {
       final s = BeansState(
         ledger: [
           _txn(BeanTxnType.signupGrant, 21),
           _txn(BeanTxnType.spend, -21),
         ],
-        subscribed: false,
       );
       expect(s.balance, 0);
       expect(s.canAnalyze, isFalse);
-    });
-
-    test('always true for unlimited subscribers, even at zero', () {
-      const s = BeansState(ledger: [], subscribed: true);
-      expect(s.balance, 0);
-      expect(s.canAnalyze, isTrue);
     });
   });
 
