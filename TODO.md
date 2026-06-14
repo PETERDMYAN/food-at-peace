@@ -46,12 +46,22 @@ New `POST /event` (open/scan/purchase/refund counters) + `GET /metrics`
 
 ---
 
-## 🚧 Remaining (QA stubs §6) — larger efforts
+## ✅ Done (QA stub #4 — Circle of Food backend)
 
-### 4. Circle of Food — real backend
-Invites + privacy-gated trend sharing are still local/mock. Needs new endpoints
-(invite create/accept, friends, shared trends) on the v2 stack + DynamoDB, and
-the client wired off the mock.
+### 4. Circle of Food — real backend ✅
+Real friend graph on the v2 stack: handle directory + invite/accept/decline/list
+([backend/src/circle.py](backend/src/circle.py), `CircleTable`), with privacy-gated
+trends computed read-only from a connected friend's own synced food + profile
+(Mifflin target — never raw food). Client:
+[circle_client.dart](lib/src/data/circle_client.dart) + `CircleNotifier` uses it
+when signed in; the offline seeded mock is preserved for signed-out/tests.
+Verified live with two minted users (invite → accept → connected-with-trend).
+- **Signed-in path needs a real device** (Apple ID) to exercise end-to-end —
+  same limitation as Sign in with Apple (QA §5).
+- Follow-up: a handle-management screen (view/edit your own @handle). Today a
+  handle is auto-derived from the profile name on first online use.
+
+## 🚧 Remaining (QA stub §6)
 
 ### 5. Beans IAP — StoreKit + server receipt validation
 Purchases/subscription are dev stubs (credit locally; reinstall resets).

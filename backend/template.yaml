@@ -300,6 +300,97 @@ Resources:
             Path: /metrics
             Method: GET
 
+  # Circle of Food: handle directory + friendship edges. PK/SK single-table.
+  CircleTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: pk
+          AttributeType: S
+        - AttributeName: sk
+          AttributeType: S
+      KeySchema:
+        - AttributeName: pk
+          KeyType: HASH
+        - AttributeName: sk
+          KeyType: RANGE
+
+  # Friend graph (register/invite/respond/remove/list). Session-token auth.
+  # Reads the sync table (read-only) to compute a connected friend's trend.
+  CircleFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/
+      Handler: circle.handler
+      Environment:
+        Variables:
+          CIRCLE_TABLE: !Ref CircleTable
+          SYNC_TABLE: !Ref SyncTable
+          SESSION_KEY_PARAM: !Ref SessionKeyParam
+      Policies:
+        - Statement:
+            - Sid: ReadWriteCircle
+              Effect: Allow
+              Action:
+                - dynamodb:GetItem
+                - dynamodb:PutItem
+                - dynamodb:UpdateItem
+                - dynamodb:DeleteItem
+                - dynamodb:Query
+              Resource:
+                - !GetAtt CircleTable.Arn
+            - Sid: ReadFriendSyncData
+              Effect: Allow
+              Action:
+                - dynamodb:GetItem
+                - dynamodb:Query
+              Resource:
+                - !GetAtt SyncTable.Arn
+            - Sid: ReadSessionKey
+              Effect: Allow
+              Action: ssm:GetParameter
+              Resource:
+                - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter${SessionKeyParam}
+            - Sid: DecryptSecureStrings
+              Effect: Allow
+              Action: kms:Decrypt
+              Resource: "*"
+              Condition:
+                StringEquals:
+                  kms:ViaService: !Sub ssm.${AWS::Region}.amazonaws.com
+      Events:
+        Register:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref VisionApi
+            Path: /circle/register
+            Method: POST
+        Invite:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref VisionApi
+            Path: /circle/invite
+            Method: POST
+        Respond:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref VisionApi
+            Path: /circle/respond
+            Method: POST
+        Remove:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref VisionApi
+            Path: /circle/remove
+            Method: POST
+        ListCircle:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref VisionApi
+            Path: /circle/list
+            Method: GET
+
 Outputs:
   ProxyBaseUrl:
     Description: >
