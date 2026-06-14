@@ -9,6 +9,7 @@ import '../data/api_key_store.dart';
 import '../data/auth_client.dart';
 import '../data/claude_vision_client.dart';
 import '../data/analytics_service.dart';
+import '../data/circle_client.dart';
 import '../data/food_photo_analyzer.dart';
 import '../data/food_repository.dart';
 import '../data/health_service.dart';
@@ -746,28 +747,59 @@ final beansProvider = NotifierProvider<BeansNotifier, BeansState>(
 // ---- Circles of Food (friends) ----
 
 /// The user's "Circle of Food": connected friends + pending invites (incoming /
-/// outgoing). Persisted locally and seeded on first run.
+/// outgoing).
 ///
-/// NOTE: invites, acceptance, and friends' trend data are LOCAL/MOCK for the
-/// client MVP. Production needs a backend: real invite delivery + acceptance,
-/// and friend-trend sharing gated by each friend's privacy consent.
+/// When signed in (and a proxy is configured) this is backed by the real
+/// `/circle/*` API — invites/acceptance and privacy-gated friend trends come
+/// from the server. Signed out, it falls back to a local, seeded list so the
+/// feature still works offline and in tests. (A handle-management screen — show
+/// / edit your own @handle — is a planned follow-up; for now a handle is
+/// derived from the profile name on first online use.)
 class CircleNotifier extends Notifier<List<Friend>> {
   static const _key = 'circle_v1';
   static const _seededKey = 'circle_seeded';
+  static const _handleSetKey = 'circle_handle_set';
 
   SharedPreferences get _prefs => ref.read(sharedPreferencesProvider);
+  String? get _token => ref.read(authProvider)?.token;
+  bool get _online {
+    final t = _token;
+    return proxyBaseUrl.isNotEmpty && t != null && t.isNotEmpty;
+  }
 
   @override
   List<Friend> build() {
-    final raw = _prefs.getString(_key);
-    if (raw != null && raw.isNotEmpty) {
-      try {
-        return [
-          for (final e in jsonDecode(raw) as List)
-            Friend.fromJson(e as Map<String, dynamic>),
-        ];
-      } catch (_) {}
+    // Rebuild when auth changes: sign in → switch to the backend; out → local.
+    ref.watch(authProvider);
+    if (_online) {
+      _refresh(); // async: ensure a handle, then load real friends + trends
+      return _loadLocal() ?? const []; // show cache while loading; no mock seed online
     }
+    return _seededOrLocal();
+  }
+
+  // ---- local (offline / cache) store ----
+
+  String _encode(List<Friend> l) => jsonEncode([for (final f in l) f.toJson()]);
+
+  Future<void> _save() => _prefs.setString(_key, _encode(state));
+
+  List<Friend>? _loadLocal() {
+    final raw = _prefs.getString(_key);
+    if (raw == null || raw.isEmpty) return null;
+    try {
+      return [
+        for (final e in jsonDecode(raw) as List)
+          Friend.fromJson(e as Map<String, dynamic>),
+      ];
+    } catch (_) {
+      return null;
+    }
+  }
+
+  List<Friend> _seededOrLocal() {
+    final local = _loadLocal();
+    if (local != null) return local;
     if (!(_prefs.getBool(_seededKey) ?? false)) {
       final seed = Friend.seed();
       _prefs.setBool(_seededKey, true);
@@ -777,17 +809,61 @@ class CircleNotifier extends Notifier<List<Friend>> {
     return const [];
   }
 
-  String _encode(List<Friend> l) => jsonEncode([for (final f in l) f.toJson()]);
-
-  Future<void> _save() => _prefs.setString(_key, _encode(state));
-
   List<Friend> get connected =>
       state.where((f) => f.status == FriendStatus.connected).toList();
   List<Friend> get incoming =>
       state.where((f) => f.status == FriendStatus.incoming).toList();
 
-  /// Send an invite by @handle (mock outgoing invite).
+  // ---- backend (signed in) ----
+
+  String _deriveHandle() {
+    final name = ref.read(profileProvider).name ?? '';
+    var h = name.toLowerCase().replaceAll(RegExp('[^a-z0-9_]'), '');
+    if (h.length < 2) h = 'foodie';
+    if (h.length > 16) h = h.substring(0, 16);
+    return h;
+  }
+
+  /// Claim a handle once (derived from the profile name; add a suffix on clash).
+  Future<void> _ensureHandle(CircleClient client, String token) async {
+    if (_prefs.getBool(_handleSetKey) ?? false) return;
+    final name = ref.read(profileProvider).name;
+    final base = _deriveHandle();
+    var code = await client.register(token, base, name: name);
+    if (code == 409) {
+      final suffix =
+          (DateTime.now().microsecondsSinceEpoch % 9000 + 1000).toString();
+      code = await client.register(token, '$base$suffix', name: name);
+    }
+    if (code == 200) await _prefs.setBool(_handleSetKey, true);
+  }
+
+  Future<void> _refresh() async {
+    final token = _token;
+    if (token == null || token.isEmpty) return;
+    final client = ref.read(circleClientProvider);
+    try {
+      await _ensureHandle(client, token);
+      state = await client.list(token);
+      await _save(); // cache for the next cold start
+    } catch (_) {
+      // Keep showing the cached list on a transient failure.
+    }
+  }
+
+  /// Send an invite by @handle.
   Future<void> invite(String handle) async {
+    if (_online) {
+      final token = _token!;
+      final client = ref.read(circleClientProvider);
+      try {
+        await _ensureHandle(client, token);
+        await client.invite(token, handle.trim());
+        await _refresh();
+      } catch (_) {}
+      return;
+    }
+    // Offline: optimistic local outgoing invite.
     final h = handle.trim().replaceAll('@', '');
     if (h.isEmpty) return;
     final name = h[0].toUpperCase() + (h.length > 1 ? h.substring(1) : '');
@@ -803,8 +879,15 @@ class CircleNotifier extends Notifier<List<Friend>> {
     await _save();
   }
 
-  /// Accept an incoming invite — they become connected (with a mock trend).
+  /// Accept an incoming invite — they become connected (with their trend).
   Future<void> accept(String id) async {
+    if (_online) {
+      try {
+        await ref.read(circleClientProvider).respond(_token!, id, 'accept');
+        await _refresh();
+      } catch (_) {}
+      return;
+    }
     state = [
       for (final f in state)
         if (f.id == id)
@@ -824,6 +907,13 @@ class CircleNotifier extends Notifier<List<Friend>> {
   }
 
   Future<void> remove(String id) async {
+    if (_online) {
+      try {
+        await ref.read(circleClientProvider).remove(_token!, id);
+        await _refresh();
+      } catch (_) {}
+      return;
+    }
     state = [
       for (final f in state)
         if (f.id != id) f,
@@ -831,6 +921,10 @@ class CircleNotifier extends Notifier<List<Friend>> {
     await _save();
   }
 }
+
+final circleClientProvider = Provider<CircleClient>(
+  (ref) => CircleClient(baseUrl: proxyBaseUrl),
+);
 
 final circleProvider = NotifierProvider<CircleNotifier, List<Friend>>(
   CircleNotifier.new,
