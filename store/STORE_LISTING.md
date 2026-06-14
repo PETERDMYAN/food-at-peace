@@ -30,6 +30,11 @@ Log meals in seconds, snap a photo to estimate nutrition, and see exactly how ma
 
 ## Description (max 4000)
 
+<!-- TODO(i18n): make this App Store description translatable. The app is
+     localized to Chinese (Simplified) too, so provide a localized
+     description / promotional text / subtitle per language in App Store
+     Connect's per-locale listing fields. -->
+
 ```
 Food at Peace is a calm, no-nonsense calorie and macro tracker. Log what you eat, see how much you can still eat today, and keep protein and saturated fat on target — without ads, noise, or guesswork.
 

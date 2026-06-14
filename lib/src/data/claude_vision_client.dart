@@ -89,6 +89,11 @@ class ClaudeVisionClient {
   }
 }
 
+// TODO(i18n): make Claude's food response translatable. The dish `name`,
+// `portionDescription`, and `notes` come back in English regardless of the
+// user's locale. Pass the active language into the prompt and ask Claude to
+// return those human-readable fields in that language (or translate the
+// result), so the photo estimate is localized like the rest of the app.
 const String _systemPrompt =
     'You are a nutrition estimator. Look at the food photo and estimate the '
     'nutrition for the ENTIRE portion visible. Use typical recipes and serving '

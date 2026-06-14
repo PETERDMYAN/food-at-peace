@@ -126,6 +126,13 @@ the system locale by default and persists a manual choice.
 - [ ] **Push notifications**
 - [ ] **Recurring food** — log a repeating food entry once and have it recur
 - [ ] **Sharing with friends** — share progress with friends
+- [ ] **Translatable Claude food response** — Claude returns the dish `name`,
+  `portionDescription`, and `notes` in English; have it respond in the user's
+  language (or translate the result) so the photo estimate is localized
+  (`lib/src/data/claude_vision_client.dart`)
+- [ ] **Translatable App Store description** — localize the listing
+  copy (description, promo, subtitle) for each supported language
+  (`store/STORE_LISTING.md`)
 - [ ] Later: home-screen widget, reminders, barcode scan, Android
 
 ## Tech stack
