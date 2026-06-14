@@ -606,9 +606,7 @@ class _BeansTile extends ConsumerWidget {
     final t = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
     final beans = ref.watch(beansProvider);
-    final status = beans.subscribed
-        ? t.beansUnlimited
-        : t.beansCount(beans.balance);
+    final status = t.beansCount(beans.balance);
     return Card(
       child: InkWell(
         borderRadius: BorderRadius.circular(26),

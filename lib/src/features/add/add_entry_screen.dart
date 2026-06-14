@@ -83,13 +83,16 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
 
   Future<void> _scanPhoto() async {
     final t = AppLocalizations.of(context);
+    // The resolved UI language ('en' / 'zh') — captured before any await so the
+    // AI writes its estimate in the same language the user is reading.
+    final lang = Localizations.localeOf(context).languageCode;
     final analyzer = ref.read(foodPhotoAnalyzerProvider);
     if (analyzer == null) {
       _showKeyNeededDialog();
       return;
     }
-    // Each scan costs one Bean (unless unlimited). Out of Beans → paywall; if
-    // they top up there, fall through and continue.
+    // Each scan costs one Bean. Out of Beans → paywall; if they top up there,
+    // fall through and continue.
     if (!ref.read(beansProvider).canAnalyze) {
       await showBeansPaywall(context, ref);
       if (!mounted || !ref.read(beansProvider).canAnalyze) return;
@@ -120,6 +123,7 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
       final analysis = await analyzer.analyze(
         imageBytes: bytes,
         mediaType: _mediaTypeFor(file),
+        lang: lang,
       );
       if (!mounted) return;
       setState(() {
@@ -135,6 +139,8 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
       });
       // Charge one Bean for the successful scan.
       await ref.read(beansProvider.notifier).spendOnPhoto(analysis.name);
+      // Non-PII usage ping for the owner dashboard (fire-and-forget).
+      ref.read(analyticsServiceProvider).emit('scan');
     } on ClaudeApiException catch (e) {
       _toast(e.message);
     } catch (_) {
@@ -218,25 +224,23 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
                   icon: const Icon(Icons.camera_alt_outlined),
                   label: Text(t.scanPhoto),
                 ),
-                // Unlimited subscribers see nothing; everyone else sees how many
-                // scans (Beans) they have left.
-                if (!beans.subscribed)
-                  Padding(
-                    padding: const EdgeInsets.only(top: 8),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        const BeanIcon(size: 15),
-                        const SizedBox(width: 6),
-                        Text(
-                          t.scansLeft(beans.balance),
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
-                          ),
+                // How many scans (Beans) the user has left.
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const BeanIcon(size: 15),
+                      const SizedBox(width: 6),
+                      Text(
+                        t.scansLeft(beans.balance),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
+                ),
                 if (_analysis != null) ...[
                   const SizedBox(height: 12),
                   _AnalysisBanner(analysis: _analysis!),

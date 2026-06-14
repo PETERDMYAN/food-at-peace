@@ -12,9 +12,13 @@ import 'claude_vision_client.dart';
 /// the key server-side). Both throw [ClaudeApiException] on failure so the UI
 /// can handle them the same way.
 abstract class FoodPhotoAnalyzer {
+  /// [lang] is the app's selected locale code ('en' / 'zh'); when set, the AI
+  /// writes the human-readable fields (name, items, portion, notes) in that
+  /// language. Null/'en' keeps the default English output.
   Future<FoodAnalysis> analyze({
     required Uint8List imageBytes,
     required String mediaType,
+    String? lang,
   });
 }
 
@@ -30,11 +34,13 @@ class DirectAnalyzer implements FoodPhotoAnalyzer {
   Future<FoodAnalysis> analyze({
     required Uint8List imageBytes,
     required String mediaType,
+    String? lang,
   }) {
     return _client.analyze(
       apiKey: _apiKey,
       imageBytes: imageBytes,
       mediaType: mediaType,
+      lang: lang,
     );
   }
 }
@@ -66,6 +72,7 @@ class ProxyAnalyzer implements FoodPhotoAnalyzer {
   Future<FoodAnalysis> analyze({
     required Uint8List imageBytes,
     required String mediaType,
+    String? lang,
   }) async {
     final http.Response resp;
     try {
@@ -75,6 +82,9 @@ class ProxyAnalyzer implements FoodPhotoAnalyzer {
         body: jsonEncode({
           'image': base64Encode(imageBytes),
           'mediaType': mediaType,
+          // Omitted when null so the request shape is unchanged for callers
+          // that don't pass a locale (and the backend defaults to English).
+          'lang': ?lang,
         }),
       );
     } catch (_) {

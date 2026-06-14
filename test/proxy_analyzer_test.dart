@@ -51,6 +51,41 @@ void main() {
       final sent = jsonDecode(captured.body) as Map<String, dynamic>;
       expect(sent['mediaType'], 'image/jpeg');
       expect(sent['image'], base64Encode([1, 2, 3]));
+      // No locale passed → no `lang` key (backend stays on English).
+      expect(sent.containsKey('lang'), isFalse);
+    });
+
+    test('forwards the selected locale as `lang` when provided', () async {
+      late http.Request captured;
+      final mock = MockClient((req) async {
+        captured = req;
+        return http.Response(
+          jsonEncode({
+            'name': '吐司',
+            'calories': 120,
+            'proteinG': 4,
+            'satFatG': 1,
+            'portionDescription': '1 片',
+            'confidence': 'high',
+          }),
+          200,
+          headers: {'content-type': 'application/json'},
+        );
+      });
+      final analyzer = ProxyAnalyzer(
+        baseUrl: 'https://api.example.com',
+        appToken: 't',
+        httpClient: mock,
+      );
+
+      final result = await analyzer.analyze(
+        imageBytes: Uint8List.fromList([1]),
+        mediaType: 'image/jpeg',
+        lang: 'zh',
+      );
+
+      expect(result.name, '吐司');
+      expect((jsonDecode(captured.body) as Map)['lang'], 'zh');
     });
 
     test('surfaces the proxy error message verbatim on non-200', () async {

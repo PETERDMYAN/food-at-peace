@@ -53,9 +53,35 @@ USER_PROMPT = (
     "photo, then call log_food."
 )
 
-def build_request_body(base64_image, media_type, model):
+# Map an app locale code to the language the model should answer in. English is
+# the default (no entry), so the production app — which sends no `lang` — is
+# completely unaffected. Mirrors `languageDirective` in claude_vision_client.dart.
+_LANGUAGE_NAMES = {
+    "zh": "Simplified Chinese",
+}
+
+
+def language_directive(lang):
+    """Sentence appended to the *user* prompt telling the model which language to
+    write the human-readable fields in (name/items/portionDescription/notes).
+    Returns '' for English or an unknown locale. Kept out of the cache_control'd
+    system block so prompt caching still hits regardless of language."""
+    if not isinstance(lang, str):
+        return ""
+    name = _LANGUAGE_NAMES.get(lang.split("-")[0].split("_")[0].strip().lower())
+    if not name:
+        return ""
+    return (
+        f" Write the name, items, portionDescription, and notes fields in {name}; "
+        "keep all numeric fields and the confidence value unchanged."
+    )
+
+
+def build_request_body(base64_image, media_type, model, lang=None):
     """Port of buildRequestBody in claude_vision_client.dart. The system block is
-    cache_control'd so prompt caching works just like the direct client."""
+    cache_control'd so prompt caching works just like the direct client; the
+    per-language directive rides on the volatile user message so it never breaks
+    the cached prefix."""
     return {
         "model": model,
         "max_tokens": MAX_TOKENS,
@@ -150,7 +176,7 @@ def build_request_body(base64_image, media_type, model):
                             "data": base64_image,
                         },
                     },
-                    {"type": "text", "text": USER_PROMPT},
+                    {"type": "text", "text": USER_PROMPT + language_directive(lang)},
                 ],
             }
         ],
@@ -236,12 +262,15 @@ def handler(event, context):
         body = _parse_body(event)
         image = body.get("image")
         media_type = body.get("mediaType") or "image/jpeg"
+        # Optional: the app's selected locale ('en' / 'zh'). Absent on the
+        # production app, so its analyses stay English (unchanged behaviour).
+        lang = body.get("lang")
         if not isinstance(image, str) or not image:
             raise ProxyError(400, "No image provided.")
 
         api_key = _get_secret(ANTHROPIC_KEY_PARAM)
         anthropic_response = _call_anthropic(
-            api_key, build_request_body(image, media_type, MODEL)
+            api_key, build_request_body(image, media_type, MODEL, lang)
         )
         return _response(200, parse_tool_input(anthropic_response))
     except ProxyError as exc:

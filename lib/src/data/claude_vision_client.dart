@@ -58,11 +58,13 @@ class ClaudeVisionClient {
     required String apiKey,
     required Uint8List imageBytes,
     required String mediaType,
+    String? lang,
   }) async {
     final body = buildRequestBody(
       base64Image: base64Encode(imageBytes),
       mediaType: mediaType,
       model: model,
+      lang: lang,
     );
 
     final http.Response resp;
@@ -101,11 +103,31 @@ const String _userPrompt =
     'Estimate the calories, protein, and saturated fat for the food in this '
     'photo, then call log_food.';
 
+/// Maps an app locale code to the language the model should answer in. English
+/// is the default (no entry) — passing null/'en' leaves the prompt unchanged.
+/// Mirrors `_LANGUAGE_NAMES` in backend/src/app.py.
+const Map<String, String> _languageNames = {'zh': 'Simplified Chinese'};
+
+/// A sentence appended to the *user* prompt telling the model which language to
+/// write the human-readable fields in (name/items/portionDescription/notes).
+/// Returns '' for English or an unknown locale. Kept off the cache_control'd
+/// system block so prompt caching still hits regardless of language. Mirrors
+/// `language_directive` in backend/src/app.py.
+String languageDirective(String? lang) {
+  if (lang == null) return '';
+  final code = lang.split(RegExp('[-_]')).first.trim().toLowerCase();
+  final name = _languageNames[code];
+  if (name == null) return '';
+  return ' Write the name, items, portionDescription, and notes fields in $name; '
+      'keep all numeric fields and the confidence value unchanged.';
+}
+
 /// Builds the Messages API request body. Pure function — unit-tested.
 Map<String, dynamic> buildRequestBody({
   required String base64Image,
   required String mediaType,
   required String model,
+  String? lang,
 }) {
   return {
     'model': model,
@@ -190,7 +212,7 @@ Map<String, dynamic> buildRequestBody({
               'data': base64Image,
             },
           },
-          {'type': 'text', 'text': _userPrompt},
+          {'type': 'text', 'text': _userPrompt + languageDirective(lang)},
         ],
       },
     ],

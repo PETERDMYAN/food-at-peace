@@ -45,7 +45,6 @@ class _Body extends StatelessWidget {
       _StatCard(label: t.mBeansSold, value: n.format(m.beansSold), icon: Icons.savings_outlined),
       _StatCard(label: t.mRevenue, value: 'S\$${m.revenueSgd.toStringAsFixed(2)}', icon: Icons.payments_outlined),
       _StatCard(label: t.mRefunds, value: '${m.refunds} · S\$${m.refundSgd.toStringAsFixed(2)}', icon: Icons.undo),
-      _StatCard(label: t.mSubscribers, value: n.format(m.subscribers), icon: Icons.all_inclusive),
     ];
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),

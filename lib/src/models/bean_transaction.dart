@@ -88,9 +88,6 @@ class BeanPricing {
   static double priceFor(int beans) =>
       (beans / packBeans) * packPriceSgd;
 
-  /// Monthly unlimited subscription price.
-  static const double subscriptionSgdPerMonth = 3.99;
-
   /// Beans spent per food-photo analysis.
   static const int costPerPhoto = 1;
 }

@@ -54,6 +54,7 @@ Resources:
           - x-app-token
           - authorization
         AllowMethods:
+          - GET
           - POST
           - OPTIONS
       # Stage throttling caps the blast radius (and Anthropic spend) if the
@@ -239,6 +240,65 @@ Resources:
             ApiId: !Ref VisionApi
             Path: /account/delete
             Method: POST
+
+  # Aggregate, non-PII product counters for the owner dashboard. One row of
+  # lifetime totals (pk="counter") plus one row per day (pk="day#<date>").
+  MetricsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: pk
+          AttributeType: S
+      KeySchema:
+        - AttributeName: pk
+          KeyType: HASH
+
+  # Owner analytics: POST /event increments counters; GET /metrics reads them
+  # back in the AppMetrics shape. Guarded by the shared app token.
+  MetricsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/
+      Handler: metrics.handler
+      Environment:
+        Variables:
+          METRICS_TABLE: !Ref MetricsTable
+          APP_TOKEN_PARAM: !Ref AppTokenParam
+      Policies:
+        - Statement:
+            - Sid: ReadWriteMetrics
+              Effect: Allow
+              Action:
+                - dynamodb:GetItem
+                - dynamodb:UpdateItem
+              Resource:
+                - !GetAtt MetricsTable.Arn
+            - Sid: ReadAppToken
+              Effect: Allow
+              Action: ssm:GetParameter
+              Resource:
+                - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter${AppTokenParam}
+            - Sid: DecryptSecureStrings
+              Effect: Allow
+              Action: kms:Decrypt
+              Resource: "*"
+              Condition:
+                StringEquals:
+                  kms:ViaService: !Sub ssm.${AWS::Region}.amazonaws.com
+      Events:
+        Emit:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref VisionApi
+            Path: /event
+            Method: POST
+        Read:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref VisionApi
+            Path: /metrics
+            Method: GET
 
 Outputs:
   ProxyBaseUrl:

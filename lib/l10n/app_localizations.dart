@@ -1406,12 +1406,6 @@ abstract class AppLocalizations {
   /// **'Beans balance'**
   String get beansBalance;
 
-  /// No description provided for @beansUnlimited.
-  ///
-  /// In en, this message translates to:
-  /// **'Unlimited'**
-  String get beansUnlimited;
-
   /// No description provided for @beansPerScan.
   ///
   /// In en, this message translates to:
@@ -1435,12 +1429,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Top up'**
   String get topUp;
-
-  /// No description provided for @goUnlimited.
-  ///
-  /// In en, this message translates to:
-  /// **'Go Unlimited'**
-  String get goUnlimited;
 
   /// No description provided for @beansGrant.
   ///
@@ -1478,12 +1466,6 @@ abstract class AppLocalizations {
   /// **'SGD {value}'**
   String priceSgd(String value);
 
-  /// No description provided for @priceSgdPerMonth.
-  ///
-  /// In en, this message translates to:
-  /// **'SGD {value}/mo'**
-  String priceSgdPerMonth(String value);
-
   /// No description provided for @paywallTitle.
   ///
   /// In en, this message translates to:
@@ -1493,7 +1475,7 @@ abstract class AppLocalizations {
   /// No description provided for @paywallBody.
   ///
   /// In en, this message translates to:
-  /// **'Each photo scan uses 1 Bean. Top up or go unlimited to keep scanning your meals.'**
+  /// **'Each photo scan uses 1 Bean. Top up to keep scanning your meals.'**
   String get paywallBody;
 
   /// No description provided for @beansStubNote.
@@ -1507,12 +1489,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Added {count} Beans'**
   String beansBought(int count);
-
-  /// No description provided for @beansSubscribed.
-  ///
-  /// In en, this message translates to:
-  /// **'Unlimited unlocked 🎉'**
-  String get beansSubscribed;
 
   /// No description provided for @scansLeft.
   ///
@@ -1609,12 +1585,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Refunds'**
   String get mRefunds;
-
-  /// No description provided for @mSubscribers.
-  ///
-  /// In en, this message translates to:
-  /// **'Subscribers'**
-  String get mSubscribers;
 
   /// No description provided for @versionLabel.
   ///

@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../data/api_key_store.dart';
 import '../data/auth_client.dart';
 import '../data/claude_vision_client.dart';
+import '../data/analytics_service.dart';
 import '../data/food_photo_analyzer.dart';
 import '../data/food_repository.dart';
 import '../data/health_service.dart';
@@ -640,38 +641,32 @@ final remindersProvider = NotifierProvider<RemindersNotifier, List<Reminder>>(
 
 // ---- Beans (in-app credit) ----
 
-/// Wallet state: the Beans ledger (newest first) + whether the unlimited
-/// subscription is active. Balance is derived from the ledger so it can never
-/// drift out of sync.
+/// Wallet state: the Beans ledger (newest first). Balance is derived from the
+/// ledger so it can never drift out of sync.
 class BeansState {
-  const BeansState({required this.ledger, required this.subscribed});
+  const BeansState({required this.ledger});
 
   final List<BeanTransaction> ledger;
-  final bool subscribed;
 
   int get balance => ledger.fold(0, (sum, t) => sum + t.amount);
 
-  /// Unlimited subscribers never run out; otherwise you need a Bean to spend.
-  bool get canAnalyze => subscribed || balance > 0;
+  /// You need at least one Bean to scan a photo.
+  bool get canAnalyze => balance > 0;
 
-  BeansState copyWith({List<BeanTransaction>? ledger, bool? subscribed}) =>
-      BeansState(
-        ledger: ledger ?? this.ledger,
-        subscribed: subscribed ?? this.subscribed,
-      );
+  BeansState copyWith({List<BeanTransaction>? ledger}) =>
+      BeansState(ledger: ledger ?? this.ledger);
 }
 
 /// The Beans wallet. Grants [BeanPricing.signupGrant] free Beans once on first
 /// launch; spends one per photo analysis; records purchases/refunds.
 ///
-/// NOTE: balance + entitlement are stored locally (shared_preferences) for now.
-/// Production must move both server-side (a tamper-proof ledger keyed to the
-/// account) with StoreKit receipt validation — otherwise a reinstall resets the
-/// balance and the subscription. [purchasePack]/[subscribeUnlimited] are DEV
-/// STUBS that credit locally; they must be replaced with real StoreKit IAP.
+/// NOTE: the balance is stored locally (shared_preferences) for now. Production
+/// must move it server-side (a tamper-proof ledger keyed to the account) with
+/// StoreKit receipt validation — otherwise a reinstall resets the balance.
+/// [purchasePack] is a DEV STUB that credits locally; it must be replaced with
+/// real StoreKit IAP.
 class BeansNotifier extends Notifier<BeansState> {
   static const _ledgerKey = 'beans_ledger_v1';
-  static const _subKey = 'beans_subscribed';
   static const _grantedKey = 'beans_granted';
 
   SharedPreferences get _prefs => ref.read(sharedPreferencesProvider);
@@ -694,10 +689,7 @@ class BeansNotifier extends Notifier<BeansState> {
       _prefs.setBool(_grantedKey, true);
       _prefs.setString(_ledgerKey, _encode(ledger));
     }
-    return BeansState(
-      ledger: ledger,
-      subscribed: _prefs.getBool(_subKey) ?? false,
-    );
+    return BeansState(ledger: ledger);
   }
 
   BeanTransaction _grant() => BeanTransaction(
@@ -718,10 +710,9 @@ class BeansNotifier extends Notifier<BeansState> {
     await _prefs.setString(_ledgerKey, _encode(state.ledger));
   }
 
-  /// Spend one Bean on a photo analysis. No-op for unlimited subscribers.
-  /// Returns false (without spending) if there aren't enough Beans.
+  /// Spend one Bean on a photo analysis. Returns false (without spending) if
+  /// there aren't enough Beans.
   Future<bool> spendOnPhoto(String dishNote) async {
-    if (state.subscribed) return true;
     if (state.balance < BeanPricing.costPerPhoto) return false;
     await _append(
       BeanTransaction(
@@ -746,13 +737,6 @@ class BeansNotifier extends Notifier<BeansState> {
       priceSgd: sgd,
     ),
   );
-
-  /// DEV STUB — flips on the unlimited entitlement locally. Replace with a
-  /// StoreKit auto-renewing subscription (SGD 3.99/month) + entitlement check.
-  Future<void> subscribeUnlimited() async {
-    state = state.copyWith(subscribed: true);
-    await _prefs.setBool(_subKey, true);
-  }
 }
 
 final beansProvider = NotifierProvider<BeansNotifier, BeansState>(
@@ -855,11 +839,18 @@ final circleProvider = NotifierProvider<CircleNotifier, List<Friend>>(
 // ---- Owner metrics dashboard ----
 
 final metricsServiceProvider = Provider<MetricsService>(
-  (ref) => MetricsService(),
+  (ref) => MetricsService(baseUrl: proxyBaseUrl, appToken: proxyAppToken),
 );
 
-/// Aggregate product metrics for the owner dashboard (sample data until an
-/// analytics backend is wired — see [MetricsService]).
+/// Aggregate product metrics for the owner dashboard. Live from the analytics
+/// backend when a proxy is configured; clearly-labelled sample data otherwise
+/// (see [MetricsService]).
 final metricsProvider = FutureProvider<AppMetrics>(
   (ref) => ref.read(metricsServiceProvider).fetch(),
+);
+
+/// Fire-and-forget product analytics (`open` / `scan` / …) feeding the owner
+/// dashboard counters. No-op when no proxy URL is baked in.
+final analyticsServiceProvider = Provider<AnalyticsService>(
+  (ref) => AnalyticsService(baseUrl: proxyBaseUrl, appToken: proxyAppToken),
 );

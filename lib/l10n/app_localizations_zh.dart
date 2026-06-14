@@ -727,9 +727,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get beansBalance => '豆子余额';
 
   @override
-  String get beansUnlimited => '无限畅用';
-
-  @override
   String get beansPerScan => '每次拍照分析消耗 1 颗豆子';
 
   @override
@@ -740,9 +737,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get topUp => '充值';
-
-  @override
-  String get goUnlimited => '升级无限';
 
   @override
   String get beansGrant => '新人福利';
@@ -767,15 +761,10 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String priceSgdPerMonth(String value) {
-    return 'SGD $value/月';
-  }
-
-  @override
   String get paywallTitle => '豆子用完啦';
 
   @override
-  String get paywallBody => '每次拍照分析消耗 1 颗豆子。充值或升级无限，继续记录每一餐。';
+  String get paywallBody => '每次拍照分析消耗 1 颗豆子。充值后即可继续记录每一餐。';
 
   @override
   String get beansStubNote => '演示版本——购买即时到账，正式支付即将上线。';
@@ -784,9 +773,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String beansBought(int count) {
     return '已添加 $count 颗豆子';
   }
-
-  @override
-  String get beansSubscribed => '已解锁无限畅用 🎉';
 
   @override
   String scansLeft(int count) {
@@ -837,9 +823,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get mRefunds => '退款';
-
-  @override
-  String get mSubscribers => '订阅用户';
 
   @override
   String versionLabel(String name, String version, String build) {
