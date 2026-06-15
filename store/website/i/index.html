@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Food at Peace — join my circle</title>
+<!-- iOS Safari Smart App Banner: shows "OPEN" if the app is installed, "GET"
+     (App Store) if it isn't — Apple does the installed/not-installed detection. -->
+<meta name="apple-itunes-app" content="app-id=6777715561" />
+<meta name="theme-color" content="#0E0B14" />
+<meta name="description" content="Join my circle on Food at Peace — a calm calorie & macro tracker." />
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; display: flex; align-items: center;
+    justify-content: center; padding: 28px;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: radial-gradient(120% 120% at 50% 0%, #1B1330 0%, #0E0B14 60%);
+    color: #fff; -webkit-font-smoothing: antialiased;
+  }
+  main { width: 100%; max-width: 420px; text-align: center; }
+  .logo {
+    width: 84px; height: 84px; margin: 0 auto 18px; border-radius: 22px;
+    display: grid; place-items: center; font-size: 42px;
+    background: linear-gradient(135deg, #7C83FF 0%, #C86BFF 100%);
+    box-shadow: 0 14px 40px rgba(176, 107, 255, .35);
+  }
+  h1 { font-size: 24px; line-height: 1.25; margin: 0 0 6px; font-weight: 800; }
+  .handle { font-size: 18px; font-weight: 700; color: #C9B8FF; margin: 0 0 14px; }
+  .sub { color: #B4ABC8; font-size: 15px; line-height: 1.5; margin: 0 0 26px; }
+  .btn {
+    display: block; width: 100%; padding: 15px 18px; margin: 10px 0;
+    border-radius: 16px; font-size: 16px; font-weight: 700; text-decoration: none;
+    color: #fff; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.14);
+  }
+  .btn.primary {
+    background: linear-gradient(135deg, #7C83FF 0%, #C86BFF 100%);
+    border: none; box-shadow: 0 10px 30px rgba(124, 131, 255, .35);
+  }
+  .wechat {
+    margin: 8px 0 0; padding: 18px; border-radius: 16px; text-align: left;
+    background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.14);
+  }
+  .wechat strong { display: block; margin-bottom: 6px; font-size: 16px; }
+  .wechat p { margin: 0; color: #B4ABC8; font-size: 14px; line-height: 1.5; }
+  .arrow { float: right; font-size: 26px; margin: -6px 2px 0 0; }
+  .foot { margin-top: 22px; color: #6E6685; font-size: 13px; }
+  .foot a { color: #9B92B5; }
+</style>
+</head>
+<body>
+  <main>
+    <div class="logo">🍵</div>
+    <h1 id="title">Join my circle on Food&nbsp;at&nbsp;Peace</h1>
+    <p class="handle" id="who"></p>
+    <p class="sub">A calm calorie &amp; macro tracker. Add me and we'll see each other's daily trends.</p>
+
+    <a class="btn primary" id="open" href="https://apps.apple.com/app/id6777715561">Open in the app</a>
+    <a class="btn" id="download" href="https://apps.apple.com/app/id6777715561">Download on the App&nbsp;Store</a>
+
+    <div class="wechat" id="wechat" hidden>
+      <span class="arrow">⤴</span>
+      <strong>Open in Safari to continue</strong>
+      <p>WeChat can't open apps directly. Tap <b>•••</b> at the top-right → <b>Open in Safari / Browser</b>, then this page will open the app (or the App&nbsp;Store).</p>
+    </div>
+
+    <p class="foot">iPhone only · <a id="footlink" href="https://apps.apple.com/app/id6777715561">View on the App Store</a></p>
+  </main>
+
+<script>
+  (function () {
+    var APPSTORE = 'https://apps.apple.com/app/id6777715561';
+    // Path is /i/<handle>; read the handle client-side so one page serves all links.
+    var parts = location.pathname.split('/').filter(Boolean);
+    var idx = parts.indexOf('i');
+    var raw = idx >= 0 ? (parts[idx + 1] || '') : (parts[parts.length - 1] || '');
+    var handle = raw.replace(/[^a-z0-9_]/gi, '').toLowerCase();
+    var ua = navigator.userAgent || '';
+    var isWeChat = /MicroMessenger/i.test(ua);
+    var isIOS = /iPhone|iPad|iPod/i.test(ua) ||
+                (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    var scheme = handle ? ('foodatpeace://i/' + handle) : null;
+
+    if (handle) document.getElementById('who').textContent = '@' + handle;
+    var openBtn = document.getElementById('open');
+    if (scheme) openBtn.setAttribute('href', scheme);
+
+    if (isWeChat) {
+      // WeChat's in-app browser blocks Universal Links AND App Store redirects.
+      // The only path is to hand off to Safari; hide the (non-working) buttons.
+      document.getElementById('wechat').hidden = false;
+      openBtn.style.display = 'none';
+      document.getElementById('download').style.display = 'none';
+      return;
+    }
+
+    if (isIOS && scheme) {
+      // Try to open the app; if we're still here ~1.4s later it isn't installed,
+      // so send them to the App Store to download it.
+      var fallback = setTimeout(function () { location.href = APPSTORE; }, 1400);
+      var cancel = function () { clearTimeout(fallback); };
+      document.addEventListener('visibilitychange', function () { if (document.hidden) cancel(); });
+      window.addEventListener('pagehide', cancel);
+      window.addEventListener('blur', cancel);
+      location.href = scheme;
+    }
+  })();
+</script>
+</body>
+</html>

@@ -103,6 +103,21 @@ photo → B reacts ❤️ → A receives it (all confirmed server-side too). Dri
    emits an `open` analytics event — reuse/extend that), and only request once
    (iOS rate-limits the prompt anyway). Gate behind onboarding-complete so we
    don't ask brand-new users.
+6. **Enable in-WeChat open / download (WeChat Open Platform / Mini Program)** *(you —
+   needs a verified WeChat account)* — WeChat's in-app browser **blocks iOS Universal
+   Links and App Store redirects**, so a shared `foodatpeace.app/i/<handle>` can't
+   natively open or install the app inside WeChat; the landing page can only fall back
+   to a "tap ··· → Open in Safari" guide. To open/download **without leaving WeChat**,
+   register on the **WeChat Open Platform (微信开放平台)**:
+   - **Mobile App** registration → obtain a WeChat `AppID`, integrate the WeChat
+     OpenSDK, and register the app's **Universal Link** so WeChat permits it to launch
+     the app directly from a chat (`weixin://` / `LSApplicationQueriesSchemes`).
+   - and/or a **Mini Program (小程序)** that renders the invite natively (inviter card +
+     "Open app / Download" CTA) and launches the app via `launchApplication` / the
+     Universal Link.
+   - Prereq: a **verified business entity** (营业执照 — China-registered company, or a
+     third-party agent), ~300 RMB/yr verification. Then add the WeChat SDK + a new iOS
+     build. Until then, the landing page's Safari hand-off is the supported WeChat path.
 
 ## 📱 Device-only QA (QA_REPORT §5)
 
