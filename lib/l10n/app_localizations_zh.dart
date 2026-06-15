@@ -867,6 +867,34 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get yourHandle => '我的用户名';
+
+  @override
+  String get setHandle => '设置用户名';
+
+  @override
+  String get handleHint => '字母、数字或下划线';
+
+  @override
+  String handleCopied(String handle) {
+    return '已复制 $handle';
+  }
+
+  @override
+  String handleSaved(String handle) {
+    return '你的用户名是 $handle，分享给好友即可添加你';
+  }
+
+  @override
+  String get handleTaken => '该用户名已被占用，换一个试试';
+
+  @override
+  String get handleInvalid => '请使用 2–20 个字母、数字或下划线';
+
+  @override
+  String get handleError => '保存用户名失败，请重试';
+
+  @override
   String get todayLabel => '今天';
 
   @override

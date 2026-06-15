@@ -51,9 +51,9 @@ class CircleStrip extends ConsumerWidget {
                 avatar: StoryAvatar(
                   icon: Icons.add,
                   ring: false,
-                  onTap: () => showInviteSheet(context, ref),
+                  onTap: () => showInviteSheet(context),
                 ),
-                onTap: () => showInviteSheet(context, ref),
+                onTap: () => showInviteSheet(context),
               ),
               for (final f in connected)
                 _AvatarColumn(
@@ -118,25 +118,23 @@ class _AvatarColumn extends StatelessWidget {
 // Invite sheet
 // ---------------------------------------------------------------------------
 
-Future<void> showInviteSheet(BuildContext context, WidgetRef ref) {
+Future<void> showInviteSheet(BuildContext context) {
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
     showDragHandle: true,
-    builder: (_) => _InviteSheet(parentRef: ref),
+    builder: (_) => const _InviteSheet(),
   );
 }
 
-class _InviteSheet extends StatefulWidget {
-  const _InviteSheet({required this.parentRef});
-
-  final WidgetRef parentRef;
+class _InviteSheet extends ConsumerStatefulWidget {
+  const _InviteSheet();
 
   @override
-  State<_InviteSheet> createState() => _InviteSheetState();
+  ConsumerState<_InviteSheet> createState() => _InviteSheetState();
 }
 
-class _InviteSheetState extends State<_InviteSheet> {
+class _InviteSheetState extends ConsumerState<_InviteSheet> {
   final _handle = TextEditingController();
 
   @override
@@ -149,6 +147,7 @@ class _InviteSheetState extends State<_InviteSheet> {
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
     final messenger = ScaffoldMessenger.of(context);
+    final myHandle = ref.watch(myCircleHandleProvider);
     return SafeArea(
       child: Padding(
         padding: EdgeInsets.fromLTRB(
@@ -167,25 +166,14 @@ class _InviteSheetState extends State<_InviteSheet> {
               style: Theme.of(context).textTheme.titleLarge,
             ),
             const SizedBox(height: 16),
-            OutlinedButton.icon(
-              onPressed: () {
-                Clipboard.setData(
-                  const ClipboardData(
-                    text: 'https://foodatpeace.app/i/abc123',
-                  ),
-                );
-                Navigator.pop(context);
-                messenger.showSnackBar(
-                  SnackBar(content: Text(t.inviteLinkCopied)),
-                );
-              },
-              icon: const Icon(Icons.link),
-              label: Text(t.inviteShareLink),
+            // The user's own @handle — friends add them with this.
+            _MyHandleCard(
+              handle: myHandle,
+              onEdit: () => _editHandle(t, messenger),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
             TextField(
               controller: _handle,
-              autofocus: true,
               decoration: InputDecoration(
                 labelText: t.inviteHandleLabel,
                 prefixText: '@',
@@ -206,10 +194,124 @@ class _InviteSheetState extends State<_InviteSheet> {
   void _send(AppLocalizations t, ScaffoldMessengerState messenger) {
     final handle = _handle.text.trim();
     if (handle.isEmpty) return;
-    widget.parentRef.read(circleProvider.notifier).invite(handle);
+    ref.read(circleProvider.notifier).invite(handle);
     Navigator.pop(context);
     messenger.showSnackBar(
       SnackBar(content: Text(t.inviteSent('@${handle.replaceAll('@', '')}'))),
+    );
+  }
+
+  Future<void> _editHandle(
+    AppLocalizations t,
+    ScaffoldMessengerState messenger,
+  ) async {
+    final controller = TextEditingController(
+      text: ref.read(myCircleHandleProvider) ?? '',
+    );
+    final submitted = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(t.setHandle),
+        content: TextField(
+          controller: controller,
+          autofocus: true,
+          decoration: InputDecoration(
+            prefixText: '@',
+            helperText: t.handleHint,
+          ),
+          onSubmitted: (v) => Navigator.pop(ctx, v),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(t.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, controller.text),
+            child: Text(t.save),
+          ),
+        ],
+      ),
+    );
+    controller.dispose();
+    if (submitted == null || submitted.trim().isEmpty) return;
+    final outcome = await ref.read(circleProvider.notifier).setHandle(submitted);
+    if (!mounted) return;
+    final cleaned = '@${submitted.trim().replaceAll('@', '').toLowerCase()}';
+    final msg = switch (outcome) {
+      SetHandleResult.ok => t.handleSaved(cleaned),
+      SetHandleResult.taken => t.handleTaken,
+      SetHandleResult.invalid => t.handleInvalid,
+      SetHandleResult.error => t.handleError,
+    };
+    messenger.showSnackBar(SnackBar(content: Text(msg)));
+  }
+}
+
+/// Shows the viewer's own @handle (with copy + edit), or a "set your handle"
+/// button when they haven't picked one yet.
+class _MyHandleCard extends StatelessWidget {
+  const _MyHandleCard({required this.handle, required this.onEdit});
+
+  final String? handle;
+  final VoidCallback onEdit;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    final scheme = Theme.of(context).colorScheme;
+    if (handle == null) {
+      return OutlinedButton.icon(
+        onPressed: onEdit,
+        icon: const Icon(Icons.alternate_email),
+        label: Text(t.setHandle),
+      );
+    }
+    final at = '@$handle';
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 8, 4, 8),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerHighest.withValues(alpha: 0.5),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  t.yourHandle,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                  ),
+                ),
+                Text(
+                  at,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          IconButton(
+            tooltip: t.setHandle,
+            icon: const Icon(Icons.edit_outlined),
+            onPressed: onEdit,
+          ),
+          IconButton(
+            tooltip: t.yourHandle,
+            icon: const Icon(Icons.copy),
+            onPressed: () {
+              Clipboard.setData(ClipboardData(text: at));
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(t.handleCopied(at))),
+              );
+            },
+          ),
+        ],
+      ),
     );
   }
 }

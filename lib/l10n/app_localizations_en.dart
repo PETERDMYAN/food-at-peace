@@ -892,6 +892,34 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get yourHandle => 'Your handle';
+
+  @override
+  String get setHandle => 'Set your handle';
+
+  @override
+  String get handleHint => 'letters, numbers or _';
+
+  @override
+  String handleCopied(String handle) {
+    return 'Copied $handle';
+  }
+
+  @override
+  String handleSaved(String handle) {
+    return 'You\'re $handle — share it so friends can add you';
+  }
+
+  @override
+  String get handleTaken => 'That handle is taken — try another';
+
+  @override
+  String get handleInvalid => 'Use 2–20 letters, numbers or _';
+
+  @override
+  String get handleError => 'Couldn\'t save your handle — try again';
+
+  @override
   String get todayLabel => 'Today';
 
   @override

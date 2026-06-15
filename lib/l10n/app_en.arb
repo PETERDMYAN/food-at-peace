@@ -433,6 +433,20 @@
   "@inviteSent": {
     "placeholders": { "handle": { "type": "String" } }
   },
+  "yourHandle": "Your handle",
+  "setHandle": "Set your handle",
+  "handleHint": "letters, numbers or _",
+  "handleCopied": "Copied {handle}",
+  "@handleCopied": {
+    "placeholders": { "handle": { "type": "String" } }
+  },
+  "handleSaved": "You're {handle} — share it so friends can add you",
+  "@handleSaved": {
+    "placeholders": { "handle": { "type": "String" } }
+  },
+  "handleTaken": "That handle is taken — try another",
+  "handleInvalid": "Use 2–20 letters, numbers or _",
+  "handleError": "Couldn't save your handle — try again",
   "todayLabel": "Today",
   "streakLabel": "Streak",
   "streakDays": "{count} days",

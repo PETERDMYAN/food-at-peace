@@ -1658,6 +1658,54 @@ abstract class AppLocalizations {
   /// **'Invite sent to {handle}'**
   String inviteSent(String handle);
 
+  /// No description provided for @yourHandle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your handle'**
+  String get yourHandle;
+
+  /// No description provided for @setHandle.
+  ///
+  /// In en, this message translates to:
+  /// **'Set your handle'**
+  String get setHandle;
+
+  /// No description provided for @handleHint.
+  ///
+  /// In en, this message translates to:
+  /// **'letters, numbers or _'**
+  String get handleHint;
+
+  /// No description provided for @handleCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Copied {handle}'**
+  String handleCopied(String handle);
+
+  /// No description provided for @handleSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re {handle} — share it so friends can add you'**
+  String handleSaved(String handle);
+
+  /// No description provided for @handleTaken.
+  ///
+  /// In en, this message translates to:
+  /// **'That handle is taken — try another'**
+  String get handleTaken;
+
+  /// No description provided for @handleInvalid.
+  ///
+  /// In en, this message translates to:
+  /// **'Use 2–20 letters, numbers or _'**
+  String get handleInvalid;
+
+  /// No description provided for @handleError.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t save your handle — try again'**
+  String get handleError;
+
   /// No description provided for @todayLabel.
   ///
   /// In en, this message translates to:
