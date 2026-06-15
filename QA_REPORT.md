@@ -148,7 +148,7 @@ backend stack `food-at-peace-vision-proxy-v2` / API `p21hoawoi5`; production
   Associated Domains entitlement + `foodatpeace://` scheme; signing auto-provisioned
   the new capability (archived via `xcodebuild -allowProvisioningUpdates`).
 
-Automated coverage now: **Flutter 103 + backend 74 tests, `flutter analyze` clean**,
+Automated coverage now: **Flutter 108 + backend 74 tests, `flutter analyze` clean**,
 plus integration walkthroughs (`integration_test/lang_demo_test.dart`,
 `circle_demo_test.dart`). New: `test/invite_link_test.dart` (link build/parse),
 `connect` cases in `test/circle_client_test.dart` and `backend/tests/test_circle.py`.
