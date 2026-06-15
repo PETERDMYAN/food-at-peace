@@ -1,7 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:food_at_peace/l10n/app_localizations.dart';
+import 'package:image/image.dart' as img;
 import 'package:image_picker/image_picker.dart';
 
 import '../../data/claude_vision_client.dart';
@@ -12,6 +14,20 @@ import '../../providers/providers.dart';
 import '../../util/l10n_labels.dart';
 import '../../widgets/bean_icon.dart';
 import '../wallet/beans_screen.dart';
+
+/// Decodes [original] and returns a ≤1024px JPEG copy for the AI estimate (run
+/// in a background isolate via `compute`). Falls back to the original if it
+/// can't decode or is already small enough.
+Uint8List _downscaleForAnalysis(Uint8List original) {
+  const maxEdge = 1024;
+  final decoded = img.decodeImage(original);
+  if (decoded == null) return original;
+  if (decoded.width <= maxEdge && decoded.height <= maxEdge) return original;
+  final resized = decoded.width >= decoded.height
+      ? img.copyResize(decoded, width: maxEdge)
+      : img.copyResize(decoded, height: maxEdge);
+  return Uint8List.fromList(img.encodeJpg(resized, quality: 85));
+}
 
 /// Food-entry form. A photo can be scanned with Claude to pre-fill the fields,
 /// which the user then reviews and edits before saving.
@@ -34,6 +50,11 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
   FoodSource _source = FoodSource.manual;
   bool _analyzing = false;
   FoodAnalysis? _analysis;
+
+  // Retained from a successful scan so the photo can be shared to the circle.
+  Uint8List? _photoBytes;
+  String _photoMediaType = 'image/jpeg';
+  bool _shareToCircle = true;
 
   static MealType _defaultMeal() {
     final h = DateTime.now().hour;
@@ -78,7 +99,28 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
           : _serving.text.trim(),
     );
     ref.read(foodEntriesProvider.notifier).add(entry);
+    _maybeShareToCircle(entry);
     Navigator.of(context).pop();
+  }
+
+  /// Fire-and-forget: when sharing is on and this is a scanned photo, post it to
+  /// the circle (only when signed in). Never blocks the save or surfaces errors.
+  void _maybeShareToCircle(FoodEntry entry) {
+    if (!_shareToCircle || _source != FoodSource.photo || _photoBytes == null) {
+      return;
+    }
+    final token = ref.read(authProvider)?.token;
+    if (token == null || token.isEmpty) return; // sharing needs an account
+    ref
+        .read(postsClientProvider)
+        .post(
+          imageBytes: _photoBytes!,
+          mediaType: _photoMediaType,
+          name: entry.name,
+          calories: entry.calories.round(),
+          token: token,
+        )
+        .catchError((_) {});
   }
 
   Future<void> _scanPhoto() async {
@@ -104,12 +146,10 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
     try {
       file = await ImagePicker().pickImage(
         source: source,
-        // 1024px long edge keeps the upload under Anthropic's ~1.15 MP vision
-        // downscale threshold (so we pay actual size, not the ~1,600-token cap)
-        // — smaller payload + lower latency, still plenty for food estimation.
-        maxWidth: 1024,
-        maxHeight: 1024,
-        imageQuality: 85,
+        // Pick the full-resolution photo (re-encoded to JPEG via imageQuality,
+        // which also normalises iOS HEIC). The circle "story" keeps this
+        // original; a 1024px copy is made below just for the AI estimate.
+        imageQuality: 90,
       );
     } catch (_) {
       _toast(t.cameraError);
@@ -119,16 +159,21 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
 
     setState(() => _analyzing = true);
     try {
-      final bytes = await file.readAsBytes();
+      final original = await file.readAsBytes();
+      // Downscale a copy off the UI isolate for the AI estimate (cheaper +
+      // faster); the full-resolution original is kept for the circle story.
+      final analysisBytes = await compute(_downscaleForAnalysis, original);
       final analysis = await analyzer.analyze(
-        imageBytes: bytes,
-        mediaType: _mediaTypeFor(file),
+        imageBytes: analysisBytes,
+        mediaType: 'image/jpeg',
         lang: lang,
       );
       if (!mounted) return;
       setState(() {
         _analysis = analysis;
         _source = FoodSource.photo;
+        _photoBytes = original;
+        _photoMediaType = 'image/jpeg';
         _name.text = analysis.name;
         _calories.text = analysis.calories.round().toString();
         _protein.text = analysis.proteinG.round().toString();
@@ -172,14 +217,6 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
         ),
       ),
     );
-  }
-
-  String _mediaTypeFor(XFile file) {
-    final name = file.name.toLowerCase();
-    if (name.endsWith('.png')) return 'image/png';
-    if (name.endsWith('.webp')) return 'image/webp';
-    if (name.endsWith('.gif')) return 'image/gif';
-    return 'image/jpeg';
   }
 
   void _toast(String message) {
@@ -244,6 +281,14 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
                 if (_analysis != null) ...[
                   const SizedBox(height: 12),
                   _AnalysisBanner(analysis: _analysis!),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    value: _shareToCircle,
+                    onChanged: (v) => setState(() => _shareToCircle = v),
+                    secondary: const Icon(Icons.group_outlined),
+                    title: Text(t.shareToCircle),
+                    subtitle: Text(t.shareToCircleHint),
+                  ),
                 ],
                 const SizedBox(height: 12),
                 TextFormField(

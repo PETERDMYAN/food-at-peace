@@ -1706,6 +1706,36 @@ abstract class AppLocalizations {
   /// **'Couldn\'t save your handle — try again'**
   String get handleError;
 
+  /// No description provided for @shareToCircle.
+  ///
+  /// In en, this message translates to:
+  /// **'Share to circle'**
+  String get shareToCircle;
+
+  /// No description provided for @shareToCircleHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Friends in your circle see it for 3 days'**
+  String get shareToCircleHint;
+
+  /// No description provided for @feedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Circle feed'**
+  String get feedTitle;
+
+  /// No description provided for @feedEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No posts yet. Scan a meal and share it to your circle.'**
+  String get feedEmpty;
+
+  /// No description provided for @feedReceived.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} reactions'**
+  String feedReceived(int count);
+
   /// No description provided for @todayLabel.
   ///
   /// In en, this message translates to:
@@ -1729,6 +1759,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'On-target · last 7 days'**
   String get friendAdherence;
+
+  /// No description provided for @removeFriend.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove from circle'**
+  String get removeFriend;
+
+  /// No description provided for @removeFriendQ.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove {name} from your circle?'**
+  String removeFriendQ(String name);
 
   /// No description provided for @noRequests.
   ///
