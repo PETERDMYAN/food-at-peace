@@ -217,6 +217,6 @@ What was done:
 |---|---|
 | Bundle ID | `com.foodatpeace.foodAtPeace` |
 | Team ID | `GJB4AB92L4` |
-| Version / build | `1.0.0 (3)` live on the App Store · `1.0.1 (4)` (v2) on TestFlight |
+| Version / build | `1.0.0 (3)` live on the App Store · `1.0.1 (5)` (v2) on TestFlight |
 | IPA output | `build/ios/ipa/food_at_peace.ipa` |
 | Build env | `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer LANG=en_US.UTF-8` |

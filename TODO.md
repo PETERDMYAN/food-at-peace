@@ -51,13 +51,16 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
     [`circle_feed_screen.dart`](lib/src/features/circle/circle_feed_screen.dart)).
     The **story keeps the full-resolution photo**; the AI estimate uses a downscaled
     1024px copy.
-- **TestFlight** — `1.0.1 (4)` built + uploaded headlessly via the ASC API key
+- **TestFlight** — `1.0.1 (5)` built + uploaded headlessly via the ASC API key
   (see [`PUBLISHING.md`](PUBLISHING.md) §4). Adds the Associated Domains entitlement
   + `foodatpeace://` URL scheme; signing auto-provisioned the new capability.
 
-Verified: Flutter 103 + backend 74 tests, `flutter analyze` clean. The signed-in
-Circle paths (invites + feed + connect) need a real device (Apple ID) to exercise
-end-to-end — verified server-side with live two-user runs (incl. connect).
+Verified: Flutter 104 + backend 74 tests, `flutter analyze` clean. The full signed-in
+Circle flow was exercised **in-app on two simulators** against the live v2 backend
+(injected session tokens, since Apple sign-in can't run on a sim): user A scans +
+posts a meal → user B opens A's invite → one-tap mutual connect → B's feed shows A's
+photo → B reacts ❤️ → A receives it (all confirmed server-side too). Driver:
+[`integration_test/circle_two_user_demo.dart`](integration_test/circle_two_user_demo.dart).
 
 ## 🚧 Remaining
 
