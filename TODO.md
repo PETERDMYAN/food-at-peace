@@ -70,11 +70,19 @@ photo → B reacts ❤️ → A receives it (all confirmed server-side too). Dri
 
 ## 🚧 Remaining
 
-1. **Host the invite-link AASA** *(you — universal link only)* — the in-app handler,
-   entitlement, and custom-scheme fallback all ship in build 4. For the **universal
-   link** to open the app from WeChat/WhatsApp you must own `foodatpeace.app` and
-   host [`store/apple-app-site-association`](store/apple-app-site-association) at
-   `/.well-known/`. Steps in [`store/INVITE_LINKS.md`](store/INVITE_LINKS.md).
+1. **Register `foodatpeace.app` + publish the invite site** *(you — registrar +
+   Cloudflare Pages)* — without this the shared `foodatpeace.app/i/<handle>` link is
+   dead (domain doesn't resolve — fails in Chrome too, not a WeChat bug). The smart
+   landing site is **built** at [`store/website/`](store/website/): AASA + the
+   `/i/<handle>` page (app installed → open the app · not installed → App Store
+   `id6777715561` · WeChat → "Open in Safari" hand-off), plus `_redirects`/`_headers`
+   for Cloudflare Pages. The app handler/entitlement/`foodatpeace://` scheme already
+   shipped (build 4). **Remaining (you):** (a) register `foodatpeace.app` (Cloudflare
+   Registrar, ~US$13/yr — `.app` is HTTPS-only), (b) a Cloudflare Pages project from
+   branch `v2`, build output dir `store/website`, custom domain `foodatpeace.app`.
+   Click-by-click in [`store/INVITE_LINKS.md`](store/INVITE_LINKS.md). Then ping me to
+   verify the AASA + `/i/<handle>` end-to-end; testers reinstall once (iOS caches the
+   AASA at install). Native in-WeChat open is a separate follow-up (§6).
 2. **Beans IAP** — purchases/subscription are **dev stubs** (credit locally; a
    reinstall resets the balance). Needs `in_app_purchase` StoreKit + a backend
    `/iap/validate` endpoint (Apple receipt validation) + **App Store Connect IAP
