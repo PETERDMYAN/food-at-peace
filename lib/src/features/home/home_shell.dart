@@ -39,26 +39,39 @@ class _HomeShellState extends ConsumerState<HomeShell>
     });
   }
 
-  /// Surface a notification + in-app banner when a friend has shared a new meal
-  /// to the circle since we last looked. Best-effort; uses the same
-  /// notification service as the meal reminders. (Instant background delivery
-  /// would need server push — a planned APNs follow-up.)
+  /// Surface notifications + an in-app banner for new circle activity (friend
+  /// requests, acceptances, friends' meals, reactions on your posts) since we
+  /// last looked. Best-effort; uses the same notification service as the meal
+  /// reminders. (Instant background delivery would need server push — a planned
+  /// APNs follow-up.)
   Future<void> _checkCircleActivity() async {
-    final fresh = await ref.read(circleActivityProvider.notifier).pollNew();
-    if (!mounted || fresh.isEmpty) return;
+    final events = await ref.read(circleActivityProvider.notifier).pollActivity();
+    if (!mounted || events.isEmpty) return;
     if (!ref.read(circleNotifyProvider)) return;
     final t = AppLocalizations.of(context);
-    final post = fresh.first;
-    final who = post.authorName ?? post.authorHandle ?? t.aFriend;
-    final msg = t.circleSharedMeal(who);
-    ref
-        .read(notificationServiceProvider)
-        .show(id: NotificationService.circleId, title: msg, body: post.name ?? '');
+    String msgFor(CircleEvent e) {
+      final who = e.name.isEmpty ? t.aFriend : e.name;
+      return switch (e.kind) {
+        CircleEventKind.request => t.circleRequestNotif(who),
+        CircleEventKind.accepted => t.circleAcceptedNotif(who),
+        CircleEventKind.posted => t.circleSharedMeal(who),
+        CircleEventKind.reaction => t.circleReactionNotif(who, e.detail ?? '❤️'),
+      };
+    }
+
+    final svc = ref.read(notificationServiceProvider);
+    for (final e in events) {
+      svc.show(
+        id: NotificationService.circleId + e.kind.index,
+        title: msgFor(e),
+        body: e.detail ?? '',
+      );
+    }
     ScaffoldMessenger.of(context)
       ..clearSnackBars()
       ..showSnackBar(
         SnackBar(
-          content: Text(msg),
+          content: Text(msgFor(events.first)),
           behavior: SnackBarBehavior.floating,
           duration: const Duration(seconds: 6),
         ),

@@ -1921,6 +1921,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'A friend'**
   String get aFriend;
+
+  /// No description provided for @circleRequestNotif.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} wants to join your circle 👋'**
+  String circleRequestNotif(String name);
+
+  /// No description provided for @circleAcceptedNotif.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} accepted — you\'re connected 🎉'**
+  String circleAcceptedNotif(String name);
+
+  /// No description provided for @circleReactionNotif.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} reacted {emoji} to your meal'**
+  String circleReactionNotif(String name, String emoji);
+
+  /// No description provided for @addByHandle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add by @handle'**
+  String get addByHandle;
+
+  /// No description provided for @addByHandleSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Friend request sent to {handle}'**
+  String addByHandleSent(String handle);
 }
 
 class _AppLocalizationsDelegate

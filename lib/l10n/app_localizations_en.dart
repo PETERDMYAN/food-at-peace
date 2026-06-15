@@ -1045,4 +1045,27 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get aFriend => 'A friend';
+
+  @override
+  String circleRequestNotif(String name) {
+    return '$name wants to join your circle 👋';
+  }
+
+  @override
+  String circleAcceptedNotif(String name) {
+    return '$name accepted — you\'re connected 🎉';
+  }
+
+  @override
+  String circleReactionNotif(String name, String emoji) {
+    return '$name reacted $emoji to your meal';
+  }
+
+  @override
+  String get addByHandle => 'Add by @handle';
+
+  @override
+  String addByHandleSent(String handle) {
+    return 'Friend request sent to $handle';
+  }
 }

@@ -27,7 +27,16 @@ class ManageCircleScreen extends ConsumerWidget {
         friends.where((f) => f.status == FriendStatus.outgoing).toList();
 
     return Scaffold(
-      appBar: AppBar(title: Text(t.manageCircle)),
+      appBar: AppBar(
+        title: Text(t.manageCircle),
+        actions: [
+          IconButton(
+            tooltip: t.addByHandle,
+            icon: const Icon(Icons.person_add_alt_1_outlined),
+            onPressed: () => _addByHandle(context, ref),
+          ),
+        ],
+      ),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 40),
         children: [
@@ -134,6 +143,64 @@ class ManageCircleScreen extends ConsumerWidget {
     );
     if (confirmed != true) return;
     await ref.read(circleProvider.notifier).remove(friend.id);
+  }
+
+  /// Send a friend request to someone by their @handle (they get an incoming
+  /// request to accept). Complements the share-link one-tap connect.
+  Future<void> _addByHandle(BuildContext context, WidgetRef ref) async {
+    final t = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final handle = await showDialog<String>(
+      context: context,
+      builder: (_) => const _AddByHandleDialog(),
+    );
+    if (handle == null || handle.trim().isEmpty) return;
+    await ref.read(circleProvider.notifier).invite(handle);
+    final cleaned = '@${handle.trim().replaceAll('@', '').toLowerCase()}';
+    messenger.showSnackBar(SnackBar(content: Text(t.addByHandleSent(cleaned))));
+  }
+}
+
+/// Handle-entry dialog for sending a friend request. Owns its controller so it's
+/// disposed only after the dismiss animation (disposing synchronously crashes).
+class _AddByHandleDialog extends StatefulWidget {
+  const _AddByHandleDialog();
+
+  @override
+  State<_AddByHandleDialog> createState() => _AddByHandleDialogState();
+}
+
+class _AddByHandleDialogState extends State<_AddByHandleDialog> {
+  final _controller = TextEditingController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    return AlertDialog(
+      title: Text(t.addByHandle),
+      content: TextField(
+        controller: _controller,
+        autofocus: true,
+        decoration: InputDecoration(prefixText: '@', helperText: t.handleHint),
+        onSubmitted: (v) => Navigator.pop(context, v),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text(t.cancel),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(context, _controller.text),
+          child: Text(t.inviteSend),
+        ),
+      ],
+    );
   }
 }
 
