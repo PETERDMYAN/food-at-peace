@@ -52,6 +52,7 @@ dependencies:
   timezone: ^0.10.0
   flutter_timezone: ^4.1.0
   package_info_plus: ^8.0.0
+  in_app_purchase: ^3.2.0
   # Circle invite links: deep-link handling, QR rendering, native share sheet.
   app_links: ^6.3.2
   qr_flutter: ^4.1.0

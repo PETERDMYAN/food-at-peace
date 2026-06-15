@@ -88,6 +88,14 @@ class BeanPricing {
   static double priceFor(int beans) =>
       (beans / packBeans) * packPriceSgd;
 
+  /// The fixed SGD price for a Bean pack tier, or null if [beans] isn't a tier.
+  static double? sgdForBeans(int beans) {
+    for (final p in packs) {
+      if (p.beans == beans) return p.sgd;
+    }
+    return null;
+  }
+
   /// Beans spent per food-photo analysis.
   static const int costPerPhoto = 1;
 }
