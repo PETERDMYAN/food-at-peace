@@ -1,5 +1,12 @@
 # Circle invite links (universal links)
 
+> **✅ LIVE (2026-06-15):** `foodatpeace.app` is registered (AWS Route53) and the
+> site below is hosted on **AWS CloudFront + ACM HTTPS** over a private S3 bucket
+> (`foodatpeace-app-web`, distribution `E2M22G0LAT1HKW`). AASA + `/i/<handle>` verified.
+> The Cloudflare/GitHub-Pages options further down are kept as reference only.
+> Re-deploy after edits: `aws s3 sync store/website s3://foodatpeace-app-web --delete`
+> then `aws cloudfront create-invalidation --distribution-id E2M22G0LAT1HKW --paths '/*'`.
+
 Circle invites are **universal links** of the form:
 
 ```
