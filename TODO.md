@@ -57,9 +57,11 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
     [`circle_feed_screen.dart`](lib/src/features/circle/circle_feed_screen.dart)).
     The **story keeps the full-resolution photo**; the AI estimate uses a downscaled
     1024px copy.
-- **TestFlight** — `1.0.1 (7)` built + uploaded headlessly via the ASC API key
-  (see [`PUBLISHING.md`](PUBLISHING.md) §4). Adds the Associated Domains entitlement
-  + `foodatpeace://` URL scheme; signing auto-provisioned the new capability.
+- **TestFlight** — `1.0.1 (10)` built + uploaded headlessly via the ASC API key
+  (see [`PUBLISHING.md`](PUBLISHING.md) §4). Since (7): **unlimited subscription
+  removed** (Beans packs only), the **Circle notification** work, and the **"where to
+  find a friend's handle" hint**. Associated Domains + `foodatpeace://` scheme shipped
+  in (4); the invite links are now **live** on `foodatpeace.app` (§1).
 
 Verified: Flutter 108 + backend 74 tests, `flutter analyze` clean. The full signed-in
 Circle flow was exercised **in-app on two simulators** against the live v2 backend
