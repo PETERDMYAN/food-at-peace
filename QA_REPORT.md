@@ -136,15 +136,27 @@ backend stack `food-at-peace-vision-proxy-v2` / API `p21hoawoi5`; production
   privacy-gated trends), the `@handle` view/set/copy UI, remove-friend, and a **3-day
   photo feed** with emoji reactions (verified live with two users: post → see →
   react → receive; presigned photo downloads).
+- **Invite universal link + QR + one-tap connect** — `POST /circle/connect` makes
+  both sides mutual friends from a shared link/QR. **Verified live** with two minted
+  session tokens: B opens A's invite → both `connected`, no pending; self/unknown
+  guards return 400/404. Client: QR + native share of `https://foodatpeace.app/i/<handle>`,
+  an `app_links` in-app handler (works under `FlutterSceneDelegate` via the engine's
+  scene→app-delegate fallback — traced in the engine source), a `foodatpeace://`
+  custom-scheme fallback, and a **Manage circle** screen (connected/requests/invited).
 - **Chinese App Store listing** ([`store/STORE_LISTING_zh.md`](store/STORE_LISTING_zh.md)).
-- **TestFlight** `1.0.1 (2)` built + uploaded via the ASC API key.
+- **TestFlight** `1.0.1 (4)` built + uploaded via the ASC API key — adds the
+  Associated Domains entitlement + `foodatpeace://` scheme; signing auto-provisioned
+  the new capability (archived via `xcodebuild -allowProvisioningUpdates`).
 
-Automated coverage now: **Flutter 93 + backend 68 tests, `flutter analyze` clean**,
+Automated coverage now: **Flutter 103 + backend 74 tests, `flutter analyze` clean**,
 plus integration walkthroughs (`integration_test/lang_demo_test.dart`,
-`circle_demo_test.dart`).
+`circle_demo_test.dart`). New: `test/invite_link_test.dart` (link build/parse),
+`connect` cases in `test/circle_client_test.dart` and `backend/tests/test_circle.py`.
 
 **Still needs a device / manual pass** (can't be automated on the simulator): the
-**signed-in Circle paths** (invite delivery, accept, the photo feed + reactions)
-require a real Apple ID — verified server-side via live two-user runs, but not yet
-exercised in-app on a device. Plus the existing §5 items (Sign in with Apple, Apple
-Health, notifications, camera, weather GPS).
+**signed-in Circle paths** (invite delivery, accept, connect via a tapped link, the
+photo feed + reactions) require a real Apple ID — verified server-side via live
+two-user runs, but not yet exercised in-app on a device. The **universal link**
+(vs. the custom scheme) also needs the AASA hosted on `foodatpeace.app`
+([`store/INVITE_LINKS.md`](store/INVITE_LINKS.md)). Plus the existing §5 items (Sign
+in with Apple, Apple Health, notifications, camera, weather GPS).

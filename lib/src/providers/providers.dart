@@ -919,6 +919,39 @@ class CircleNotifier extends Notifier<List<Friend>> {
     await _save();
   }
 
+  /// Connect directly from a tapped invite link/QR — both sides become
+  /// connected immediately (the inviter consented by sharing the link). Returns
+  /// the new friend's display name (or `@handle`) on success. Throws
+  /// [CircleException] with a user-facing message on failure (online path).
+  Future<String?> connect(String handle) async {
+    final h = handle.trim().replaceAll('@', '').toLowerCase();
+    if (h.isEmpty) throw CircleException('That invite link is invalid.');
+    if (_online) {
+      final token = _token!;
+      final client = ref.read(circleClientProvider);
+      await _ensureHandle(client, token);
+      final name = await client.connect(token, h);
+      await _refresh();
+      return name ?? '@$h';
+    }
+    // Offline: optimistic local connected friend so the flow still demos.
+    if (!state.any((f) => f.handle == '@$h')) {
+      final display = h[0].toUpperCase() + (h.length > 1 ? h.substring(1) : '');
+      state = [
+        ...state,
+        Friend.sample(
+          id: 'f_${DateTime.now().microsecondsSinceEpoch}',
+          name: display,
+          handle: '@$h',
+          status: FriendStatus.connected,
+          seed: h.hashCode,
+        ),
+      ];
+      await _save();
+    }
+    return '@$h';
+  }
+
   /// Accept an incoming invite — they become connected (with their trend).
   Future<void> accept(String id) async {
     if (_online) {

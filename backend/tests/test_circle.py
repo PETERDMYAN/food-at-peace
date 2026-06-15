@@ -60,3 +60,91 @@ def test_build_trend_no_target_gives_zero_adherence():
     assert tr["target"] == 0
     assert tr["adh"][-1] == 0
     assert tr["kcal"] == 500
+
+
+# --- connect (one-tap mutual connect via an invite link/QR) ------------------
+
+class FakeCircleTable:
+    """In-memory stand-in for the CircleTable resource (pk+sk composite key)."""
+
+    def __init__(self):
+        self.items = {}
+
+    def get_item(self, Key):
+        item = self.items.get((Key["pk"], Key["sk"]))
+        return {"Item": dict(item)} if item else {}
+
+    def put_item(self, Item):
+        self.items[(Item["pk"], Item["sk"])] = dict(Item)
+
+    def delete_item(self, Key):
+        self.items.pop((Key["pk"], Key["sk"]), None)
+
+
+@pytest.fixture
+def circle_table(monkeypatch):
+    fake = FakeCircleTable()
+    monkeypatch.setattr(circle, "_circle", lambda: fake)
+    return fake
+
+
+def _edge(table, owner, other):
+    return table.items.get((f"user#{owner}", f"friend#{other}"))
+
+
+def test_connect_makes_both_sides_connected(circle_table):
+    circle.register("u_a", {"handle": "alex", "name": "Alex"})
+    circle.register("u_b", {"handle": "mia", "name": "Mia"})
+
+    # B opens A's invite link (https://…/i/alex) -> taps connect.
+    out = circle.connect("u_b", {"handle": "@alex"})
+    assert out == {"status": "connected", "handle": "@alex", "name": "Alex"}
+
+    assert _edge(circle_table, "u_b", "u_a")["status"] == "connected"
+    assert _edge(circle_table, "u_a", "u_b")["status"] == "connected"
+    # Mirrored edges carry the *other* person's handle/name.
+    assert _edge(circle_table, "u_b", "u_a")["handle"] == "@alex"
+    assert _edge(circle_table, "u_a", "u_b")["handle"] == "@mia"
+
+
+def test_connect_is_idempotent(circle_table):
+    circle.register("u_a", {"handle": "alex"})
+    circle.register("u_b", {"handle": "mia"})
+    circle.connect("u_b", {"handle": "alex"})
+    # A second tap (e.g. the link re-opened) just stays connected.
+    out = circle.connect("u_b", {"handle": "alex"})
+    assert out["status"] == "connected"
+    assert _edge(circle_table, "u_b", "u_a")["status"] == "connected"
+    assert _edge(circle_table, "u_a", "u_b")["status"] == "connected"
+
+
+def test_connect_upgrades_a_pending_invite(circle_table):
+    circle.register("u_a", {"handle": "alex"})
+    circle.register("u_b", {"handle": "mia"})
+    # A had already invited B (pending), then B taps A's link.
+    circle.invite("u_a", {"handle": "mia"})
+    assert _edge(circle_table, "u_b", "u_a")["status"] == "incoming"
+    circle.connect("u_b", {"handle": "alex"})
+    assert _edge(circle_table, "u_b", "u_a")["status"] == "connected"
+    assert _edge(circle_table, "u_a", "u_b")["status"] == "connected"
+
+
+def test_connect_requires_a_claimed_handle(circle_table):
+    circle.register("u_a", {"handle": "alex"})
+    with pytest.raises(circle.ProxyError) as e:
+        circle.connect("u_b", {"handle": "alex"})  # B never registered
+    assert e.value.status == 400
+
+
+def test_connect_rejects_unknown_handle(circle_table):
+    circle.register("u_b", {"handle": "mia"})
+    with pytest.raises(circle.ProxyError) as e:
+        circle.connect("u_b", {"handle": "ghost"})
+    assert e.value.status == 404
+
+
+def test_connect_rejects_self(circle_table):
+    circle.register("u_a", {"handle": "alex"})
+    with pytest.raises(circle.ProxyError) as e:
+        circle.connect("u_a", {"handle": "alex"})
+    assert e.value.status == 400

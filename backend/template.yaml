@@ -372,6 +372,12 @@ Resources:
             ApiId: !Ref VisionApi
             Path: /circle/invite
             Method: POST
+        Connect:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref VisionApi
+            Path: /circle/connect
+            Method: POST
         Respond:
           Type: HttpApi
           Properties:

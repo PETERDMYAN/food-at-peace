@@ -82,5 +82,21 @@
 	<string>Food at Peace uses your location only while you use the app, to show your local weather on the Today screen.</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
+	<!-- Custom URL scheme for Circle invites (foodatpeace://i/<handle>). A
+	     fallback that needs no domain/entitlement, so the connect flow is
+	     testable before the universal-link AASA is hosted. -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>com.foodatpeace.foodAtPeace</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>foodatpeace</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

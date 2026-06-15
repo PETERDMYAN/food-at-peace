@@ -1795,6 +1795,108 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'{name} joined your circle 🎉'**
   String friendAccepted(String name);
+
+  /// No description provided for @manageCircle.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage circle'**
+  String get manageCircle;
+
+  /// No description provided for @shareInvite.
+  ///
+  /// In en, this message translates to:
+  /// **'Share invite'**
+  String get shareInvite;
+
+  /// No description provided for @scanToConnect.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan to add me to your circle'**
+  String get scanToConnect;
+
+  /// No description provided for @inviteLinkLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Your invite link'**
+  String get inviteLinkLabel;
+
+  /// No description provided for @copyLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy link'**
+  String get copyLink;
+
+  /// No description provided for @shareInviteMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Add me on Food at Peace 🍵 {link}'**
+  String shareInviteMessage(String link);
+
+  /// No description provided for @connectTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to your circle'**
+  String get connectTitle;
+
+  /// No description provided for @connectPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect with {handle}? You\'ll each see the other\'s daily food trends.'**
+  String connectPrompt(String handle);
+
+  /// No description provided for @connectCta.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect'**
+  String get connectCta;
+
+  /// No description provided for @connecting.
+  ///
+  /// In en, this message translates to:
+  /// **'Connecting…'**
+  String get connecting;
+
+  /// No description provided for @connectedToast.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re now connected with {name} 🎉'**
+  String connectedToast(String name);
+
+  /// No description provided for @connectFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t connect — please try again.'**
+  String get connectFailed;
+
+  /// No description provided for @sectionConnected.
+  ///
+  /// In en, this message translates to:
+  /// **'Connected'**
+  String get sectionConnected;
+
+  /// No description provided for @sectionRequests.
+  ///
+  /// In en, this message translates to:
+  /// **'Requests'**
+  String get sectionRequests;
+
+  /// No description provided for @sectionInvited.
+  ///
+  /// In en, this message translates to:
+  /// **'Invited'**
+  String get sectionInvited;
+
+  /// No description provided for @cancelInvite.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get cancelInvite;
+
+  /// No description provided for @circleEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Your circle is empty. Share your invite link to add friends.'**
+  String get circleEmpty;
 }
 
 class _AppLocalizationsDelegate

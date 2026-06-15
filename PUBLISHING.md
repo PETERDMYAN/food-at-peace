@@ -108,6 +108,20 @@ xcrun altool --upload-app --type ios --file build/ios/ipa/food_at_peace.ipa \
   --apiKey <KEYID> --apiIssuer <ISSUER_ID>
 ```
 
+> ⚠️ **Adding a new capability (e.g. Associated Domains)?** `flutter build ipa`'s
+> *archive* step does **not** pass `-allowProvisioningUpdates`, so it fails with
+> *"provisioning profile doesn't include the … entitlement"* until the App ID
+> carries that capability. Archive with `xcodebuild` directly + the ASC key so it
+> auto-provisions the capability, then export/upload as above. This is how build
+> `1.0.1 (4)` (Associated Domains + `foodatpeace://` URL scheme) shipped:
+> ```bash
+> flutter build ios --config-only --release --dart-define-from-file=dart_defines.json
+> cd ios && xcodebuild archive -workspace Runner.xcworkspace -scheme Runner \
+>   -configuration Release -archivePath ../build/ios/archive/Runner.xcarchive \
+>   -allowProvisioningUpdates -authenticationKeyPath ~/.appstoreconnect/private_keys/AuthKey_<KEYID>.p8 \
+>   -authenticationKeyID <KEYID> -authenticationKeyIssuerID <ISSUER_ID>
+> ```
+
 **Path A — Transporter (easiest):** install **Transporter** from the Mac App
 Store, sign in, drag `build/ios/ipa/food_at_peace.ipa` in, click **Deliver**.
 
@@ -203,6 +217,6 @@ What was done:
 |---|---|
 | Bundle ID | `com.foodatpeace.foodAtPeace` |
 | Team ID | `GJB4AB92L4` |
-| Version / build | `1.0.0 (3)` live on the App Store · `1.0.1 (2)` (v2) on TestFlight |
+| Version / build | `1.0.0 (3)` live on the App Store · `1.0.1 (4)` (v2) on TestFlight |
 | IPA output | `build/ios/ipa/food_at_peace.ipa` |
 | Build env | `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer LANG=en_US.UTF-8` |

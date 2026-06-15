@@ -62,6 +62,25 @@ class CircleClient {
   Future<int> invite(String token, String handle) =>
       _post(token, '/circle/invite', {'handle': handle});
 
+  /// One-tap mutual connect from an invite link/QR. The inviter consented by
+  /// sharing the link, so this connects both sides immediately. Idempotent.
+  /// Returns the connected friend's display name (or the handle) for the toast.
+  Future<String?> connect(String token, String handle) async {
+    final http.Response resp;
+    try {
+      resp = await _http.post(
+        Uri.parse('$_base/circle/connect'),
+        headers: _headers(token),
+        body: jsonEncode({'handle': handle}),
+      );
+    } catch (_) {
+      throw CircleException('Network error — check your connection.');
+    }
+    if (resp.statusCode != 200) throw CircleException(_messageFrom(resp));
+    final j = jsonDecode(utf8.decode(resp.bodyBytes)) as Map<String, dynamic>;
+    return (j['name'] as String?) ?? (j['handle'] as String?);
+  }
+
   Future<int> respond(String token, String userId, String action) =>
       _post(token, '/circle/respond', {'userId': userId, 'action': action});
 
