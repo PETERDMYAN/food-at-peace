@@ -759,6 +759,7 @@ class CircleNotifier extends Notifier<List<Friend>> {
   static const _key = 'circle_v1';
   static const _seededKey = 'circle_seeded';
   static const _handleSetKey = 'circle_handle_set';
+  static const _myHandleKey = 'circle_my_handle';
 
   SharedPreferences get _prefs => ref.read(sharedPreferencesProvider);
   String? get _token => ref.read(authProvider)?.token;
@@ -824,18 +825,55 @@ class CircleNotifier extends Notifier<List<Friend>> {
     return h;
   }
 
-  /// Claim a handle once (derived from the profile name; add a suffix on clash).
+  /// Ensure a handle is claimed on the backend. Uses the handle the user chose
+  /// (if any); otherwise derives one from the profile name, adding a numeric
+  /// suffix on a clash. Idempotent via [_handleSetKey].
   Future<void> _ensureHandle(CircleClient client, String token) async {
-    if (_prefs.getBool(_handleSetKey) ?? false) return;
-    final name = ref.read(profileProvider).name;
-    final base = _deriveHandle();
-    var code = await client.register(token, base, name: name);
-    if (code == 409) {
-      final suffix =
-          (DateTime.now().microsecondsSinceEpoch % 9000 + 1000).toString();
-      code = await client.register(token, '$base$suffix', name: name);
+    if (_prefs.getBool(_handleSetKey) ?? false) {
+      final saved = _prefs.getString(_myHandleKey);
+      if (saved != null) ref.read(myCircleHandleProvider.notifier).set(saved);
+      return;
     }
-    if (code == 200) await _prefs.setBool(_handleSetKey, true);
+    final name = ref.read(profileProvider).name;
+    final chosen = _prefs.getString(_myHandleKey);
+    var handle = chosen ?? _deriveHandle();
+    var code = await client.register(token, handle, name: name);
+    if (code == 409 && chosen == null) {
+      handle = '$handle${DateTime.now().microsecondsSinceEpoch % 9000 + 1000}';
+      code = await client.register(token, handle, name: name);
+    }
+    if (code == 200) {
+      await _prefs.setString(_myHandleKey, handle);
+      await _prefs.setBool(_handleSetKey, true);
+      ref.read(myCircleHandleProvider.notifier).set(handle);
+    }
+  }
+
+  /// Set (or change) the user's own @handle so friends can add them. Validated
+  /// locally, stored immediately (works offline), and registered with the
+  /// backend when signed in — reporting a clash so the UI can prompt for
+  /// another. Mirrors the server's handle rules.
+  Future<SetHandleResult> setHandle(String raw) async {
+    final handle = raw.trim().replaceAll('@', '').toLowerCase();
+    if (!RegExp(r'^[a-z0-9_]{2,20}$').hasMatch(handle)) {
+      return SetHandleResult.invalid;
+    }
+    if (_online) {
+      try {
+        final code = await ref
+            .read(circleClientProvider)
+            .register(_token!, handle, name: ref.read(profileProvider).name);
+        if (code == 409) return SetHandleResult.taken;
+        if (code != 200) return SetHandleResult.error;
+      } catch (_) {
+        return SetHandleResult.error;
+      }
+    }
+    await _prefs.setString(_myHandleKey, handle);
+    await _prefs.setBool(_handleSetKey, true);
+    ref.read(myCircleHandleProvider.notifier).set(handle);
+    if (_online) await _refresh();
+    return SetHandleResult.ok;
   }
 
   Future<void> _refresh() async {
@@ -921,6 +959,30 @@ class CircleNotifier extends Notifier<List<Friend>> {
     await _save();
   }
 }
+
+/// Outcome of [CircleNotifier.setHandle].
+enum SetHandleResult { ok, taken, invalid, error }
+
+/// The user's own Circle @handle (bare, no leading @), or null if unset.
+/// Backed by prefs; written through [CircleNotifier] so the UI reacts.
+class MyCircleHandleNotifier extends Notifier<String?> {
+  @override
+  String? build() {
+    final h = ref
+        .read(sharedPreferencesProvider)
+        .getString(CircleNotifier._myHandleKey);
+    return (h == null || h.isEmpty) ? null : h;
+  }
+
+  void set(String? handle) {
+    state = (handle == null || handle.isEmpty) ? null : handle;
+  }
+}
+
+final myCircleHandleProvider =
+    NotifierProvider<MyCircleHandleNotifier, String?>(
+      MyCircleHandleNotifier.new,
+    );
 
 final circleClientProvider = Provider<CircleClient>(
   (ref) => CircleClient(baseUrl: proxyBaseUrl),
