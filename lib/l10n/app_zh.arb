@@ -317,5 +317,10 @@
   "circleActivity": "圈子动态",
   "circleActivitySubtitle": "好友分享餐食时通知我",
   "circleSharedMeal": "{name} 分享了一餐 🍵",
-  "aFriend": "一位好友"
+  "aFriend": "一位好友",
+  "circleRequestNotif": "{name} 想加入你的圈子 👋",
+  "circleAcceptedNotif": "{name} 接受了 — 你们已连接 🎉",
+  "circleReactionNotif": "{name} 对你的餐食回应了 {emoji}",
+  "addByHandle": "通过 @用户名 添加",
+  "addByHandleSent": "已向 {handle} 发送好友请求"
 }

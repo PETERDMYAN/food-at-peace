@@ -506,5 +506,22 @@
   "@circleSharedMeal": {
     "placeholders": { "name": { "type": "String" } }
   },
-  "aFriend": "A friend"
+  "aFriend": "A friend",
+  "circleRequestNotif": "{name} wants to join your circle 👋",
+  "@circleRequestNotif": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "circleAcceptedNotif": "{name} accepted — you're connected 🎉",
+  "@circleAcceptedNotif": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "circleReactionNotif": "{name} reacted {emoji} to your meal",
+  "@circleReactionNotif": {
+    "placeholders": { "name": { "type": "String" }, "emoji": { "type": "String" } }
+  },
+  "addByHandle": "Add by @handle",
+  "addByHandleSent": "Friend request sent to {handle}",
+  "@addByHandleSent": {
+    "placeholders": { "handle": { "type": "String" } }
+  }
 }

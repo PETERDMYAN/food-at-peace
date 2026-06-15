@@ -1,46 +1,43 @@
-// Two-simulator "Circle of Food" walkthrough, driven on real simulators so it
-// can be screen-recorded. One device runs as the INVITER (posts a meal photo +
-// shows its invite QR); the other runs as the VIEWER (connects via the invite,
-// opens the feed, sees the meal, reacts). Both are "signed in" against the LIVE
-// v2 backend via a server-minted session token injected through an authProvider
-// override (Sign in with Apple can't run on a simulator). The token + role come
-// from --dart-define so no secret is committed.
+// Five-phase, two-simulator "Circle of Food" walkthrough (Peter + Eva), driven on
+// real simulators so it can be screen-recorded. Both are "signed in" against the
+// LIVE v2 backend via a server-minted session token injected through an
+// authProvider override (Sign in with Apple can't run on a sim). The phase, token
+// and peer come from --dart-define so no secret is committed.
 //
-// Run (per device):
-//   flutter test integration_test/circle_two_user_demo.dart -d <SIM> \
-//     --dart-define-from-file=dart_defines.json \
-//     --dart-define DEMO_ROLE=inviter --dart-define DEV_SESSION_TOKEN=... \
-//     --dart-define DEV_USER_ID=... --dart-define DEMO_MY_HANDLE=alexNNN \
-//     --dart-define DEMO_PEER_HANDLE=miaNNN
+// Phases (run in order; they share backend state):
+//   request  (Peter): send a friend request to Eva by @handle
+//   accept   (Eva):   get the request notification, then accept
+//   post     (Peter): get the "accepted" notification, then post a meal photo
+//   like     (Eva):   get the "shared a meal" notification, open feed, react ❤️
+//   reaction (Peter): get the "reacted to your meal" notification
+//
+// Each phase seeds the activity snapshot so the relevant notification counts as
+// "new" on launch (a fresh app would otherwise baseline it away).
 import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter/services.dart';
 // ignore: depend_on_referenced_packages
 import 'package:image_picker_platform_interface/image_picker_platform_interface.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:food_at_peace/app.dart';
-import 'package:food_at_peace/src/features/circle/connect_sheet.dart';
-import 'package:food_at_peace/src/features/home/home_shell.dart';
 import 'package:food_at_peace/src/models/session.dart';
 import 'package:food_at_peace/src/providers/providers.dart';
 
 import 'demo_food_image.dart';
 
-const _role = String.fromEnvironment('DEMO_ROLE'); // inviter | viewer
+const _phase = String.fromEnvironment('DEMO_PHASE'); // request|accept|post|like|reaction
 const _token = String.fromEnvironment('DEV_SESSION_TOKEN');
 const _uid = String.fromEnvironment('DEV_USER_ID');
 const _myHandle = String.fromEnvironment('DEMO_MY_HANDLE');
 const _peerHandle = String.fromEnvironment('DEMO_PEER_HANDLE');
+const _peerUid = String.fromEnvironment('DEMO_PEER_UID');
+const _big = 9999999999999;
 
-/// Treats the app as signed in with a real (server-minted) session token, so
-/// the Circle/feed Bearer calls hit the live v2 backend. Test-only — production
-/// auth still goes through Sign in with Apple.
 class _DemoAuth extends AuthNotifier {
   @override
   Session? build() => _token.isEmpty
@@ -75,22 +72,53 @@ Future<void> beat(WidgetTester t, int ms) async {
   }
 }
 
+/// Poll (pumping) up to ~16s for a banner/text to appear — the activity check is
+/// a live network call, so it can land a few seconds after launch.
+Future<bool> pollFor(WidgetTester t, String text) async {
+  for (var i = 0; i < 40; i++) {
+    await beat(t, 400);
+    if (find.textContaining(text).evaluate().isNotEmpty) return true;
+  }
+  return false;
+}
+
+String _snap(Map<String, String> statuses, int lastPostMs) => jsonEncode({
+  'statuses': statuses,
+  'reactions': <String, int>{},
+  'lastPostMs': lastPostMs,
+});
+
+Map<String, Object> _seed() {
+  final base = <String, Object>{
+    'onboarding_complete': true,
+    'circle_my_handle': _myHandle,
+    'circle_handle_set': true,
+    'circle_notify_enabled': true,
+  };
+  switch (_phase) {
+    case 'accept': // Peter's incoming request should read as new
+      base['circle_activity_snapshot_v1'] = _snap({}, _big);
+    case 'post': // Eva (peer) just went outgoing -> connected
+      base['circle_activity_snapshot_v1'] = _snap({_peerUid: 'outgoing'}, _big);
+    case 'like': // Peter (peer) connected; his new post should read as new
+      base['circle_activity_snapshot_v1'] = _snap({_peerUid: 'connected'}, 1);
+    case 'reaction': // my own post should read as freshly reacted-to
+      base['circle_activity_snapshot_v1'] = _snap({_peerUid: 'connected'}, _big);
+    // 'request' → no snapshot (first run, no notifications for Peter)
+  }
+  return base;
+}
+
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('two-user circle demo — $_role', (t) async {
-    final dir = await Directory.systemTemp.createTemp('fap_demo2');
+  testWidgets('circle 5-step demo — $_phase', (t) async {
+    final dir = await Directory.systemTemp.createTemp('fap_demo5');
     final file = File('${dir.path}/food.jpg')
       ..writeAsBytesSync(base64Decode(demoFoodJpgB64));
     ImagePickerPlatform.instance = _FakePicker(file.path);
 
-    SharedPreferences.setMockInitialValues({
-      'onboarding_complete': true,
-      'circle_my_handle': _myHandle,
-      'circle_handle_set': true,
-      'circle_notify_enabled': true, // notify on friends' meals
-      'circle_last_seen_ms': 1, // so the peer's existing post counts as "new"
-    });
+    SharedPreferences.setMockInitialValues(_seed());
     final prefs = await SharedPreferences.getInstance();
 
     await t.pumpWidget(
@@ -103,88 +131,87 @@ void main() {
         child: const FoodAtPeaceApp(),
       ),
     );
-    await beat(t, 2800); // boot + first online circle refresh
+    await beat(t, 2800); // boot + first circle refresh / activity check
 
-    if (_role == 'inviter') {
-      await _runInviter(t);
-    } else {
-      await _runViewer(t);
+    switch (_phase) {
+      case 'request':
+        await _request(t);
+      case 'accept':
+        await _accept(t);
+      case 'post':
+        await _post(t);
+      case 'like':
+        await _like(t);
+      case 'reaction':
+        await _reaction(t);
     }
   });
 }
 
-/// Alex: scan + post a meal to the circle, then show the invite QR.
-Future<void> _runInviter(WidgetTester t) async {
-  // Today → Add food.
-  await t.tap(find.byIcon(Icons.add));
-  await beat(t, 1800); // AddEntryScreen + welcome-grant Beans (enables scanning)
+/// Peter: Trends → Manage circle → add Eva by @handle (sends a request).
+Future<void> _request(WidgetTester t) async {
+  await t.tap(find.byIcon(Icons.insights_outlined));
+  await beat(t, 1500);
+  await t.tap(find.byIcon(Icons.group_outlined).hitTestable());
+  await beat(t, 1800);
+  await t.tap(find.byIcon(Icons.person_add_alt_1_outlined).hitTestable());
+  await beat(t, 1200);
+  await t.enterText(
+    find.descendant(of: find.byType(AlertDialog), matching: find.byType(TextField)),
+    _peerHandle,
+  );
+  await beat(t, 800);
+  await t.tap(find.widgetWithText(FilledButton, 'Send invite').hitTestable());
+  await beat(t, 2500);
+  expect(await pollFor(t, 'Invited'), isTrue, reason: 'Eva should appear as Invited');
+  await beat(t, 2500); // hold for the recording
+}
 
-  // Scan a photo from the library (fake picker returns the bundled meal).
+/// Eva: get the friend-request notification, then accept it.
+Future<void> _accept(WidgetTester t) async {
+  expect(await pollFor(t, 'wants to join'), isTrue,
+      reason: 'expected the friend-request notification');
+  await beat(t, 2500); // hold the banner
+  await t.tap(find.byIcon(Icons.insights_outlined));
+  await beat(t, 1500);
+  await t.tap(find.textContaining('Requests').hitTestable());
+  await beat(t, 1600);
+  await t.tap(find.widgetWithText(FilledButton, 'Accept').hitTestable());
+  await beat(t, 2500);
+}
+
+/// Peter: get the "Eva accepted" notification, then post a meal to the circle.
+Future<void> _post(WidgetTester t) async {
+  expect(await pollFor(t, 'accepted'), isTrue,
+      reason: 'expected the request-accepted notification');
+  await beat(t, 2500);
+  await t.tap(find.byIcon(Icons.add)); // Today FAB
+  await beat(t, 1800);
   await t.tap(find.byIcon(Icons.camera_alt_outlined));
   await beat(t, 900);
   await t.tap(find.byIcon(Icons.photo_library_outlined).hitTestable());
   await beat(t, 1000);
-  await beat(t, 18000); // live analysis against the v2 backend
-
-  // "Share to circle" is on by default — save (fires the post, best-effort).
+  await beat(t, 18000); // live analysis
   await t.tap(find.widgetWithText(TextButton, 'Save').hitTestable());
   await beat(t, 5000);
-
-  // Trends → Manage circle → the invite QR + link.
-  await t.tap(find.byIcon(Icons.insights_outlined));
-  await beat(t, 1600);
-  await t.tap(find.byIcon(Icons.group_outlined).hitTestable());
-  await beat(t, 2500);
-  await beat(t, 6000); // hold the QR on screen for the recording
 }
 
-/// Mia: connect via Alex's invite link, then view the feed and react.
-Future<void> _runViewer(WidgetTester t) async {
-  // Trends tab.
+/// Eva: get the "Peter shared a meal" notification, open the feed, react ❤️.
+Future<void> _like(WidgetTester t) async {
+  expect(await pollFor(t, 'shared a meal'), isTrue,
+      reason: 'expected the friend-posted notification');
+  await beat(t, 2500);
   await t.tap(find.byIcon(Icons.insights_outlined));
-  await beat(t, 1600);
-
-  // Mimic opening Alex's invite link (foodatpeace://i/<peer>) — same sheet the
-  // app_links deep-link handler shows.
-  final ctx = t.element(find.byType(HomeShell));
-  showConnectSheet(ctx, _peerHandle);
-  await beat(t, 1800);
-  await t.tap(find.widgetWithText(FilledButton, 'Connect').hitTestable());
-  await beat(t, 4500); // connect + circle refresh (let the connect toast clear)
-
-  // Return to the app → it checks circle activity and surfaces a notification
-  // banner for Alex's new meal (same notification setting as the food reminders).
-  await _resume(t);
-  // Poll for the banner (the feed fetch is a live network call, so it can land
-  // a few seconds after the resume).
-  var shown = false;
-  for (var i = 0; i < 40 && !shown; i++) {
-    await beat(t, 400);
-    shown = find.textContaining('shared a meal').evaluate().isNotEmpty;
-  }
-  expect(shown, isTrue, reason: 'expected the "shared a meal" notification banner');
-  await beat(t, 3000); // hold the notification banner for the recording
-
-  // Open the circle feed → Alex's meal photo (presigned S3 image) loads.
+  await beat(t, 1500);
   await t.tap(find.byIcon(Icons.dynamic_feed_outlined).hitTestable());
   await beat(t, 5000);
-
-  // React with ❤️ — Alex will receive it.
   await t.tap(find.text('❤️').first.hitTestable());
-  await beat(t, 4000);
+  await beat(t, 3500);
 }
 
-/// Drive an app foreground cycle (via the lifecycle channel) so HomeShell
-/// re-checks circle activity.
-Future<void> _resume(WidgetTester t) async {
-  Future<void> send(String s) => t.binding.defaultBinaryMessenger
-      .handlePlatformMessage(
-        'flutter/lifecycle',
-        const StringCodec().encodeMessage(s),
-        (_) {},
-      );
-  await send('AppLifecycleState.inactive');
-  await beat(t, 500);
-  await send('AppLifecycleState.resumed');
-  await beat(t, 800);
+/// Peter: get the "Eva reacted to your meal" notification.
+Future<void> _reaction(WidgetTester t) async {
+  expect(await pollFor(t, 'reacted'), isTrue,
+      reason: 'expected the reaction-received notification');
+  await beat(t, 4000); // hold the banner for the recording
 }

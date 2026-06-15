@@ -1017,4 +1017,27 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get aFriend => '一位好友';
+
+  @override
+  String circleRequestNotif(String name) {
+    return '$name 想加入你的圈子 👋';
+  }
+
+  @override
+  String circleAcceptedNotif(String name) {
+    return '$name 接受了 — 你们已连接 🎉';
+  }
+
+  @override
+  String circleReactionNotif(String name, String emoji) {
+    return '$name 对你的餐食回应了 $emoji';
+  }
+
+  @override
+  String get addByHandle => '通过 @用户名 添加';
+
+  @override
+  String addByHandleSent(String handle) {
+    return '已向 $handle 发送好友请求';
+  }
 }

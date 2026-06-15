@@ -1073,41 +1073,142 @@ final circleNotifyProvider = NotifierProvider<CircleNotifyNotifier, bool>(
   CircleNotifyNotifier.new,
 );
 
-/// Detects when friends post new meals. [pollNew] fetches the feed and returns
-/// friends' posts newer than the last-seen marker (advancing it). The widget
-/// layer turns those into a notification + in-app banner. This is the local,
-/// no-server-push path — instant background delivery is a future APNs upgrade.
+/// A circle "something happened" event the UI turns into a notification + banner.
+enum CircleEventKind { request, accepted, posted, reaction }
+
+class CircleEvent {
+  const CircleEvent(this.kind, this.name, {this.detail});
+  final CircleEventKind kind;
+  final String name; // the other person's display name
+  final String? detail; // dish name (posted) or emoji (reaction)
+}
+
+/// Snapshot of the circle state we compare against between polls.
+class CircleSnapshot {
+  const CircleSnapshot({
+    required this.statuses,
+    required this.reactions,
+    required this.lastPostMs,
+  });
+  final Map<String, String> statuses; // userId -> connected|incoming|outgoing
+  final Map<String, int> reactions; // my postId -> total reaction count
+  final int lastPostMs; // newest friend-post timestamp seen
+}
+
+/// Pure: diff the latest circle state against [prev] into notifiable events.
+/// [prev] is null on the first ever check (then we only set a baseline, no
+/// events — so we never notify for the existing backlog).
+({List<CircleEvent> events, CircleSnapshot snapshot}) diffCircleActivity({
+  required List<Friend> friends,
+  required List<CirclePost> feed,
+  required CircleSnapshot? prev,
+}) {
+  final statuses = {for (final f in friends) f.id: f.status.name};
+  final myPosts = feed.where((p) => p.mine);
+  final reactions = {
+    for (final p in myPosts)
+      p.postId: p.reactions.values.fold<int>(0, (a, b) => a + b),
+  };
+  final maxPostMs = feed
+      .where((p) => !p.mine)
+      .fold<int>(0, (m, p) => p.createdAt > m ? p.createdAt : m);
+  final snapshot = CircleSnapshot(
+    statuses: statuses,
+    reactions: reactions,
+    lastPostMs: maxPostMs > (prev?.lastPostMs ?? 0)
+        ? maxPostMs
+        : (prev?.lastPostMs ?? 0),
+  );
+  if (prev == null) return (events: const <CircleEvent>[], snapshot: snapshot);
+
+  final events = <CircleEvent>[];
+  // Friend requests received / your requests accepted.
+  for (final f in friends) {
+    final was = prev.statuses[f.id];
+    if (f.status == FriendStatus.incoming && was != 'incoming') {
+      events.add(CircleEvent(CircleEventKind.request, f.name));
+    } else if (f.status == FriendStatus.connected && was == 'outgoing') {
+      events.add(CircleEvent(CircleEventKind.accepted, f.name));
+    }
+  }
+  // Friends' new meals.
+  for (final p in freshFriendPosts(feed, prev.lastPostMs)) {
+    events.add(CircleEvent(
+      CircleEventKind.posted,
+      p.authorName ?? p.authorHandle ?? '',
+      detail: p.name,
+    ));
+  }
+  // New reactions on your own posts.
+  for (final p in myPosts) {
+    final now = p.reactions.values.fold<int>(0, (a, b) => a + b);
+    if (now > (prev.reactions[p.postId] ?? 0)) {
+      final r = p.reactors.isNotEmpty ? p.reactors.last : null;
+      events.add(CircleEvent(
+        CircleEventKind.reaction,
+        r?.name ?? '',
+        detail: r?.emoji,
+      ));
+    }
+  }
+  return (events: events, snapshot: snapshot);
+}
+
+/// Detects circle activity (friend requests, acceptances, friends' meals,
+/// reactions on your posts) by diffing `/circle/list` + `/circle/feed` against a
+/// stored snapshot. The widget layer turns the events into notifications +
+/// in-app banners. Local, no-server-push — instant background delivery is a
+/// planned APNs upgrade.
 class CircleActivityNotifier extends Notifier<int> {
-  static const _lastSeenKey = 'circle_last_seen_ms';
+  static const _snapKey = 'circle_activity_snapshot_v1';
 
   @override
   int build() => 0;
 
-  Future<List<CirclePost>> pollNew() async {
+  Future<List<CircleEvent>> pollActivity() async {
     final token = ref.read(authProvider)?.token;
     if (token == null || token.isEmpty || proxyBaseUrl.isEmpty) return const [];
-    final prefs = ref.read(sharedPreferencesProvider);
+    final List<Friend> friends;
     final List<CirclePost> feed;
     try {
+      friends = await ref.read(circleClientProvider).list(token);
       feed = await ref.read(postsClientProvider).feed(token);
     } catch (_) {
       return const [];
     }
-    final friendPosts = feed.where((p) => !p.mine).toList();
-    final maxTs = friendPosts.fold<int>(
-      0,
-      (m, p) => p.createdAt > m ? p.createdAt : m,
-    );
-    final lastSeen = prefs.getInt(_lastSeenKey);
-    if (lastSeen == null) {
-      // First check ever — set a baseline so we don't notify for the backlog.
-      await prefs.setInt(_lastSeenKey, maxTs);
-      return const [];
-    }
-    final fresh = freshFriendPosts(feed, lastSeen);
-    if (maxTs > lastSeen) await prefs.setInt(_lastSeenKey, maxTs);
-    return fresh;
+    final prefs = ref.read(sharedPreferencesProvider);
+    final prev = _readSnapshot(prefs);
+    final result =
+        diffCircleActivity(friends: friends, feed: feed, prev: prev);
+    await _writeSnapshot(prefs, result.snapshot);
+    return result.events;
   }
+
+  CircleSnapshot? _readSnapshot(SharedPreferences prefs) {
+    final raw = prefs.getString(_snapKey);
+    if (raw == null || raw.isEmpty) return null;
+    try {
+      final j = jsonDecode(raw) as Map<String, dynamic>;
+      return CircleSnapshot(
+        statuses: (j['statuses'] as Map).map((k, v) => MapEntry('$k', '$v')),
+        reactions: (j['reactions'] as Map)
+            .map((k, v) => MapEntry('$k', (v as num).toInt())),
+        lastPostMs: (j['lastPostMs'] as num?)?.toInt() ?? 0,
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> _writeSnapshot(SharedPreferences prefs, CircleSnapshot s) =>
+      prefs.setString(
+        _snapKey,
+        jsonEncode({
+          'statuses': s.statuses,
+          'reactions': s.reactions,
+          'lastPostMs': s.lastPostMs,
+        }),
+      );
 }
 
 /// Pure: friends' posts (not the viewer's own) strictly newer than
