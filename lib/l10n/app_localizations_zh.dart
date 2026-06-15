@@ -895,6 +895,23 @@ class AppLocalizationsZh extends AppLocalizations {
   String get handleError => '保存用户名失败，请重试';
 
   @override
+  String get shareToCircle => '分享到圈子';
+
+  @override
+  String get shareToCircleHint => '圈子好友可见 3 天';
+
+  @override
+  String get feedTitle => '圈子动态';
+
+  @override
+  String get feedEmpty => '还没有动态。拍一餐分享到你的圈子吧。';
+
+  @override
+  String feedReceived(int count) {
+    return '$count 个反应';
+  }
+
+  @override
   String get todayLabel => '今天';
 
   @override
@@ -907,6 +924,14 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get friendAdherence => '达标 · 近 7 天';
+
+  @override
+  String get removeFriend => '移出圈子';
+
+  @override
+  String removeFriendQ(String name) {
+    return '确定将 $name 移出你的圈子吗？';
+  }
 
   @override
   String get noRequests => '暂无待处理的请求。';

@@ -6,6 +6,7 @@ import 'package:food_at_peace/l10n/app_localizations.dart';
 import '../../models/friend.dart';
 import '../../providers/providers.dart';
 import '../../widgets/story_avatar.dart';
+import 'circle_feed_screen.dart';
 
 /// "Circle of Food" strip shown on top of the Trends graph: a row of
 /// Instagram-style friend avatars, an "Add" bubble (invite), and a Requests
@@ -31,6 +32,12 @@ class CircleStrip extends ConsumerWidget {
           children: [
             Text(t.yourCircle, style: Theme.of(context).textTheme.titleSmall),
             const Spacer(),
+            IconButton(
+              tooltip: t.feedTitle,
+              visualDensity: VisualDensity.compact,
+              icon: const Icon(Icons.dynamic_feed_outlined),
+              onPressed: () => showCircleFeed(context),
+            ),
             if (incoming > 0)
               TextButton(
                 onPressed: () => Navigator.of(context).push(
@@ -350,13 +357,13 @@ Future<void> showFriendTrend(BuildContext context, Friend friend) {
   );
 }
 
-class _FriendTrendSheet extends StatelessWidget {
+class _FriendTrendSheet extends ConsumerWidget {
   const _FriendTrendSheet({required this.friend});
 
   final Friend friend;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final t = AppLocalizations.of(context);
     final text = Theme.of(context).textTheme;
     return SafeArea(
@@ -409,10 +416,52 @@ class _FriendTrendSheet extends StatelessWidget {
             Text(t.friendAdherence, style: text.titleSmall),
             const SizedBox(height: 10),
             _AdherenceBars(values: friend.adherence7d),
+            const SizedBox(height: 16),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: () => _confirmRemove(context, ref, t),
+                style: TextButton.styleFrom(
+                  foregroundColor: Theme.of(context).colorScheme.error,
+                ),
+                icon: const Icon(Icons.person_remove_outlined),
+                label: Text(t.removeFriend),
+              ),
+            ),
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _confirmRemove(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations t,
+  ) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(t.removeFriend),
+        content: Text(t.removeFriendQ(friend.name)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(t.cancel),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(ctx).colorScheme.error,
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(t.removeFriend),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    await ref.read(circleProvider.notifier).remove(friend.id);
+    if (context.mounted) Navigator.pop(context); // close the trend sheet
   }
 }
 

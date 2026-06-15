@@ -68,9 +68,16 @@ void main() {
     await t.pageBack();
     await beat(t, 1200);
 
-    // Finish on a connected friend's privacy-gated trend (no dismissal needed).
+    // A connected friend's privacy-gated trend …
     await t.tap(find.text('Mia Tan').first);
-    await beat(t, 2800);
+    await beat(t, 2600);
     expect(find.text('On-target · last 7 days'), findsOneWidget);
+
+    // … then remove them from the circle (confirm dialog).
+    await t.tap(find.widgetWithText(TextButton, 'Remove from circle').hitTestable());
+    await beat(t, 1100);
+    await t.tap(find.widgetWithText(FilledButton, 'Remove from circle').hitTestable());
+    await beat(t, 1700);
+    expect(find.text('Mia Tan'), findsNothing);
   });
 }

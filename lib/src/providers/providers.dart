@@ -15,6 +15,7 @@ import '../data/food_repository.dart';
 import '../data/health_service.dart';
 import '../data/metrics_service.dart';
 import '../data/notification_service.dart';
+import '../data/posts_client.dart';
 import '../data/profile_repository.dart';
 import '../data/session_store.dart';
 import '../data/weather_service.dart';
@@ -22,6 +23,7 @@ import '../data/weight_repository.dart';
 import '../models/daily_summary.dart';
 import '../models/energy_out.dart';
 import '../models/bean_transaction.dart';
+import '../models/circle_post.dart';
 import '../models/food_entry.dart';
 import '../models/friend.dart';
 import '../models/meal_type.dart';
@@ -991,6 +993,23 @@ final circleClientProvider = Provider<CircleClient>(
 final circleProvider = NotifierProvider<CircleNotifier, List<Friend>>(
   CircleNotifier.new,
 );
+
+// ---- Circle photo feed (share a scanned meal; friends react) ----
+
+/// Emoji reactions offered in the circle feed.
+const List<String> circleReactionEmojis = ['👍', '❤️', '😋', '🔥', '👏'];
+
+final postsClientProvider = Provider<PostsClient>(
+  (ref) => PostsClient(baseUrl: proxyBaseUrl),
+);
+
+/// The viewer's circle feed (their friends' + own active posts). Empty when
+/// signed out or no proxy is configured.
+final circleFeedProvider = FutureProvider<List<CirclePost>>((ref) async {
+  final token = ref.watch(authProvider)?.token;
+  if (token == null || token.isEmpty || proxyBaseUrl.isEmpty) return const [];
+  return ref.read(postsClientProvider).feed(token);
+});
 
 // ---- Owner metrics dashboard ----
 

@@ -920,6 +920,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get handleError => 'Couldn\'t save your handle — try again';
 
   @override
+  String get shareToCircle => 'Share to circle';
+
+  @override
+  String get shareToCircleHint => 'Friends in your circle see it for 3 days';
+
+  @override
+  String get feedTitle => 'Circle feed';
+
+  @override
+  String get feedEmpty =>
+      'No posts yet. Scan a meal and share it to your circle.';
+
+  @override
+  String feedReceived(int count) {
+    return '$count reactions';
+  }
+
+  @override
   String get todayLabel => 'Today';
 
   @override
@@ -932,6 +950,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get friendAdherence => 'On-target · last 7 days';
+
+  @override
+  String get removeFriend => 'Remove from circle';
+
+  @override
+  String removeFriendQ(String name) {
+    return 'Remove $name from your circle?';
+  }
 
   @override
   String get noRequests => 'No pending requests.';
