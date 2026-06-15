@@ -499,5 +499,12 @@
   "sectionRequests": "Requests",
   "sectionInvited": "Invited",
   "cancelInvite": "Cancel",
-  "circleEmpty": "Your circle is empty. Share your invite link to add friends."
+  "circleEmpty": "Your circle is empty. Share your invite link to add friends.",
+  "circleActivity": "Circle activity",
+  "circleActivitySubtitle": "Get notified when a friend shares a meal",
+  "circleSharedMeal": "{name} shared a meal 🍵",
+  "@circleSharedMeal": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "aFriend": "A friend"
 }

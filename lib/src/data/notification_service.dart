@@ -89,6 +89,12 @@ class NotificationService {
   /// Notification ids are allocated from here, one per enabled reminder.
   static const int baseId = 7000;
 
+  /// Channel + id for one-off "circle activity" notifications (a friend shared
+  /// a meal). Same plugin/service as the meal reminders so it's managed in one
+  /// place; a distinct channel keeps the OS grouping/labels sensible.
+  static const String _circleChannelId = 'circle_activity';
+  static const int circleId = 7100;
+
   bool _ready = false;
 
   /// One-time init: timezone database + plugin. Safe to call repeatedly.
@@ -178,6 +184,34 @@ class NotificationService {
   Future<void> cancelAll() async {
     if (kIsWeb) return;
     await _plugin.cancelAll();
+  }
+
+  /// Fires an immediate one-off notification (used for "a friend shared a meal"
+  /// circle activity). Best-effort; never throws into the caller.
+  Future<void> show({
+    required int id,
+    required String title,
+    required String body,
+  }) async {
+    if (kIsWeb) return;
+    try {
+      await init();
+      const details = NotificationDetails(
+        android: AndroidNotificationDetails(
+          _circleChannelId,
+          'Circle activity',
+          channelDescription: 'When a friend shares a meal to your circle.',
+          importance: Importance.defaultImportance,
+          priority: Priority.defaultPriority,
+        ),
+        iOS: DarwinNotificationDetails(
+          presentAlert: true,
+          presentBanner: true,
+          presentSound: true,
+        ),
+      );
+      await _plugin.show(id, title, body, details);
+    } catch (_) {}
   }
 
   /// The next future occurrence of [hour]:[minute] in local time (today if it's

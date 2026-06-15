@@ -35,7 +35,34 @@ class _HomeShellState extends ConsumerState<HomeShell>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(profileProvider.notifier).refreshFromHealth();
       _refreshReminders();
+      _checkCircleActivity();
     });
+  }
+
+  /// Surface a notification + in-app banner when a friend has shared a new meal
+  /// to the circle since we last looked. Best-effort; uses the same
+  /// notification service as the meal reminders. (Instant background delivery
+  /// would need server push — a planned APNs follow-up.)
+  Future<void> _checkCircleActivity() async {
+    final fresh = await ref.read(circleActivityProvider.notifier).pollNew();
+    if (!mounted || fresh.isEmpty) return;
+    if (!ref.read(circleNotifyProvider)) return;
+    final t = AppLocalizations.of(context);
+    final post = fresh.first;
+    final who = post.authorName ?? post.authorHandle ?? t.aFriend;
+    final msg = t.circleSharedMeal(who);
+    ref
+        .read(notificationServiceProvider)
+        .show(id: NotificationService.circleId, title: msg, body: post.name ?? '');
+    ScaffoldMessenger.of(context)
+      ..clearSnackBars()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(msg),
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 6),
+        ),
+      );
   }
 
   /// Re-sync the OS meal reminders on launch/resume so they reflect the latest
@@ -63,6 +90,7 @@ class _HomeShellState extends ConsumerState<HomeShell>
       ref.read(syncEngineProvider.notifier).syncNow();
       ref.read(profileProvider.notifier).refreshFromHealth();
       _refreshReminders();
+      _checkCircleActivity();
     }
   }
 

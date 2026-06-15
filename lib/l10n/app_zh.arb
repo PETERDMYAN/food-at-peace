@@ -313,5 +313,9 @@
   "sectionRequests": "请求",
   "sectionInvited": "已邀请",
   "cancelInvite": "取消",
-  "circleEmpty": "你的圈子还是空的。分享邀请链接来添加好友吧。"
+  "circleEmpty": "你的圈子还是空的。分享邀请链接来添加好友吧。",
+  "circleActivity": "圈子动态",
+  "circleActivitySubtitle": "好友分享餐食时通知我",
+  "circleSharedMeal": "{name} 分享了一餐 🍵",
+  "aFriend": "一位好友"
 }
