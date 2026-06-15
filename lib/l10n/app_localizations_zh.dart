@@ -1003,4 +1003,18 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get circleEmpty => '你的圈子还是空的。分享邀请链接来添加好友吧。';
+
+  @override
+  String get circleActivity => '圈子动态';
+
+  @override
+  String get circleActivitySubtitle => '好友分享餐食时通知我';
+
+  @override
+  String circleSharedMeal(String name) {
+    return '$name 分享了一餐 🍵';
+  }
+
+  @override
+  String get aFriend => '一位好友';
 }

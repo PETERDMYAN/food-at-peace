@@ -18,6 +18,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter/services.dart';
 // ignore: depend_on_referenced_packages
 import 'package:image_picker_platform_interface/image_picker_platform_interface.dart';
 import 'package:integration_test/integration_test.dart';
@@ -87,6 +88,8 @@ void main() {
       'onboarding_complete': true,
       'circle_my_handle': _myHandle,
       'circle_handle_set': true,
+      'circle_notify_enabled': true, // notify on friends' meals
+      'circle_last_seen_ms': 1, // so the peer's existing post counts as "new"
     });
     final prefs = await SharedPreferences.getInstance();
 
@@ -147,7 +150,20 @@ Future<void> _runViewer(WidgetTester t) async {
   showConnectSheet(ctx, _peerHandle);
   await beat(t, 1800);
   await t.tap(find.widgetWithText(FilledButton, 'Connect').hitTestable());
-  await beat(t, 3500); // connect + circle refresh
+  await beat(t, 4500); // connect + circle refresh (let the connect toast clear)
+
+  // Return to the app → it checks circle activity and surfaces a notification
+  // banner for Alex's new meal (same notification setting as the food reminders).
+  await _resume(t);
+  // Poll for the banner (the feed fetch is a live network call, so it can land
+  // a few seconds after the resume).
+  var shown = false;
+  for (var i = 0; i < 40 && !shown; i++) {
+    await beat(t, 400);
+    shown = find.textContaining('shared a meal').evaluate().isNotEmpty;
+  }
+  expect(shown, isTrue, reason: 'expected the "shared a meal" notification banner');
+  await beat(t, 3000); // hold the notification banner for the recording
 
   // Open the circle feed → Alex's meal photo (presigned S3 image) loads.
   await t.tap(find.byIcon(Icons.dynamic_feed_outlined).hitTestable());
@@ -156,4 +172,19 @@ Future<void> _runViewer(WidgetTester t) async {
   // React with ❤️ — Alex will receive it.
   await t.tap(find.text('❤️').first.hitTestable());
   await beat(t, 4000);
+}
+
+/// Drive an app foreground cycle (via the lifecycle channel) so HomeShell
+/// re-checks circle activity.
+Future<void> _resume(WidgetTester t) async {
+  Future<void> send(String s) => t.binding.defaultBinaryMessenger
+      .handlePlatformMessage(
+        'flutter/lifecycle',
+        const StringCodec().encodeMessage(s),
+        (_) {},
+      );
+  await send('AppLifecycleState.inactive');
+  await beat(t, 500);
+  await send('AppLifecycleState.resumed');
+  await beat(t, 800);
 }

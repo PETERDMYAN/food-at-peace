@@ -44,6 +44,12 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
   - **Manage circle screen** — share/QR, connected (remove), incoming
     (accept/decline), and invited (cancel)
     ([`manage_friends_screen.dart`](lib/src/features/circle/manage_friends_screen.dart)).
+  - **Friend-meal notifications** — when a friend shares a meal you get a
+    notification + in-app banner, toggled in the reminders screen ("Circle
+    activity") alongside the food reminders (same permission/service). Detected
+    on launch/resume vs a last-seen marker (`circleActivityProvider.pollNew`,
+    `NotificationService.show`). Local-only today — instant background delivery
+    is a planned **APNs push** follow-up (see Remaining).
   - **Photo feed ("stories")** — share a scanned meal (toggle, default on) to your
     circle; friends react with emojis; you receive the reactions; posts auto-expire
     after **3 days**. ([`backend/src/posts.py`](backend/src/posts.py), `PostsTable` +
@@ -74,7 +80,13 @@ photo → B reacts ❤️ → A receives it (all confirmed server-side too). Dri
    `/iap/validate` endpoint (Apple receipt validation) + **App Store Connect IAP
    product creation + sandbox testing** (manual, external). Emit `purchase`/`refund`
    analytics once live.
-3. **Optimise model usage** — tune the photo-analysis Claude call for cost &
+3. **APNs push for circle notifications** — friend-meal alerts are currently
+   surfaced locally (on app launch/resume vs a last-seen marker). For *instant*
+   delivery while the app is backgrounded/closed, add Apple Push: device-token
+   registration, an APNs key + entitlement, and a server push from
+   `posts.py` on a new post (fan out to the poster's connected friends). The
+   in-app toggle ("Circle activity", in the reminders screen) already gates it.
+4. **Optimise model usage** — tune the photo-analysis Claude call for cost &
    latency. The model is server-side via the `MODEL` env var (default
    `claude-sonnet-4-6`), so it's swappable without an app update. Levers to
    evaluate: try a **cheaper/faster tier** (e.g. Haiku) and measure estimate

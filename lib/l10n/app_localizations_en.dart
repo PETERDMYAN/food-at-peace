@@ -1030,4 +1030,19 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get circleEmpty =>
       'Your circle is empty. Share your invite link to add friends.';
+
+  @override
+  String get circleActivity => 'Circle activity';
+
+  @override
+  String get circleActivitySubtitle =>
+      'Get notified when a friend shares a meal';
+
+  @override
+  String circleSharedMeal(String name) {
+    return '$name shared a meal 🍵';
+  }
+
+  @override
+  String get aFriend => 'A friend';
 }

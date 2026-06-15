@@ -1897,6 +1897,30 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Your circle is empty. Share your invite link to add friends.'**
   String get circleEmpty;
+
+  /// No description provided for @circleActivity.
+  ///
+  /// In en, this message translates to:
+  /// **'Circle activity'**
+  String get circleActivity;
+
+  /// No description provided for @circleActivitySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Get notified when a friend shares a meal'**
+  String get circleActivitySubtitle;
+
+  /// No description provided for @circleSharedMeal.
+  ///
+  /// In en, this message translates to:
+  /// **'{name} shared a meal 🍵'**
+  String circleSharedMeal(String name);
+
+  /// No description provided for @aFriend.
+  ///
+  /// In en, this message translates to:
+  /// **'A friend'**
+  String get aFriend;
 }
 
 class _AppLocalizationsDelegate

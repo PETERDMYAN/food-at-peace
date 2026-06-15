@@ -1044,6 +1044,81 @@ final circleFeedProvider = FutureProvider<List<CirclePost>>((ref) async {
   return ref.read(postsClientProvider).feed(token);
 });
 
+/// Whether to notify the user when a friend shares a meal. Managed alongside the
+/// food reminders (same notification permission + service). Opt-in, persisted.
+class CircleNotifyNotifier extends Notifier<bool> {
+  static const _prefsKey = 'circle_notify_enabled';
+
+  @override
+  bool build() =>
+      ref.read(sharedPreferencesProvider).getBool(_prefsKey) ?? false;
+
+  /// Requests OS notification permission; flips on only if granted.
+  Future<bool> enable() async {
+    final granted = await ref
+        .read(notificationServiceProvider)
+        .requestPermission();
+    state = granted;
+    await ref.read(sharedPreferencesProvider).setBool(_prefsKey, granted);
+    return granted;
+  }
+
+  Future<void> disable() async {
+    state = false;
+    await ref.read(sharedPreferencesProvider).setBool(_prefsKey, false);
+  }
+}
+
+final circleNotifyProvider = NotifierProvider<CircleNotifyNotifier, bool>(
+  CircleNotifyNotifier.new,
+);
+
+/// Detects when friends post new meals. [pollNew] fetches the feed and returns
+/// friends' posts newer than the last-seen marker (advancing it). The widget
+/// layer turns those into a notification + in-app banner. This is the local,
+/// no-server-push path — instant background delivery is a future APNs upgrade.
+class CircleActivityNotifier extends Notifier<int> {
+  static const _lastSeenKey = 'circle_last_seen_ms';
+
+  @override
+  int build() => 0;
+
+  Future<List<CirclePost>> pollNew() async {
+    final token = ref.read(authProvider)?.token;
+    if (token == null || token.isEmpty || proxyBaseUrl.isEmpty) return const [];
+    final prefs = ref.read(sharedPreferencesProvider);
+    final List<CirclePost> feed;
+    try {
+      feed = await ref.read(postsClientProvider).feed(token);
+    } catch (_) {
+      return const [];
+    }
+    final friendPosts = feed.where((p) => !p.mine).toList();
+    final maxTs = friendPosts.fold<int>(
+      0,
+      (m, p) => p.createdAt > m ? p.createdAt : m,
+    );
+    final lastSeen = prefs.getInt(_lastSeenKey);
+    if (lastSeen == null) {
+      // First check ever — set a baseline so we don't notify for the backlog.
+      await prefs.setInt(_lastSeenKey, maxTs);
+      return const [];
+    }
+    final fresh = freshFriendPosts(feed, lastSeen);
+    if (maxTs > lastSeen) await prefs.setInt(_lastSeenKey, maxTs);
+    return fresh;
+  }
+}
+
+/// Pure: friends' posts (not the viewer's own) strictly newer than
+/// [lastSeenMs], newest first. The basis for "a friend shared a meal" alerts.
+List<CirclePost> freshFriendPosts(List<CirclePost> feed, int lastSeenMs) =>
+    feed.where((p) => !p.mine && p.createdAt > lastSeenMs).toList()
+      ..sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
+final circleActivityProvider =
+    NotifierProvider<CircleActivityNotifier, int>(CircleActivityNotifier.new);
+
 // ---- Owner metrics dashboard ----
 
 final metricsServiceProvider = Provider<MetricsService>(

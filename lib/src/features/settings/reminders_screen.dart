@@ -55,6 +55,25 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen> {
     }
   }
 
+  Future<void> _toggleCircle(bool value) async {
+    final t = AppLocalizations.of(context);
+    setState(() => _busy = true);
+    try {
+      if (value) {
+        final granted = await ref.read(circleNotifyProvider.notifier).enable();
+        if (!granted && mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(t.remindersDenied)));
+        }
+      } else {
+        await ref.read(circleNotifyProvider.notifier).disable();
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
   Future<void> _editTime(Reminder r) async {
     final picked = await showTimePicker(
       context: context,
@@ -152,6 +171,29 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen> {
               label: Text(t.addReminder),
             ),
           ],
+          const SizedBox(height: 16),
+          // Circle activity — same notification permission/service as the meal
+          // reminders, surfaced when a friend shares a meal.
+          Card(
+            child: SwitchListTile(
+              contentPadding: const EdgeInsets.fromLTRB(16, 4, 12, 4),
+              title: Text(
+                t.circleActivity,
+                style: Theme.of(context).textTheme.titleSmall,
+              ),
+              subtitle: Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(t.circleActivitySubtitle),
+              ),
+              isThreeLine: true,
+              value: ref.watch(circleNotifyProvider),
+              onChanged: _busy ? null : _toggleCircle,
+              secondary: IconTile(
+                icon: Icons.group_outlined,
+                color: scheme.primary,
+              ),
+            ),
+          ),
         ],
       ),
     );
