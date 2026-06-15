@@ -6,7 +6,7 @@ on your protein and saturated-fat quotas. Connects to **Apple Health / Garmin**
 for real calories burned, and speaks **English and 中文**. Built with Flutter.
 
 > **Status:** **v1.0.0 is live on the App Store.** Active development is on the
-> **`v2`** branch (TestFlight build **1.0.1 (4)**), which adds: AI photo estimates
+> **`v2`** branch (TestFlight build **1.0.1 (10)**), which adds: AI photo estimates
 > **in your app language** (EN/中文), the **Circle of Food** social layer (friends
 > by `@handle`, **invite universal link + QR with one-tap mutual connect**, a
 > **Manage circle** screen, privacy-gated friend trends, and a 3-day photo
@@ -14,10 +14,11 @@ for real calories burned, and speaks **English and 中文**. Built with Flutter.
 > daily meal reminders, and a **Beans** credit wallet. v2 runs against an
 > **isolated backend stack** (`food-at-peace-vision-proxy-v2`) so production is
 > never touched — see `CLAUDE.md` / [`backend/README.md`](backend/README.md).
-> Remaining before the v2 release: **hosting the invite-link AASA** on
-> `foodatpeace.app` (the in-app handler + custom-scheme fallback already ship —
-> see [`store/INVITE_LINKS.md`](store/INVITE_LINKS.md)) and real **Beans in-app
-> purchases** (see `TODO.md`).
+> The **invite links are live**: `foodatpeace.app` is registered + hosted on AWS
+> (Route53 + CloudFront/HTTPS) serving the AASA + a smart `/i/<handle>` page (app
+> installed → opens the app · not installed → App Store · WeChat → "Open in Safari"
+> hand-off) — see [`store/INVITE_LINKS.md`](store/INVITE_LINKS.md). Remaining before
+> the v2 release: real **Beans in-app purchases** (see `TODO.md`).
 > Earlier: v1.0.0 cleared the Guideline 1.4.1 rejection with the in-app Sources &
 > methodology screen + in-app account deletion (see `PUBLISHING.md`).
 
