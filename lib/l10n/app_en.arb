@@ -427,7 +427,6 @@
   "invitePeople": "Add a friend",
   "inviteShareLink": "Share invite link",
   "inviteLinkCopied": "Invite link copied",
-  "inviteHandleLabel": "Friend's handle",
   "inviteHandleHelp": "A friend's @username is shown at the top of their own Add-friend screen — ask them for it.",
   "inviteSend": "Send invite",
   "inviteSent": "Invite sent to {handle}",

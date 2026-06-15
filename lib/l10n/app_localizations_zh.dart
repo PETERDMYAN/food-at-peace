@@ -856,9 +856,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get inviteLinkCopied => '邀请链接已复制';
 
   @override
-  String get inviteHandleLabel => '好友的用户名';
-
-  @override
   String get inviteHandleHelp => '好友的用户名会显示在对方「添加好友」页面的顶部——可向对方索取。';
 
   @override
