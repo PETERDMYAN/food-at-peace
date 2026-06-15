@@ -184,11 +184,27 @@ class _AddByHandleDialogState extends State<_AddByHandleDialog> {
     final t = AppLocalizations.of(context);
     return AlertDialog(
       title: Text(t.addByHandle),
-      content: TextField(
-        controller: _controller,
-        autofocus: true,
-        decoration: InputDecoration(prefixText: '@', helperText: t.handleHint),
-        onSubmitted: (v) => Navigator.pop(context, v),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            t.inviteHandleHelp,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: _controller,
+            autofocus: true,
+            decoration: InputDecoration(
+              prefixText: '@',
+              helperText: t.handleHint,
+            ),
+            onSubmitted: (v) => Navigator.pop(context, v),
+          ),
+        ],
       ),
       actions: [
         TextButton(

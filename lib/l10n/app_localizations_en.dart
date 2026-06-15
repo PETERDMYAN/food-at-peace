@@ -884,6 +884,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get inviteHandleLabel => 'Friend\'s handle';
 
   @override
+  String get inviteHandleHelp =>
+      'A friend\'s @username is shown at the top of their own Add-friend screen — ask them for it.';
+
+  @override
   String get inviteSend => 'Send invite';
 
   @override
