@@ -1646,6 +1646,12 @@ abstract class AppLocalizations {
   /// **'Friend\'s handle'**
   String get inviteHandleLabel;
 
+  /// No description provided for @inviteHandleHelp.
+  ///
+  /// In en, this message translates to:
+  /// **'A friend\'s @username is shown at the top of their own Add-friend screen — ask them for it.'**
+  String get inviteHandleHelp;
+
   /// No description provided for @inviteSend.
   ///
   /// In en, this message translates to:

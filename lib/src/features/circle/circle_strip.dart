@@ -168,6 +168,15 @@ class _InviteSheet extends ConsumerWidget {
               handle: myHandle,
               onEdit: () => editCircleHandle(context, ref),
             ),
+            const SizedBox(height: 8),
+            // Where to find a friend's handle — it's in this same spot on theirs.
+            Text(
+              t.inviteHandleHelp,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
             // Share a universal invite link / QR — one tap connects you both.
             if (myHandle != null) ...[
               const SizedBox(height: 20),
