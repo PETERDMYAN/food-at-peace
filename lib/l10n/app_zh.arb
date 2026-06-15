@@ -271,7 +271,6 @@
   "invitePeople": "添加好友",
   "inviteShareLink": "分享邀请链接",
   "inviteLinkCopied": "邀请链接已复制",
-  "inviteHandleLabel": "好友的用户名",
   "inviteHandleHelp": "好友的用户名会显示在对方「添加好友」页面的顶部——可向对方索取。",
   "inviteSend": "发送邀请",
   "inviteSent": "已向 {handle} 发送邀请",

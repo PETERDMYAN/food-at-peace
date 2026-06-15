@@ -881,9 +881,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get inviteLinkCopied => 'Invite link copied';
 
   @override
-  String get inviteHandleLabel => 'Friend\'s handle';
-
-  @override
   String get inviteHandleHelp =>
       'A friend\'s @username is shown at the top of their own Add-friend screen — ask them for it.';
 

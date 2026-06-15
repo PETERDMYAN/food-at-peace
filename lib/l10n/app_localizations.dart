@@ -1640,12 +1640,6 @@ abstract class AppLocalizations {
   /// **'Invite link copied'**
   String get inviteLinkCopied;
 
-  /// No description provided for @inviteHandleLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Friend\'s handle'**
-  String get inviteHandleLabel;
-
   /// No description provided for @inviteHandleHelp.
   ///
   /// In en, this message translates to:
