@@ -775,7 +775,10 @@ class CircleNotifier extends Notifier<List<Friend>> {
     // Rebuild when auth changes: sign in → switch to the backend; out → local.
     ref.watch(authProvider);
     if (_online) {
-      _refresh(); // async: ensure a handle, then load real friends + trends
+      // Defer: _refresh()/_ensureHandle write myCircleHandleProvider, which must
+      // not happen during this build (Riverpod asserts), so the circle would
+      // never load on launch for a returning user with a handle already set.
+      Future.microtask(_refresh);
       return _loadLocal() ?? const []; // show cache while loading; no mock seed online
     }
     return _seededOrLocal();

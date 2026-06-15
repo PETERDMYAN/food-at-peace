@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'l10n/app_localizations.dart';
+import 'src/app_globals.dart';
 import 'src/data/invite_link.dart';
 import 'src/features/circle/connect_sheet.dart';
 import 'src/features/home/home_shell.dart';
@@ -76,6 +77,7 @@ class _FoodAtPeaceAppState extends ConsumerState<FoodAtPeaceApp> {
     final onboarded = ref.watch(onboardingCompleteProvider);
     return MaterialApp(
       navigatorKey: _navigatorKey,
+      scaffoldMessengerKey: rootMessengerKey,
       onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
       debugShowCheckedModeBanner: false,
       // Always dark — GXS-style. (No light theme / no system toggle.)
