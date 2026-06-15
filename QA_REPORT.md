@@ -153,10 +153,16 @@ plus integration walkthroughs (`integration_test/lang_demo_test.dart`,
 `circle_demo_test.dart`). New: `test/invite_link_test.dart` (link build/parse),
 `connect` cases in `test/circle_client_test.dart` and `backend/tests/test_circle.py`.
 
-**Still needs a device / manual pass** (can't be automated on the simulator): the
-**signed-in Circle paths** (invite delivery, accept, connect via a tapped link, the
-photo feed + reactions) require a real Apple ID — verified server-side via live
-two-user runs, but not yet exercised in-app on a device. The **universal link**
-(vs. the custom scheme) also needs the AASA hosted on `foodatpeace.app`
-([`store/INVITE_LINKS.md`](store/INVITE_LINKS.md)). Plus the existing §5 items (Sign
-in with Apple, Apple Health, notifications, camera, weather GPS).
+The **signed-in Circle flow is now exercised in-app on two simulators** against the
+live v2 backend (session tokens injected via a test-only `authProvider` override,
+since Apple sign-in can't run on a sim): user A scans + posts a meal → user B opens
+A's invite → one-tap mutual connect → B's feed shows A's photo → B reacts ❤️ → A
+receives it (also confirmed server-side). Driver:
+[`integration_test/circle_two_user_demo.dart`](integration_test/circle_two_user_demo.dart).
+
+**Still needs a real device / manual pass:** Sign in with Apple end-to-end (the demo
+injects the token), and the **universal link** opening the app from
+WeChat/WhatsApp — that needs the AASA hosted on `foodatpeace.app`
+([`store/INVITE_LINKS.md`](store/INVITE_LINKS.md); the `foodatpeace://` scheme is
+verified working). Plus the existing §5 items (Apple Health, notifications, camera,
+weather GPS).
