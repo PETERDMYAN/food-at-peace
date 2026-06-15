@@ -88,11 +88,19 @@ photo → B reacts ❤️ → A receives it (all confirmed server-side too). Dri
    edits with: `aws s3 sync store/website s3://foodatpeace-app-web --delete` +
    `aws cloudfront create-invalidation --distribution-id E2M22G0LAT1HKW --paths '/*'`.
    Native in-WeChat open is the §6 follow-up.
-2. **Beans IAP** — purchases/subscription are **dev stubs** (credit locally; a
-   reinstall resets the balance). Needs `in_app_purchase` StoreKit + a backend
-   `/iap/validate` endpoint (Apple receipt validation) + **App Store Connect IAP
-   product creation + sandbox testing** (manual, external). Emit `purchase`/`refund`
-   analytics once live.
+2. **Beans IAP** *(in progress)* — the paywall still **dev-stubs** purchases (credits
+   locally; a reinstall resets the balance). **Done:** `in_app_purchase` added +
+   `IapService` ([`lib/src/data/iap_service.dart`](lib/src/data/iap_service.dart),
+   consumable products `beans_100…beans_800`) + the wallet credit hook
+   (`iapServiceProvider` → `BeansNotifier.recordPurchase`). **Next (you):** sign the
+   **Paid Apps agreement** + create the **5 consumable products** in App Store Connect
+   (`beans_100`=100 … `beans_800`=800, prices 1.99/3.99/5.99/9.49/13.99) + a **sandbox
+   tester**. **Next (me):** switch the paywall (`beans_screen.dart`) from
+   `purchasePack` → `IapService.buy`, show StoreKit's **localized prices**, drop the
+   "Custom" tile (Apple has no arbitrary pricing), and **mock the store** in the
+   integration tests (IAP can't run on the sim). **Phase 2:** a backend `/iap/validate`
+   endpoint (Apple receipt validation) + a **server-side Beans ledger** (anti-fraud,
+   cross-device balance, referral Beans §7); emit `purchase`/`refund` analytics.
 3. **APNs push for circle notifications** — friend-meal alerts are currently
    surfaced locally (on app launch/resume vs a last-seen marker). For *instant*
    delivery while the app is backgrounded/closed, add Apple Push: device-token

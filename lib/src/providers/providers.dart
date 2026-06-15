@@ -13,6 +13,7 @@ import '../data/circle_client.dart';
 import '../data/food_photo_analyzer.dart';
 import '../data/food_repository.dart';
 import '../data/health_service.dart';
+import '../data/iap_service.dart';
 import '../data/metrics_service.dart';
 import '../data/notification_service.dart';
 import '../data/posts_client.dart';
@@ -729,8 +730,8 @@ class BeansNotifier extends Notifier<BeansState> {
     return true;
   }
 
-  /// DEV STUB — credits [beans] locally for [sgd]. Replace with the matching
-  /// StoreKit consumable IAP purchase + server-side receipt validation.
+  /// DEV STUB — credits [beans] locally for [sgd]. Still used by the paywall
+  /// until the StoreKit switchover; real purchases go through [recordPurchase].
   Future<void> purchasePack(int beans, double sgd) => _append(
     BeanTransaction(
       id: _id('buy'),
@@ -740,11 +741,35 @@ class BeansNotifier extends Notifier<BeansState> {
       priceSgd: sgd,
     ),
   );
+
+  /// Credit a verified StoreKit purchase to the ledger — called by the IAP flow
+  /// ([IapService]) when `in_app_purchase` reports the consumable as purchased.
+  Future<void> recordPurchase(int beans, String productId) => _append(
+    BeanTransaction(
+      id: _id('buy'),
+      type: BeanTxnType.purchase,
+      amount: beans,
+      timestamp: DateTime.now(),
+      priceSgd: BeanPricing.sgdForBeans(beans),
+      note: productId,
+    ),
+  );
 }
 
 final beansProvider = NotifierProvider<BeansNotifier, BeansState>(
   BeansNotifier.new,
 );
+
+/// StoreKit IAP for the Bean packs; a completed purchase credits the wallet via
+/// [BeansNotifier.recordPurchase]. Lazily created on first read.
+final iapServiceProvider = Provider<IapService>((ref) {
+  final service = IapService(
+    onCredited: (beans, productId) =>
+        ref.read(beansProvider.notifier).recordPurchase(beans, productId),
+  );
+  ref.onDispose(service.dispose);
+  return service;
+});
 
 // ---- Circles of Food (friends) ----
 
