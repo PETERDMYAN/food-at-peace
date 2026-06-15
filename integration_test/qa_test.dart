@@ -179,17 +179,22 @@ void main() {
   });
 
   testWidgets('Circle of Food: invite sheet + friend trend', (t) async {
-    final prefs = await seed({});
+    final prefs = await seed({
+      'circle_my_handle': 'mypal',
+      'circle_handle_set': true,
+    });
     await pumpScreen(t, prefs, const TrendsScreen());
     expect(find.text('Your circle'), findsOneWidget);
     expect(find.text('Requests (1)'), findsOneWidget); // seeded incoming invite
 
-    // Open invite sheet
+    // Open invite sheet → it shows your @handle + a shareable invite link/QR
+    // (one tap connects you both; no typing a friend's name).
     await t.tap(find.text('Add').first);
     await beat(t);
-    expect(find.text('Send invite'), findsOneWidget);
-    await t.enterText(find.byType(TextField).first, 'newpal');
-    await t.tap(find.text('Send invite'));
+    expect(find.text('Add a friend'), findsOneWidget);
+    expect(find.textContaining('foodatpeace.app/i/mypal'), findsWidgets);
+    // Dismiss the sheet (tap the scrim above it).
+    await t.tapAt(const Offset(20, 40));
     await beat(t);
 
     // Tap a connected friend to see their trend

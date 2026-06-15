@@ -40,7 +40,8 @@ void main() {
     await beat(t, 1700);
     expect(find.text('Your circle'), findsOneWidget);
 
-    // The invite sheet → set your own @handle, then invite a friend by handle.
+    // The invite sheet → set your own @handle; a shareable invite QR + link
+    // then appears (friends tap it to connect — no typing a friend's name).
     await t.tap(find.text('Add').first);
     await beat(t, 1400);
     await t.tap(find.text('Set your handle').hitTestable());
@@ -53,17 +54,12 @@ void main() {
     await t.tap(find.widgetWithText(FilledButton, 'Save').hitTestable());
     await beat(t, 2000);
     expect(find.text('@peteryan'), findsOneWidget); // your handle, with copy + edit
+    await t.ensureVisible(find.textContaining('foodatpeace.app/i/peteryan'));
+    await beat(t, 1800); // hold the invite QR/link for the recording
 
-    // Invite someone by their handle (closes the sheet). The sheet now also
-    // shows the QR/share card, so scroll the manual field + button into view.
-    await t.ensureVisible(find.byType(TextField).first);
-    await beat(t, 600);
-    await t.enterText(find.byType(TextField).first, 'alexlim');
-    await beat(t, 800);
-    await t.ensureVisible(find.widgetWithText(FilledButton, 'Send invite'));
-    await beat(t, 400);
-    await t.tap(find.widgetWithText(FilledButton, 'Send invite').hitTestable());
-    await beat(t, 1800);
+    // Close the sheet (tap the scrim above it) and continue.
+    await t.tapAt(const Offset(20, 40));
+    await beat(t, 1400);
 
     // A pending request → accept it.
     await t.tap(find.text('Requests (1)'));

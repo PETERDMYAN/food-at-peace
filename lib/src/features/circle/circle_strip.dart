@@ -143,35 +143,16 @@ Future<void> showInviteSheet(BuildContext context) {
   );
 }
 
-class _InviteSheet extends ConsumerStatefulWidget {
+class _InviteSheet extends ConsumerWidget {
   const _InviteSheet();
 
   @override
-  ConsumerState<_InviteSheet> createState() => _InviteSheetState();
-}
-
-class _InviteSheetState extends ConsumerState<_InviteSheet> {
-  final _handle = TextEditingController();
-
-  @override
-  void dispose() {
-    _handle.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final t = AppLocalizations.of(context);
-    final messenger = ScaffoldMessenger.of(context);
     final myHandle = ref.watch(myCircleHandleProvider);
     return SafeArea(
       child: SingleChildScrollView(
-        padding: EdgeInsets.fromLTRB(
-          20,
-          4,
-          20,
-          24 + MediaQuery.of(context).viewInsets.bottom,
-        ),
+        padding: const EdgeInsets.fromLTRB(20, 4, 20, 28),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -187,41 +168,14 @@ class _InviteSheetState extends ConsumerState<_InviteSheet> {
               handle: myHandle,
               onEdit: () => editCircleHandle(context, ref),
             ),
-            const SizedBox(height: 20),
-            // Primary path: share a universal invite link / QR.
+            // Share a universal invite link / QR — one tap connects you both.
             if (myHandle != null) ...[
-              InviteShareCard(handle: myHandle),
               const SizedBox(height: 20),
-              const Divider(),
-              const SizedBox(height: 12),
+              InviteShareCard(handle: myHandle),
             ],
-            // Secondary path: invite by typing a friend's @handle.
-            TextField(
-              controller: _handle,
-              decoration: InputDecoration(
-                labelText: t.inviteHandleLabel,
-                prefixText: '@',
-              ),
-              onSubmitted: (_) => _send(t, messenger),
-            ),
-            const SizedBox(height: 12),
-            FilledButton(
-              onPressed: () => _send(t, messenger),
-              child: Text(t.inviteSend),
-            ),
           ],
         ),
       ),
-    );
-  }
-
-  void _send(AppLocalizations t, ScaffoldMessengerState messenger) {
-    final handle = _handle.text.trim();
-    if (handle.isEmpty) return;
-    ref.read(circleProvider.notifier).invite(handle);
-    Navigator.pop(context);
-    messenger.showSnackBar(
-      SnackBar(content: Text(t.inviteSent('@${handle.replaceAll('@', '')}'))),
     );
   }
 }

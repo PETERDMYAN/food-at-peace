@@ -74,6 +74,17 @@ photo → B reacts ❤️ → A receives it (all confirmed server-side too). Dri
    `/iap/validate` endpoint (Apple receipt validation) + **App Store Connect IAP
    product creation + sandbox testing** (manual, external). Emit `purchase`/`refund`
    analytics once live.
+3. **Optimise model usage** — tune the photo-analysis Claude call for cost &
+   latency. The model is server-side via the `MODEL` env var (default
+   `claude-sonnet-4-6`), so it's swappable without an app update. Levers to
+   evaluate: try a **cheaper/faster tier** (e.g. Haiku) and measure estimate
+   quality vs. Sonnet; tighten the system prompt / `max_tokens`; lean harder on
+   **prompt caching** (the system block is already cached — verify cache hits);
+   **downscale the analysis image** further (currently 1024px) and check accuracy;
+   short-circuit obvious non-food photos. Measure $/scan + p50/p95 latency before
+   and after. Keep the request **backward-compatible** with the shipped 1.0.0 app
+   (see the `production-safety` skill) and keep the Dart/Python request builders in
+   sync. Mirrored in tasks.
 
 ## 📱 Device-only QA (QA_REPORT §5)
 
