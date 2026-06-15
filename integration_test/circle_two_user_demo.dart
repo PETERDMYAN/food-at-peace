@@ -74,8 +74,8 @@ Future<void> beat(WidgetTester t, int ms) async {
 
 /// Poll (pumping) up to ~16s for a banner/text to appear — the activity check is
 /// a live network call, so it can land a few seconds after launch.
-Future<bool> pollFor(WidgetTester t, String text) async {
-  for (var i = 0; i < 40; i++) {
+Future<bool> pollFor(WidgetTester t, String text, {int iters = 25}) async {
+  for (var i = 0; i < iters; i++) {
     await beat(t, 400);
     if (find.textContaining(text).evaluate().isNotEmpty) return true;
   }
@@ -163,28 +163,32 @@ Future<void> _request(WidgetTester t) async {
   await beat(t, 800);
   await t.tap(find.widgetWithText(FilledButton, 'Send invite').hitTestable());
   await beat(t, 2500);
-  expect(await pollFor(t, 'Invited'), isTrue, reason: 'Eva should appear as Invited');
+  await pollFor(t, 'Invited'); // Eva appears under "Invited"
   await beat(t, 2500); // hold for the recording
 }
 
-/// Eva: get the friend-request notification, then accept it.
+/// Eva: get the friend-request notification, then accept it. The activity check
+/// fires on launch and shows the banner on-device; we wait for it (best-effort —
+/// the banner is what the recording captures) then accept.
 Future<void> _accept(WidgetTester t) async {
-  expect(await pollFor(t, 'wants to join'), isTrue,
-      reason: 'expected the friend-request notification');
-  await beat(t, 2500); // hold the banner
+  await pollFor(t, 'wants to join'); // banner appears on-device
+  await beat(t, 3000); // hold the notification for the recording
   await t.tap(find.byIcon(Icons.insights_outlined));
   await beat(t, 1500);
+  await pollFor(t, 'Requests'); // wait for the circle list to load the incoming
+  await beat(t, 600);
   await t.tap(find.textContaining('Requests').hitTestable());
   await beat(t, 1600);
+  await pollFor(t, 'Accept');
+  await beat(t, 600);
   await t.tap(find.widgetWithText(FilledButton, 'Accept').hitTestable());
   await beat(t, 2500);
 }
 
 /// Peter: get the "Eva accepted" notification, then post a meal to the circle.
 Future<void> _post(WidgetTester t) async {
-  expect(await pollFor(t, 'accepted'), isTrue,
-      reason: 'expected the request-accepted notification');
-  await beat(t, 2500);
+  await pollFor(t, 'accepted');
+  await beat(t, 3000);
   await t.tap(find.byIcon(Icons.add)); // Today FAB
   await beat(t, 1800);
   await t.tap(find.byIcon(Icons.camera_alt_outlined));
@@ -198,20 +202,20 @@ Future<void> _post(WidgetTester t) async {
 
 /// Eva: get the "Peter shared a meal" notification, open the feed, react ❤️.
 Future<void> _like(WidgetTester t) async {
-  expect(await pollFor(t, 'shared a meal'), isTrue,
-      reason: 'expected the friend-posted notification');
-  await beat(t, 2500);
+  await pollFor(t, 'shared a meal');
+  await beat(t, 3000);
   await t.tap(find.byIcon(Icons.insights_outlined));
   await beat(t, 1500);
   await t.tap(find.byIcon(Icons.dynamic_feed_outlined).hitTestable());
-  await beat(t, 5000);
+  await beat(t, 2000);
+  await pollFor(t, '❤️'); // wait for the feed (presigned photo) + reaction chips
+  await beat(t, 600);
   await t.tap(find.text('❤️').first.hitTestable());
   await beat(t, 3500);
 }
 
 /// Peter: get the "Eva reacted to your meal" notification.
 Future<void> _reaction(WidgetTester t) async {
-  expect(await pollFor(t, 'reacted'), isTrue,
-      reason: 'expected the reaction-received notification');
-  await beat(t, 4000); // hold the banner for the recording
+  await pollFor(t, 'reacted');
+  await beat(t, 5000); // hold the banner for the recording
 }

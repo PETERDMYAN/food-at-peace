@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:food_at_peace/l10n/app_localizations.dart';
 
+import '../../app_globals.dart';
 import '../../data/notification_service.dart';
 import '../../data/sync_engine.dart';
 import '../../providers/providers.dart';
@@ -67,15 +68,21 @@ class _HomeShellState extends ConsumerState<HomeShell>
         body: e.detail ?? '',
       );
     }
-    ScaffoldMessenger.of(context)
-      ..clearSnackBars()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(msgFor(events.first)),
-          behavior: SnackBarBehavior.floating,
-          duration: const Duration(seconds: 6),
-        ),
-      );
+    // Defer to the next frame + use the app-wide messenger key, so the banner
+    // shows reliably even when this fires right after launch (where
+    // ScaffoldMessenger.of(context) can race the first frame and drop it).
+    final banner = msgFor(events.first);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      rootMessengerKey.currentState
+        ?..clearSnackBars()
+        ..showSnackBar(
+          SnackBar(
+            content: Text(banner),
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 6),
+          ),
+        );
+    });
   }
 
   /// Re-sync the OS meal reminders on launch/resume so they reflect the latest
