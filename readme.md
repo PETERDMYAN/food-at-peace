@@ -5,19 +5,17 @@ or by **snapping a photo** — see how much you can still eat today, and keep an
 on your protein and saturated-fat quotas. Connects to **Apple Health / Garmin**
 for real calories burned, and speaks **English and 中文**. Built with Flutter.
 
-> **Status:** Runs on-device on iPhone (paid Apple Developer membership active) with a
-> dark, GXS-style UI. Complete: first-run onboarding, manual + photo logging, the
-> goal-**gap** targets engine, Apple Health/Garmin (auto-fills age/height/weight), an
-> interactive Trends screen, a local **weather** header, EN/中文, feedback, and
-> **accounts + cloud sync** — Sign in with Apple → an AWS Lambda + DynamoDB backend
-> (the Claude key stays server-side; no secret ships in the app).
-> **App Store:** v1.0 (1) was rejected under Guideline 1.4.1 (citations for health
-> calculations); build **1.0.0 (3)** fixes it with the in-app Sources & methodology
-> screen, adds **in-app account deletion** (Guideline 5.1.1(v)), and refreshes the
-> privacy policy/manifest. **Resubmitted June 12, 2026 — Waiting for Review**, with a
-> fresh 6.9″ screenshot set, updated description, and corrected App Privacy answers;
-> set to auto-release on approval (see `PUBLISHING.md`).
-> Next up: Google sign-in and subscriptions.
+> **Status:** **v1.0.0 is live on the App Store.** Active development is on the
+> **`v2`** branch (TestFlight build **1.0.1 (2)**), which adds: AI photo estimates
+> **in your app language** (EN/中文), the **Circle of Food** social layer (friends
+> by `@handle`, privacy-gated friend trends, and a 3-day photo **"stories"** feed
+> with emoji reactions), a **real owner-analytics** backend, daily meal reminders,
+> and a **Beans** credit wallet. v2 runs against an **isolated backend stack**
+> (`food-at-peace-vision-proxy-v2`) so production is never touched — see `CLAUDE.md`
+> / [`backend/README.md`](backend/README.md). Remaining before the v2 release:
+> invite **deep-links** and real **Beans in-app purchases** (see `TODO.md`).
+> Earlier: v1.0.0 cleared the Guideline 1.4.1 rejection with the in-app Sources &
+> methodology screen + in-app account deletion (see `PUBLISHING.md`).
 
 ## What it does today
 - **Onboarding** — on first launch: continue with **Sign in with Apple** (pulls your
@@ -30,7 +28,14 @@ for real calories burned, and speaks **English and 中文**. Built with Flutter.
   decline GPS). A calorie ring (budget = burn + your calorie *gap*),
   protein and saturated-fat cards, and a card of today's workouts.
 - **Add food** — manual entry, or **scan a meal photo** and let Claude estimate the
-  calories / protein / saturated fat for you to confirm.
+  calories / protein / saturated fat for you to confirm — **in your app language**
+  (EN/中文). You can also share the scan to your **Circle** (below).
+- **Circle of Food** — a social layer on **Trends**: claim a `@handle`, invite
+  friends by handle and accept requests, tap a connected friend for their
+  **privacy-gated trend** (today vs target, streak, 7-day adherence) or remove them,
+  and share a scanned meal to a **3-day photo feed** where friends react with emojis
+  (👍❤️😋🔥👏) and you receive the reactions. The story keeps the full-resolution
+  photo; the AI estimate uses a downscaled copy.
 - **Trends** — daily charts for calories / protein / saturated fat vs. target, each
   led by a prominent "on target X/Y days" stat. Switch between **1 / 7 / 30-day**
   windows, page to earlier windows with prev/next, and tap or drag a chart to read
@@ -132,10 +137,11 @@ the system locale by default and persists a manual choice.
   500 / 800 + Custom** and the unlimited plan. Balance + ledger are local
   (`shared_preferences`); purchase/subscribe are **dev stubs**.
 
-- [~] **Owner metrics dashboard — UI built (sample data)** — Profile → tap the
-  version row 5× → downloads / active / opens (7-day bars) / photos scanned /
-  Beans sold / revenue / refunds / subscribers. `MetricsService` returns sample
-  numbers until analytics is wired.
+- [x] **Owner metrics dashboard (v2 — now real)** — Profile → tap the version row 5×
+  → downloads / active / opens (7-day bars) / photos scanned / Beans sold / revenue /
+  refunds. The app emits `open`/`scan` events and `MetricsService` reads **live**
+  aggregates from `GET /metrics`; `downloads`/`revenue` stay 0 until the App Store
+  Connect API + real IAP land.
 
 **TODO (pricing — StoreKit, mind Apple's rules):**
 - [ ] **Beans packs** — each tier (100/200/300/500/800) = a fixed **consumable
@@ -147,17 +153,19 @@ the system locale by default and persists a manual choice.
   needs the subscription-group setup, required disclosures (Guideline 3.1.2),
   and **server-side entitlement** (replace the local `subscribed` flag).
 
-**TODO (dashboard — make it real):**
-- [ ] Emit analytics events (`open` / `scan` / `purchase` / `refund`) to the
-  backend, add an aggregation endpoint the dashboard reads, and pull
+**TODO (dashboard):**
+- [x] **(v2)** Emit `open`/`scan` events + a `GET /metrics` aggregation endpoint the
+  dashboard reads. Still TODO: `purchase`/`refund` events (needs IAP) and
   **downloads** from the **App Store Connect API**.
 
-- [~] **Circles of Food — client MVP built** — Instagram-story gradient-ring
-  friend avatars on top of the **Trends** graph; **Add** (invite by handle /
-  share link) + **Requests** accept/decline; tap a friend for their trend
-  (today vs target, streak, 7-day adherence). Friends + invites + trend data are
-  **local/mock** — backend TODO: real invite delivery + acceptance and
-  friend-trend sharing gated by each friend's privacy consent.
+- [x] **Circle of Food — real backend + UX (v2)** — story-style friend avatars on the
+  **Trends** graph; claim a `@handle`, invite by handle, accept/decline **Requests**,
+  tap a connected friend for their **privacy-gated** trend (today vs target, streak,
+  7-day adherence) or remove them. Plus a **3-day photo feed**: share a scanned meal
+  (toggle, default on), friends react with emojis and you receive the reactions.
+  Backed by `circle.py` + `posts.py` (CircleTable, PostsTable, S3 photos) on the v2
+  stack; trends/feed are gated to mutually-connected friends. Remaining: an **invite
+  deep-link** (`foodatpeace.app/i/<handle>`).
 
 **TODO (next up):**
 - [ ] **Google Sign-In** — `/auth/google` mirroring `/auth/apple`
@@ -167,9 +175,11 @@ the system locale by default and persists a manual choice.
 ## Tech stack
 - **Flutter / Dart**, iOS first (iPhone), then Android and web.
 - **Riverpod** for state; **shared_preferences** for local data (behind repositories)
-  and **flutter_secure_storage** for tokens/keys; **http**, **image_picker**, the
-  **health** package, **geolocator** (weather), **sign_in_with_apple** + **crypto**
-  (accounts), **intl** + **flutter_localizations**.
+  and **flutter_secure_storage** for tokens/keys; **http**, **image_picker** +
+  **image** (full-res story photo + downscaled analysis copy), the **health**
+  package, **geolocator** (weather), **sign_in_with_apple** + **crypto** (accounts),
+  **flutter_local_notifications** + **timezone** (reminders), **intl** +
+  **flutter_localizations**.
 
 ## Getting started
 ```bash
@@ -214,9 +224,11 @@ lib/
     data/                   Food/Profile/Weight repositories, ApiKeyStore,
                             ClaudeVisionClient + FoodPhotoAnalyzer (proxy/direct),
                             HealthService (+io/stub), WeatherService, FeedbackService,
-                            AuthClient + SessionStore, SyncClient + sync engine
+                            AuthClient + SessionStore, SyncClient + sync engine,
+                            MetricsService + AnalyticsService, CircleClient, PostsClient
     providers/              Riverpod providers
-    features/               onboarding / today / add / trends / settings / feedback
+    features/               onboarding / today / add / trends / circle / settings /
+                            feedback / dashboard / wallet (Beans)
     theme/ util/            theme, formatting, localized enum labels
 test/                       unit + widget tests
 ios/                        Runner + Runner.entitlements (HealthKit)

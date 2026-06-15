@@ -120,3 +120,31 @@ forgotten before charging real money / shipping social:
   `ListView` hadn't built yet (it's below the fold); the test now scrolls it into view
   before asserting. The entry always saved correctly — the calorie card reflects it
   immediately.
+
+---
+
+## Addendum — built since this pass (v2, 2026-06-15)
+
+This report predates the v2 feature work. Added since (all on the **isolated** v2
+backend stack `food-at-peace-vision-proxy-v2` / API `p21hoawoi5`; production
+`6m19l2b025` untouched):
+
+- **Locale-aware AI analysis** — the photo estimate returns in the app's language
+  (verified live: EN vs 中文, numeric fields unchanged).
+- **Owner analytics** — real `POST /event` + `GET /metrics` (verified live; counters move).
+- **Circle of Food backend** — friend graph (register / invite / accept / list +
+  privacy-gated trends), the `@handle` view/set/copy UI, remove-friend, and a **3-day
+  photo feed** with emoji reactions (verified live with two users: post → see →
+  react → receive; presigned photo downloads).
+- **Chinese App Store listing** ([`store/STORE_LISTING_zh.md`](store/STORE_LISTING_zh.md)).
+- **TestFlight** `1.0.1 (2)` built + uploaded via the ASC API key.
+
+Automated coverage now: **Flutter 93 + backend 68 tests, `flutter analyze` clean**,
+plus integration walkthroughs (`integration_test/lang_demo_test.dart`,
+`circle_demo_test.dart`).
+
+**Still needs a device / manual pass** (can't be automated on the simulator): the
+**signed-in Circle paths** (invite delivery, accept, the photo feed + reactions)
+require a real Apple ID — verified server-side via live two-user runs, but not yet
+exercised in-app on a device. Plus the existing §5 items (Sign in with Apple, Apple
+Health, notifications, camera, weather GPS).
