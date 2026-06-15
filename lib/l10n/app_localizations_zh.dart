@@ -946,4 +946,61 @@ class AppLocalizationsZh extends AppLocalizations {
   String friendAccepted(String name) {
     return '$name 加入了你的圈子 🎉';
   }
+
+  @override
+  String get manageCircle => '管理圈子';
+
+  @override
+  String get shareInvite => '分享邀请';
+
+  @override
+  String get scanToConnect => '扫码把我加入你的圈子';
+
+  @override
+  String get inviteLinkLabel => '我的邀请链接';
+
+  @override
+  String get copyLink => '复制链接';
+
+  @override
+  String shareInviteMessage(String link) {
+    return '在 Food at Peace 添加我 🍵 $link';
+  }
+
+  @override
+  String get connectTitle => '加入你的圈子';
+
+  @override
+  String connectPrompt(String handle) {
+    return '与 $handle 互相连接？你们将看到彼此每天的饮食趋势。';
+  }
+
+  @override
+  String get connectCta => '连接';
+
+  @override
+  String get connecting => '连接中…';
+
+  @override
+  String connectedToast(String name) {
+    return '你已和 $name 互相连接 🎉';
+  }
+
+  @override
+  String get connectFailed => '连接失败，请重试。';
+
+  @override
+  String get sectionConnected => '已连接';
+
+  @override
+  String get sectionRequests => '请求';
+
+  @override
+  String get sectionInvited => '已邀请';
+
+  @override
+  String get cancelInvite => '取消';
+
+  @override
+  String get circleEmpty => '你的圈子还是空的。分享邀请链接来添加好友吧。';
 }

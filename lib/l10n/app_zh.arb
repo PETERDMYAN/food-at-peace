@@ -296,5 +296,22 @@
   "noRequests": "暂无待处理的请求。",
   "accept": "接受",
   "decline": "拒绝",
-  "friendAccepted": "{name} 加入了你的圈子 🎉"
+  "friendAccepted": "{name} 加入了你的圈子 🎉",
+  "manageCircle": "管理圈子",
+  "shareInvite": "分享邀请",
+  "scanToConnect": "扫码把我加入你的圈子",
+  "inviteLinkLabel": "我的邀请链接",
+  "copyLink": "复制链接",
+  "shareInviteMessage": "在 Food at Peace 添加我 🍵 {link}",
+  "connectTitle": "加入你的圈子",
+  "connectPrompt": "与 {handle} 互相连接？你们将看到彼此每天的饮食趋势。",
+  "connectCta": "连接",
+  "connecting": "连接中…",
+  "connectedToast": "你已和 {name} 互相连接 🎉",
+  "connectFailed": "连接失败，请重试。",
+  "sectionConnected": "已连接",
+  "sectionRequests": "请求",
+  "sectionInvited": "已邀请",
+  "cancelInvite": "取消",
+  "circleEmpty": "你的圈子还是空的。分享邀请链接来添加好友吧。"
 }

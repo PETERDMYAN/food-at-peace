@@ -6,14 +6,18 @@ on your protein and saturated-fat quotas. Connects to **Apple Health / Garmin**
 for real calories burned, and speaks **English and 中文**. Built with Flutter.
 
 > **Status:** **v1.0.0 is live on the App Store.** Active development is on the
-> **`v2`** branch (TestFlight build **1.0.1 (2)**), which adds: AI photo estimates
+> **`v2`** branch (TestFlight build **1.0.1 (4)**), which adds: AI photo estimates
 > **in your app language** (EN/中文), the **Circle of Food** social layer (friends
-> by `@handle`, privacy-gated friend trends, and a 3-day photo **"stories"** feed
-> with emoji reactions), a **real owner-analytics** backend, daily meal reminders,
-> and a **Beans** credit wallet. v2 runs against an **isolated backend stack**
-> (`food-at-peace-vision-proxy-v2`) so production is never touched — see `CLAUDE.md`
-> / [`backend/README.md`](backend/README.md). Remaining before the v2 release:
-> invite **deep-links** and real **Beans in-app purchases** (see `TODO.md`).
+> by `@handle`, **invite universal link + QR with one-tap mutual connect**, a
+> **Manage circle** screen, privacy-gated friend trends, and a 3-day photo
+> **"stories"** feed with emoji reactions), a **real owner-analytics** backend,
+> daily meal reminders, and a **Beans** credit wallet. v2 runs against an
+> **isolated backend stack** (`food-at-peace-vision-proxy-v2`) so production is
+> never touched — see `CLAUDE.md` / [`backend/README.md`](backend/README.md).
+> Remaining before the v2 release: **hosting the invite-link AASA** on
+> `foodatpeace.app` (the in-app handler + custom-scheme fallback already ship —
+> see [`store/INVITE_LINKS.md`](store/INVITE_LINKS.md)) and real **Beans in-app
+> purchases** (see `TODO.md`).
 > Earlier: v1.0.0 cleared the Guideline 1.4.1 rejection with the in-app Sources &
 > methodology screen + in-app account deletion (see `PUBLISHING.md`).
 
@@ -30,8 +34,10 @@ for real calories burned, and speaks **English and 中文**. Built with Flutter.
 - **Add food** — manual entry, or **scan a meal photo** and let Claude estimate the
   calories / protein / saturated fat for you to confirm — **in your app language**
   (EN/中文). You can also share the scan to your **Circle** (below).
-- **Circle of Food** — a social layer on **Trends**: claim a `@handle`, invite
-  friends by handle and accept requests, tap a connected friend for their
+- **Circle of Food** — a social layer on **Trends**: claim a `@handle`, **share an
+  invite link or QR** (one tap connects you both as mutual friends) or invite by
+  handle and accept requests, **manage your circle** (connected / requests / invited),
+  tap a connected friend for their
   **privacy-gated trend** (today vs target, streak, 7-day adherence) or remove them,
   and share a scanned meal to a **3-day photo feed** where friends react with emojis
   (👍❤️😋🔥👏) and you receive the reactions. The story keeps the full-resolution
@@ -159,13 +165,17 @@ the system locale by default and persists a manual choice.
   **downloads** from the **App Store Connect API**.
 
 - [x] **Circle of Food — real backend + UX (v2)** — story-style friend avatars on the
-  **Trends** graph; claim a `@handle`, invite by handle, accept/decline **Requests**,
-  tap a connected friend for their **privacy-gated** trend (today vs target, streak,
-  7-day adherence) or remove them. Plus a **3-day photo feed**: share a scanned meal
-  (toggle, default on), friends react with emojis and you receive the reactions.
-  Backed by `circle.py` + `posts.py` (CircleTable, PostsTable, S3 photos) on the v2
-  stack; trends/feed are gated to mutually-connected friends. Remaining: an **invite
-  deep-link** (`foodatpeace.app/i/<handle>`).
+  **Trends** graph; claim a `@handle`, **share an invite universal link + QR** that
+  connects both sides in one tap (`POST /circle/connect`), invite by handle,
+  accept/decline **Requests**, a **Manage circle** screen (connected / requests /
+  invited), tap a connected friend for their **privacy-gated** trend (today vs
+  target, streak, 7-day adherence) or remove them. Plus a **3-day photo feed**: share
+  a scanned meal (toggle, default on), friends react with emojis and you receive the
+  reactions. Backed by `circle.py` + `posts.py` (CircleTable, PostsTable, S3 photos)
+  on the v2 stack; trends/feed are gated to mutually-connected friends. The in-app
+  link handler (`app_links`) + `foodatpeace://` scheme ship in build 4; the
+  **universal link** needs the AASA hosted on `foodatpeace.app`
+  ([`store/INVITE_LINKS.md`](store/INVITE_LINKS.md)).
 
 **TODO (next up):**
 - [ ] **Google Sign-In** — `/auth/google` mirroring `/auth/apple`

@@ -10,6 +10,7 @@ food.
 Routes:
   POST /circle/register {handle, name?}    -> claim a unique @handle
   POST /circle/invite   {handle}           -> request to connect with @handle
+  POST /circle/connect  {handle}           -> one-tap mutual connect (invite link/QR)
   POST /circle/respond  {userId, action}   -> accept | decline an incoming request
   POST /circle/remove   {userId}           -> remove a friend / cancel a request
   GET  /circle/list                        -> {me, connected[], incoming[], outgoing[]}
@@ -277,6 +278,33 @@ def invite(uid, body):
     return {"status": "outgoing"}
 
 
+def connect(uid, body):
+    """Direct mutual connect from an invite link/QR. The inviter consented by
+    sharing the link, so the receiver's tap connects both sides immediately (no
+    separate approval). Unwanted connections can be pruned from the manage list.
+    Idempotent."""
+    mine = _my_card(uid)
+    if not mine:
+        raise ProxyError(400, "Claim a handle first.")
+    handle = normalize_handle(body.get("handle"))
+    target = _lookup_handle(handle)
+    if not target:
+        raise ProxyError(404, "No one with that handle.")
+    tid = target["userId"]
+    if tid == uid:
+        raise ProxyError(400, "That's your own invite link.")
+    target_handle = _circle().get_item(
+        Key={"pk": f"user#{tid}", "sk": "me"}
+    ).get("Item", {}).get("handle") or handle
+    _put_edge(uid, tid, "@" + target_handle, target.get("name"), "connected")
+    _put_edge(tid, uid, "@" + mine["handle"], mine.get("name"), "connected")
+    return {
+        "status": "connected",
+        "handle": "@" + target_handle,
+        "name": target.get("name"),
+    }
+
+
 def respond(uid, body):
     other = body.get("userId")
     action = body.get("action")
@@ -359,6 +387,7 @@ def handler(event, context):
         op = {
             "register": register,
             "invite": invite,
+            "connect": connect,
             "respond": respond,
             "remove": remove,
         }.get(path)

@@ -473,5 +473,31 @@
   "friendAccepted": "{name} joined your circle 🎉",
   "@friendAccepted": {
     "placeholders": { "name": { "type": "String" } }
-  }
+  },
+  "manageCircle": "Manage circle",
+  "shareInvite": "Share invite",
+  "scanToConnect": "Scan to add me to your circle",
+  "inviteLinkLabel": "Your invite link",
+  "copyLink": "Copy link",
+  "shareInviteMessage": "Add me on Food at Peace 🍵 {link}",
+  "@shareInviteMessage": {
+    "placeholders": { "link": { "type": "String" } }
+  },
+  "connectTitle": "Add to your circle",
+  "connectPrompt": "Connect with {handle}? You'll each see the other's daily food trends.",
+  "@connectPrompt": {
+    "placeholders": { "handle": { "type": "String" } }
+  },
+  "connectCta": "Connect",
+  "connecting": "Connecting…",
+  "connectedToast": "You're now connected with {name} 🎉",
+  "@connectedToast": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "connectFailed": "Couldn't connect — please try again.",
+  "sectionConnected": "Connected",
+  "sectionRequests": "Requests",
+  "sectionInvited": "Invited",
+  "cancelInvite": "Cancel",
+  "circleEmpty": "Your circle is empty. Share your invite link to add friends."
 }

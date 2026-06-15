@@ -60,6 +60,34 @@ void main() {
       expect(captured.headers['authorization'], 'Bearer tok');
     });
 
+    test('connect posts the handle and returns the friend name', () async {
+      late http.Request captured;
+      final mock = MockClient((req) async {
+        captured = req;
+        return http.Response(
+          jsonEncode({'status': 'connected', 'handle': '@bob', 'name': 'Bob'}),
+          200,
+        );
+      });
+      final c = CircleClient(baseUrl: 'https://x.test', httpClient: mock);
+      final name = await c.connect('tok', 'bob');
+      expect(name, 'Bob');
+      expect(captured.url.toString(), 'https://x.test/circle/connect');
+      expect(captured.method, 'POST');
+      expect((jsonDecode(captured.body) as Map)['handle'], 'bob');
+      expect(captured.headers['authorization'], 'Bearer tok');
+    });
+
+    test('connect throws CircleException on an unknown handle', () async {
+      final mock = MockClient((req) async => http.Response(
+          jsonEncode({'error': {'message': 'No one with that handle.'}}), 404));
+      final c = CircleClient(baseUrl: 'https://x.test', httpClient: mock);
+      await expectLater(
+        c.connect('tok', 'ghost'),
+        throwsA(isA<CircleException>()),
+      );
+    });
+
     test('register surfaces 409 (handle taken) as a status code, not a throw', () async {
       final mock = MockClient((req) async =>
           http.Response(jsonEncode({'error': {'message': 'taken'}}), 409));

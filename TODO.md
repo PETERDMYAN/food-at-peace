@@ -32,7 +32,18 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
   - Friend graph: claim `@handle`, invite, accept/decline, list, and privacy-gated
     friend trends ([`backend/src/circle.py`](backend/src/circle.py), `CircleTable`).
   - Your `@handle` — view / set / copy in the invite sheet.
-  - Remove a friend from the trend sheet.
+  - **Invite universal link + QR** — share `https://foodatpeace.app/i/<handle>`
+    (tappable in WeChat/WhatsApp or scanned as a QR). The receiver opens it and
+    **one tap connects both sides as mutual friends** (`POST /circle/connect`).
+    ([`invite_link.dart`](lib/src/data/invite_link.dart),
+    [`invite_card.dart`](lib/src/features/circle/invite_card.dart),
+    [`connect_sheet.dart`](lib/src/features/circle/connect_sheet.dart); in-app
+    handler in [`app.dart`](lib/app.dart) via `app_links`). A `foodatpeace://`
+    custom scheme is handled too (testable without the AASA — see
+    [`store/INVITE_LINKS.md`](store/INVITE_LINKS.md)).
+  - **Manage circle screen** — share/QR, connected (remove), incoming
+    (accept/decline), and invited (cancel)
+    ([`manage_friends_screen.dart`](lib/src/features/circle/manage_friends_screen.dart)).
   - **Photo feed ("stories")** — share a scanned meal (toggle, default on) to your
     circle; friends react with emojis; you receive the reactions; posts auto-expire
     after **3 days**. ([`backend/src/posts.py`](backend/src/posts.py), `PostsTable` +
@@ -40,19 +51,21 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
     [`circle_feed_screen.dart`](lib/src/features/circle/circle_feed_screen.dart)).
     The **story keeps the full-resolution photo**; the AI estimate uses a downscaled
     1024px copy.
-- **TestFlight** — `1.0.1 (2)` built + uploaded headlessly via the ASC API key
-  (see [`PUBLISHING.md`](PUBLISHING.md) §4).
+- **TestFlight** — `1.0.1 (4)` built + uploaded headlessly via the ASC API key
+  (see [`PUBLISHING.md`](PUBLISHING.md) §4). Adds the Associated Domains entitlement
+  + `foodatpeace://` URL scheme; signing auto-provisioned the new capability.
 
-Verified: Flutter 93 + backend 68 tests, `flutter analyze` clean. The signed-in
-Circle paths (invites + feed) need a real device (Apple ID) to exercise end-to-end
-— verified server-side with live two-user runs.
+Verified: Flutter 103 + backend 74 tests, `flutter analyze` clean. The signed-in
+Circle paths (invites + feed + connect) need a real device (Apple ID) to exercise
+end-to-end — verified server-side with live two-user runs (incl. connect).
 
 ## 🚧 Remaining
 
-1. **Invite deep-link** — `https://foodatpeace.app/i/<handle>` (and/or a
-   `foodatpeace://` custom scheme) opens the app with the invite pre-filled. Needs
-   the Associated Domains entitlement + a hosted `apple-app-site-association` (or
-   just the custom scheme to start) and an in-app link handler.
+1. **Host the invite-link AASA** *(you — universal link only)* — the in-app handler,
+   entitlement, and custom-scheme fallback all ship in build 4. For the **universal
+   link** to open the app from WeChat/WhatsApp you must own `foodatpeace.app` and
+   host [`store/apple-app-site-association`](store/apple-app-site-association) at
+   `/.well-known/`. Steps in [`store/INVITE_LINKS.md`](store/INVITE_LINKS.md).
 2. **Beans IAP** — purchases/subscription are **dev stubs** (credit locally; a
    reinstall resets the balance). Needs `in_app_purchase` StoreKit + a backend
    `/iap/validate` endpoint (Apple receipt validation) + **App Store Connect IAP

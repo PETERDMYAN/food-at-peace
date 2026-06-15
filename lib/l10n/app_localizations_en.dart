@@ -972,4 +972,62 @@ class AppLocalizationsEn extends AppLocalizations {
   String friendAccepted(String name) {
     return '$name joined your circle 🎉';
   }
+
+  @override
+  String get manageCircle => 'Manage circle';
+
+  @override
+  String get shareInvite => 'Share invite';
+
+  @override
+  String get scanToConnect => 'Scan to add me to your circle';
+
+  @override
+  String get inviteLinkLabel => 'Your invite link';
+
+  @override
+  String get copyLink => 'Copy link';
+
+  @override
+  String shareInviteMessage(String link) {
+    return 'Add me on Food at Peace 🍵 $link';
+  }
+
+  @override
+  String get connectTitle => 'Add to your circle';
+
+  @override
+  String connectPrompt(String handle) {
+    return 'Connect with $handle? You\'ll each see the other\'s daily food trends.';
+  }
+
+  @override
+  String get connectCta => 'Connect';
+
+  @override
+  String get connecting => 'Connecting…';
+
+  @override
+  String connectedToast(String name) {
+    return 'You\'re now connected with $name 🎉';
+  }
+
+  @override
+  String get connectFailed => 'Couldn\'t connect — please try again.';
+
+  @override
+  String get sectionConnected => 'Connected';
+
+  @override
+  String get sectionRequests => 'Requests';
+
+  @override
+  String get sectionInvited => 'Invited';
+
+  @override
+  String get cancelInvite => 'Cancel';
+
+  @override
+  String get circleEmpty =>
+      'Your circle is empty. Share your invite link to add friends.';
 }

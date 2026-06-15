@@ -11,7 +11,8 @@ Endpoints (all on the one HTTP API):
 - `POST /auth/apple` — Sign in with Apple → app session token.
 - `POST /sync` · `POST /account/delete` — authenticated delta sync + account deletion (Bearer).
 - `POST /event` · `GET /metrics` — owner-analytics counters (`x-app-token`).
-- `POST /circle/register|invite|respond|remove` · `GET /circle/list` — friend graph (Bearer).
+- `POST /circle/register|invite|connect|respond|remove` · `GET /circle/list` — friend graph (Bearer).
+  `connect` is one-tap mutual connect from an invite link/QR (both sides connected at once).
 - `POST /circle/post|react` · `GET /circle/feed` — 3-day photo feed + emoji reactions (Bearer).
 
 Tables: `SyncTable`, `MetricsTable`, `CircleTable`, `PostsTable` (the last with a
