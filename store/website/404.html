@@ -41,7 +41,7 @@
   .wechat strong { display: block; margin-bottom: 6px; font-size: 16px; }
   .wechat p { margin: 0 0 14px; color: #B4ABC8; font-size: 14px; line-height: 1.5; }
   .wechat b { color: #fff; }
-  /* the animated demo: a mock WeChat top-bar -> menu -> finger taps "Open in Safari" */
+  /* the animated demo: a mock WeChat top-bar -> menu -> finger taps "Open in default browser" */
   .wx-demo { position: relative; height: 132px; border-radius: 14px; overflow: hidden;
     background: linear-gradient(180deg, #15101F 0%, #0F0B17 100%); border: 1px solid rgba(255,255,255,.08); }
   .wx-bar { position: absolute; top: 0; left: 0; right: 0; height: 36px; display: flex; align-items: center;
@@ -80,7 +80,7 @@
     18%    { top: 8px; right: 8px; transform: scale(.74); }   /* tap ••• */
     30%    { transform: scale(1); }
     52%    { top: 56px; right: 78px; transform: scale(1); }   /* glide to menu item */
-    64%    { transform: scale(.74); }                          /* tap "Open in Safari" */
+    64%    { transform: scale(.74); }                          /* tap "Open in default browser" */
     74%    { transform: scale(1); }
     90%,100% { top: 56px; right: 78px; opacity: 0; }
   }
@@ -122,16 +122,16 @@
         sub: "A calm calorie & macro tracker. Add me and we'll see each other's daily trends.",
         open: "Open in the app", download: "Download on the App Store",
         wxTitle: "Open in your browser to continue",
-        wxBody: "WeChat can't open apps directly. Tap <b>•••</b> at the top-right, then <b>Open in Safari / Browser</b> — this page will then open the app (or the App Store).",
-        menuItem: "Open in Safari", foot: "iPhone only", footLink: "View on the App Store"
+        wxBody: "WeChat can't open apps directly. Tap <b>•••</b> at the top-right, then <b>Open in default browser</b> — this page will then open the app (or the App Store).",
+        menuItem: "Open in default browser", foot: "iPhone only", footLink: "View on the App Store"
       },
       zh: {
         title: "加入我的 Food at Peace 圈子",
         sub: "一个简洁安心的卡路里与营养记录工具。加我，一起看彼此每天的饮食趋势。",
         open: "在 App 中打开", download: "前往 App Store 下载",
         wxTitle: "请在浏览器中打开",
-        wxBody: "微信无法直接打开 App。请点击右上角 <b>•••</b>，再选择 <b>在 Safari / 浏览器中打开</b> — 然后此页面会自动打开 App（或前往 App Store）。",
-        menuItem: "在 Safari 中打开", foot: "仅限 iPhone", footLink: "在 App Store 查看"
+        wxBody: "微信无法直接打开 App。请点击右上角 <b>•••</b>，选择 <b>用默认浏览器打开</b> — 然后即可打开 App（或前往 App Store）。",
+        menuItem: "用默认浏览器打开", foot: "仅限 iPhone", footLink: "在 App Store 查看"
       }
     };
 
