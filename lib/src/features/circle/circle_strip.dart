@@ -205,35 +205,11 @@ class _InviteSheetState extends ConsumerState<_InviteSheet> {
     AppLocalizations t,
     ScaffoldMessengerState messenger,
   ) async {
-    final controller = TextEditingController(
-      text: ref.read(myCircleHandleProvider) ?? '',
-    );
     final submitted = await showDialog<String>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(t.setHandle),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          decoration: InputDecoration(
-            prefixText: '@',
-            helperText: t.handleHint,
-          ),
-          onSubmitted: (v) => Navigator.pop(ctx, v),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(t.cancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx, controller.text),
-            child: Text(t.save),
-          ),
-        ],
-      ),
+      builder: (_) =>
+          _SetHandleDialog(initial: ref.read(myCircleHandleProvider)),
     );
-    controller.dispose();
     if (submitted == null || submitted.trim().isEmpty) return;
     final outcome = await ref.read(circleProvider.notifier).setHandle(submitted);
     if (!mounted) return;
@@ -245,6 +221,52 @@ class _InviteSheetState extends ConsumerState<_InviteSheet> {
       SetHandleResult.error => t.handleError,
     };
     messenger.showSnackBar(SnackBar(content: Text(msg)));
+  }
+}
+
+/// Handle-entry dialog. Owns its [TextEditingController] so it's disposed only
+/// after the dismiss animation finishes — disposing it synchronously after
+/// `showDialog` returns crashes the dialog mid-animation.
+class _SetHandleDialog extends StatefulWidget {
+  const _SetHandleDialog({this.initial});
+
+  final String? initial;
+
+  @override
+  State<_SetHandleDialog> createState() => _SetHandleDialogState();
+}
+
+class _SetHandleDialogState extends State<_SetHandleDialog> {
+  late final _controller = TextEditingController(text: widget.initial ?? '');
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    return AlertDialog(
+      title: Text(t.setHandle),
+      content: TextField(
+        controller: _controller,
+        autofocus: true,
+        decoration: InputDecoration(prefixText: '@', helperText: t.handleHint),
+        onSubmitted: (v) => Navigator.pop(context, v),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: Text(t.cancel),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(context, _controller.text),
+          child: Text(t.save),
+        ),
+      ],
+    );
   }
 }
 
