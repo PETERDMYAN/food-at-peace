@@ -191,14 +191,9 @@ class _InviteSheetState extends ConsumerState<_InviteSheet> {
             // Primary path: share a universal invite link / QR.
             if (myHandle != null) ...[
               InviteShareCard(handle: myHandle),
-              const SizedBox(height: 24),
-              Text(
-                t.inviteHandleLabel,
-                style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-              ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 20),
+              const Divider(),
+              const SizedBox(height: 12),
             ],
             // Secondary path: invite by typing a friend's @handle.
             TextField(

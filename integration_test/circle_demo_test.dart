@@ -54,9 +54,14 @@ void main() {
     await beat(t, 2000);
     expect(find.text('@peteryan'), findsOneWidget); // your handle, with copy + edit
 
-    // Invite someone by their handle (closes the sheet).
+    // Invite someone by their handle (closes the sheet). The sheet now also
+    // shows the QR/share card, so scroll the manual field + button into view.
+    await t.ensureVisible(find.byType(TextField).first);
+    await beat(t, 600);
     await t.enterText(find.byType(TextField).first, 'alexlim');
     await beat(t, 800);
+    await t.ensureVisible(find.widgetWithText(FilledButton, 'Send invite'));
+    await beat(t, 400);
     await t.tap(find.widgetWithText(FilledButton, 'Send invite').hitTestable());
     await beat(t, 1800);
 
