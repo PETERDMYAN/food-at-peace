@@ -62,11 +62,42 @@ The ready-to-host file is committed at
 
 (`GJB4AB92L4` is the Team ID; `com.foodatpeace.foodAtPeace` the bundle ID.)
 
-If you don't own a domain yet: any static host works (the same GitHub Pages site
-that serves the privacy policy can serve `/.well-known/apple-app-site-association`
-from the repo root — but a **project** Pages site lives under a path, and AASA
-must be at the domain root, so you'd need a custom domain or a `<user>.github.io`
-root repo). A custom domain on the existing Pages site is the simplest path.
+### The website to host — [`store/website/`](website/)
+
+A ready-to-host static site that makes the link **smart** (this is what fixes the
+"link doesn't work / detect install / prompt download" report):
+
+```
+store/website/
+  .well-known/apple-app-site-association   # AASA (universal links)
+  i/index.html                             # the /i/<handle> landing page
+  404.html                                 # same page — GitHub Pages serves this
+                                           #   for /i/<handle> (no per-handle file)
+  index.html                               # plain homepage → App Store
+```
+
+The landing page (`404.html` / `i/index.html`) detects the visitor and routes:
+- **iOS, app installed** → opens the app (Universal Link, or the `foodatpeace://`
+  scheme + Safari Smart App Banner "OPEN").
+- **iOS, not installed** → the App Store (`id6777715561`) to download.
+- **WeChat in-app browser** → a "tap ••• → Open in Safari" hand-off, because WeChat
+  **blocks** Universal Links *and* App Store redirects (see `TODO.md` §6 for the
+  native WeChat-program follow-up).
+- **Android / desktop** → App Store / homepage (the app is iPhone-only).
+
+Host it at the **domain root** so paths resolve as `foodatpeace.app/.well-known/...`
+and `foodatpeace.app/i/<handle>`:
+
+1. **Register `foodatpeace.app`** (e.g. Cloudflare/Porkbun/Namecheap, ~US$14/yr).
+   `.app` is HTTPS-only (HSTS preloaded) — any modern host gives a free cert.
+2. **Publish `store/website/` at the domain root.** Simplest with the existing
+   GitHub Pages: point a **custom domain** (`foodatpeace.app`) at the Pages site
+   and put these four files at the served root (Pages serves `404.html` for
+   `/i/<handle>`, and auto-provisions HTTPS). Cloudflare Pages / Netlify work too
+   (set a `/i/* → /i/index.html 200` rewrite). The AWS API stack can also serve it.
+3. **Verify:** `curl -i https://foodatpeace.app/.well-known/apple-app-site-association`
+   returns the JSON over HTTPS with no redirect, and
+   `https://foodatpeace.app/i/<yourhandle>` shows the landing page.
 
 ## Step 2 — Enable the Associated Domains capability on the App ID
 

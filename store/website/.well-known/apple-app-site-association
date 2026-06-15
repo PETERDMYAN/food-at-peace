@@ -1,0 +1,15 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["GJB4AB92L4.com.foodatpeace.foodAtPeace"],
+        "components": [
+          {
+            "/": "/i/*",
+            "comment": "Circle of Food invite links — open the app to the Connect sheet"
+          }
+        ]
+      }
+    ]
+  }
+}
