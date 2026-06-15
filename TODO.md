@@ -118,6 +118,17 @@ photo → B reacts ❤️ → A receives it (all confirmed server-side too). Dri
    - Prereq: a **verified business entity** (营业执照 — China-registered company, or a
      third-party agent), ~300 RMB/yr verification. Then add the WeChat SDK + a new iOS
      build. Until then, the landing page's Safari hand-off is the supported WeChat path.
+7. **Referral / new-user Beans** *(growth — pairs with the invite links + §2 IAP)* —
+   reward Beans through the invite loop. New users **already** get a **21-Bean welcome
+   grant** on first launch (`BeanPricing.signupGrant`, granted locally in
+   `BeansNotifier.build`). Add a **referral bonus**: when someone installs via an
+   invite link (`foodatpeace.app/i/<handle>`) and becomes a **verified new user**
+   (Sign in with Apple → first account), credit the **inviter** Beans — and optionally
+   give the new user an extra welcome bonus. Needs: a **server-side Beans ledger**
+   (Beans are local stubs today, see §2), invite **attribution** (carry the inviter
+   handle from link → install → first sign-in, e.g. deferred deep link / pasteboard
+   match against `circle.connect`), **one-reward-per-new-account** anti-abuse, and a
+   "you earned N Beans 🫘" notice.
 
 ## 📱 Device-only QA (QA_REPORT §5)
 
