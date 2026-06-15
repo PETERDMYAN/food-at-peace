@@ -70,19 +70,22 @@ photo → B reacts ❤️ → A receives it (all confirmed server-side too). Dri
 
 ## 🚧 Remaining
 
-1. **Register `foodatpeace.app` + publish the invite site** *(you — registrar +
-   Cloudflare Pages)* — without this the shared `foodatpeace.app/i/<handle>` link is
-   dead (domain doesn't resolve — fails in Chrome too, not a WeChat bug). The smart
-   landing site is **built** at [`store/website/`](store/website/): AASA + the
-   `/i/<handle>` page (app installed → open the app · not installed → App Store
-   `id6777715561` · WeChat → "Open in Safari" hand-off), plus `_redirects`/`_headers`
-   for Cloudflare Pages. The app handler/entitlement/`foodatpeace://` scheme already
-   shipped (build 4). **Remaining (you):** (a) register `foodatpeace.app` (Cloudflare
-   Registrar, ~US$13/yr — `.app` is HTTPS-only), (b) a Cloudflare Pages project from
-   branch `v2`, build output dir `store/website`, custom domain `foodatpeace.app`.
-   Click-by-click in [`store/INVITE_LINKS.md`](store/INVITE_LINKS.md). Then ping me to
-   verify the AASA + `/i/<handle>` end-to-end; testers reinstall once (iOS caches the
-   AASA at install). Native in-WeChat open is a separate follow-up (§6).
+1. **✅ `foodatpeace.app` is LIVE — invite site hosted on AWS** (2026-06-15) —
+   registered via **Route53** (privacy + auto-renew) and served by **CloudFront
+   `E2M22G0LAT1HKW` + ACM HTTPS** over a private S3 bucket (`foodatpeace-app-web`,
+   `ap-southeast-1`, OAC). Site source: [`store/website/`](store/website/). Verified
+   live: `https://foodatpeace.app/.well-known/apple-app-site-association` → `200`,
+   `application/json`, no redirect; `/i/<handle>` → the smart landing (open app · App
+   Store `id6777715561` · WeChat Safari hand-off); HTTP→HTTPS 301. **Remaining (you):**
+   (a) click the **ICANN WHOIS-verification email** (to peter.yandongming@gmail.com,
+   from Amazon Registrar) within 15 days or the domain is suspended; (b) testers
+   **reinstall once** so iOS caches the AASA. **Note:** universal links open the app
+   only on builds carrying the `applinks:foodatpeace.app` entitlement (TestFlight build
+   4+) — the **public App Store 1.0.0 does not have it**, so until v2 ships to the App
+   Store the link's download path lands on 1.0.0 (no Circle). Re-deploy the site after
+   edits with: `aws s3 sync store/website s3://foodatpeace-app-web --delete` +
+   `aws cloudfront create-invalidation --distribution-id E2M22G0LAT1HKW --paths '/*'`.
+   Native in-WeChat open is the §6 follow-up.
 2. **Beans IAP** — purchases/subscription are **dev stubs** (credit locally; a
    reinstall resets the balance). Needs `in_app_purchase` StoreKit + a backend
    `/iap/validate` endpoint (Apple receipt validation) + **App Store Connect IAP
