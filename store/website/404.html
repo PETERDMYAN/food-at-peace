@@ -1,103 +1,175 @@
 <!doctype html>
-<html lang="en">
+<html id="html" lang="en">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>Food at Peace — join my circle</title>
-<!-- iOS Safari Smart App Banner: shows "OPEN" if the app is installed, "GET"
-     (App Store) if it isn't — Apple does the installed/not-installed detection. -->
+<title>Food at Peace</title>
+<!-- iOS Safari Smart App Banner: shows "OPEN" if installed, "GET" (App Store) if not. -->
 <meta name="apple-itunes-app" content="app-id=6777715561" />
 <meta name="theme-color" content="#0E0B14" />
-<meta name="description" content="Join my circle on Food at Peace — a calm calorie & macro tracker." />
+<meta name="description" content="Join my circle on Food at Peace." />
 <style>
   :root { color-scheme: dark; }
   * { box-sizing: border-box; }
   body {
-    margin: 0; min-height: 100vh; display: flex; align-items: center;
-    justify-content: center; padding: 28px;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    padding: 28px; font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", Roboto, sans-serif;
     background: radial-gradient(120% 120% at 50% 0%, #1B1330 0%, #0E0B14 60%);
     color: #fff; -webkit-font-smoothing: antialiased;
   }
   main { width: 100%; max-width: 420px; text-align: center; }
   .logo {
-    width: 84px; height: 84px; margin: 0 auto 18px; border-radius: 22px;
-    display: grid; place-items: center; font-size: 42px;
-    background: linear-gradient(135deg, #7C83FF 0%, #C86BFF 100%);
+    width: 84px; height: 84px; margin: 0 auto 18px; border-radius: 22px; display: grid; place-items: center;
+    font-size: 42px; background: linear-gradient(135deg, #7C83FF 0%, #C86BFF 100%);
     box-shadow: 0 14px 40px rgba(176, 107, 255, .35);
   }
   h1 { font-size: 24px; line-height: 1.25; margin: 0 0 6px; font-weight: 800; }
   .handle { font-size: 18px; font-weight: 700; color: #C9B8FF; margin: 0 0 14px; }
   .sub { color: #B4ABC8; font-size: 15px; line-height: 1.5; margin: 0 0 26px; }
   .btn {
-    display: block; width: 100%; padding: 15px 18px; margin: 10px 0;
-    border-radius: 16px; font-size: 16px; font-weight: 700; text-decoration: none;
-    color: #fff; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.14);
+    display: block; width: 100%; padding: 15px 18px; margin: 10px 0; border-radius: 16px;
+    font-size: 16px; font-weight: 700; text-decoration: none; color: #fff;
+    background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.14);
   }
-  .btn.primary {
-    background: linear-gradient(135deg, #7C83FF 0%, #C86BFF 100%);
-    border: none; box-shadow: 0 10px 30px rgba(124, 131, 255, .35);
-  }
-  .wechat {
-    margin: 8px 0 0; padding: 18px; border-radius: 16px; text-align: left;
-    background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.14);
-  }
-  .wechat strong { display: block; margin-bottom: 6px; font-size: 16px; }
-  .wechat p { margin: 0; color: #B4ABC8; font-size: 14px; line-height: 1.5; }
-  .arrow { float: right; font-size: 26px; margin: -6px 2px 0 0; }
+  .btn.primary { background: linear-gradient(135deg, #7C83FF 0%, #C86BFF 100%); border: none; box-shadow: 0 10px 30px rgba(124, 131, 255, .35); }
   .foot { margin-top: 22px; color: #6E6685; font-size: 13px; }
   .foot a { color: #9B92B5; }
+
+  /* ---- WeChat hand-off card + animation ---- */
+  .wechat { margin: 4px 0 0; padding: 18px 18px 8px; border-radius: 16px; text-align: left;
+    background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.14); }
+  .wechat strong { display: block; margin-bottom: 6px; font-size: 16px; }
+  .wechat p { margin: 0 0 14px; color: #B4ABC8; font-size: 14px; line-height: 1.5; }
+  .wechat b { color: #fff; }
+  /* the animated demo: a mock WeChat top-bar -> menu -> finger taps "Open in Safari" */
+  .wx-demo { position: relative; height: 132px; border-radius: 14px; overflow: hidden;
+    background: linear-gradient(180deg, #15101F 0%, #0F0B17 100%); border: 1px solid rgba(255,255,255,.08); }
+  .wx-bar { position: absolute; top: 0; left: 0; right: 0; height: 36px; display: flex; align-items: center;
+    justify-content: space-between; padding: 0 14px; background: rgba(255,255,255,.05);
+    border-bottom: 1px solid rgba(255,255,255,.06); font-size: 14px; color: #9B92B5; }
+  .wx-dots { font-weight: 800; letter-spacing: 1px; color: #fff; padding: 2px 6px; border-radius: 8px;
+    animation: wxRing 4s ease-out infinite; }
+  .wx-menu { position: absolute; top: 44px; right: 12px; width: 186px; padding: 5px; border-radius: 12px;
+    background: #241C36; box-shadow: 0 12px 28px rgba(0,0,0,.45); border: 1px solid rgba(255,255,255,.10);
+    transform-origin: top right; animation: wxMenuIn 4s ease-out infinite; }
+  .wx-item { display: flex; align-items: center; gap: 8px; padding: 9px 10px; border-radius: 9px;
+    font-size: 13px; color: #fff; }
+  .wx-item.hl { animation: wxItemHL 4s ease-out infinite; }
+  .wx-item .ic { font-size: 15px; }
+  .wx-finger { position: absolute; width: 22px; height: 22px; border-radius: 50%;
+    background: rgba(255,255,255,.92); box-shadow: 0 0 0 6px rgba(255,255,255,.18); pointer-events: none;
+    animation: wxFinger 4s cubic-bezier(.5,0,.2,1) infinite; }
+  @keyframes wxRing {
+    0%,12% { box-shadow: 0 0 0 0 rgba(124,131,255,.6); background: rgba(124,131,255,.0); }
+    26%    { box-shadow: 0 0 0 13px rgba(124,131,255,0); background: rgba(124,131,255,.35); }
+    34%,100% { box-shadow: 0 0 0 0 rgba(124,131,255,0); background: rgba(124,131,255,.0); }
+  }
+  @keyframes wxMenuIn {
+    0%,30% { opacity: 0; transform: translateY(8px) scale(.95); }
+    42%,92% { opacity: 1; transform: translateY(0) scale(1); }
+    100% { opacity: 0; transform: translateY(8px) scale(.95); }
+  }
+  @keyframes wxItemHL {
+    0%,48% { background: transparent; }
+    60%,86% { background: rgba(124,131,255,.32); }
+    100% { background: transparent; }
+  }
+  @keyframes wxFinger {
+    0%     { top: 8px; right: 8px; opacity: 0; transform: scale(1); }
+    8%     { opacity: 1; }
+    18%    { top: 8px; right: 8px; transform: scale(.74); }   /* tap ••• */
+    30%    { transform: scale(1); }
+    52%    { top: 56px; right: 78px; transform: scale(1); }   /* glide to menu item */
+    64%    { transform: scale(.74); }                          /* tap "Open in Safari" */
+    74%    { transform: scale(1); }
+    90%,100% { top: 56px; right: 78px; opacity: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .wx-dots, .wx-menu, .wx-item.hl, .wx-finger { animation: none; }
+    .wx-menu { opacity: 1; transform: none; }
+  }
 </style>
 </head>
 <body>
   <main>
     <div class="logo">🍵</div>
-    <h1 id="title">Join my circle on Food&nbsp;at&nbsp;Peace</h1>
+    <h1 id="title"></h1>
     <p class="handle" id="who"></p>
-    <p class="sub">A calm calorie &amp; macro tracker. Add me and we'll see each other's daily trends.</p>
+    <p class="sub" id="sub"></p>
 
-    <a class="btn primary" id="open" href="https://apps.apple.com/app/id6777715561">Open in the app</a>
-    <a class="btn" id="download" href="https://apps.apple.com/app/id6777715561">Download on the App&nbsp;Store</a>
+    <a class="btn primary" id="open" href="https://apps.apple.com/app/id6777715561"></a>
+    <a class="btn" id="download" href="https://apps.apple.com/app/id6777715561"></a>
 
     <div class="wechat" id="wechat" hidden>
-      <span class="arrow">⤴</span>
-      <strong>Open in Safari to continue</strong>
-      <p>WeChat can't open apps directly. Tap <b>•••</b> at the top-right → <b>Open in Safari / Browser</b>, then this page will open the app (or the App&nbsp;Store).</p>
+      <strong id="wxTitle"></strong>
+      <p id="wxBody"></p>
+      <div class="wx-demo" aria-hidden="true">
+        <div class="wx-bar"><span>✕</span><span class="wx-dots">•••</span></div>
+        <div class="wx-menu"><div class="wx-item hl"><span class="ic">🧭</span><span id="wxMenuItem"></span></div></div>
+        <span class="wx-finger"></span>
+      </div>
     </div>
 
-    <p class="foot">iPhone only · <a id="footlink" href="https://apps.apple.com/app/id6777715561">View on the App Store</a></p>
+    <p class="foot"><span id="foot"></span> · <a id="footlink" href="https://apps.apple.com/app/id6777715561"></a></p>
   </main>
 
 <script>
   (function () {
     var APPSTORE = 'https://apps.apple.com/app/id6777715561';
-    // Path is /i/<handle>; read the handle client-side so one page serves all links.
+    var T = {
+      en: {
+        title: "Join my circle on Food at Peace",
+        sub: "A calm calorie & macro tracker. Add me and we'll see each other's daily trends.",
+        open: "Open in the app", download: "Download on the App Store",
+        wxTitle: "Open in your browser to continue",
+        wxBody: "WeChat can't open apps directly. Tap <b>•••</b> at the top-right, then <b>Open in Safari / Browser</b> — this page will then open the app (or the App Store).",
+        menuItem: "Open in Safari", foot: "iPhone only", footLink: "View on the App Store"
+      },
+      zh: {
+        title: "加入我的 Food at Peace 圈子",
+        sub: "一个简洁安心的卡路里与营养记录工具。加我，一起看彼此每天的饮食趋势。",
+        open: "在 App 中打开", download: "前往 App Store 下载",
+        wxTitle: "请在浏览器中打开",
+        wxBody: "微信无法直接打开 App。请点击右上角 <b>•••</b>，再选择 <b>在 Safari / 浏览器中打开</b> — 然后此页面会自动打开 App（或前往 App Store）。",
+        menuItem: "在 Safari 中打开", foot: "仅限 iPhone", footLink: "在 App Store 查看"
+      }
+    };
+
+    var ua = navigator.userAgent || '';
+    var isWeChat = /MicroMessenger/i.test(ua);
+    var isIOS = /iPhone|iPad|iPod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    var navLang = (navigator.language || navigator.userLanguage || 'en').toLowerCase();
+    // Follow the device language; inside WeChat always use Chinese.
+    var lang = isWeChat ? 'zh' : (navLang.indexOf('zh') === 0 ? 'zh' : 'en');
+    var t = T[lang];
+    document.getElementById('html').setAttribute('lang', lang === 'zh' ? 'zh-CN' : 'en');
+
     var parts = location.pathname.split('/').filter(Boolean);
     var idx = parts.indexOf('i');
     var raw = idx >= 0 ? (parts[idx + 1] || '') : (parts[parts.length - 1] || '');
     var handle = raw.replace(/[^a-z0-9_]/gi, '').toLowerCase();
-    var ua = navigator.userAgent || '';
-    var isWeChat = /MicroMessenger/i.test(ua);
-    var isIOS = /iPhone|iPad|iPod/i.test(ua) ||
-                (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
     var scheme = handle ? ('foodatpeace://i/' + handle) : null;
 
+    document.getElementById('title').textContent = t.title;
+    document.getElementById('sub').textContent = t.sub;
     if (handle) document.getElementById('who').textContent = '@' + handle;
     var openBtn = document.getElementById('open');
-    if (scheme) openBtn.setAttribute('href', scheme);
+    openBtn.textContent = t.open; if (scheme) openBtn.setAttribute('href', scheme);
+    var dl = document.getElementById('download'); dl.textContent = t.download; dl.setAttribute('href', APPSTORE);
+    document.getElementById('wxTitle').textContent = t.wxTitle;
+    document.getElementById('wxBody').innerHTML = t.wxBody;
+    document.getElementById('wxMenuItem').textContent = t.menuItem;
+    document.getElementById('foot').textContent = t.foot;
+    var fl = document.getElementById('footlink'); fl.textContent = t.footLink; fl.setAttribute('href', APPSTORE);
 
     if (isWeChat) {
-      // WeChat's in-app browser blocks Universal Links AND App Store redirects.
-      // The only path is to hand off to Safari; hide the (non-working) buttons.
       document.getElementById('wechat').hidden = false;
       openBtn.style.display = 'none';
-      document.getElementById('download').style.display = 'none';
+      dl.style.display = 'none';
       return;
     }
-
     if (isIOS && scheme) {
-      // Try to open the app; if we're still here ~1.4s later it isn't installed,
-      // so send them to the App Store to download it.
+      // Try to open the app; if we're still here ~1.4s later it isn't installed → App Store.
       var fallback = setTimeout(function () { location.href = APPSTORE; }, 1400);
       var cancel = function () { clearTimeout(fallback); };
       document.addEventListener('visibilitychange', function () { if (document.hidden) cancel(); });
