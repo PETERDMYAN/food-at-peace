@@ -1,8 +1,22 @@
-# Food at Peace — vision proxy (AWS Lambda)
+# Food at Peace — backend (AWS SAM)
 
-A small Lambda + API Gateway proxy that holds the Anthropic API key **server-side**
-so it never ships inside the app. The app POSTs a food photo; the proxy calls
-Anthropic and returns the structured nutrition estimate.
+An AWS SAM stack of Lambdas behind one HTTP API. It began as a vision proxy that
+holds the Anthropic API key **server-side** (so no key ships in the app) and has
+grown to also cover accounts/sync, account deletion, owner analytics, and the
+**Circle** social layer (friend graph + a photo feed).
+
+Endpoints (all on the one HTTP API):
+- `POST /analyze` — food photo → structured nutrition estimate (Claude). `x-app-token`.
+  Accepts an optional `lang` (`en`/`zh`) so the estimate comes back in the app's language.
+- `POST /auth/apple` — Sign in with Apple → app session token.
+- `POST /sync` · `POST /account/delete` — authenticated delta sync + account deletion (Bearer).
+- `POST /event` · `GET /metrics` — owner-analytics counters (`x-app-token`).
+- `POST /circle/register|invite|respond|remove` · `GET /circle/list` — friend graph (Bearer).
+- `POST /circle/post|react` · `GET /circle/feed` — 3-day photo feed + emoji reactions (Bearer).
+
+Tables: `SyncTable`, `MetricsTable`, `CircleTable`, `PostsTable` (the last with a
+3-day DynamoDB TTL). Circle photos live in an S3 bucket with a 3-day lifecycle.
+Handlers are pure stdlib + `boto3`, except `auth.py` (PyJWT[crypto], bundled by `sam build`).
 
 ```
 App ──POST /analyze {image, mediaType} + x-app-token──▶ API Gateway (HTTP API, CORS)
@@ -48,8 +62,20 @@ its next cold start (or redeploy to force it).
 
 ## 2. Deploy
 
+> ⚠️ **Two isolated stacks share these secrets.** Production (1.0.x) is
+> `food-at-peace-vision-proxy` (API `6m19l2b025`) — **never redeploy it for dev work.**
+> The `v2` branch runs on `food-at-peace-vision-proxy-v2` (API `p21hoawoi5`).
+> `samconfig.toml`'s default targets the **prod** name, so pass the v2 name explicitly.
+
 ```bash
 sam build
+
+# v2 (current dev stack):
+sam deploy --stack-name food-at-peace-vision-proxy-v2 \
+  --region ap-southeast-1 --capabilities CAPABILITY_IAM --resolve-s3 \
+  --no-confirm-changeset --parameter-overrides AppleClientId=com.foodatpeace.foodAtPeace
+
+# Production (only when intentionally shipping to the live app):
 sam deploy --guided     # first time; afterwards just `sam deploy`
 ```
 

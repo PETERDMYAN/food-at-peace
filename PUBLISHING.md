@@ -83,7 +83,30 @@ flutter build ipa --release \
 3. **Product → Archive**
 4. When done, the Organizer opens → continue to Step 4 path B.
 
-## Step 4 — Upload the build  **(you)** — pick ONE
+## Step 4 — Upload the build — pick ONE
+
+> ✅ **Now automatable headlessly** with an App Store Connect API key (`.p8`) — no
+> Xcode GUI needed. This is how the v2 TestFlight builds ship; build `1.0.1 (2)`
+> was uploaded this way on 2026-06-15. See **Path D**.
+
+**Path D — App Store Connect API key (headless, recommended):** with the `.p8`
+key + its Key ID + Issuer ID (the Issuer ID is at App Store Connect → Users and
+Access → Integrations). Bump the build number in `pubspec.yaml` first, then:
+```bash
+export DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer
+# Archives fine; its own IPA export fails (no distribution cert) — export separately below:
+flutter build ipa --release --dart-define-from-file=dart_defines.json \
+  --export-options-plist=ios/ExportOptions.plist
+mkdir -p ~/.appstoreconnect/private_keys && cp AuthKey_<KEYID>.p8 ~/.appstoreconnect/private_keys/
+# Export-sign — -allowProvisioningUpdates + the key provisions the distribution cert/profile:
+xcodebuild -exportArchive -archivePath build/ios/archive/Runner.xcarchive \
+  -exportOptionsPlist ios/ExportOptions.plist -exportPath build/ios/ipa \
+  -allowProvisioningUpdates -authenticationKeyPath ~/.appstoreconnect/private_keys/AuthKey_<KEYID>.p8 \
+  -authenticationKeyID <KEYID> -authenticationKeyIssuerID <ISSUER_ID>
+# Upload to App Store Connect / TestFlight:
+xcrun altool --upload-app --type ios --file build/ios/ipa/food_at_peace.ipa \
+  --apiKey <KEYID> --apiIssuer <ISSUER_ID>
+```
 
 **Path A — Transporter (easiest):** install **Transporter** from the Mac App
 Store, sign in, drag `build/ios/ipa/food_at_peace.ipa` in, click **Deliver**.
@@ -180,6 +203,6 @@ What was done:
 |---|---|
 | Bundle ID | `com.foodatpeace.foodAtPeace` |
 | Team ID | `GJB4AB92L4` |
-| Version / build | `1.0.0` / `3` |
+| Version / build | `1.0.0 (3)` live on the App Store · `1.0.1 (2)` (v2) on TestFlight |
 | IPA output | `build/ios/ipa/food_at_peace.ipa` |
 | Build env | `DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer LANG=en_US.UTF-8` |
