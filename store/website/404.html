@@ -19,9 +19,8 @@
   }
   main { width: 100%; max-width: 420px; text-align: center; }
   .logo {
-    width: 84px; height: 84px; margin: 0 auto 18px; border-radius: 22px; display: grid; place-items: center;
-    font-size: 42px; background: linear-gradient(135deg, #7C83FF 0%, #C86BFF 100%);
-    box-shadow: 0 14px 40px rgba(176, 107, 255, .35);
+    width: 84px; height: 84px; margin: 0 auto 18px; border-radius: 22px; display: block;
+    object-fit: cover; box-shadow: 0 14px 40px rgba(176, 107, 255, .35);
   }
   h1 { font-size: 24px; line-height: 1.25; margin: 0 0 6px; font-weight: 800; }
   .handle { font-size: 18px; font-weight: 700; color: #C9B8FF; margin: 0 0 14px; }
@@ -34,6 +33,15 @@
   .btn.primary { background: linear-gradient(135deg, #7C83FF 0%, #C86BFF 100%); border: none; box-shadow: 0 10px 30px rgba(124, 131, 255, .35); }
   .foot { margin-top: 22px; color: #6E6685; font-size: 13px; }
   .foot a { color: #9B92B5; }
+
+  /* ---- WeChat: bouncing pointer to the real ••• at the window's top-right ---- */
+  .wx-top { position: fixed; top: 3px; right: 12px; z-index: 60; display: flex; flex-direction: column;
+    align-items: flex-end; gap: 3px; animation: wxTopBounce 1.15s ease-in-out infinite; pointer-events: none; }
+  .wx-top .tri { width: 0; height: 0; border-left: 11px solid transparent; border-right: 11px solid transparent;
+    border-bottom: 16px solid #C9B8FF; margin-right: 7px; filter: drop-shadow(0 0 8px rgba(124,131,255,.95)); }
+  .wx-top .lbl { background: linear-gradient(135deg, #7C83FF, #C86BFF); color: #fff; font-size: 12px;
+    font-weight: 800; padding: 5px 11px; border-radius: 13px; white-space: nowrap; box-shadow: 0 8px 20px rgba(0,0,0,.45); }
+  @keyframes wxTopBounce { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
 
   /* ---- WeChat hand-off card + animation ---- */
   .wechat { margin: 4px 0 0; padding: 18px 18px 8px; border-radius: 16px; text-align: left;
@@ -91,8 +99,12 @@
 </style>
 </head>
 <body>
+  <div class="wx-top" id="wxTop" hidden>
+    <div class="tri"></div>
+    <div class="lbl" id="wxTopLabel"></div>
+  </div>
   <main>
-    <div class="logo">🍵</div>
+    <img class="logo" src="/icon.png" alt="Food at Peace" width="84" height="84" />
     <h1 id="title"></h1>
     <p class="handle" id="who"></p>
     <p class="sub" id="sub"></p>
@@ -123,7 +135,7 @@
         open: "Open in the app", download: "Download on the App Store",
         wxTitle: "Open in your browser to continue",
         wxBody: "WeChat can't open apps directly. Tap <b>•••</b> at the top-right, then <b>Open in default browser</b> — this page will then open the app (or the App Store).",
-        menuItem: "Open in default browser", foot: "iPhone only", footLink: "View on the App Store"
+        menuItem: "Open in default browser", wxTop: "Tap ••• up here", foot: "iPhone only", footLink: "View on the App Store"
       },
       zh: {
         title: "加入我的 Food at Peace 圈子",
@@ -131,7 +143,7 @@
         open: "在 App 中打开", download: "前往 App Store 下载",
         wxTitle: "请在浏览器中打开",
         wxBody: "微信无法直接打开 App。请点击右上角 <b>•••</b>，选择 <b>用默认浏览器打开</b> — 然后即可打开 App（或前往 App Store）。",
-        menuItem: "用默认浏览器打开", foot: "仅限 iPhone", footLink: "在 App Store 查看"
+        menuItem: "用默认浏览器打开", wxTop: "点击右上角 •••", foot: "仅限 iPhone", footLink: "在 App Store 查看"
       }
     };
 
@@ -164,6 +176,8 @@
 
     if (isWeChat) {
       document.getElementById('wechat').hidden = false;
+      document.getElementById('wxTopLabel').textContent = t.wxTop;
+      document.getElementById('wxTop').hidden = false;
       openBtn.style.display = 'none';
       dl.style.display = 'none';
       return;
