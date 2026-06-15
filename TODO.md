@@ -97,6 +97,12 @@ photo → B reacts ❤️ → A receives it (all confirmed server-side too). Dri
    and after. Keep the request **backward-compatible** with the shipped 1.0.0 app
    (see the `production-safety` skill) and keep the Dart/Python request builders in
    sync. Mirrored in tasks.
+5. **Rate-the-app prompt after 5 opens** — on the 5th app open, show the native
+   App Store review prompt. Use the `in_app_review` package
+   (`SKStoreReviewController` on iOS); count opens in prefs (the app already
+   emits an `open` analytics event — reuse/extend that), and only request once
+   (iOS rate-limits the prompt anyway). Gate behind onboarding-complete so we
+   don't ask brand-new users.
 
 ## 📱 Device-only QA (QA_REPORT §5)
 
