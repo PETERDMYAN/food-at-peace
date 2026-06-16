@@ -99,10 +99,10 @@ photo → B reacts ❤️ → A receives it (all confirmed server-side too). Dri
    **review screenshots** (the iridescent bean mark, not a coin), **all-territory
    availability**, and state **`READY_TO_SUBMIT`** — the whole product setup was done via
    the ASC API (the lingering "Missing Metadata" was just unset availability, fixed via
-   `inAppPurchaseAvailabilities`; *not* the agreement). **Only-when-needed (you, ASC UI —
-   no API):** accept the **Paid Apps agreement** + banking/tax before going live with
-   real sales; add a **Sandbox tester** before on-device purchase testing — neither
-   blocks development. **Next (me):** switch the paywall (`beans_screen.dart`) from
+   `inAppPurchaseAvailabilities`; *not* the agreement). **ASC side fully live (2026-06-16):**
+   Paid Apps agreement, bank account (UOB, SGD), and Singapore tax form are all **Active**.
+   Only remaining user step: add a **Sandbox tester** (Users and Access → Sandbox) before
+   on-device purchase testing — not blocking. **Next (me):** switch the paywall (`beans_screen.dart`) from
    `purchasePack` → `IapService.buy`, show StoreKit's **localized prices**, drop the
    "Custom" tile (Apple has no arbitrary pricing), and **mock the store** in the
    integration tests (IAP can't run on the sim). **Phase 2:** a backend `/iap/validate`
