@@ -34,19 +34,30 @@ class IapResult {
   final String? message;
 }
 
-/// Thin wrapper around `in_app_purchase` for the consumable Bean packs.
+/// Abstraction over the StoreKit IAP flow so the paywall depends on an interface
+/// and tests can inject a fake (the real store can't run on the simulator).
+/// Implemented by [StoreKitIapService].
+abstract interface class IapService {
+  Future<bool> isAvailable();
+  Future<List<ProductDetails>> products();
+  Future<IapResult> buy(String productId);
+  void dispose();
+}
+
+/// `in_app_purchase`-backed [IapService] for the consumable Bean packs.
 ///
-/// A single [purchaseStream] listener routes each store update to the pending
-/// [buy] call for that product. On a `purchased`/`restored` consumable it fires
-/// [onCredited] (so the wallet credits the Beans) and finishes the transaction.
+/// A single [InAppPurchase.purchaseStream] listener routes each store update to
+/// the pending [buy] call for that product. On a `purchased`/`restored`
+/// consumable it fires [onCredited] (so the wallet credits the Beans) and
+/// finishes the transaction.
 ///
 /// NOTE (Phase 2): this credits on the *client's* report of a successful
 /// StoreKit purchase. Server-side receipt validation (`/iap/validate`) — to
 /// harden against fraud and enable a cross-device ledger + referral Beans — is a
 /// planned follow-up (`TODO.md` §2/§7); [buy] is shaped so that hook slots in
 /// before [onCredited] without touching callers.
-class IapService {
-  IapService({this.onCredited}) {
+class StoreKitIapService implements IapService {
+  StoreKitIapService({this.onCredited}) {
     _sub = _iap.purchaseStream.listen(_onUpdates, onError: (_) {});
   }
 
@@ -55,19 +66,17 @@ class IapService {
   StreamSubscription<List<PurchaseDetails>>? _sub;
   final Map<String, Completer<IapResult>> _pending = {};
 
+  @override
   Future<bool> isAvailable() => _iap.isAvailable();
 
-  /// Live StoreKit product details (localized price strings, etc.) for the
-  /// Bean packs. Empty when the store is unavailable or products aren't set up.
+  @override
   Future<List<ProductDetails>> products() async {
     if (!await _iap.isAvailable()) return const [];
     final resp = await _iap.queryProductDetails(kBeanProductIds.values.toSet());
     return resp.productDetails;
   }
 
-  /// Buy a consumable Bean pack. Resolves when the purchase reaches a terminal
-  /// state (purchased / canceled / error), or immediately if the store/product
-  /// is unavailable.
+  @override
   Future<IapResult> buy(String productId) async {
     if (!await _iap.isAvailable()) {
       return const IapResult(IapOutcome.unavailable);
@@ -76,7 +85,6 @@ class IapService {
     if (resp.productDetails.isEmpty) {
       return const IapResult(IapOutcome.error, message: 'Product not found');
     }
-    // A retry while one is in flight reuses the existing completer.
     final completer = _pending.putIfAbsent(productId, Completer<IapResult>.new);
     await _iap.buyConsumable(
       purchaseParam: PurchaseParam(productDetails: resp.productDetails.first),
@@ -113,6 +121,7 @@ class IapService {
     if (completer != null && !completer.isCompleted) completer.complete(result);
   }
 
+  @override
   void dispose() {
     _sub?.cancel();
   }

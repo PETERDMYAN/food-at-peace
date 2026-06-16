@@ -102,10 +102,11 @@ photo → B reacts ❤️ → A receives it (all confirmed server-side too). Dri
    `inAppPurchaseAvailabilities`; *not* the agreement). **ASC side fully live (2026-06-16):**
    Paid Apps agreement, bank account (UOB, SGD), and Singapore tax form are all **Active**.
    Only remaining user step: add a **Sandbox tester** (Users and Access → Sandbox) before
-   on-device purchase testing — not blocking. **Next (me):** switch the paywall (`beans_screen.dart`) from
-   `purchasePack` → `IapService.buy`, show StoreKit's **localized prices**, drop the
-   "Custom" tile (Apple has no arbitrary pricing), and **mock the store** in the
-   integration tests (IAP can't run on the sim). **Phase 2:** a backend `/iap/validate`
+   on-device purchase testing — not blocking. **Paywall switched (done):**
+   `beans_screen.dart` now buys via `IapService.buy` (StoreKit), shows the **localized
+   store price** (falls back to the indicative SGD), the **"Custom" tile is gone** (Apple
+   can't price arbitrary amounts), and the integration tests inject a **fake store** so
+   the purchase flow runs on the sim (8/8 green). **Phase 2:** a backend `/iap/validate`
    endpoint (Apple receipt validation) + a **server-side Beans ledger** (anti-fraud,
    cross-device balance, referral Beans §7); emit `purchase`/`refund` analytics.
 3. **APNs push for circle notifications** — friend-meal alerts are currently

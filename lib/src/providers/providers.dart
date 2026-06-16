@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../data/api_key_store.dart';
@@ -763,12 +764,21 @@ final beansProvider = NotifierProvider<BeansNotifier, BeansState>(
 /// StoreKit IAP for the Bean packs; a completed purchase credits the wallet via
 /// [BeansNotifier.recordPurchase]. Lazily created on first read.
 final iapServiceProvider = Provider<IapService>((ref) {
-  final service = IapService(
+  final service = StoreKitIapService(
     onCredited: (beans, productId) =>
         ref.read(beansProvider.notifier).recordPurchase(beans, productId),
   );
   ref.onDispose(service.dispose);
   return service;
+});
+
+/// Live StoreKit product details (localized prices) for the Bean packs, keyed by
+/// product ID. Empty when the store is unavailable (e.g. on the simulator).
+final beanProductsProvider = FutureProvider<Map<String, ProductDetails>>((
+  ref,
+) async {
+  final list = await ref.read(iapServiceProvider).products();
+  return {for (final p in list) p.id: p};
 });
 
 // ---- Circles of Food (friends) ----

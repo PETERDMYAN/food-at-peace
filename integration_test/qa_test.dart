@@ -7,11 +7,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:in_app_purchase/in_app_purchase.dart';
 import 'package:integration_test/integration_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:food_at_peace/app.dart';
 import 'package:food_at_peace/l10n/app_localizations.dart';
+import 'package:food_at_peace/src/data/iap_service.dart';
 import 'package:food_at_peace/src/features/dashboard/dashboard_screen.dart';
 import 'package:food_at_peace/src/features/settings/reminders_screen.dart';
 import 'package:food_at_peace/src/features/trends/trends_screen.dart';
@@ -19,11 +21,38 @@ import 'package:food_at_peace/src/features/wallet/beans_screen.dart';
 import 'package:food_at_peace/src/providers/providers.dart';
 import 'package:food_at_peace/src/theme/app_theme.dart';
 
+/// Fake StoreKit so the Beans purchase flow runs on the simulator (the real
+/// store is unavailable there): buy() immediately credits + reports purchased.
+class _FakeIap implements IapService {
+  _FakeIap(this.onCredited);
+  final void Function(int beans, String productId) onCredited;
+  @override
+  Future<bool> isAvailable() async => true;
+  @override
+  Future<List<ProductDetails>> products() async => const [];
+  @override
+  Future<IapResult> buy(String productId) async {
+    final beans = beansForProduct(productId);
+    if (beans != null) onCredited(beans, productId);
+    return IapResult(IapOutcome.purchased, beans: beans);
+  }
+  @override
+  void dispose() {}
+}
+
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
   // No location prompt: weather resolves to null.
   final noWeather = weatherProvider.overrideWith((ref) async => null);
+
+  // Fake StoreKit so the Beans paywall's purchase flow works on the simulator.
+  final fakeIap = iapServiceProvider.overrideWith(
+    (ref) => _FakeIap(
+      (beans, productId) =>
+          ref.read(beansProvider.notifier).recordPurchase(beans, productId),
+    ),
+  );
 
   Future<SharedPreferences> seed(Map<String, Object> values) async {
     SharedPreferences.setMockInitialValues(values);
@@ -42,7 +71,11 @@ void main() {
   Future<void> pumpApp(WidgetTester t, SharedPreferences prefs) async {
     await t.pumpWidget(
       ProviderScope(
-        overrides: [sharedPreferencesProvider.overrideWithValue(prefs), noWeather],
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(prefs),
+          noWeather,
+          fakeIap,
+        ],
         child: const FoodAtPeaceApp(),
       ),
     );
@@ -56,7 +89,11 @@ void main() {
   ) async {
     await t.pumpWidget(
       ProviderScope(
-        overrides: [sharedPreferencesProvider.overrideWithValue(prefs), noWeather],
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(prefs),
+          noWeather,
+          fakeIap,
+        ],
         child: MaterialApp(
           debugShowCheckedModeBanner: false,
           theme: AppTheme.dark(),
@@ -133,26 +170,13 @@ void main() {
   testWidgets('Beans wallet: top-up pack updates balance', (t) async {
     final prefs = await seed({'reminders_enabled': false});
     await pumpScreen(t, prefs, const BeansScreen());
-    expect(find.text('21'), findsOneWidget); // free grant
+    expect(find.text('100'), findsOneWidget); // free grant
 
     await t.tap(find.text('Top up'));
     await beat(t);
     await t.tap(find.text('200 Beans').hitTestable());
     await beat(t);
-    expect(find.text('221'), findsOneWidget); // 21 + 200
-  });
-
-  testWidgets('Beans paywall: custom amount dialog adds beans', (t) async {
-    final prefs = await seed({});
-    await pumpScreen(t, prefs, const BeansScreen());
-    await t.tap(find.text('Top up'));
-    await beat(t);
-    await t.tap(find.text('Custom').hitTestable());
-    await beat(t);
-    // default 150 — the dialog's confirm is the on-screen (hit-testable) Top up
-    await t.tap(find.widgetWithText(FilledButton, 'Top up').hitTestable());
-    await beat(t);
-    expect(find.text('171'), findsOneWidget); // 21 + 150
+    expect(find.text('300'), findsOneWidget); // 100 + 200 via (faked) StoreKit
   });
 
   testWidgets('Reminders: toggle, add, and delete', (t) async {

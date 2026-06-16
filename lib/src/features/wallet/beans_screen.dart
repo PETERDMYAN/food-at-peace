@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:food_at_peace/l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
 
+import '../../data/iap_service.dart';
 import '../../models/bean_transaction.dart';
 import '../../providers/providers.dart';
 import '../../theme/app_theme.dart';
@@ -156,40 +157,52 @@ class _TxnRow extends StatelessWidget {
   }
 }
 
-/// Bottom-sheet paywall shown when out of Beans (or from the wallet's top-up
-/// button): buy a Bean pack.
-///
-/// DEV STUB: the buttons credit locally and pop. Replace the `purchasePack()`
-/// call with real StoreKit IAP + receipt validation before shipping.
+/// Bottom-sheet paywall: buy a consumable Bean pack through StoreKit. The packs
+/// map to the App Store Connect products (`beans_100…beans_800`); a completed
+/// purchase credits the wallet ([IapService] → `BeansNotifier.recordPurchase`).
 Future<void> showBeansPaywall(BuildContext context, WidgetRef ref) {
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
     showDragHandle: true,
-    builder: (ctx) => _PaywallSheet(parentRef: ref),
+    builder: (ctx) => const _PaywallSheet(),
   );
 }
 
-class _PaywallSheet extends StatelessWidget {
-  const _PaywallSheet({required this.parentRef});
-
-  final WidgetRef parentRef;
+class _PaywallSheet extends ConsumerWidget {
+  const _PaywallSheet();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final t = AppLocalizations.of(context);
     final text = Theme.of(context).textTheme;
-    final notifier = parentRef.read(beansProvider.notifier);
+    // StoreKit's localized price strings, keyed by product ID; empty before they
+    // load (or on the simulator) — we fall back to the indicative SGD price.
+    final prices = ref.watch(beanProductsProvider).asData?.value ?? const {};
 
     // Capture the messenger so the toast survives popping the sheet.
     final messenger = ScaffoldMessenger.of(context);
     void toast(String msg) =>
         messenger.showSnackBar(SnackBar(content: Text(msg)));
 
-    Future<void> buyPack(int beans, double sgd) async {
-      await notifier.purchasePack(beans, sgd);
-      if (context.mounted) Navigator.pop(context);
-      toast(t.beansBought(beans));
+    Future<void> buyPack(int beans) async {
+      final productId = beanProductId(beans);
+      if (productId == null) return;
+      final result = await ref.read(iapServiceProvider).buy(productId);
+      if (!context.mounted) return;
+      switch (result.outcome) {
+        case IapOutcome.purchased:
+          Navigator.pop(context);
+          toast(t.beansBought(result.beans ?? beans));
+        case IapOutcome.canceled:
+          break;
+        case IapOutcome.pending:
+          toast(t.iapPending);
+        case IapOutcome.unavailable:
+          toast(t.iapUnavailable);
+        case IapOutcome.error:
+          toast(result.message ?? t.iapFailed);
+      }
     }
 
     return SafeArea(
@@ -223,32 +236,12 @@ class _PaywallSheet extends StatelessWidget {
             for (final p in BeanPricing.packs)
               _PackTile(
                 label: t.beansCount(p.beans),
-                trailing: t.priceSgd(p.sgd.toStringAsFixed(2)),
+                trailing:
+                    prices[beanProductId(p.beans)]?.price ??
+                    t.priceSgd(p.sgd.toStringAsFixed(2)),
                 badge: p.beans == 800 ? t.beansBestValue : null,
-                onTap: () => buyPack(p.beans, p.sgd),
+                onTap: () => buyPack(p.beans),
               ),
-            _PackTile(
-              label: t.beansCustom,
-              trailing: '',
-              isCustom: true,
-              onTap: () async {
-                final amount = await showDialog<int>(
-                  context: context,
-                  builder: (_) => const _CustomTopUpDialog(),
-                );
-                if (amount != null && amount > 0) {
-                  await buyPack(amount, BeanPricing.priceFor(amount));
-                }
-              },
-            ),
-            const SizedBox(height: 14),
-            Text(
-              t.beansStubNote,
-              textAlign: TextAlign.center,
-              style: text.labelSmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
-            ),
           ],
         ),
       ),
@@ -256,22 +249,20 @@ class _PaywallSheet extends StatelessWidget {
   }
 }
 
-/// A compact top-up row: a Bean pack ("200 Beans" · "SGD 3.99"), an optional
-/// "Best value" badge, or the "Custom" entry (chevron, opens the amount dialog).
+/// A compact top-up row: a Bean pack ("200 Beans" · "S$3.99") with an optional
+/// "Best value" badge.
 class _PackTile extends StatelessWidget {
   const _PackTile({
     required this.label,
     required this.trailing,
     required this.onTap,
     this.badge,
-    this.isCustom = false,
   });
 
   final String label;
   final String trailing;
   final VoidCallback onTap;
   final String? badge;
-  final bool isCustom;
 
   @override
   Widget build(BuildContext context) {
@@ -326,86 +317,17 @@ class _PackTile extends StatelessWidget {
                   ],
                 ),
               ),
-              if (isCustom)
-                Icon(Icons.chevron_right, color: scheme.onSurfaceVariant)
-              else
-                Text(
-                  trailing,
-                  style: text.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    color: AppTheme.beanAccent,
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Enter a custom number of Beans; previews the indicative price and returns
-/// the amount (Apple IAP still needs this to resolve to a fixed product/tier).
-class _CustomTopUpDialog extends StatefulWidget {
-  const _CustomTopUpDialog();
-
-  @override
-  State<_CustomTopUpDialog> createState() => _CustomTopUpDialogState();
-}
-
-class _CustomTopUpDialogState extends State<_CustomTopUpDialog> {
-  final _controller = TextEditingController(text: '150');
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final t = AppLocalizations.of(context);
-    final amount = int.tryParse(_controller.text.trim()) ?? 0;
-    return AlertDialog(
-      title: Text(t.beansCustomTitle),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          TextField(
-            controller: _controller,
-            keyboardType: TextInputType.number,
-            autofocus: true,
-            onChanged: (_) => setState(() {}),
-            decoration: InputDecoration(labelText: t.beansCustomLabel),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              const BeanIcon(size: 18),
-              const SizedBox(width: 8),
               Text(
-                amount > 0
-                    ? t.priceSgd(BeanPricing.priceFor(amount).toStringAsFixed(2))
-                    : '—',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
+                trailing,
+                style: text.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: AppTheme.beanAccent,
                 ),
               ),
             ],
           ),
-        ],
+        ),
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: Text(t.cancel),
-        ),
-        FilledButton(
-          onPressed: amount > 0 ? () => Navigator.pop(context, amount) : null,
-          child: Text(t.topUp),
-        ),
-      ],
     );
   }
 }
