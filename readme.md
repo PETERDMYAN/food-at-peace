@@ -10,8 +10,10 @@ for real calories burned, and speaks **English and 中文**. Built with Flutter.
 > set** (EN + 简体中文, incl. Circle + Beans), Circle/Beans in the EN/中文 descriptions, an
 > EN subtitle, and a new 简体中文 localization with the CN name **食之安**. Build 14 points
 > at the migrated prod backend, all 5 Beans consumables attached, **auto-release on
-> approval**).
-> Active development continues on the **`v2`** branch, which adds: AI photo estimates
+> approval**). **Next up: `v3` build `1.0.2 (15)` is on TestFlight** (prod backend) — it
+> adds **Eva's daily life-lesson card** and a real **25-Bean** entry IAP (`beans_25`,
+> S$0.48); it becomes the 1.0.2 submission after 1.0.1 clears review.
+> Active development is on the **`v3`** branch, which adds: AI photo estimates
 > **in your app language** (EN/中文), the **Circle of Food** social layer (friends
 > by `@handle`, **invite universal link + QR with one-tap mutual connect**, a
 > **Manage circle** screen, privacy-gated friend trends, and a 3-day photo

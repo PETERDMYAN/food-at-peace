@@ -62,7 +62,11 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
     [`circle_feed_screen.dart`](lib/src/features/circle/circle_feed_screen.dart)).
     The **story keeps the full-resolution photo**; the AI estimate uses a downscaled
     1024px copy.
-- **TestFlight / App Store** — `1.0.1 (14)` built against **prod**
+- **TestFlight / App Store** — **`v3` build `1.0.2 (15)` uploaded to TestFlight** (2026-06-17,
+  prod backend, `/tmp/fap_rec/build15.sh`) — adds Eva's daily-lesson card + the `beans_25`
+  entry IAP; becomes the 1.0.2 submission after 1.0.1 clears review. (`beans_25` server
+  validation needs the v3 `iap.py` deployed to prod first — additive, do at 1.0.2 submit.)
+  Earlier: `1.0.1 (14)` built against **prod**
   (`--dart-define-from-file=dart_defines.prod.json`) + uploaded via the ASC API key,
   and submitted to App Store review on 2026-06-16 (first public v2 release; all 5 Beans
   consumables `beans_100…beans_800` attached, **auto-release on approval**). Then pulled
