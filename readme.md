@@ -6,7 +6,7 @@ on your protein and saturated-fat quotas. Connects to **Apple Health / Garmin**
 for real calories burned, and speaks **English and 中文**. Built with Flutter.
 
 > **Status:** **v1.0.0 is live on the App Store.** Active development is on the
-> **`v2`** branch (TestFlight build **1.0.1 (11)**), which adds: AI photo estimates
+> **`v2`** branch (TestFlight build **1.0.1 (12)**), which adds: AI photo estimates
 > **in your app language** (EN/中文), the **Circle of Food** social layer (friends
 > by `@handle`, **invite universal link + QR with one-tap mutual connect**, a
 > **Manage circle** screen, privacy-gated friend trends, and a 3-day photo
@@ -16,9 +16,11 @@ for real calories burned, and speaks **English and 中文**. Built with Flutter.
 > never touched — see `CLAUDE.md` / [`backend/README.md`](backend/README.md).
 > The **invite links are live**: `foodatpeace.app` is registered + hosted on AWS
 > (Route53 + CloudFront/HTTPS) serving the AASA + a smart `/i/<handle>` page (app
-> installed → opens the app · not installed → App Store · WeChat → "Open in Safari"
-> hand-off) — see [`store/INVITE_LINKS.md`](store/INVITE_LINKS.md). Remaining before
-> the v2 release: real **Beans in-app purchases** (see `TODO.md`).
+> installed → opens the app · not installed → App Store · WeChat → tap ••• (top-right)
+> → **用默认浏览器打开** hand-off) — see [`store/INVITE_LINKS.md`](store/INVITE_LINKS.md).
+> **Beans are real now**: a StoreKit paywall (consumable packs) backed by a **server
+> ledger that follows the account** across devices; remaining is `/iap/validate`
+> receipt validation (see `TODO.md`).
 > Earlier: v1.0.0 cleared the Guideline 1.4.1 rejection with the in-app Sources &
 > methodology screen + in-app account deletion (see `PUBLISHING.md`).
 
@@ -149,15 +151,18 @@ the system locale by default and persists a manual choice.
   pricing; the sub was cut). A **screen-recordable walkthrough** of the purchase
   lives in [`integration_test/beans_purchase_demo.dart`](integration_test/beans_purchase_demo.dart)
   (wallet 100 → Top up → buy 200 → balance 300 + ledger row; a faked store stands
-  in for Apple's payment sheet on the sim). The local balance + ledger
-  (`shared_preferences`) still need the **server ledger** (`/beans`, built on v2)
-  wired client-side + receipt validation — see `TODO.md` §2.
+  in for Apple's payment sheet on the sim). The balance is **synced to the account's
+  server ledger** (`/beans` on v2) — pushed on every change, pulled on sign-in, with
+  per-device signup grants collapsed (`BeansClient` + `mergeBeansLedgers`) — so it
+  follows you across devices and survives a reinstall; account deletion clears it too.
+  Remaining: `/iap/validate` receipt validation — see `TODO.md` §2.
 
 - [x] **Owner metrics dashboard (v2 — now real)** — Profile → tap the version row 5×
   → downloads / active / opens (7-day bars) / photos scanned / Beans sold / revenue /
   refunds. The app emits `open`/`scan` events and `MetricsService` reads **live**
   aggregates from `GET /metrics`; `downloads`/`revenue` stay 0 until the App Store
-  Connect API + real IAP land.
+  Connect API + real IAP land. Tapping the version **10×** instead reveals + copies
+  this account's **user id** (its key in the sync DB) — a hidden owner/debug helper.
 
 **TODO (pricing — StoreKit, mind Apple's rules):**
 - [x] **Beans packs** — each tier (100/200/300/500/800) is a fixed **consumable

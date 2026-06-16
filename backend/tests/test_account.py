@@ -178,3 +178,36 @@ def test_marker_survives_repeat_deletion_and_check_helper():
     account.check_token_not_revoked({"iat": 100}, {"minIat": 50})
     with pytest.raises(common.ProxyError):
         account.check_token_not_revoked({"iat": 100}, {"minIat": 200})
+
+
+# --- Beans ledger cleanup (isolated table) -----------------------------------
+
+
+@pytest.fixture
+def beans_store(monkeypatch):
+    fake = FakeStore()
+    monkeypatch.setattr(account, "_beans_store", lambda: fake)
+    return fake
+
+
+def test_deletion_also_clears_the_beans_ledger(store, beans_store):
+    store.seed("apple:u1", "food#a")
+    beans_store.put({"userId": "apple:u1", "sk": "grant_1", "txn": "{}"})
+    beans_store.put({"userId": "apple:u1", "sk": "buy_1", "txn": "{}"})
+    beans_store.put({"userId": "apple:u2", "sk": "buy_other", "txn": "{}"})
+
+    status, body = _delete(user_id="apple:u1")
+
+    assert status == 200
+    assert body == {"deleted": 1}  # the sync row; beans rows aren't counted
+    assert beans_store.keys_for_user("apple:u1") == []  # user's beans gone
+    assert beans_store.keys_for_user("apple:u2") == ["buy_other"]  # others' kept
+
+
+def test_deletion_without_a_beans_table_is_a_noop(store):
+    # No beans_store fixture → account._beans_store() returns None (BEANS_TABLE
+    # unset). Deletion must still succeed (the clear is best-effort/optional).
+    store.seed("apple:u1", "profile")
+    status, body = _delete(user_id="apple:u1")
+    assert status == 200
+    assert body == {"deleted": 1}

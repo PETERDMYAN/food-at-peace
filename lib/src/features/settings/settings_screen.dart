@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:food_at_peace/l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
@@ -306,18 +309,21 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 }
 
-/// App version at the bottom of Profile. Tapping it 5× opens the owner metrics
-/// dashboard (a hidden entry — not for regular users).
-class _VersionFooter extends StatefulWidget {
+/// App version at the bottom of Profile — a hidden owner/debug entry, not for
+/// regular users. A short debounce lets one row carry two gestures: tap it **5×**
+/// to open the owner metrics dashboard, or **10×** to reveal this account's
+/// stable user id (the key it syncs under in the backend DB), with copy.
+class _VersionFooter extends ConsumerStatefulWidget {
   const _VersionFooter();
 
   @override
-  State<_VersionFooter> createState() => _VersionFooterState();
+  ConsumerState<_VersionFooter> createState() => _VersionFooterState();
 }
 
-class _VersionFooterState extends State<_VersionFooter> {
+class _VersionFooterState extends ConsumerState<_VersionFooter> {
   PackageInfo? _info;
   int _taps = 0;
+  Timer? _resetTimer;
 
   @override
   void initState() {
@@ -327,14 +333,82 @@ class _VersionFooterState extends State<_VersionFooter> {
     });
   }
 
+  @override
+  void dispose() {
+    _resetTimer?.cancel();
+    super.dispose();
+  }
+
+  // Two hidden gestures on one row. We can't act on the 5th tap immediately —
+  // that would navigate away before the user could reach 10 — so each tap
+  // (re)starts a short timer and we act once tapping pauses: 10+ → account id,
+  // else 5+ → owner dashboard.
   void _tap() {
     _taps++;
-    if (_taps >= 5) {
+    _resetTimer?.cancel();
+    _resetTimer = Timer(const Duration(milliseconds: 700), () {
+      final taps = _taps;
       _taps = 0;
-      Navigator.of(
-        context,
-      ).push(MaterialPageRoute(builder: (_) => const DashboardScreen()));
-    }
+      if (!mounted) return;
+      if (taps >= 10) {
+        _showAccountId();
+      } else if (taps >= 5) {
+        Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => const DashboardScreen()));
+      }
+    });
+  }
+
+  void _showAccountId() {
+    final t = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final userId = ref.read(authProvider)?.userId;
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(t.accountIdTitle),
+        content: userId == null
+            ? Text(t.accountIdSignedOut)
+            : Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    t.accountIdHint,
+                    style: Theme.of(ctx).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(ctx).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  SelectableText(
+                    userId,
+                    style: const TextStyle(
+                      fontFamily: 'monospace',
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+        actions: [
+          if (userId != null)
+            TextButton(
+              onPressed: () {
+                Clipboard.setData(ClipboardData(text: userId));
+                Navigator.pop(ctx);
+                messenger.showSnackBar(
+                  SnackBar(content: Text(t.accountIdCopied)),
+                );
+              },
+              child: Text(t.copy),
+            ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(t.close),
+          ),
+        ],
+      ),
+    );
   }
 
   @override

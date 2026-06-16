@@ -86,23 +86,31 @@ def handler(event, context):
             raise ProxyError(401, "Not authenticated.")
         store = _store()
 
-        if _method(event) == "POST":
-            body = _parse_body(event)
-            for txn in body.get("txns") or []:
-                tid = txn.get("id")
-                if not tid:
-                    continue
-                # Append-only + idempotent: never overwrite an existing txn id.
-                if store.get(user_id, tid) is None:
-                    store.put(
-                        {"userId": user_id, "sk": tid, "txn": json.dumps(txn)}
-                    )
-
+        # Load the account's ledger once (this is also the GET response body).
         ledger = [
             json.loads(i["txn"])
             for i in store.list_for_user(user_id)
             if i.get("txn")
         ]
+
+        if _method(event) == "POST":
+            body = _parse_body(event)
+            ids = {t.get("id") for t in ledger if t.get("id")}
+            has_grant = any(t.get("type") == "signupGrant" for t in ledger)
+            for txn in body.get("txns") or []:
+                tid = txn.get("id")
+                if not tid or tid in ids:
+                    continue  # append-only + idempotent: never overwrite an id
+                # One welcome grant per account, even though every device grants
+                # its own local 100 on first launch (the union would double it).
+                if txn.get("type") == "signupGrant":
+                    if has_grant:
+                        continue
+                    has_grant = True
+                store.put({"userId": user_id, "sk": tid, "txn": json.dumps(txn)})
+                ids.add(tid)
+                ledger.append(txn)
+
         return _response(200, {"ledger": ledger})
     except ProxyError as exc:
         return _response(exc.status, {"error": {"message": exc.message}})

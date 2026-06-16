@@ -1610,6 +1610,42 @@ abstract class AppLocalizations {
   /// **'{name} {version} ({build})'**
   String versionLabel(String name, String version, String build);
 
+  /// No description provided for @accountIdTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Account ID'**
+  String get accountIdTitle;
+
+  /// No description provided for @accountIdHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Your account\'s ID in the sync database.'**
+  String get accountIdHint;
+
+  /// No description provided for @accountIdSignedOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to see your account ID.'**
+  String get accountIdSignedOut;
+
+  /// No description provided for @accountIdCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Account ID copied'**
+  String get accountIdCopied;
+
+  /// No description provided for @copy.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy'**
+  String get copy;
+
+  /// No description provided for @close.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get close;
+
   /// No description provided for @yourCircle.
   ///
   /// In en, this message translates to:

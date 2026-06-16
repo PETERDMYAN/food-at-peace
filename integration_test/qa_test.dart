@@ -260,4 +260,33 @@ void main() {
     await beat(t);
     expect(find.text('Profile'), findsWidgets);
   });
+
+  testWidgets('Owner: tapping the version 10× reveals the account-ID dialog', (
+    t,
+  ) async {
+    final prefs = await seed({'onboarding_complete': true});
+    await pumpApp(t, prefs);
+    await t.tap(find.byIcon(Icons.settings_outlined).hitTestable());
+    await beat(t);
+
+    // The version footer sits at the very bottom of Profile.
+    final version = find.textContaining('Food at Peace 1.0.1');
+    await t.scrollUntilVisible(
+      version,
+      300,
+      scrollable: find.byType(Scrollable).hitTestable(),
+    );
+    await beat(t, 200);
+
+    // Ten debounced taps reveal the account id. Signed out in the test, so the
+    // dialog explains sign-in is needed — but it proves the 10× gesture fires
+    // (and doesn't trip the 5× owner-dashboard route along the way).
+    for (var i = 0; i < 10; i++) {
+      await t.tap(version);
+      await beat(t, 90);
+    }
+    await beat(t, 1000); // let the ~700ms debounce timer fire
+    expect(find.text('Account ID'), findsOneWidget);
+    expect(find.text('Sign in to see your account ID.'), findsOneWidget);
+  });
 }

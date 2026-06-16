@@ -864,6 +864,24 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get accountIdTitle => 'Account ID';
+
+  @override
+  String get accountIdHint => 'Your account\'s ID in the sync database.';
+
+  @override
+  String get accountIdSignedOut => 'Sign in to see your account ID.';
+
+  @override
+  String get accountIdCopied => 'Account ID copied';
+
+  @override
+  String get copy => 'Copy';
+
+  @override
+  String get close => 'Close';
+
+  @override
   String get yourCircle => 'Your circle';
 
   @override

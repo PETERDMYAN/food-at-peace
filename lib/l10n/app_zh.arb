@@ -265,6 +265,12 @@
   "mRevenue": "收入",
   "mRefunds": "退款",
   "versionLabel": "{name} {version} ({build})",
+  "accountIdTitle": "账户 ID",
+  "accountIdHint": "你的账户在同步数据库中的 ID。",
+  "accountIdSignedOut": "登录后可查看账户 ID。",
+  "accountIdCopied": "已复制账户 ID",
+  "copy": "复制",
+  "close": "关闭",
 
   "yourCircle": "我的圈子",
   "addFriend": "添加",
