@@ -57,7 +57,7 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
     [`circle_feed_screen.dart`](lib/src/features/circle/circle_feed_screen.dart)).
     The **story keeps the full-resolution photo**; the AI estimate uses a downscaled
     1024px copy.
-- **TestFlight** — `1.0.1 (10)` built + uploaded headlessly via the ASC API key
+- **TestFlight** — `1.0.1 (11)` built + uploaded headlessly via the ASC API key
   (see [`PUBLISHING.md`](PUBLISHING.md) §4). Since (7): **unlimited subscription
   removed** (Beans packs only), the **Circle notification** work, and the **"where to
   find a friend's handle" hint**. Associated Domains + `foodatpeace://` scheme shipped
