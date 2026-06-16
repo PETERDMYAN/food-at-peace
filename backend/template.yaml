@@ -31,6 +31,10 @@ Parameters:
     Type: String
     Default: /food-at-peace/session-signing-key
     Description: SSM SecureString parameter holding the HS256 session-token signing key.
+  IapSecretParam:
+    Type: String
+    Default: /food-at-peace/iap-shared-secret
+    Description: SSM SecureString parameter holding the App Store shared secret (IAP receipt validation).
   SessionTtlDays:
     Type: Number
     Default: 60
@@ -259,6 +263,50 @@ Resources:
           Properties:
             ApiId: !Ref VisionApi
             Path: /beans
+            Method: POST
+
+  # Apple IAP receipt validation: POST /iap/validate verifies the receipt with
+  # Apple (shared secret) and credits the Beans server-side (idempotent), into
+  # the same BeansTable ledger. Bearer session token, scoped to the account.
+  IapFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/
+      Handler: iap.handler
+      Environment:
+        Variables:
+          BEANS_TABLE: !Ref BeansTable
+          SESSION_KEY_PARAM: !Ref SessionKeyParam
+          IAP_SECRET_PARAM: !Ref IapSecretParam
+      Policies:
+        - Statement:
+            - Sid: ReadWriteBeans
+              Effect: Allow
+              Action:
+                - dynamodb:GetItem
+                - dynamodb:PutItem
+                - dynamodb:Query
+              Resource:
+                - !GetAtt BeansTable.Arn
+            - Sid: ReadSecrets
+              Effect: Allow
+              Action: ssm:GetParameter
+              Resource:
+                - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter${SessionKeyParam}
+                - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter${IapSecretParam}
+            - Sid: DecryptSecureStrings
+              Effect: Allow
+              Action: kms:Decrypt
+              Resource: "*"
+              Condition:
+                StringEquals:
+                  kms:ViaService: !Sub ssm.${AWS::Region}.amazonaws.com
+      Events:
+        ValidateIap:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref VisionApi
+            Path: /iap/validate
             Method: POST
 
   # In-app account deletion (App Store Guideline 5.1.1(v)). Verifies the app

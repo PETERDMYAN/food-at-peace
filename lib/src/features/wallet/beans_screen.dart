@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -195,7 +196,9 @@ class _PaywallSheetState extends ConsumerState<_PaywallSheet> {
   }
 
   void _onTitleTap() {
-    if (_revealed) return;
+    // The hidden pack credits a Bean via the local dev path (no real payment), so
+    // it's a free-Beans shortcut — debug builds only, never TestFlight/App Store.
+    if (_revealed || !kDebugMode) return;
     _tapReset?.cancel();
     _tapReset = Timer(const Duration(seconds: 1), () => _titleTaps = 0);
     if (++_titleTaps >= 10) {

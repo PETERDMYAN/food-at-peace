@@ -54,6 +54,34 @@ class BeansClient {
     return _ledgerFrom(resp);
   }
 
+  /// Validate a StoreKit receipt server-side (`POST /iap/validate`). Returns the
+  /// account's ledger when Apple confirms the purchase (Beans credited
+  /// server-side, idempotent), or null when it couldn't validate
+  /// (unconfigured / invalid / network error) so the caller can fall back to a
+  /// local credit. Never throws.
+  Future<List<BeanTransaction>?> validateIap(
+    String token,
+    String receipt,
+    String productId,
+  ) async {
+    try {
+      final resp = await _http.post(
+        Uri.parse('$_base/iap/validate'),
+        headers: _headers(token),
+        body: jsonEncode({'receipt': receipt, 'productId': productId}),
+      );
+      if (resp.statusCode != 200) return null;
+      final j = jsonDecode(utf8.decode(resp.bodyBytes)) as Map<String, dynamic>;
+      if (j['valid'] != true) return null;
+      return [
+        for (final t in (j['ledger'] as List? ?? const []))
+          BeanTransaction.fromJson((t as Map).cast<String, dynamic>()),
+      ];
+    } catch (_) {
+      return null;
+    }
+  }
+
   List<BeanTransaction> _ledgerFrom(http.Response resp) {
     if (resp.statusCode != 200) throw BeansSyncException(_messageFrom(resp));
     final j = jsonDecode(utf8.decode(resp.bodyBytes)) as Map<String, dynamic>;

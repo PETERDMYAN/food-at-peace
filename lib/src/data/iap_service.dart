@@ -62,7 +62,7 @@ class StoreKitIapService implements IapService {
   }
 
   final InAppPurchase _iap = InAppPurchase.instance;
-  final void Function(int beans, String productId)? onCredited;
+  final void Function(int beans, String productId, String receipt)? onCredited;
   StreamSubscription<List<PurchaseDetails>>? _sub;
   final Map<String, Completer<IapResult>> _pending = {};
   List<ProductDetails> _cache = const [];
@@ -115,7 +115,15 @@ class StoreKitIapService implements IapService {
         case PurchaseStatus.purchased:
         case PurchaseStatus.restored:
           final beans = beansForProduct(p.productID);
-          if (beans != null) onCredited?.call(beans, p.productID);
+          if (beans != null) {
+            // The receipt lets the wallet validate the purchase server-side
+            // before crediting (fraud-hardening); empty when unavailable.
+            onCredited?.call(
+              beans,
+              p.productID,
+              p.verificationData.serverVerificationData,
+            );
+          }
           _resolve(p.productID, IapResult(IapOutcome.purchased, beans: beans));
           if (p.pendingCompletePurchase) _iap.completePurchase(p);
         case PurchaseStatus.error:
