@@ -64,9 +64,15 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
     1024px copy.
 - **TestFlight / App Store** — `1.0.1 (14)` built against **prod**
   (`--dart-define-from-file=dart_defines.prod.json`) + uploaded via the ASC API key,
-  and **submitted to App Store review on 2026-06-16 — now "Waiting for Review"** (first
-  public v2 release; all 5 Beans consumables `beans_100…beans_800` attached to the
-  version, **auto-release on approval**). (14) adds
+  and submitted to App Store review on 2026-06-16 (first public v2 release; all 5 Beans
+  consumables `beans_100…beans_800` attached, **auto-release on approval**). Then **pulled
+  back to refresh the store metadata** (resubmission pending): a generated **bilingual
+  6-shot screenshot set** (EN `store/app-store-screens/` + 简体中文 `…-zh/`, 1320×2868:
+  Today · Circle · Scan · Trends · Beans · Settings, via
+  [`integration_test/store_screenshots.dart`](integration_test/store_screenshots.dart)),
+  Circle + Beans added to the EN/中文 descriptions, and a localized CN app name **食之安**.
+  Also localized the Circle post card (`feedYou`/`feedSomeone` + `kcalValue`) so the
+  feed reads fully in 中文. (14) adds
   **server-side IAP receipt validation** (`/iap/validate`, §2), **APNs background push**
   for circle activity (request / accept / shared-meal / reaction → real Apple banners
   even when the app is closed; key `D2665A2D4P`, [`backend/src/apns.py`](backend/src/apns.py)
@@ -237,6 +243,41 @@ is now a single plated dish so the AI estimate reads cleanly (~420 kcal, not a 2
    `CircleTable` (shows in the friend graph, can post to the feed) or a **pure
    client-side pinned card** (no backend — simplest). Keep any bundled-config/asset
    changes backward-compatible per the `production-safety` skill.
+
+9. **Make the micro Bean pack a REAL production IAP (not debug-only)** *(needs a
+   pricing decision — see blocker)* — today the **1-Bean / S$0.02** pack is a
+   `kDebugMode`-only **free local credit**: it's hidden in `BeanPricing.hiddenPacks`
+   ([`bean_transaction.dart`](lib/src/models/bean_transaction.dart)), revealed only by
+   tapping the paywall title **10×** in a debug build (the `!kDebugMode` guard +
+   `isHidden` local-credit bypass in
+   [`beans_screen.dart`](lib/src/features/wallet/beans_screen.dart)), so it never
+   reaches TestFlight/the App Store and takes no real money. Goal: a genuinely
+   purchasable pack that works in production.
+   - **⚠️ Hard blocker — Apple will not sell S$0.02.** In-app digital goods *must* go
+     through IAP, and IAP has a **price floor** (Apple's lowest point is ≈ US$0.29; the
+     SGD floor is ≈ **S$0.38–0.49** — confirm the exact tier in ASC). There is **no
+     compliant way to charge S$0.02**. So the micro-pack **must be repriced to Apple's
+     lowest tier** to become real, or it stays a non-purchasable dev shortcut.
+     **Decision needed (you):** at the floor (~S$0.49) a single Bean is ~25× the
+     per-Bean rate of the 100-pack (S$1.99 → ~S$0.02/Bean), so a real "1 Bean" pack is
+     poor value — consider a **"smallest real pack"** (e.g. 25–50 Beans at the floor
+     tier) instead of literally 1 Bean. Confirm price + size before building.
+   - **ASC product** — create a new consumable (e.g. `beans_1` / `beans_25`) via the ASC
+     API exactly like `beans_100…800` (§2): EN + 中文 localization, price at the chosen
+     tier (Singapore base auto-converts), review screenshot, all-territory availability.
+     First appearance of a new IAP **must ride a version submission**.
+   - **Client** — move the pack out of `hiddenPacks` into `BeanPricing.packs`; add its id
+     to `beanProductId`/`productBeans`
+     ([`iap_service.dart`](lib/src/data/iap_service.dart)); and **delete the bypass** —
+     the `isHidden` local-credit branch, the 10-tap reveal + `beansSecretUnlocked` string,
+     and the `!kDebugMode` guard — so it buys through `IapService.buy` → `/iap/validate`
+     like every other pack. **Keep the debug-only FREE credit separate** (it can stay,
+     gated to `kDebugMode`); a paid product must never hit the free local path.
+   - **Server** — no contract change: `/iap/validate` already credits any consumable,
+     idempotent by Apple txn id (§2 Phase 3); just map the new product id → its Bean
+     grant. Additive only — apply the `production-safety` skill.
+   - **Tests** — extend the fake-store integration test + `BeanPricing`/`beanProductId`
+     unit coverage for the new id.
 
 ## 📱 Device-only QA (QA_REPORT §5)
 

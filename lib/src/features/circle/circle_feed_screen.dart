@@ -67,10 +67,12 @@ class _PostCard extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
-    final title = post.mine ? 'You' : (post.authorName ?? 'Someone');
+    final t = AppLocalizations.of(context);
+    final title = post.mine ? t.feedYou : (post.authorName ?? t.feedSomeone);
+    final kcal = t.kcalValue('${post.calories}');
     final sub = (post.name != null && post.name!.isNotEmpty)
-        ? '${post.name} · ${post.calories} kcal'
-        : '${post.calories} kcal';
+        ? '${post.name} · $kcal'
+        : kcal;
     return Card(
       margin: const EdgeInsets.only(bottom: 14),
       clipBehavior: Clip.antiAlias,

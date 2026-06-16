@@ -460,6 +460,8 @@
   "shareToCircle": "Share to circle",
   "shareToCircleHint": "Friends in your circle see it for 3 days",
   "feedTitle": "Circle feed",
+  "feedYou": "You",
+  "feedSomeone": "Someone",
   "feedEmpty": "No posts yet. Scan a meal and share it to your circle.",
   "feedReceived": "{count} reactions",
   "@feedReceived": {
