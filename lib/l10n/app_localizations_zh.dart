@@ -792,6 +792,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get beansChoosePack => '充值豆子';
 
   @override
+  String get beansSecretUnlocked => '已解锁隐藏礼包 🫘';
+
+  @override
   String get beansCustom => '自定义';
 
   @override

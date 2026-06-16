@@ -53,8 +53,7 @@ class BeanTransaction {
       orElse: () => BeanTxnType.spend,
     ),
     amount: (j['amount'] as num).toInt(),
-    timestamp:
-        DateTime.tryParse(j['ts'] as String? ?? '') ?? DateTime(2026),
+    timestamp: DateTime.tryParse(j['ts'] as String? ?? '') ?? DateTime(2026),
     note: j['note'] as String?,
     priceSgd: (j['price'] as num?)?.toDouble(),
   );
@@ -84,13 +83,23 @@ class BeanPricing {
     (beans: 800, sgd: 13.98),
   ];
 
+  /// Hidden "easter-egg" packs — not shown until the paywall title is tapped 10×.
+  /// 1 Bean / SGD 0.02 is below Apple's minimum IAP price tier, so it can't be a
+  /// real StoreKit product; the paywall routes it through the local dev credit
+  /// instead (a quick top-up shortcut for testing).
+  static const List<({int beans, double sgd})> hiddenPacks = [
+    (beans: 1, sgd: 0.02),
+  ];
+
+  /// Whether [beans] is a hidden (non-StoreKit) pack.
+  static bool isHidden(int beans) => hiddenPacks.any((p) => p.beans == beans);
+
   /// Indicative price (SGD) for an arbitrary Bean amount at the per-100 rate.
-  static double priceFor(int beans) =>
-      (beans / packBeans) * packPriceSgd;
+  static double priceFor(int beans) => (beans / packBeans) * packPriceSgd;
 
   /// The fixed SGD price for a Bean pack tier, or null if [beans] isn't a tier.
   static double? sgdForBeans(int beans) {
-    for (final p in packs) {
+    for (final p in [...packs, ...hiddenPacks]) {
       if (p.beans == beans) return p.sgd;
     }
     return null;

@@ -57,8 +57,13 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
     [`circle_feed_screen.dart`](lib/src/features/circle/circle_feed_screen.dart)).
     The **story keeps the full-resolution photo**; the AI estimate uses a downscaled
     1024px copy.
-- **TestFlight** — `1.0.1 (12)` built + uploaded headlessly via the ASC API key
-  (see [`PUBLISHING.md`](PUBLISHING.md) §4). Since (11): **Beans follow the account**
+- **TestFlight** — `1.0.1 (13)` built + uploaded headlessly via the ASC API key
+  (see [`PUBLISHING.md`](PUBLISHING.md) §4). (13) polishes the **Beans paywall** — a
+  per-pack spinner while a purchase is in flight + a tap-guard so the same pack can't
+  fire twice, and a hidden **1-Bean dev pack** (SGD 0.02) revealed by tapping the
+  paywall title 10× — and makes **circle-activity notifications present as real Apple
+  banners in the foreground** (`AppDelegate.willPresent` → `[.banner,.list,.sound]`).
+  Since (11): **Beans follow the account**
   (the server ledger is now synced client-side — pull on sign-in, push on append) and a
   hidden **owner gesture** (tap the version **10×** to reveal + copy this account's user
   id; **5×** still opens the metrics dashboard). (11) shipped the real **StoreKit Beans
@@ -66,7 +71,7 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
   notification work. Associated Domains + `foodatpeace://` scheme shipped in (4); the
   invite links are **live** on `foodatpeace.app` (§1).
 
-Verified: Flutter 117 + backend 84 tests + 12 integration, `flutter analyze` clean. The full signed-in
+Verified: Flutter 119 + backend 84 tests + 12 integration, `flutter analyze` clean. The full signed-in
 Circle flow was exercised **in-app on two simulators** against the live v2 backend
 (injected session tokens, since Apple sign-in can't run on a sim): user A scans +
 posts a meal → user B opens A's invite → one-tap mutual connect → B's feed shows A's
@@ -137,7 +142,9 @@ is now a single plated dish so the AI estimate reads cleanly (~420 kcal, not a 2
    her account. **Remaining:** `/iap/validate` (Apple receipt validation) to harden against
    fraud, then referral Beans (§7) and `purchase`/`refund` analytics.
 3. **APNs push for circle notifications** — friend-meal alerts are currently
-   surfaced locally (on app launch/resume vs a last-seen marker). For *instant*
+   surfaced locally (on app launch/resume vs a last-seen marker) and now present as
+   real **Apple banners even in the foreground** (`AppDelegate.willPresent` returns
+   `[.banner,.list,.sound]`), alongside the in-app banner. For *instant*
    delivery while the app is backgrounded/closed, add Apple Push: device-token
    registration, an APNs key + entitlement, and a server push from
    `posts.py` on a new post (fan out to the poster's connected friends). The

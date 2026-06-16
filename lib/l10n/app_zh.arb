@@ -249,6 +249,7 @@
   "iapPending": "购买处理中…",
   "iapFailed": "购买失败，请重试。",
   "beansChoosePack": "充值豆子",
+  "beansSecretUnlocked": "已解锁隐藏礼包 🫘",
   "beansCustom": "自定义",
   "beansCustomTitle": "自定义充值",
   "beansCustomLabel": "豆子数量",
