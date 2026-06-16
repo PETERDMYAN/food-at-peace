@@ -60,3 +60,4 @@ backend/build.toml
 # App Store Connect API keys — never commit secrets
 *.p8
 AuthKey_*.p8
+dart_defines.prod.json

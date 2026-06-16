@@ -62,6 +62,11 @@ class CircleClient {
   Future<int> invite(String token, String handle) =>
       _post(token, '/circle/invite', {'handle': handle});
 
+  /// Register this device's APNs token so the server can push friend-meal /
+  /// request / reaction alerts. Idempotent server-side (deduped by token).
+  Future<int> registerDevice(String token, String deviceToken) =>
+      _post(token, '/circle/register-device', {'token': deviceToken});
+
   /// One-tap mutual connect from an invite link/QR. The inviter consented by
   /// sharing the link, so this connects both sides immediately. Idempotent.
   /// Returns the connected friend's display name (or the handle) for the toast.

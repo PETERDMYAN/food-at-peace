@@ -105,6 +105,16 @@ def _connected_ids(uid):
     ]
 
 
+def _push(to_uid, title, body=""):
+    """Best-effort Apple push to one user's devices (never raises)."""
+    try:
+        import apns
+
+        apns.notify(_get_secret, _circle(), to_uid, title, body)
+    except Exception:  # noqa: BLE001
+        pass
+
+
 # --- Operations -------------------------------------------------------------
 
 def create_post(uid, body):
@@ -143,6 +153,9 @@ def create_post(uid, body):
             "expiresAt": expires,
         }
     )
+    # Tell connected friends a new meal landed in their circle (best-effort).
+    for friend in _connected_ids(uid):
+        _push(friend, f"{me['name']} shared a meal 🍵")
     return {"postId": post_id, "expiresAt": expires}
 
 
@@ -232,14 +245,20 @@ def react(uid, body):
     if not emoji or (existing and existing.get("emoji") == emoji):
         _posts().delete_item(Key=key)
         return {"myReaction": None}
+    reactor = _user_card(uid)["name"]
     _posts().put_item(
         Item={
             **key,
             "emoji": emoji,
-            "reactorName": _user_card(uid)["name"],
+            "reactorName": reactor,
             "expiresAt": _now_s() + TTL_SECONDS,
         }
     )
+    # Notify the meal's owner that someone reacted (best-effort; authorId comes
+    # from the client's feed entry).
+    owner = (body.get("authorId") or "").strip()
+    if owner and owner != uid:
+        _push(owner, f"{reactor} reacted {emoji} to your meal")
     return {"myReaction": emoji}
 
 
