@@ -71,7 +71,7 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
   notification work. Associated Domains + `foodatpeace://` scheme shipped in (4); the
   invite links are **live** on `foodatpeace.app` (§1).
 
-Verified: Flutter 119 + backend 84 tests + 12 integration, `flutter analyze` clean. The full signed-in
+Verified: Flutter 119 + backend 90 tests + 12 integration, `flutter analyze` clean. The full signed-in
 Circle flow was exercised **in-app on two simulators** against the live v2 backend
 (injected session tokens, since Apple sign-in can't run on a sim): user A scans +
 posts a meal → user B opens A's invite → one-tap mutual connect → B's feed shows A's
@@ -139,8 +139,15 @@ is now a single plated dish so the AI estimate reads cleanly (~420 kcal, not a 2
    grants collapsed via `mergeBeansLedgers`), so a balance follows the account across
    devices and survives a reinstall. `account.py` now also clears `BeansTable` on account
    deletion. Verified live: roro's seeded 80-Bean purchase is returned by `GET /beans` for
-   her account. **Remaining:** `/iap/validate` (Apple receipt validation) to harden against
-   fraud, then referral Beans (§7) and `purchase`/`refund` analytics.
+   her account. **Phase 3 (receipt validation — DONE):** `POST /iap/validate`
+   ([`backend/src/iap.py`](backend/src/iap.py)) verifies the App Store receipt with the
+   shared secret (SSM `/food-at-peace/iap-shared-secret`) and credits Beans server-side,
+   **idempotent by Apple transaction id**; the client validates after a StoreKit purchase
+   and adopts the server ledger, falling back to a local credit when the secret isn't set
+   so nothing breaks (`BeansClient.validateIap`, `BeansNotifier.creditPurchase`). The
+   **hidden 1-Bean dev pack** (free local credit) is gated to **debug builds only**
+   (`kDebugMode`) so it never reaches TestFlight/the App Store. **Remaining:** add the
+   shared secret to SSM, referral Beans (§7) and `purchase`/`refund` analytics.
 3. **APNs push for circle notifications** — friend-meal alerts are currently
    surfaced locally (on app launch/resume vs a last-seen marker) and now present as
    real **Apple banners even in the foreground** (`AppDelegate.willPresent` returns

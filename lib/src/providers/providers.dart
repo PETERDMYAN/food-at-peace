@@ -800,6 +800,31 @@ class BeansNotifier extends Notifier<BeansState> {
       // StoreKit product ID isn't meaningful to the user.
     ),
   );
+
+  /// Credit a completed StoreKit purchase. When we have the receipt + an account,
+  /// validate it server-side (`/iap/validate`), which credits the Beans
+  /// server-side (idempotent + cross-device, after Apple confirms the receipt) —
+  /// then adopt the returned ledger. Falls back to a local credit when validation
+  /// isn't available (no receipt / signed out / the shared secret isn't set yet)
+  /// so a paid purchase always lands. Called by the IAP flow.
+  Future<void> creditPurchase(int beans, String productId, String receipt) async {
+    final token = ref.read(authProvider)?.token;
+    if (receipt.isNotEmpty &&
+        token != null &&
+        token.isNotEmpty &&
+        proxyBaseUrl.isNotEmpty) {
+      final ledger = await ref
+          .read(beansClientProvider)
+          .validateIap(token, receipt, productId);
+      if (ledger != null) {
+        final merged = mergeBeansLedgers(ledger, state.ledger);
+        state = state.copyWith(ledger: merged);
+        await _prefs.setString(_ledgerKey, _encode(merged));
+        return;
+      }
+    }
+    await recordPurchase(beans, productId);
+  }
 }
 
 /// HTTP client for the server-side Beans ledger (`/beans`). No-op target when no
@@ -813,11 +838,12 @@ final beansProvider = NotifierProvider<BeansNotifier, BeansState>(
 );
 
 /// StoreKit IAP for the Bean packs; a completed purchase credits the wallet via
-/// [BeansNotifier.recordPurchase]. Lazily created on first read.
+/// [BeansNotifier.creditPurchase] (which validates the receipt server-side when
+/// it can). Lazily created on first read.
 final iapServiceProvider = Provider<IapService>((ref) {
   final service = StoreKitIapService(
-    onCredited: (beans, productId) =>
-        ref.read(beansProvider.notifier).recordPurchase(beans, productId),
+    onCredited: (beans, productId, receipt) =>
+        ref.read(beansProvider.notifier).creditPurchase(beans, productId, receipt),
   );
   ref.onDispose(service.dispose);
   return service;
