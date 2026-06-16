@@ -66,12 +66,20 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
   notification work. Associated Domains + `foodatpeace://` scheme shipped in (4); the
   invite links are **live** on `foodatpeace.app` (§1).
 
-Verified: Flutter 117 + backend 84 tests + 9 integration, `flutter analyze` clean. The full signed-in
+Verified: Flutter 117 + backend 84 tests + 12 integration, `flutter analyze` clean. The full signed-in
 Circle flow was exercised **in-app on two simulators** against the live v2 backend
 (injected session tokens, since Apple sign-in can't run on a sim): user A scans +
 posts a meal → user B opens A's invite → one-tap mutual connect → B's feed shows A's
 photo → B reacts ❤️ → A receives it (all confirmed server-side too). Driver:
 [`integration_test/circle_two_user_demo.dart`](integration_test/circle_two_user_demo.dart).
+
+A full **8-step Eva+Peter walkthrough video** (2026-06-16) records end-to-end on the two
+simulators, adding screen-recordable single-user drivers:
+[`onboarding_demo.dart`](integration_test/onboarding_demo.dart) (Apple ID + Health injected
+exactly as the app consumes them), [`photo_log_demo.dart`](integration_test/photo_log_demo.dart)
+(scan → 420 kcal → log), and [`beans_100_demo.dart`](integration_test/beans_100_demo.dart)
+(recharge 100). The shared demo photo ([`demo_food_image.dart`](integration_test/demo_food_image.dart))
+is now a single plated dish so the AI estimate reads cleanly (~420 kcal, not a 2850 kcal grocery spread).
 
 ## 🚧 Remaining
 
@@ -114,6 +122,9 @@ photo → B reacts ❤️ → A receives it (all confirmed server-side too). Dri
    [`integration_test/beans_purchase_demo.dart`](integration_test/beans_purchase_demo.dart)
    (wallet 100 → Top up → buy 200 → balance 300 + ledger row; a faked store stands in for
    Apple's payment sheet on the sim — the real sheet was already exercised on-device).
+   **Ledger polish:** a purchased row no longer renders the raw StoreKit product id
+   (`beans_100`) — it shows just "Top-up · <price>" (`recordPurchase` dropped the
+   product-id `note`, [`providers.dart`](lib/src/providers/providers.dart)).
    **Phase 2 (Beans follow the account — DONE):** an isolated, append-only `/beans`
    ledger on v2 (GET pulls, POST appends; idempotent by txn id; bearer-auth; own
    `BeansTable`; **one signup grant per account** enforced server-side),
