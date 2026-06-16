@@ -65,6 +65,7 @@ class StoreKitIapService implements IapService {
   final void Function(int beans, String productId)? onCredited;
   StreamSubscription<List<PurchaseDetails>>? _sub;
   final Map<String, Completer<IapResult>> _pending = {};
+  List<ProductDetails> _cache = const [];
 
   @override
   Future<bool> isAvailable() => _iap.isAvailable();
@@ -73,21 +74,35 @@ class StoreKitIapService implements IapService {
   Future<List<ProductDetails>> products() async {
     if (!await _iap.isAvailable()) return const [];
     final resp = await _iap.queryProductDetails(kBeanProductIds.values.toSet());
+    _cache = resp.productDetails;
     return resp.productDetails;
   }
 
   @override
   Future<IapResult> buy(String productId) async {
-    if (!await _iap.isAvailable()) {
-      return const IapResult(IapOutcome.unavailable);
+    // Reuse the product details fetched by products() (the paywall preloads them
+    // via beanProductsProvider) so a tap goes straight to the purchase sheet —
+    // re-querying StoreKit on every tap made the paywall feel slow.
+    ProductDetails? product;
+    for (final p in _cache) {
+      if (p.id == productId) {
+        product = p;
+        break;
+      }
     }
-    final resp = await _iap.queryProductDetails({productId});
-    if (resp.productDetails.isEmpty) {
-      return const IapResult(IapOutcome.error, message: 'Product not found');
+    if (product == null) {
+      if (!await _iap.isAvailable()) {
+        return const IapResult(IapOutcome.unavailable);
+      }
+      final resp = await _iap.queryProductDetails({productId});
+      if (resp.productDetails.isEmpty) {
+        return const IapResult(IapOutcome.error, message: 'Product not found');
+      }
+      product = resp.productDetails.first;
     }
     final completer = _pending.putIfAbsent(productId, Completer<IapResult>.new);
     await _iap.buyConsumable(
-      purchaseParam: PurchaseParam(productDetails: resp.productDetails.first),
+      purchaseParam: PurchaseParam(productDetails: product),
     );
     return completer.future;
   }

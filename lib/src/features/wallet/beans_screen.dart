@@ -179,6 +179,7 @@ class _PaywallSheet extends ConsumerWidget {
     // StoreKit's localized price strings, keyed by product ID; empty before they
     // load (or on the simulator) — we fall back to the indicative SGD price.
     final prices = ref.watch(beanProductsProvider).asData?.value ?? const {};
+    final balance = ref.watch(beansProvider).balance;
 
     // Capture the messenger so the toast survives popping the sheet.
     final messenger = ScaffoldMessenger.of(context);
@@ -215,7 +216,9 @@ class _PaywallSheet extends ConsumerWidget {
             const Center(child: BeanIcon(size: 44)),
             const SizedBox(height: 12),
             Text(
-              t.paywallTitle,
+              // Only a zero balance means they ran out — otherwise it's a plain
+              // top-up, so don't claim "out of Beans" when some remain.
+              balance > 0 ? t.beansChoosePack : t.paywallTitle,
               textAlign: TextAlign.center,
               style: text.titleLarge,
             ),
@@ -228,11 +231,6 @@ class _PaywallSheet extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 18),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Text(t.beansChoosePack, style: text.titleSmall),
-            ),
-            const SizedBox(height: 10),
             for (final p in BeanPricing.packs)
               _PackTile(
                 label: t.beansCount(p.beans),
