@@ -199,6 +199,27 @@ is now a single plated dish so the AI estimate reads cleanly (~420 kcal, not a 2
    handle from link → install → first sign-in, e.g. deferred deep link / pasteboard
    match against `circle.connect`), **one-reward-per-new-account** anti-abuse, and a
    "you earned N Beans 🫘" notice.
+8. **Eva — a daily "life lesson" everyone follows** *(engagement)* — a built-in
+   **system Circle account, Eva**, auto-added to **every** user's circle on first run /
+   sign-in and **non-removable** (everyone follows her — Eva is the primary demo persona).
+   Each day Eva surfaces **one fresh life-lesson aphorism** (a short "adage about life")
+   in the **Circle** ("Your circle" on Trends — a pinned Eva card: her avatar + today's
+   line). The line is keyed to the **user's local date**, so it flips at local midnight
+   and is the **same for everyone that day** (communal): `index = localEpochDay % 100`.
+   Source is a **config file of 100 Claude-generated, bilingual (EN/中文) lessons**,
+   **rotated one-per-day over a 100-day cycle**, then repeats — pre-generated, so **no
+   runtime model call** (offline-friendly; "fresh" = a new line each local day).
+   Optionally a daily local notification ("Eva's lesson for today …") gated by the
+   existing **Circle activity** toggle. **To build:** (a) **Claude generates** the 100
+   bilingual lessons into the config — bundled `assets/eva_wisdom.json` (declared in
+   `pubspec` assets) is the simplest first cut, *or* a server config (e.g. `/config/wisdom`
+   on the v2 stack) so the list updates without an app release; (b) a `dailyWisdomProvider`
+   that picks today's line by local date; (c) the pinned Eva card in the circle UI
+   ([`circle_feed_screen.dart`](lib/src/features/circle/circle_feed_screen.dart) /
+   Trends circle strip); (d) decide whether Eva is a **real server account** in
+   `CircleTable` (shows in the friend graph, can post to the feed) or a **pure
+   client-side pinned card** (no backend — simplest). Keep any bundled-config/asset
+   changes backward-compatible per the `production-safety` skill.
 
 ## 📱 Device-only QA (QA_REPORT §5)
 
