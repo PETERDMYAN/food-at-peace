@@ -796,7 +796,8 @@ class BeansNotifier extends Notifier<BeansState> {
       amount: beans,
       timestamp: DateTime.now(),
       priceSgd: BeanPricing.sgdForBeans(beans),
-      note: productId,
+      // No note: the row already shows "Top-up · <price>" — the internal
+      // StoreKit product ID isn't meaningful to the user.
     ),
   );
 }

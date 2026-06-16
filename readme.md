@@ -148,10 +148,13 @@ the system locale by default and persists a manual choice.
   showing Apple's localized price; the five `beans_100…beans_800` products are
   **live in App Store Connect** (EN/中文, prices, review shots, available). The
   "Custom" tile and the unlimited subscription are **gone** (Apple has no arbitrary
-  pricing; the sub was cut). A **screen-recordable walkthrough** of the purchase
-  lives in [`integration_test/beans_purchase_demo.dart`](integration_test/beans_purchase_demo.dart)
-  (wallet 100 → Top up → buy 200 → balance 300 + ledger row; a faked store stands
-  in for Apple's payment sheet on the sim). The balance is **synced to the account's
+  pricing; the sub was cut). **Screen-recordable walkthroughs** of the purchase live in
+  [`beans_purchase_demo.dart`](integration_test/beans_purchase_demo.dart) (buy 200) and
+  [`beans_100_demo.dart`](integration_test/beans_100_demo.dart) (recharge 100 → balance
+  200); a faked store stands in for Apple's payment sheet on the sim, and the ledger row
+  reads "Top-up · <price>" (no raw product id). These join the full **8-step Eva+Peter
+  walkthrough** (onboarding, photo→log, the two-user Circle flow) recorded across two
+  simulators. The balance is **synced to the account's
   server ledger** (`/beans` on v2) — pushed on every change, pulled on sign-in, with
   per-device signup grants collapsed (`BeansClient` + `mergeBeansLedgers`) — so it
   follows you across devices and survives a reinstall; account deletion clears it too.
