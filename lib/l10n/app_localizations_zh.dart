@@ -780,6 +780,15 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get iapUnavailable => '暂时无法购买。';
+
+  @override
+  String get iapPending => '购买处理中…';
+
+  @override
+  String get iapFailed => '购买失败，请重试。';
+
+  @override
   String get beansChoosePack => '充值豆子';
 
   @override

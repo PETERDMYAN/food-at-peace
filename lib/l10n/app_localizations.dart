@@ -1496,6 +1496,24 @@ abstract class AppLocalizations {
   /// **'{count} scans left'**
   String scansLeft(int count);
 
+  /// No description provided for @iapUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Purchases aren\'t available right now.'**
+  String get iapUnavailable;
+
+  /// No description provided for @iapPending.
+  ///
+  /// In en, this message translates to:
+  /// **'Your purchase is processing…'**
+  String get iapPending;
+
+  /// No description provided for @iapFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Purchase failed. Please try again.'**
+  String get iapFailed;
+
   /// No description provided for @beansChoosePack.
   ///
   /// In en, this message translates to:

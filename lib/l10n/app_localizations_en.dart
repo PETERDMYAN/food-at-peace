@@ -804,6 +804,15 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get iapUnavailable => 'Purchases aren\'t available right now.';
+
+  @override
+  String get iapPending => 'Your purchase is processing…';
+
+  @override
+  String get iapFailed => 'Purchase failed. Please try again.';
+
+  @override
   String get beansChoosePack => 'Top up Beans';
 
   @override

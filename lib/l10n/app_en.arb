@@ -391,6 +391,9 @@
   "@scansLeft": {
     "placeholders": { "count": { "type": "int" } }
   },
+  "iapUnavailable": "Purchases aren't available right now.",
+  "iapPending": "Your purchase is processing…",
+  "iapFailed": "Purchase failed. Please try again.",
   "beansChoosePack": "Top up Beans",
   "beansCustom": "Custom",
   "beansCustomTitle": "Custom top-up",
