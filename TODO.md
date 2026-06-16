@@ -247,16 +247,19 @@ is now a single plated dish so the AI estimate reads cleanly (~420 kcal, not a 2
    changes backward-compatible per the `production-safety` skill.
 
 9. **Make the micro Bean pack a REAL production IAP (not debug-only)** —
-   **DECISION (2026-06-16): `beans_25` = 25 Beans @ S$0.49** (Apple's SGD floor; a literal
-   1-Bean/S$0.02 can't be sold). **Client + server code landed on `v3`:** `beans_25` added
-   to `BeanPricing.packs` ([`bean_transaction.dart`](lib/src/models/bean_transaction.dart)),
-   `kBeanProductIds` ([`iap_service.dart`](lib/src/data/iap_service.dart)) and the server
-   `PRODUCTS` map ([`backend/src/iap.py`](backend/src/iap.py)); unit + backend tests added
-   (10 Dart / 7 backend green). The **hidden 1-Bean debug freebie stays as-is** (separate,
-   `kDebugMode`-only). **Remaining:** (a) create the `beans_25` consumable in ASC (EN+中文,
-   ~S$0.49 tier, review screenshot, availability); (b) it rides the **next version (1.0.2)**
-   — a new IAP must accompany a version submission, and 1.0.1 is still in review; (c) deploy
-   the updated `iap.py` to prod when 1.0.2 ships. *(Below: the original blocker write-up.)*
+   **DECISION (2026-06): `beans_25` = 25 Beans @ S$0.48** (Apple's actual SGD floor — there's
+   no 0.49 SGD point; a literal 1-Bean/S$0.02 can't be sold). **Client + server code landed
+   on `v3`:** `beans_25` added to `BeanPricing.packs`
+   ([`bean_transaction.dart`](lib/src/models/bean_transaction.dart)), `kBeanProductIds`
+   ([`iap_service.dart`](lib/src/data/iap_service.dart)) and the server `PRODUCTS` map
+   ([`backend/src/iap.py`](backend/src/iap.py)); unit + backend tests added (green). The
+   **hidden 1-Bean debug freebie stays as-is** (separate, `kDebugMode`-only). **✅ ASC product
+   created** — consumable `beans_25` (Apple ID 6780952980), S$0.48 base (US$0.29 / AUD$0.49
+   comparable), EN ("25 Beans") + 简体中文 ("25 颗豆子") localizations, review screenshot,
+   all-territory availability — status **Ready to Submit**. **Remaining:** (a) it rides the
+   **next version (1.0.2)** — a new IAP must accompany a version submission, and 1.0.1 is
+   still in review; (b) deploy the updated `iap.py` to prod when 1.0.2 ships. *(Below: the
+   original blocker write-up.)*
 
    (Original note — today the **1-Bean / S$0.02** pack is a
    `kDebugMode`-only **free local credit**: it's hidden in `BeanPricing.hiddenPacks`
