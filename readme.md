@@ -5,16 +5,19 @@ or by **snapping a photo** — see how much you can still eat today, and keep an
 on your protein and saturated-fat quotas. Connects to **Apple Health / Garmin**
 for real calories burned, and speaks **English and 中文**. Built with Flutter.
 
-> **Status:** **v1.0.0 is live on the App Store.** Active development is on the
-> **`v2`** branch (build **1.0.1 (14)**, submitted to App Store review — the first
-> public v2 release, pointing at the migrated prod backend), which adds: AI photo estimates
+> **Status:** **v1.0.0 is live on the App Store; v1.0.1 (14) is "Waiting for Review"**
+> (submitted 2026-06-16 — the first public v2 release, pointing at the migrated prod
+> backend, with all 5 Beans consumables attached and **auto-release on approval**).
+> Active development continues on the **`v2`** branch, which adds: AI photo estimates
 > **in your app language** (EN/中文), the **Circle of Food** social layer (friends
 > by `@handle`, **invite universal link + QR with one-tap mutual connect**, a
 > **Manage circle** screen, privacy-gated friend trends, and a 3-day photo
 > **"stories"** feed with emoji reactions), a **real owner-analytics** backend,
-> daily meal reminders, and a **Beans** credit wallet. v2 runs against an
-> **isolated backend stack** (`food-at-peace-vision-proxy-v2`) so production is
-> never touched — see `CLAUDE.md` / [`backend/README.md`](backend/README.md).
+> daily meal reminders, and a **Beans** credit wallet. Day-to-day dev still runs
+> against the **isolated `food-at-peace-vision-proxy-v2` stack**, while the public
+> 1.0.1 release points at the **migrated prod stack** (the v2 backend was deployed
+> onto prod additively on 2026-06-16, leaving 1.0.0 users' data intact) — see
+> `CLAUDE.md` / [`backend/README.md`](backend/README.md).
 > The **invite links are live**: `foodatpeace.app` is registered + hosted on AWS
 > (Route53 + CloudFront/HTTPS) serving the AASA + a smart `/i/<handle>` page (app
 > installed → opens the app · not installed → App Store · WeChat → tap ••• (top-right)

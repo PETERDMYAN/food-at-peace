@@ -64,7 +64,9 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
     1024px copy.
 - **TestFlight / App Store** — `1.0.1 (14)` built against **prod**
   (`--dart-define-from-file=dart_defines.prod.json`) + uploaded via the ASC API key,
-  and submitted to **App Store review** (first public v2 release). (14) adds
+  and **submitted to App Store review on 2026-06-16 — now "Waiting for Review"** (first
+  public v2 release; all 5 Beans consumables `beans_100…beans_800` attached to the
+  version, **auto-release on approval**). (14) adds
   **server-side IAP receipt validation** (`/iap/validate`, §2), **APNs background push**
   for circle activity (request / accept / shared-meal / reaction → real Apple banners
   even when the app is closed; key `D2665A2D4P`, [`backend/src/apns.py`](backend/src/apns.py)
@@ -121,9 +123,11 @@ is now a single plated dish so the AI estimate reads cleanly (~420 kcal, not a 2
    with **EN + 中文 localizations**, **prices** (SGD 1.99/3.99/5.99/9.48/13.98, **Singapore
    base** → auto-converts; 9.48/13.98 are Apple's nearest SGD tiers to 9.49/13.99), and
    **review screenshots** (the iridescent bean mark, not a coin), **all-territory
-   availability**, and state **`READY_TO_SUBMIT`** — the whole product setup was done via
-   the ASC API (the lingering "Missing Metadata" was just unset availability, fixed via
-   `inAppPurchaseAvailabilities`; *not* the agreement). **ASC side fully live (2026-06-16):**
+   availability**, and (until 2026-06-16) state **`READY_TO_SUBMIT`** — the whole product
+   setup was done via the ASC API (the lingering "Missing Metadata" was just unset
+   availability, fixed via `inAppPurchaseAvailabilities`; *not* the agreement). **All 5 are
+   now attached to version 1.0.1 and IN REVIEW** (submitted 2026-06-16 — first IAP must ride
+   a version). **ASC side fully live (2026-06-16):**
    Paid Apps agreement, bank account (UOB, SGD), and Singapore tax form are all **Active**.
    Only remaining user step: add a **Sandbox tester** (Users and Access → Sandbox) before
    on-device purchase testing — not blocking. **Paywall switched (done):**
