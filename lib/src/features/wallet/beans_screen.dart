@@ -1,4 +1,7 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:food_at_peace/l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
@@ -169,28 +172,68 @@ Future<void> showBeansPaywall(BuildContext context, WidgetRef ref) {
   );
 }
 
-class _PaywallSheet extends ConsumerWidget {
+class _PaywallSheet extends ConsumerStatefulWidget {
   const _PaywallSheet();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final t = AppLocalizations.of(context);
-    final text = Theme.of(context).textTheme;
-    // StoreKit's localized price strings, keyed by product ID; empty before they
-    // load (or on the simulator) — we fall back to the indicative SGD price.
-    final prices = ref.watch(beanProductsProvider).asData?.value ?? const {};
-    final balance = ref.watch(beansProvider).balance;
+  ConsumerState<_PaywallSheet> createState() => _PaywallSheetState();
+}
 
-    // Capture the messenger so the toast survives popping the sheet.
+class _PaywallSheetState extends ConsumerState<_PaywallSheet> {
+  /// Beans amount of the pack currently being purchased (null = idle). Drives the
+  /// per-tile spinner and blocks a second tap from opening the sheet twice.
+  int? _buying;
+  // Tap the title 10× to reveal the hidden pack (a dev top-up shortcut).
+  int _titleTaps = 0;
+  bool _revealed = false;
+  Timer? _tapReset;
+
+  @override
+  void dispose() {
+    _tapReset?.cancel();
+    super.dispose();
+  }
+
+  void _onTitleTap() {
+    if (_revealed) return;
+    _tapReset?.cancel();
+    _tapReset = Timer(const Duration(seconds: 1), () => _titleTaps = 0);
+    if (++_titleTaps >= 10) {
+      setState(() => _revealed = true);
+      HapticFeedback.mediumImpact();
+      ScaffoldMessenger.of(context)
+        ..clearSnackBars()
+        ..showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context).beansSecretUnlocked),
+          ),
+        );
+    }
+  }
+
+  Future<void> _buy(int beans) async {
+    if (_buying != null) return; // already purchasing — ignore extra taps
+    setState(() => _buying = beans);
     final messenger = ScaffoldMessenger.of(context);
+    final t = AppLocalizations.of(context);
     void toast(String msg) =>
         messenger.showSnackBar(SnackBar(content: Text(msg)));
-
-    Future<void> buyPack(int beans) async {
+    try {
+      // Hidden packs are below Apple's minimum IAP price tier, so they can't be a
+      // StoreKit product — credit them locally via the dev path instead.
+      if (BeanPricing.isHidden(beans)) {
+        await ref
+            .read(beansProvider.notifier)
+            .purchasePack(beans, BeanPricing.sgdForBeans(beans) ?? 0);
+        if (!mounted) return;
+        Navigator.pop(context);
+        toast(t.beansBought(beans));
+        return;
+      }
       final productId = beanProductId(beans);
       if (productId == null) return;
       final result = await ref.read(iapServiceProvider).buy(productId);
-      if (!context.mounted) return;
+      if (!mounted) return;
       switch (result.outcome) {
         case IapOutcome.purchased:
           Navigator.pop(context);
@@ -204,7 +247,24 @@ class _PaywallSheet extends ConsumerWidget {
         case IapOutcome.error:
           toast(result.message ?? t.iapFailed);
       }
+    } finally {
+      if (mounted) setState(() => _buying = null);
     }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    final text = Theme.of(context).textTheme;
+    // StoreKit's localized price strings, keyed by product ID; empty before they
+    // load (or on the simulator) — we fall back to the indicative SGD price.
+    final prices = ref.watch(beanProductsProvider).asData?.value ?? const {};
+    final balance = ref.watch(beansProvider).balance;
+    final busy = _buying != null;
+    final packs = [
+      ...BeanPricing.packs,
+      if (_revealed) ...BeanPricing.hiddenPacks,
+    ];
 
     return SafeArea(
       child: SingleChildScrollView(
@@ -215,12 +275,16 @@ class _PaywallSheet extends ConsumerWidget {
           children: [
             const Center(child: BeanIcon(size: 44)),
             const SizedBox(height: 12),
-            Text(
-              // Only a zero balance means they ran out — otherwise it's a plain
-              // top-up, so don't claim "out of Beans" when some remain.
-              balance > 0 ? t.beansChoosePack : t.paywallTitle,
-              textAlign: TextAlign.center,
-              style: text.titleLarge,
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: _onTitleTap,
+              child: Text(
+                // Only a zero balance means they ran out — otherwise it's a plain
+                // top-up, so don't claim "out of Beans" when some remain.
+                balance > 0 ? t.beansChoosePack : t.paywallTitle,
+                textAlign: TextAlign.center,
+                style: text.titleLarge,
+              ),
             ),
             const SizedBox(height: 6),
             Text(
@@ -231,14 +295,16 @@ class _PaywallSheet extends ConsumerWidget {
               ),
             ),
             const SizedBox(height: 18),
-            for (final p in BeanPricing.packs)
+            for (final p in packs)
               _PackTile(
                 label: t.beansCount(p.beans),
                 trailing:
                     prices[beanProductId(p.beans)]?.price ??
                     t.priceSgd(p.sgd.toStringAsFixed(2)),
                 badge: p.beans == 800 ? t.beansBestValue : null,
-                onTap: () => buyPack(p.beans),
+                loading: _buying == p.beans,
+                enabled: !busy,
+                onTap: () => _buy(p.beans),
               ),
           ],
         ),
@@ -255,6 +321,8 @@ class _PackTile extends StatelessWidget {
     required this.trailing,
     required this.onTap,
     this.badge,
+    this.loading = false,
+    this.enabled = true,
   });
 
   final String label;
@@ -262,67 +330,83 @@ class _PackTile extends StatelessWidget {
   final VoidCallback onTap;
   final String? badge;
 
+  /// This pack's purchase is in flight — show a spinner where the price was.
+  final bool loading;
+
+  /// False while another pack is being purchased — dim + ignore taps.
+  final bool enabled;
+
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(18),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          decoration: BoxDecoration(
-            color: scheme.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(18),
-          ),
-          child: Row(
-            children: [
-              const BeanIcon(size: 24),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Row(
-                  children: [
-                    Flexible(
-                      child: Text(
-                        label,
-                        style: text.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ),
-                    if (badge != null) ...[
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          gradient: AppTheme.beanGradient,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
+      child: AnimatedOpacity(
+        duration: const Duration(milliseconds: 150),
+        opacity: (enabled || loading) ? 1 : 0.4,
+        child: InkWell(
+          onTap: (enabled && !loading) ? onTap : null,
+          borderRadius: BorderRadius.circular(18),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            decoration: BoxDecoration(
+              color: scheme.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: Row(
+              children: [
+                const BeanIcon(size: 24),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Row(
+                    children: [
+                      Flexible(
                         child: Text(
-                          badge!,
-                          style: text.labelSmall?.copyWith(
-                            color: AppTheme.beanInk,
+                          label,
+                          style: text.titleMedium?.copyWith(
                             fontWeight: FontWeight.w700,
                           ),
                         ),
                       ),
+                      if (badge != null) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
+                          decoration: BoxDecoration(
+                            gradient: AppTheme.beanGradient,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            badge!,
+                            style: text.labelSmall?.copyWith(
+                              color: AppTheme.beanInk,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
-              ),
-              Text(
-                trailing,
-                style: text.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  color: AppTheme.beanAccent,
-                ),
-              ),
-            ],
+                loading
+                    ? const SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Text(
+                        trailing,
+                        style: text.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          color: AppTheme.beanAccent,
+                        ),
+                      ),
+              ],
+            ),
           ),
         ),
       ),

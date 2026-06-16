@@ -36,6 +36,9 @@ const _uid = String.fromEnvironment('DEV_USER_ID');
 const _myHandle = String.fromEnvironment('DEMO_MY_HANDLE');
 const _peerHandle = String.fromEnvironment('DEMO_PEER_HANDLE');
 const _peerUid = String.fromEnvironment('DEMO_PEER_UID');
+// When set, ask iOS for notification permission on launch so the circle-activity
+// notification surfaces as a real Apple banner (not just the in-app one).
+const _grantNotif = bool.fromEnvironment('DEMO_GRANT_NOTIF');
 const _big = 9999999999999;
 
 class _DemoAuth extends AuthNotifier {
@@ -120,6 +123,15 @@ void main() {
 
     SharedPreferences.setMockInitialValues(_seed());
     final prefs = await SharedPreferences.getInstance();
+
+    // Grant OS notification permission BEFORE the app builds, so the launch
+    // activity-check surfaces a real Apple banner with no permission race. The
+    // pre-app permission dialog lands in the (trimmed) recording head.
+    if (_grantNotif) {
+      final c = ProviderContainer();
+      await c.read(notificationServiceProvider).requestPermission();
+      c.dispose();
+    }
 
     await t.pumpWidget(
       ProviderScope(

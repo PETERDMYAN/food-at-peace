@@ -1520,6 +1520,12 @@ abstract class AppLocalizations {
   /// **'Top up Beans'**
   String get beansChoosePack;
 
+  /// No description provided for @beansSecretUnlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'Secret pack unlocked 🫘'**
+  String get beansSecretUnlocked;
+
   /// No description provided for @beansCustom.
   ///
   /// In en, this message translates to:

@@ -395,6 +395,7 @@
   "iapPending": "Your purchase is processing…",
   "iapFailed": "Purchase failed. Please try again.",
   "beansChoosePack": "Top up Beans",
+  "beansSecretUnlocked": "Secret pack unlocked 🫘",
   "beansCustom": "Custom",
   "beansCustomTitle": "Custom top-up",
   "beansCustomLabel": "Number of Beans",

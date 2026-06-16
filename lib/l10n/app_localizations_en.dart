@@ -816,6 +816,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get beansChoosePack => 'Top up Beans';
 
   @override
+  String get beansSecretUnlocked => 'Secret pack unlocked 🫘';
+
+  @override
   String get beansCustom => 'Custom';
 
   @override
