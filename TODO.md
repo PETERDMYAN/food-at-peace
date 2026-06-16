@@ -92,10 +92,14 @@ photo → B reacts ❤️ → A receives it (all confirmed server-side too). Dri
    locally; a reinstall resets the balance). **Done:** `in_app_purchase` added +
    `IapService` ([`lib/src/data/iap_service.dart`](lib/src/data/iap_service.dart),
    consumable products `beans_100…beans_800`) + the wallet credit hook
-   (`iapServiceProvider` → `BeansNotifier.recordPurchase`). **Next (you):** sign the
-   **Paid Apps agreement** + create the **5 consumable products** in App Store Connect
-   (`beans_100`=100 … `beans_800`=800, prices 1.99/3.99/5.99/9.49/13.99) + a **sandbox
-   tester**. **Next (me):** switch the paywall (`beans_screen.dart`) from
+   (`iapServiceProvider` → `BeansNotifier.recordPurchase`). **Products DONE (via the ASC
+   API, no UI):** the 5 consumables `beans_100…beans_800` are created on app `6777715561`
+   with **EN + 中文 localizations**, **prices** ($1.99/3.99/5.99/9.49/13.99, USA base →
+   auto-converts), and **review screenshots**. They show `MISSING_METADATA` **only**
+   because the Paid Apps agreement isn't active. **Next (you, ASC UI — can't be done by
+   API):** (a) accept the **Paid Apps agreement** + banking/tax (Business → Agreements)
+   → flips all 5 to *Ready to Submit*; (b) add a **Sandbox tester** (Users and Access →
+   Sandbox). **Next (me):** switch the paywall (`beans_screen.dart`) from
    `purchasePack` → `IapService.buy`, show StoreKit's **localized prices**, drop the
    "Custom" tile (Apple has no arbitrary pricing), and **mock the store** in the
    integration tests (IAP can't run on the sim). **Phase 2:** a backend `/iap/validate`
