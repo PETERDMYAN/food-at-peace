@@ -94,8 +94,9 @@ photo → B reacts ❤️ → A receives it (all confirmed server-side too). Dri
    consumable products `beans_100…beans_800`) + the wallet credit hook
    (`iapServiceProvider` → `BeansNotifier.recordPurchase`). **Products DONE (via the ASC
    API, no UI):** the 5 consumables `beans_100…beans_800` are created on app `6777715561`
-   with **EN + 中文 localizations**, **prices** ($1.99/3.99/5.99/9.49/13.99, USA base →
-   auto-converts), and **review screenshots**. They show `MISSING_METADATA` **only**
+   with **EN + 中文 localizations**, **prices** (SGD 1.99/3.99/5.99/9.48/13.98, **Singapore
+   base** → auto-converts; 9.48/13.98 are Apple's nearest SGD tiers to 9.49/13.99), and
+   **review screenshots** (the iridescent bean mark, not a coin). They show `MISSING_METADATA` **only**
    because the Paid Apps agreement isn't active. **Next (you, ASC UI — can't be done by
    API):** (a) accept the **Paid Apps agreement** + banking/tax (Business → Agreements)
    → flips all 5 to *Ready to Submit*; (b) add a **Sandbox tester** (Users and Access →
@@ -144,7 +145,7 @@ photo → B reacts ❤️ → A receives it (all confirmed server-side too). Dri
      third-party agent), ~300 RMB/yr verification. Then add the WeChat SDK + a new iOS
      build. Until then, the landing page's Safari hand-off is the supported WeChat path.
 7. **Referral / new-user Beans** *(growth — pairs with the invite links + §2 IAP)* —
-   reward Beans through the invite loop. New users **already** get a **21-Bean welcome
+   reward Beans through the invite loop. New users **already** get a **100-Bean welcome
    grant** on first launch (`BeanPricing.signupGrant`, granted locally in
    `BeansNotifier.build`). Add a **referral bonus**: when someone installs via an
    invite link (`foodatpeace.app/i/<handle>`) and becomes a **verified new user**
