@@ -137,12 +137,21 @@ the system locale by default and persists a manual choice.
   enabled from onboarding or **Settings → Reminders**
   (`flutter_local_notifications` + `timezone`)
 
-- [~] **Beans (in-app credit) — client foundation built** — 100 free Beans on
-  first launch; 1 Bean per photo scan (Add screen shows "N scans left" unless
-  unlimited); iridescent pastel "jelly-bean" wallet in **Profile → Beans** with
-  balance, transaction history and a paywall offering packs **100 / 200 / 300 /
-  500 / 800 + Custom** and the unlimited plan. Balance + ledger are local
-  (`shared_preferences`); purchase/subscribe are **dev stubs**.
+- [~] **Beans (in-app credit) — real StoreKit IAP wired** — 100 free Beans on
+  first launch; 1 Bean per photo scan (Add screen shows "N scans left");
+  iridescent pastel "jelly-bean" wallet in **Profile → Beans** with balance,
+  transaction history, and a paywall of **consumable** packs **100 / 200 / 300 /
+  500 / 800** (SGD 1.99 / 3.99 / 5.99 / 9.48 / 13.98). The paywall buys through
+  **`in_app_purchase` / StoreKit** (`IapService` → `BeansNotifier.recordPurchase`),
+  showing Apple's localized price; the five `beans_100…beans_800` products are
+  **live in App Store Connect** (EN/中文, prices, review shots, available). The
+  "Custom" tile and the unlimited subscription are **gone** (Apple has no arbitrary
+  pricing; the sub was cut). A **screen-recordable walkthrough** of the purchase
+  lives in [`integration_test/beans_purchase_demo.dart`](integration_test/beans_purchase_demo.dart)
+  (wallet 100 → Top up → buy 200 → balance 300 + ledger row; a faked store stands
+  in for Apple's payment sheet on the sim). The local balance + ledger
+  (`shared_preferences`) still need the **server ledger** (`/beans`, built on v2)
+  wired client-side + receipt validation — see `TODO.md` §2.
 
 - [x] **Owner metrics dashboard (v2 — now real)** — Profile → tap the version row 5×
   → downloads / active / opens (7-day bars) / photos scanned / Beans sold / revenue /
@@ -151,14 +160,16 @@ the system locale by default and persists a manual choice.
   Connect API + real IAP land.
 
 **TODO (pricing — StoreKit, mind Apple's rules):**
-- [ ] **Beans packs** — each tier (100/200/300/500/800) = a fixed **consumable
-  IAP** product on an Apple price tier. Apple has no arbitrary pricing, so
-  **"Custom" must resolve to a fixed tier** (or be dropped on iOS). Beans are
-  consumed in-app → must use Apple IAP, no external payment. Add **Restore
-  Purchases** + **server-side balance ledger** + receipt validation.
-- [ ] **Unlimited subscription** — SGD 3.99/mo **auto-renewable subscription**;
-  needs the subscription-group setup, required disclosures (Guideline 3.1.2),
-  and **server-side entitlement** (replace the local `subscribed` flag).
+- [x] **Beans packs** — each tier (100/200/300/500/800) is a fixed **consumable
+  IAP** product (`beans_100…beans_800`) live in App Store Connect; the "Custom"
+  tile was dropped (Apple has no arbitrary pricing) and the paywall buys via
+  StoreKit (`in_app_purchase`). Beans are consumed in-app → Apple IAP only, no
+  external payment.
+- [ ] **Harden Beans IAP** — wire the **server-side ledger** (`/beans`, built on
+  v2) into the client (pull on sign-in / push on append) so a balance follows the
+  account, add **Restore Purchases**, and **receipt validation** (`/iap/validate`).
+- [x] **Unlimited subscription — cut.** Replaced by Beans packs only (the
+  auto-renewable plan and its local `subscribed` flag were removed).
 
 **TODO (dashboard):**
 - [x] **(v2)** Emit `open`/`scan` events + a `GET /metrics` aggregation endpoint the

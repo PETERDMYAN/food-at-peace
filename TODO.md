@@ -106,7 +106,12 @@ photo → B reacts ❤️ → A receives it (all confirmed server-side too). Dri
    `beans_screen.dart` now buys via `IapService.buy` (StoreKit), shows the **localized
    store price** (falls back to the indicative SGD), the **"Custom" tile is gone** (Apple
    can't price arbitrary amounts), and the integration tests inject a **fake store** so
-   the purchase flow runs on the sim (8/8 green). **Phase 2 (in progress):** the
+   the purchase flow runs on the sim (8/8 green). A slowed-down, **screen-recordable**
+   walkthrough of a buy is in
+   [`integration_test/beans_purchase_demo.dart`](integration_test/beans_purchase_demo.dart)
+   (wallet 100 → Top up → buy 200 → balance 300 + ledger row; a faked store stands in for
+   Apple's payment sheet on the sim — the real sheet was already exercised on-device).
+   **Phase 2 (in progress):** the
    **server-side Beans ledger is built + deployed on v2** — isolated, append-only
    `/beans` (GET pulls, POST appends; idempotent by txn id; bearer-auth; own
    `BeansTable`), [`backend/src/beans.py`](backend/src/beans.py). **Remaining:** the
