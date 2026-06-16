@@ -76,6 +76,8 @@ class BeanPricing {
   /// IAP has no arbitrary pricing, so the "custom" amount has to resolve to one
   /// of these tiers (or the nearest) rather than a free-form price.
   static const List<({int beans, double sgd})> packs = [
+    // Entry pack at Apple's SGD price floor — the smallest *real* top-up.
+    (beans: 25, sgd: 0.49),
     (beans: 100, sgd: 1.99),
     (beans: 200, sgd: 3.99),
     (beans: 300, sgd: 5.99),

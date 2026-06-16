@@ -17,6 +17,14 @@ void main() {
     expect(BeanPricing.costPerPhoto, 1);
   });
 
+  test('beans_25 is the entry pack at S\$0.49 (a real IAP, not the hidden freebie)', () {
+    final p25 = BeanPricing.packs.where((p) => p.beans == 25).toList();
+    expect(p25.length, 1);
+    expect(p25.single.sgd, 0.49);
+    expect(BeanPricing.isHidden(25), isFalse); // sold via StoreKit, not local credit
+    expect(BeanPricing.sgdForBeans(25), 0.49);
+  });
+
   test('balance is the signed sum of the ledger', () {
     final state = BeansState(
       ledger: [

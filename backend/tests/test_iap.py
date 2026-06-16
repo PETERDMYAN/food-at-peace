@@ -111,6 +111,14 @@ def test_valid_receipt_credits_idempotently(store, monkeypatch):
     assert [t["id"] for t in body2["ledger"]].count("iap-tx-1") == 1
 
 
+def test_beans_25_credits_25(store, monkeypatch):
+    monkeypatch.setattr(iap, "_verify", lambda r, s: _apple_ok("beans_25", "tx-25"))
+    status, body = _call(body={"receipt": "r", "productId": "beans_25"})
+    assert status == 200
+    assert body["valid"] is True
+    assert body["beans"] == 25
+
+
 def test_rejects_product_not_in_receipt(store, monkeypatch):
     monkeypatch.setattr(iap, "_verify", lambda r, s: _apple_ok("beans_800", "tx-9"))
     status, body = _call(body={"receipt": "r", "productId": "beans_200"})

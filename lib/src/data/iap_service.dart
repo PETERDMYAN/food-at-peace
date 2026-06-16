@@ -6,6 +6,7 @@ import 'package:in_app_purchase/in_app_purchase.dart';
 /// products created in App Store Connect *and* `BeanPricing.packs` in the app
 /// (key = Beans granted, value = product ID).
 const Map<int, String> kBeanProductIds = {
+  25: 'beans_25',
   100: 'beans_100',
   200: 'beans_200',
   300: 'beans_300',

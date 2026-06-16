@@ -32,6 +32,7 @@ IAP_SECRET_PARAM = os.environ.get(
 # product id -> (Beans granted, indicative SGD). MUST match the app's
 # kBeanProductIds / BeanPricing.packs.
 PRODUCTS = {
+    "beans_25": (25, 0.49),
     "beans_100": (100, 1.99),
     "beans_200": (200, 3.99),
     "beans_300": (300, 5.99),
