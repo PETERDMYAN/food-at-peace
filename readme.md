@@ -6,7 +6,7 @@ on your protein and saturated-fat quotas. Connects to **Apple Health / Garmin**
 for real calories burned, and speaks **English and 中文**. Built with Flutter.
 
 > **Status:** **v1.0.0 is live on the App Store.** Active development is on the
-> **`v2`** branch (TestFlight build **1.0.1 (10)**), which adds: AI photo estimates
+> **`v2`** branch (TestFlight build **1.0.1 (11)**), which adds: AI photo estimates
 > **in your app language** (EN/中文), the **Circle of Food** social layer (friends
 > by `@handle`, **invite universal link + QR with one-tap mutual connect**, a
 > **Manage circle** screen, privacy-gated friend trends, and a 3-day photo
