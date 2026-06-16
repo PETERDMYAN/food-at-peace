@@ -1,10 +1,29 @@
 # Capturing App Store screenshots
 
-> **Current shipped set:** `store/app-store-screens/` — 5 × 1320 × 2868 captured
-> June 12, 2026 on the iPhone 16 Pro Max simulator (iOS 26.5), uploaded to the
-> **6.9″ Display** slot in Media Manager in order: Today · Trends · Add ·
-> Sources & methodology · Settings. (1320 × 2868 is only accepted by the 6.9″
-> slot in Media Manager — the version page's inline box is the 6.5″ slot.)
+> **Current shipped set (1.0.1, 2026-06-16):** a **bilingual** 6 × 1320 × 2868 set —
+> `store/app-store-screens/` (English) and `store/app-store-screens-zh/` (简体中文) —
+> uploaded to the **6.9″ Display** slot in Media Manager, order: **Today · Circle ·
+> Scan · Trends · Beans · Settings**. (1320 × 2868 is only accepted by the 6.9″ slot;
+> the version page's inline box is the 6.5″ slot.)
+>
+> **These are generated, not hand-captured.** `integration_test/store_screenshots.dart`
+> seeds a configured account (profile, a week of meals, a Beans ledger, a Circle feed
+> with hosted photos), forces a locale, and walks the screens; a tiny host server
+> (`/tmp/fap_shots/shotserver.py`) captures the *device* screen via `simctl` (so the
+> clean 9:41 status bar is included) when the test pings `127.0.0.1` per screen.
+> Regenerate both sets on a booted **iPhone 17 Pro Max** (also 1320 × 2868):
+>
+> ```bash
+> # host capture server (writes /tmp/fap_shots/out/<name>.png on GET /shot/<name>)
+> SHOT_UDID=<udid> nohup python3 /tmp/fap_shots/shotserver.py 8099 &
+> xcrun simctl status_bar <udid> override --time "9:41" --batteryState charged \
+>   --batteryLevel 100 --cellularBars 4 --wifiBars 3 --operatorName ""
+> flutter test integration_test/store_screenshots.dart -d <udid> --dart-define=LOCALE=en
+> flutter test integration_test/store_screenshots.dart -d <udid> --dart-define=LOCALE=zh
+> ```
+>
+> _Historical:_ the prior 1.0.0 set was 5 hand-captured shots (Today · Trends · Add ·
+> Sources · Settings) on the iPhone 16 Pro Max.
 
 App Store Connect requires **6.7-inch iPhone** screenshots at **1290 × 2796 px**
 (this one set covers all current iPhone sizes). 1–10 images; the first 3 show in

@@ -1784,6 +1784,18 @@ abstract class AppLocalizations {
   /// **'Circle feed'**
   String get feedTitle;
 
+  /// No description provided for @feedYou.
+  ///
+  /// In en, this message translates to:
+  /// **'You'**
+  String get feedYou;
+
+  /// No description provided for @feedSomeone.
+  ///
+  /// In en, this message translates to:
+  /// **'Someone'**
+  String get feedSomeone;
+
   /// No description provided for @feedEmpty.
   ///
   /// In en, this message translates to:

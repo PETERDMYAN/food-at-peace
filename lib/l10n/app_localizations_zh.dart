@@ -934,6 +934,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get feedTitle => '圈子动态';
 
   @override
+  String get feedYou => '你';
+
+  @override
+  String get feedSomeone => '好友';
+
+  @override
   String get feedEmpty => '还没有动态。拍一餐分享到你的圈子吧。';
 
   @override

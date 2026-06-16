@@ -295,6 +295,8 @@
   "shareToCircle": "分享到圈子",
   "shareToCircleHint": "圈子好友可见 3 天",
   "feedTitle": "圈子动态",
+  "feedYou": "你",
+  "feedSomeone": "好友",
   "feedEmpty": "还没有动态。拍一餐分享到你的圈子吧。",
   "feedReceived": "{count} 个反应",
   "todayLabel": "今天",

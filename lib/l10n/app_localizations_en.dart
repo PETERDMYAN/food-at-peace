@@ -960,6 +960,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get feedTitle => 'Circle feed';
 
   @override
+  String get feedYou => 'You';
+
+  @override
+  String get feedSomeone => 'Someone';
+
+  @override
   String get feedEmpty =>
       'No posts yet. Scan a meal and share it to your circle.';
 

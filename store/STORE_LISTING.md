@@ -41,6 +41,7 @@ TODAY AT A GLANCE
 LOG IN SECONDS
 • Add meals manually: calories, protein, saturated fat, meal, and serving.
 • Or snap a photo of your plate and let AI estimate the calories, protein, and saturated fat — review the estimate, then log it.
+• Photo scans run on Beans, a simple in-app credit: each scan uses one Bean and you start with 100 free. Top up whenever you like — manual logging is always free.
 
 YOUR ACTIVITY, COUNTED
 • Connect Apple Health and your budget uses the calories you actually burned — resting plus active energy.
@@ -56,6 +57,11 @@ TARGETS THAT MAKE SENSE — AND SHOW THEIR WORK
 • Calorie budget from the Mifflin–St Jeor equation plus your measured activity and goal (lose, maintain, or gain).
 • Protein target from your bodyweight; saturated-fat cap per the US Dietary Guidelines.
 • Every formula is cited in-app: see "Sources & methodology" with links to the original references.
+
+SHARE WITH YOUR CIRCLE
+• Build a small, private Circle of friends — invite by a link or QR code, and a single tap connects you both.
+• Share a scanned meal to your Circle and cheer each other on with quick emoji reactions.
+• Posts are ephemeral — every shared meal disappears after 3 days, and only mutually-connected friends ever see them.
 
 SYNC, IF YOU WANT IT
 • Optional Sign in with Apple keeps your log and profile in sync across devices.
@@ -79,11 +85,16 @@ Photo analysis is powered by Anthropic's Claude. Estimates are general wellness 
 calorie counter,macro,protein,nutrition,food diary,diet,health,weight,saturated fat,tdee,bmr,log
 ```
 
-## What's New (version 1.0.0)
+## What's New (version 1.0.1)
 
 ```
-First release. Track calories and macros, snap a photo to estimate a meal, factor in your real Apple Health burn, and see your trends — with every formula cited under Sources & methodology.
+• Your Beans balance now syncs with your account, so it follows you across devices.
+• Smoother top-up: clearer purchase feedback and protection against accidental double taps.
+• Circle push notifications — get notified when a friend asks to connect, accepts your invite, shares a meal, or reacts to one of yours.
+• Polish and performance improvements throughout.
 ```
+
+(1.0.0 was: First release. Track calories and macros, snap a photo to estimate a meal, factor in your real Apple Health burn, and see your trends — with every formula cited under Sources & methodology.)
 
 ---
 
