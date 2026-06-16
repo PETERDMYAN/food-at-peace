@@ -57,13 +57,16 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
     [`circle_feed_screen.dart`](lib/src/features/circle/circle_feed_screen.dart)).
     The **story keeps the full-resolution photo**; the AI estimate uses a downscaled
     1024px copy.
-- **TestFlight** — `1.0.1 (11)` built + uploaded headlessly via the ASC API key
-  (see [`PUBLISHING.md`](PUBLISHING.md) §4). Since (7): **unlimited subscription
-  removed** (Beans packs only), the **Circle notification** work, and the **"where to
-  find a friend's handle" hint**. Associated Domains + `foodatpeace://` scheme shipped
-  in (4); the invite links are now **live** on `foodatpeace.app` (§1).
+- **TestFlight** — `1.0.1 (12)` built + uploaded headlessly via the ASC API key
+  (see [`PUBLISHING.md`](PUBLISHING.md) §4). Since (11): **Beans follow the account**
+  (the server ledger is now synced client-side — pull on sign-in, push on append) and a
+  hidden **owner gesture** (tap the version **10×** to reveal + copy this account's user
+  id; **5×** still opens the metrics dashboard). (11) shipped the real **StoreKit Beans
+  paywall** + 100 free grant + SGD prices; unlimited subscription removed; the Circle
+  notification work. Associated Domains + `foodatpeace://` scheme shipped in (4); the
+  invite links are **live** on `foodatpeace.app` (§1).
 
-Verified: Flutter 108 + backend 74 tests, `flutter analyze` clean. The full signed-in
+Verified: Flutter 117 + backend 84 tests + 9 integration, `flutter analyze` clean. The full signed-in
 Circle flow was exercised **in-app on two simulators** against the live v2 backend
 (injected session tokens, since Apple sign-in can't run on a sim): user A scans +
 posts a meal → user B opens A's invite → one-tap mutual connect → B's feed shows A's
@@ -111,14 +114,17 @@ photo → B reacts ❤️ → A receives it (all confirmed server-side too). Dri
    [`integration_test/beans_purchase_demo.dart`](integration_test/beans_purchase_demo.dart)
    (wallet 100 → Top up → buy 200 → balance 300 + ledger row; a faked store stands in for
    Apple's payment sheet on the sim — the real sheet was already exercised on-device).
-   **Phase 2 (in progress):** the
-   **server-side Beans ledger is built + deployed on v2** — isolated, append-only
-   `/beans` (GET pulls, POST appends; idempotent by txn id; bearer-auth; own
-   `BeansTable`), [`backend/src/beans.py`](backend/src/beans.py). **Remaining:** the
-   client `BeansClient` + `BeansNotifier` server sync (pull on sign-in, push on append)
-   so a balance follows the account across devices; have `account.py` also clear
-   `BeansTable` on account deletion; and an `/iap/validate` (Apple receipt validation).
-   Then referral Beans (§7) and `purchase`/`refund` analytics.
+   **Phase 2 (Beans follow the account — DONE):** an isolated, append-only `/beans`
+   ledger on v2 (GET pulls, POST appends; idempotent by txn id; bearer-auth; own
+   `BeansTable`; **one signup grant per account** enforced server-side),
+   [`backend/src/beans.py`](backend/src/beans.py). The client
+   [`BeansClient`](lib/src/data/beans_client.dart) + `BeansNotifier` reconcile on sign-in
+   and after every append (push local → adopt the merged server ledger; per-device signup
+   grants collapsed via `mergeBeansLedgers`), so a balance follows the account across
+   devices and survives a reinstall. `account.py` now also clears `BeansTable` on account
+   deletion. Verified live: roro's seeded 80-Bean purchase is returned by `GET /beans` for
+   her account. **Remaining:** `/iap/validate` (Apple receipt validation) to harden against
+   fraud, then referral Beans (§7) and `purchase`/`refund` analytics.
 3. **APNs push for circle notifications** — friend-meal alerts are currently
    surfaced locally (on app launch/resume vs a last-seen marker). For *instant*
    delivery while the app is backgrounded/closed, add Apple Push: device-token

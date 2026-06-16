@@ -26,6 +26,9 @@ from common import ProxyError, _get_secret, _header, _parse_body, _response  # n
 from session import verify_session_token
 
 TABLE_NAME = os.environ.get("SYNC_TABLE", "")
+# Optional: the isolated Beans ledger table. When set, deletion also clears it so
+# no server-side data outlives the account. Absent → the beans clear is skipped.
+BEANS_TABLE = os.environ.get("BEANS_TABLE", "")
 SESSION_KEY_PARAM = os.environ.get(
     "SESSION_KEY_PARAM", "/food-at-peace/session-signing-key"
 )
@@ -80,6 +83,7 @@ class _DeleteStore:
 
 
 _store_singleton = None
+_beans_store_singleton = None
 
 
 def _store():
@@ -89,6 +93,37 @@ def _store():
 
         _store_singleton = _DeleteStore(boto3.resource("dynamodb").Table(TABLE_NAME))
     return _store_singleton
+
+
+def _beans_store():
+    """Store for the user's Beans ledger, or None when no Beans table is set."""
+    global _beans_store_singleton
+    if not BEANS_TABLE:
+        return None
+    if _beans_store_singleton is None:
+        import boto3
+
+        _beans_store_singleton = _DeleteStore(
+            boto3.resource("dynamodb").Table(BEANS_TABLE)
+        )
+    return _beans_store_singleton
+
+
+def _clear_beans(user_id):
+    """Best-effort: drop the user's Beans ledger (isolated table).
+
+    Runs AFTER the sync-data delete + revocation marker — the Guideline
+    5.1.1(v)-critical path. The marker now rejects this same token, so the
+    request can't be retried as-is; a hiccup clearing the secondary table must
+    never raise and fail the (already-completed) account deletion.
+    """
+    beans = _beans_store()
+    if beans is None:
+        return
+    try:
+        beans.delete_many(user_id, beans.keys_for_user(user_id))
+    except Exception:  # noqa: BLE001 — never fail deletion on the secondary table
+        pass
 
 
 def _bearer(event):
@@ -128,6 +163,8 @@ def handler(event, context):
             }
         )
         store.delete_many(user_id, keys)
+        # Also clear the isolated Beans ledger (best-effort; see _clear_beans).
+        _clear_beans(user_id)
         return _response(200, {"deleted": len(keys)})
     except ProxyError as exc:
         return _response(exc.status, {"error": {"message": exc.message}})

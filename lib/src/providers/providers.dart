@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../data/api_key_store.dart';
 import '../data/auth_client.dart';
+import '../data/beans_client.dart';
 import '../data/claude_vision_client.dart';
 import '../data/analytics_service.dart';
 import '../data/circle_client.dart';
@@ -665,11 +666,12 @@ class BeansState {
 /// The Beans wallet. Grants [BeanPricing.signupGrant] free Beans once on first
 /// launch; spends one per photo analysis; records purchases/refunds.
 ///
-/// NOTE: the balance is stored locally (shared_preferences) for now. Production
-/// must move it server-side (a tamper-proof ledger keyed to the account) with
-/// StoreKit receipt validation — otherwise a reinstall resets the balance.
-/// [purchasePack] is a DEV STUB that credits locally; it must be replaced with
-/// real StoreKit IAP.
+/// The ledger is persisted locally (shared_preferences) and, when signed in,
+/// reconciled with the account's **server ledger** (`/beans`) on sign-in and
+/// after each append ([_syncBeans]) so a balance follows the user across devices
+/// and survives a reinstall. Real purchases go through [recordPurchase];
+/// [purchasePack] is a legacy local-credit stub. StoreKit **receipt validation**
+/// (`/iap/validate`) is still a planned follow-up (`TODO.md` §2).
 class BeansNotifier extends Notifier<BeansState> {
   static const _ledgerKey = 'beans_ledger_v1';
   static const _grantedKey = 'beans_granted';
@@ -678,6 +680,8 @@ class BeansNotifier extends Notifier<BeansState> {
 
   @override
   BeansState build() {
+    // Rebuild when auth changes so signing in triggers a server reconcile.
+    ref.watch(authProvider);
     final raw = _prefs.getString(_ledgerKey);
     var ledger = <BeanTransaction>[];
     if (raw != null && raw.isNotEmpty) {
@@ -694,7 +698,16 @@ class BeansNotifier extends Notifier<BeansState> {
       _prefs.setBool(_grantedKey, true);
       _prefs.setString(_ledgerKey, _encode(ledger));
     }
+    // Signed in → pull the account's server ledger (and push what's local) so a
+    // balance bought on another device follows the account here. Deferred: it
+    // mutates state, which can't happen during build().
+    if (_online) Future.microtask(_syncBeans);
     return BeansState(ledger: ledger);
+  }
+
+  bool get _online {
+    final token = ref.read(authProvider)?.token;
+    return proxyBaseUrl.isNotEmpty && token != null && token.isNotEmpty;
   }
 
   BeanTransaction _grant() => BeanTransaction(
@@ -713,6 +726,37 @@ class BeansNotifier extends Notifier<BeansState> {
   Future<void> _append(BeanTransaction txn) async {
     state = state.copyWith(ledger: [txn, ...state.ledger]);
     await _prefs.setString(_ledgerKey, _encode(state.ledger));
+    // Push the new transaction to the account's server ledger (best-effort) so
+    // a purchase/spend follows the user across devices.
+    if (_online) unawaited(_syncBeans());
+  }
+
+  /// Best-effort reconcile of the local ledger with the account's server ledger.
+  /// `POST /beans` uploads our transactions and returns the account's full
+  /// ledger (append-only, idempotent by id), so Beans bought on one device show
+  /// up on another; the per-device signup grant is collapsed to one
+  /// ([mergeBeansLedgers]). Never throws — a failure just keeps the local ledger.
+  Future<void> _syncBeans() async {
+    final token = ref.read(authProvider)?.token;
+    if (token == null || token.isEmpty || proxyBaseUrl.isEmpty) return;
+    try {
+      final server = await ref
+          .read(beansClientProvider)
+          .push(token, state.ledger);
+      final merged = mergeBeansLedgers(server, state.ledger);
+      if (!_sameLedger(merged, state.ledger)) {
+        state = state.copyWith(ledger: merged);
+      }
+      await _prefs.setString(_ledgerKey, _encode(merged));
+    } catch (_) {
+      // best-effort; keep the local ledger on any network/parse failure
+    }
+  }
+
+  static bool _sameLedger(List<BeanTransaction> a, List<BeanTransaction> b) {
+    if (a.length != b.length) return false;
+    final ids = a.map((t) => t.id).toSet();
+    return b.every((t) => ids.contains(t.id));
   }
 
   /// Spend one Bean on a photo analysis. Returns false (without spending) if
@@ -756,6 +800,12 @@ class BeansNotifier extends Notifier<BeansState> {
     ),
   );
 }
+
+/// HTTP client for the server-side Beans ledger (`/beans`). No-op target when no
+/// proxy is configured (the notifier only calls it when signed in + online).
+final beansClientProvider = Provider<BeansClient>(
+  (ref) => BeansClient(baseUrl: proxyBaseUrl),
+);
 
 final beansProvider = NotifierProvider<BeansNotifier, BeansState>(
   BeansNotifier.new,

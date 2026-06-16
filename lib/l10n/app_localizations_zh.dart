@@ -839,6 +839,24 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get accountIdTitle => '账户 ID';
+
+  @override
+  String get accountIdHint => '你的账户在同步数据库中的 ID。';
+
+  @override
+  String get accountIdSignedOut => '登录后可查看账户 ID。';
+
+  @override
+  String get accountIdCopied => '已复制账户 ID';
+
+  @override
+  String get copy => '复制';
+
+  @override
+  String get close => '关闭';
+
+  @override
   String get yourCircle => '我的圈子';
 
   @override

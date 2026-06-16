@@ -63,4 +63,54 @@ void main() {
     expect(back.note, 'pack');
     expect(back.timestamp, t.timestamp);
   });
+
+  group('mergeBeansLedgers', () {
+    BeanTransaction g(String id, BeanTxnType type, int amount, DateTime ts) =>
+        BeanTransaction(id: id, type: type, amount: amount, timestamp: ts);
+
+    test('unions by id — the same txn on both sides is not double-counted', () {
+      final purchase =
+          g('buy_1', BeanTxnType.purchase, 200, DateTime(2026, 6, 16, 10));
+      final local = [
+        g('grant_1', BeanTxnType.signupGrant, 100, DateTime(2026, 6, 16, 9)),
+        purchase,
+      ];
+      final merged = mergeBeansLedgers([purchase], local); // server already has it
+      expect(merged.length, 2);
+      expect(merged.fold<int>(0, (s, x) => s + x.amount), 300);
+    });
+
+    test('brings in server-only transactions (cross-device)', () {
+      final local = [
+        g('grant_1', BeanTxnType.signupGrant, 100, DateTime(2026, 6, 16, 9)),
+      ];
+      final server = [
+        g('buy_seed80', BeanTxnType.purchase, 80, DateTime(2026, 6, 16, 5)),
+      ];
+      final merged = mergeBeansLedgers(server, local);
+      expect(merged.map((x) => x.id), containsAll(['grant_1', 'buy_seed80']));
+      expect(merged.fold<int>(0, (s, x) => s + x.amount), 180);
+    });
+
+    test('collapses multiple signup grants to the earliest (one per account)', () {
+      final early =
+          g('grant_A', BeanTxnType.signupGrant, 100, DateTime(2026, 6, 1));
+      final later =
+          g('grant_B', BeanTxnType.signupGrant, 100, DateTime(2026, 6, 16));
+      final merged = mergeBeansLedgers([early], [later]);
+      final grants =
+          merged.where((x) => x.type == BeanTxnType.signupGrant).toList();
+      expect(grants.length, 1);
+      expect(grants.single.id, 'grant_A'); // earliest kept
+      expect(merged.fold<int>(0, (s, x) => s + x.amount), 100); // not 200
+    });
+
+    test('returns newest first', () {
+      final older = g('a', BeanTxnType.purchase, 100, DateTime(2026, 6, 10));
+      final newer = g('b', BeanTxnType.purchase, 100, DateTime(2026, 6, 16));
+      final merged = mergeBeansLedgers([older], [newer]);
+      expect(merged.first.id, 'b');
+      expect(merged.last.id, 'a');
+    });
+  });
 }

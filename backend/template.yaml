@@ -272,6 +272,7 @@ Resources:
       Environment:
         Variables:
           SYNC_TABLE: !Ref SyncTable
+          BEANS_TABLE: !Ref BeansTable
           SESSION_KEY_PARAM: !Ref SessionKeyParam
       Policies:
         - Statement:
@@ -285,6 +286,7 @@ Resources:
                 - dynamodb:BatchWriteItem
               Resource:
                 - !GetAtt SyncTable.Arn
+                - !GetAtt BeansTable.Arn
             - Sid: ReadSessionKey
               Effect: Allow
               Action: ssm:GetParameter

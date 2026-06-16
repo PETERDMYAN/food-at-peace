@@ -418,6 +418,12 @@
       "build": { "type": "String" }
     }
   },
+  "accountIdTitle": "Account ID",
+  "accountIdHint": "Your account's ID in the sync database.",
+  "accountIdSignedOut": "Sign in to see your account ID.",
+  "accountIdCopied": "Account ID copied",
+  "copy": "Copy",
+  "close": "Close",
 
   "yourCircle": "Your circle",
   "addFriend": "Add",

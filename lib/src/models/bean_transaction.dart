@@ -99,3 +99,36 @@ class BeanPricing {
   /// Beans spent per food-photo analysis.
   static const int costPerPhoto = 1;
 }
+
+/// Merge two Beans ledgers into one, newest first. The ledger is append-only and
+/// every entry is immutable, so the union is taken **by id** (an id seen in both
+/// is the same transaction). The one exception is the welcome [signupGrant]: each
+/// device grants its own local 100 on first launch, so a union could hold several
+/// — they are collapsed to a **single grant** (the earliest), since the bonus is
+/// once per account. Pure (no Flutter / IO) so it is unit-tested directly.
+List<BeanTransaction> mergeBeansLedgers(
+  Iterable<BeanTransaction> a,
+  Iterable<BeanTransaction> b,
+) {
+  final byId = <String, BeanTransaction>{};
+  for (final t in a) {
+    byId[t.id] = t;
+  }
+  for (final t in b) {
+    byId.putIfAbsent(t.id, () => t);
+  }
+  var list = byId.values.toList();
+  final grants = list.where((t) => t.type == BeanTxnType.signupGrant).toList()
+    ..sort((x, y) {
+      final c = x.timestamp.compareTo(y.timestamp);
+      return c != 0 ? c : x.id.compareTo(y.id);
+    });
+  if (grants.length > 1) {
+    final keepId = grants.first.id;
+    list = list
+        .where((t) => t.type != BeanTxnType.signupGrant || t.id == keepId)
+        .toList();
+  }
+  list.sort((x, y) => y.timestamp.compareTo(x.timestamp)); // newest first
+  return list;
+}
