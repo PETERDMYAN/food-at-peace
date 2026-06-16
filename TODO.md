@@ -164,8 +164,10 @@ is now a single plated dish so the AI estimate reads cleanly (~420 kcal, not a 2
    and adopts the server ledger, falling back to a local credit when the secret isn't set
    so nothing breaks (`BeansClient.validateIap`, `BeansNotifier.creditPurchase`). The
    **hidden 1-Bean dev pack** (free local credit) is gated to **debug builds only**
-   (`kDebugMode`) so it never reaches TestFlight/the App Store. **Remaining:** add the
-   shared secret to SSM, referral Beans (§7) and `purchase`/`refund` analytics.
+   (`kDebugMode`) so it never reaches TestFlight/the App Store. **The Apple shared secret
+   is now live in SSM** (`/food-at-peace/iap-shared-secret`, SecureString, ap-southeast-1,
+   2026-06-16), so receipt validation runs server-side (no redeploy — read per cold start).
+   **Remaining:** referral Beans (§7) and `purchase`/`refund` analytics.
 3. **APNs push for circle notifications — DONE (needs on-device verification).**
    Local notifications already fire on launch/resume + present as foreground Apple
    banners; **build 14 adds true background Apple Push**: APNs key `D2665A2D4P`
