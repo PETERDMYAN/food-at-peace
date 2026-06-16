@@ -197,6 +197,70 @@ Resources:
             Path: /sync
             Method: POST
 
+  # Per-user Beans ledger (append-only). Keyed userId + sk(=txn id). Isolated
+  # from SyncTable so it never touches the food/weight/profile sync contract.
+  BeansTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: userId
+          AttributeType: S
+        - AttributeName: sk
+          AttributeType: S
+      KeySchema:
+        - AttributeName: userId
+          KeyType: HASH
+        - AttributeName: sk
+          KeyType: RANGE
+
+  # Server-side Beans wallet: GET /beans pulls the ledger, POST /beans appends
+  # (idempotent by txn id). Bearer session token, scoped to the account.
+  BeansFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/
+      Handler: beans.handler
+      Environment:
+        Variables:
+          BEANS_TABLE: !Ref BeansTable
+          SESSION_KEY_PARAM: !Ref SessionKeyParam
+      Policies:
+        - Statement:
+            - Sid: ReadWriteBeans
+              Effect: Allow
+              Action:
+                - dynamodb:GetItem
+                - dynamodb:PutItem
+                - dynamodb:Query
+              Resource:
+                - !GetAtt BeansTable.Arn
+            - Sid: ReadSessionKey
+              Effect: Allow
+              Action: ssm:GetParameter
+              Resource:
+                - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter${SessionKeyParam}
+            - Sid: DecryptSecureStrings
+              Effect: Allow
+              Action: kms:Decrypt
+              Resource: "*"
+              Condition:
+                StringEquals:
+                  kms:ViaService: !Sub ssm.${AWS::Region}.amazonaws.com
+      Events:
+        GetBeans:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref VisionApi
+            Path: /beans
+            Method: GET
+        PostBeans:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref VisionApi
+            Path: /beans
+            Method: POST
+
   # In-app account deletion (App Store Guideline 5.1.1(v)). Verifies the app
   # session token, then removes every row the user owns in the sync table —
   # all the server-side data we hold for them.

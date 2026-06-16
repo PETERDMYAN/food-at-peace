@@ -106,9 +106,14 @@ photo → B reacts ❤️ → A receives it (all confirmed server-side too). Dri
    `beans_screen.dart` now buys via `IapService.buy` (StoreKit), shows the **localized
    store price** (falls back to the indicative SGD), the **"Custom" tile is gone** (Apple
    can't price arbitrary amounts), and the integration tests inject a **fake store** so
-   the purchase flow runs on the sim (8/8 green). **Phase 2:** a backend `/iap/validate`
-   endpoint (Apple receipt validation) + a **server-side Beans ledger** (anti-fraud,
-   cross-device balance, referral Beans §7); emit `purchase`/`refund` analytics.
+   the purchase flow runs on the sim (8/8 green). **Phase 2 (in progress):** the
+   **server-side Beans ledger is built + deployed on v2** — isolated, append-only
+   `/beans` (GET pulls, POST appends; idempotent by txn id; bearer-auth; own
+   `BeansTable`), [`backend/src/beans.py`](backend/src/beans.py). **Remaining:** the
+   client `BeansClient` + `BeansNotifier` server sync (pull on sign-in, push on append)
+   so a balance follows the account across devices; have `account.py` also clear
+   `BeansTable` on account deletion; and an `/iap/validate` (Apple receipt validation).
+   Then referral Beans (§7) and `purchase`/`refund` analytics.
 3. **APNs push for circle notifications** — friend-meal alerts are currently
    surfaced locally (on app launch/resume vs a last-seen marker). For *instant*
    delivery while the app is backgrounded/closed, add Apple Push: device-token
