@@ -43,59 +43,20 @@
     font-weight: 800; padding: 5px 11px; border-radius: 13px; white-space: nowrap; box-shadow: 0 8px 20px rgba(0,0,0,.45); }
   @keyframes wxTopBounce { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
 
-  /* ---- WeChat hand-off card + animation ---- */
-  .wechat { margin: 4px 0 0; padding: 18px 18px 8px; border-radius: 16px; text-align: left;
+  /* ---- WeChat hand-off card (no fake menu — the real ••• lives top-right) ---- */
+  .wechat { margin: 4px 0 0; padding: 18px; border-radius: 16px; text-align: left;
     background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.14); }
   .wechat strong { display: block; margin-bottom: 6px; font-size: 16px; }
   .wechat p { margin: 0 0 14px; color: #B4ABC8; font-size: 14px; line-height: 1.5; }
   .wechat b { color: #fff; }
-  /* the animated demo: a mock WeChat top-bar -> menu -> finger taps "Open in default browser" */
-  .wx-demo { position: relative; height: 132px; border-radius: 14px; overflow: hidden;
-    background: linear-gradient(180deg, #15101F 0%, #0F0B17 100%); border: 1px solid rgba(255,255,255,.08); }
-  .wx-bar { position: absolute; top: 0; left: 0; right: 0; height: 36px; display: flex; align-items: center;
-    justify-content: space-between; padding: 0 14px; background: rgba(255,255,255,.05);
-    border-bottom: 1px solid rgba(255,255,255,.06); font-size: 14px; color: #9B92B5; }
-  .wx-dots { font-weight: 800; letter-spacing: 1px; color: #fff; padding: 2px 6px; border-radius: 8px;
-    animation: wxRing 4s ease-out infinite; }
-  .wx-menu { position: absolute; top: 44px; right: 12px; width: 186px; padding: 5px; border-radius: 12px;
-    background: #241C36; box-shadow: 0 12px 28px rgba(0,0,0,.45); border: 1px solid rgba(255,255,255,.10);
-    transform-origin: top right; animation: wxMenuIn 4s ease-out infinite; }
-  .wx-item { display: flex; align-items: center; gap: 8px; padding: 9px 10px; border-radius: 9px;
-    font-size: 13px; color: #fff; }
-  .wx-item.hl { animation: wxItemHL 4s ease-out infinite; }
-  .wx-item .ic { font-size: 15px; }
-  .wx-finger { position: absolute; width: 22px; height: 22px; border-radius: 50%;
-    background: rgba(255,255,255,.92); box-shadow: 0 0 0 6px rgba(255,255,255,.18); pointer-events: none;
-    animation: wxFinger 4s cubic-bezier(.5,0,.2,1) infinite; }
-  @keyframes wxRing {
-    0%,12% { box-shadow: 0 0 0 0 rgba(124,131,255,.6); background: rgba(124,131,255,.0); }
-    26%    { box-shadow: 0 0 0 13px rgba(124,131,255,0); background: rgba(124,131,255,.35); }
-    34%,100% { box-shadow: 0 0 0 0 rgba(124,131,255,0); background: rgba(124,131,255,.0); }
-  }
-  @keyframes wxMenuIn {
-    0%,30% { opacity: 0; transform: translateY(8px) scale(.95); }
-    42%,92% { opacity: 1; transform: translateY(0) scale(1); }
-    100% { opacity: 0; transform: translateY(8px) scale(.95); }
-  }
-  @keyframes wxItemHL {
-    0%,48% { background: transparent; }
-    60%,86% { background: rgba(124,131,255,.32); }
-    100% { background: transparent; }
-  }
-  @keyframes wxFinger {
-    0%     { top: 8px; right: 8px; opacity: 0; transform: scale(1); }
-    8%     { opacity: 1; }
-    18%    { top: 8px; right: 8px; transform: scale(.74); }   /* tap ••• */
-    30%    { transform: scale(1); }
-    52%    { top: 56px; right: 78px; transform: scale(1); }   /* glide to menu item */
-    64%    { transform: scale(.74); }                          /* tap "Open in default browser" */
-    74%    { transform: scale(1); }
-    90%,100% { top: 56px; right: 78px; opacity: 0; }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .wx-dots, .wx-menu, .wx-item.hl, .wx-finger { animation: none; }
-    .wx-menu { opacity: 1; transform: none; }
-  }
+  /* The exact menu row to look for, shown as a static label (not a control) so
+     nobody tries to tap it here — the real ••• is only at the window's top-right. */
+  .wx-pillrow { display: flex; justify-content: center; }
+  .wx-pill { display: inline-flex; align-items: center; max-width: 100%; white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis; padding: 11px 16px; border-radius: 12px;
+    font-size: 15px; font-weight: 700; color: #fff; background: #241C36;
+    border: 1px solid rgba(255,255,255,.12); box-shadow: 0 8px 22px rgba(0,0,0,.4); }
+  @media (prefers-reduced-motion: reduce) { .wx-top { animation: none; } }
 </style>
 </head>
 <body>
@@ -115,11 +76,7 @@
     <div class="wechat" id="wechat" hidden>
       <strong id="wxTitle"></strong>
       <p id="wxBody"></p>
-      <div class="wx-demo" aria-hidden="true">
-        <div class="wx-bar"><span>✕</span><span class="wx-dots">•••</span></div>
-        <div class="wx-menu"><div class="wx-item hl"><span class="ic">🧭</span><span id="wxMenuItem"></span></div></div>
-        <span class="wx-finger"></span>
-      </div>
+      <div class="wx-pillrow"><span class="wx-pill" id="wxMenuItem"></span></div>
     </div>
 
     <p class="foot"><span id="foot"></span> · <a id="footlink" href="https://apps.apple.com/app/id6777715561"></a></p>
