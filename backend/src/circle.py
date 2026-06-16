@@ -275,6 +275,7 @@ def invite(uid, body):
     ).get("Item", {}).get("handle") or normalize_handle(body.get("handle"))
     _put_edge(uid, tid, "@" + target_handle, target.get("name"), "outgoing")
     _put_edge(tid, uid, "@" + mine["handle"], mine.get("name"), "incoming")
+    _push(tid, f"{mine.get('name') or '@' + mine['handle']} wants to join your circle 👋")
     return {"status": "outgoing"}
 
 
@@ -326,6 +327,11 @@ def respond(uid, body):
             ExpressionAttributeNames={"#s": "status"},
             ExpressionAttributeValues={":c": "connected", ":t": _now_ms()},
         )
+        mine = _my_card(uid)
+        _push(
+            other,
+            f"{(mine or {}).get('name') or 'A friend'} accepted — you're connected 🎉",
+        )
         return {"status": "connected"}
     # decline
     _delete_edge(uid, other)
@@ -340,6 +346,26 @@ def remove(uid, body):
     _delete_edge(uid, other)
     _delete_edge(other, uid)
     return {"status": "removed"}
+
+
+def register_device(uid, body):
+    """Store an APNs device token for the account (so we can push to it). Tokens
+    are deduped by value (the sk) and cleaned up on the next push failure."""
+    token = (body.get("token") or "").strip()
+    if not token or len(token) > 200:
+        raise ProxyError(400, "Missing device token.")
+    _circle().put_item(Item={"pk": f"user#{uid}", "sk": f"device#{token}"})
+    return {"status": "registered"}
+
+
+def _push(to_uid, title, body=""):
+    """Best-effort Apple push to one user's devices (never raises)."""
+    try:
+        import apns
+
+        apns.notify(_get_secret, _circle(), to_uid, title, body)
+    except Exception:  # noqa: BLE001
+        pass
 
 
 def list_circle(uid):
@@ -386,6 +412,7 @@ def handler(event, context):
         body = _parse_body(event)
         op = {
             "register": register,
+            "register-device": register_device,
             "invite": invite,
             "connect": connect,
             "respond": respond,

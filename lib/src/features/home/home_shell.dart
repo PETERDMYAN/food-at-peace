@@ -37,6 +37,7 @@ class _HomeShellState extends ConsumerState<HomeShell>
       ref.read(profileProvider.notifier).refreshFromHealth();
       _refreshReminders();
       _checkCircleActivity();
+      _registerPushToken();
     });
   }
 
@@ -98,6 +99,25 @@ class _HomeShellState extends ConsumerState<HomeShell>
     );
   }
 
+  /// Send this device's APNs token (captured natively into shared_preferences as
+  /// `apns_device_token`) to the server once, so friend-meal / request /
+  /// reaction pushes can arrive when the app is backgrounded. Best-effort; needs
+  /// an account, and re-tries on the next launch/resume until it sticks.
+  Future<void> _registerPushToken() async {
+    final token = ref.read(authProvider)?.token;
+    if (token == null || token.isEmpty || proxyBaseUrl.isEmpty) return;
+    final prefs = ref.read(sharedPreferencesProvider);
+    final device = prefs.getString('apns_device_token');
+    if (device == null || device.isEmpty) return;
+    if (prefs.getString('apns_device_token_synced') == device) return;
+    try {
+      await ref.read(circleClientProvider).registerDevice(token, device);
+      await prefs.setString('apns_device_token_synced', device);
+    } catch (_) {
+      // best-effort — retried on the next launch/resume
+    }
+  }
+
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
@@ -111,6 +131,7 @@ class _HomeShellState extends ConsumerState<HomeShell>
       ref.read(profileProvider.notifier).refreshFromHealth();
       _refreshReminders();
       _checkCircleActivity();
+      _registerPushToken();
     }
   }
 

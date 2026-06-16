@@ -6,7 +6,8 @@ on your protein and saturated-fat quotas. Connects to **Apple Health / Garmin**
 for real calories burned, and speaks **English and 中文**. Built with Flutter.
 
 > **Status:** **v1.0.0 is live on the App Store.** Active development is on the
-> **`v2`** branch (TestFlight build **1.0.1 (13)**), which adds: AI photo estimates
+> **`v2`** branch (build **1.0.1 (14)**, submitted to App Store review — the first
+> public v2 release, pointing at the migrated prod backend), which adds: AI photo estimates
 > **in your app language** (EN/中文), the **Circle of Food** social layer (friends
 > by `@handle`, **invite universal link + QR with one-tap mutual connect**, a
 > **Manage circle** screen, privacy-gated friend trends, and a 3-day photo
@@ -19,10 +20,11 @@ for real calories burned, and speaks **English and 中文**. Built with Flutter.
 > installed → opens the app · not installed → App Store · WeChat → tap ••• (top-right)
 > → **用默认浏览器打开** hand-off) — see [`store/INVITE_LINKS.md`](store/INVITE_LINKS.md).
 > **Beans are real now**: a StoreKit paywall (consumable packs) backed by a **server
-> ledger that follows the account** across devices — the buy shows a spinner while in
-> flight and can't be double-fired, plus a hidden 1-Bean pack (tap the title 10×);
-> remaining is `/iap/validate` receipt validation (see `TODO.md`). Circle notifications
-> now also surface as **foreground Apple banners**.
+> ledger that follows the account**; the buy shows a spinner + can't be double-fired,
+> and a purchase is **validated server-side against Apple's receipt** (`/iap/validate`)
+> before crediting (the hidden 1-Bean dev pack is debug-only). Circle notifications
+> arrive as **real Apple banners** — foreground, and **background via APNs push**
+> (build 14) for friend requests, accepts, shared meals, and reactions.
 > Earlier: v1.0.0 cleared the Guideline 1.4.1 rejection with the in-app Sources &
 > methodology screen + in-app account deletion (see `PUBLISHING.md`).
 

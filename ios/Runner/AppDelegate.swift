@@ -13,7 +13,32 @@ import UserNotifications
     if #available(iOS 10.0, *) {
       UNUserNotificationCenter.current().delegate = self as UNUserNotificationCenterDelegate
     }
+    // Ask iOS for an APNs device token. It's delivered (didRegister… below) once
+    // the user has granted notification permission; harmless before then.
+    application.registerForRemoteNotifications()
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+  }
+
+  /// APNs token arrived — stash it where Flutter's shared_preferences can read it
+  /// (keys are stored under a "flutter." prefix), so Dart can register it with
+  /// the server (/circle/register-device) for friend-meal push.
+  override func application(
+    _ application: UIApplication,
+    didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data
+  ) {
+    let hex = deviceToken.map { String(format: "%02x", $0) }.joined()
+    UserDefaults.standard.set(hex, forKey: "flutter.apns_device_token")
+    super.application(
+      application, didRegisterForRemoteNotificationsWithDeviceToken: deviceToken)
+  }
+
+  override func application(
+    _ application: UIApplication,
+    didFailToRegisterForRemoteNotificationsWithError error: Error
+  ) {
+    // Best-effort: no token this launch (e.g. notifications not yet granted).
+    super.application(
+      application, didFailToRegisterForRemoteNotificationsWithError: error)
   }
 
   /// Present circle-activity / reminder notifications as a banner even when the

@@ -35,6 +35,22 @@ Parameters:
     Type: String
     Default: /food-at-peace/iap-shared-secret
     Description: SSM SecureString parameter holding the App Store shared secret (IAP receipt validation).
+  ApnsKeyParam:
+    Type: String
+    Default: /food-at-peace/apns-key
+    Description: SSM SecureString parameter holding the APNs .p8 auth key.
+  ApnsKeyIdParam:
+    Type: String
+    Default: /food-at-peace/apns-key-id
+    Description: SSM parameter holding the 10-char APNs key id.
+  ApnsTeamId:
+    Type: String
+    Default: GJB4AB92L4
+    Description: Apple Developer team id (APNs provider-JWT issuer).
+  ApnsBundleId:
+    Type: String
+    Default: com.foodatpeace.foodAtPeace
+    Description: App bundle id (used as the APNs topic).
   SessionTtlDays:
     Type: Number
     Default: 60
@@ -442,6 +458,10 @@ Resources:
           CIRCLE_TABLE: !Ref CircleTable
           SYNC_TABLE: !Ref SyncTable
           SESSION_KEY_PARAM: !Ref SessionKeyParam
+          APNS_KEY_PARAM: !Ref ApnsKeyParam
+          APNS_KEY_ID_PARAM: !Ref ApnsKeyIdParam
+          APNS_TEAM_ID: !Ref ApnsTeamId
+          APNS_BUNDLE_ID: !Ref ApnsBundleId
       Policies:
         - Statement:
             - Sid: ReadWriteCircle
@@ -461,11 +481,13 @@ Resources:
                 - dynamodb:Query
               Resource:
                 - !GetAtt SyncTable.Arn
-            - Sid: ReadSessionKey
+            - Sid: ReadSecrets
               Effect: Allow
               Action: ssm:GetParameter
               Resource:
                 - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter${SessionKeyParam}
+                - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter${ApnsKeyParam}
+                - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter${ApnsKeyIdParam}
             - Sid: DecryptSecureStrings
               Effect: Allow
               Action: kms:Decrypt
@@ -479,6 +501,12 @@ Resources:
           Properties:
             ApiId: !Ref VisionApi
             Path: /circle/register
+            Method: POST
+        RegisterDevice:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref VisionApi
+            Path: /circle/register-device
             Method: POST
         Invite:
           Type: HttpApi
@@ -558,6 +586,10 @@ Resources:
           CIRCLE_TABLE: !Ref CircleTable
           PHOTOS_BUCKET: !Ref CirclePhotosBucket
           SESSION_KEY_PARAM: !Ref SessionKeyParam
+          APNS_KEY_PARAM: !Ref ApnsKeyParam
+          APNS_KEY_ID_PARAM: !Ref ApnsKeyIdParam
+          APNS_TEAM_ID: !Ref ApnsTeamId
+          APNS_BUNDLE_ID: !Ref ApnsBundleId
       Policies:
         - Statement:
             - Sid: ReadWritePosts
@@ -583,11 +615,13 @@ Resources:
                 - s3:GetObject
               Resource:
                 - !Sub ${CirclePhotosBucket.Arn}/*
-            - Sid: ReadSessionKey
+            - Sid: ReadSecrets
               Effect: Allow
               Action: ssm:GetParameter
               Resource:
                 - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter${SessionKeyParam}
+                - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter${ApnsKeyParam}
+                - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter${ApnsKeyIdParam}
             - Sid: DecryptSecureStrings
               Effect: Allow
               Action: kms:Decrypt

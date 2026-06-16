@@ -1,8 +1,13 @@
-# No third-party dependencies. All three handlers use only the standard library
-# (urllib, json, hmac, hashlib, base64) plus boto3, which is already present in
-# the Lambda Python runtime. JWT signing/verification (including Apple's RS256
-# identity tokens) is done in src/jwtlite.py with stdlib only — so `sam build`
-# needs no native wheels / Docker and the deploy package stays tiny.
+# Bundled into every Lambda (shared CodeUri). Kept to PURE-PYTHON wheels only, so
+# `sam build` needs no Docker / cross-compilation and stays portable to the Lambda
+# Linux runtime.
 #
-# Test-only deps (PyJWT, cryptography, pytest) live in tests/requirements-dev.txt
-# and are never bundled into the Lambda.
+# Used by apns.py (Circle + Posts push):
+#   httpx[http2] — HTTP/2 client (APNs is HTTP/2-only); pulls h2/hpack/hyperframe.
+#   ecdsa        — pure-Python ES256 signing of the APNs provider JWT (avoids the
+#                  native `cryptography` wheel, which can't cross-compile here).
+# Everything else (analyze/auth/sync/account/circle/beans/iap) uses only the
+# standard library + boto3 (already in the runtime); JWT for our own tokens +
+# Apple's RS256 identity tokens is done in jwtlite.py (stdlib).
+httpx[http2]
+ecdsa
