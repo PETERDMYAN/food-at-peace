@@ -5,11 +5,12 @@ or by **snapping a photo** — see how much you can still eat today, and keep an
 on your protein and saturated-fat quotas. Connects to **Apple Health / Garmin**
 for real calories burned, and speaks **English and 中文**. Built with Flutter.
 
-> **Status:** **v1.0.0 is live on the App Store; v1.0.1 (14) is staged for resubmission**
-> (first submitted 2026-06-16, then pulled from review to refresh the store metadata —
-> a **bilingual 6-shot screenshot set** (EN + 简体中文, incl. Circle + Beans), Circle/Beans
-> in the description, and a localized CN name **食之安**. Build 14 points at the migrated
-> prod backend, all 5 Beans consumables attached, **auto-release on approval**).
+> **Status:** **v1.0.0 is live on the App Store; v1.0.1 (14) is "Waiting for Review"**
+> (submitted 2026-06-16 with a refreshed store listing — a **bilingual 6-shot screenshot
+> set** (EN + 简体中文, incl. Circle + Beans), Circle/Beans in the EN/中文 descriptions, an
+> EN subtitle, and a new 简体中文 localization with the CN name **食之安**. Build 14 points
+> at the migrated prod backend, all 5 Beans consumables attached, **auto-release on
+> approval**).
 > Active development continues on the **`v2`** branch, which adds: AI photo estimates
 > **in your app language** (EN/中文), the **Circle of Food** social layer (friends
 > by `@handle`, **invite universal link + QR with one-tap mutual connect**, a
