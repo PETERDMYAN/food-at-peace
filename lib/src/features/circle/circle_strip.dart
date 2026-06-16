@@ -6,6 +6,7 @@ import '../../models/friend.dart';
 import '../../providers/providers.dart';
 import '../../widgets/story_avatar.dart';
 import 'circle_feed_screen.dart';
+import 'eva_lesson_card.dart';
 import 'invite_card.dart';
 import 'manage_friends_screen.dart';
 
@@ -56,7 +57,9 @@ class CircleStrip extends ConsumerWidget {
               ),
           ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 10),
+        // Eva — a built-in companion everyone follows; her daily life lesson.
+        const EvaLessonCard(),
         SizedBox(
           height: 96,
           child: ListView(

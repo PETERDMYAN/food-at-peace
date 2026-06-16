@@ -427,6 +427,7 @@
   "close": "Close",
 
   "yourCircle": "Your circle",
+  "evaDailyLesson": "Daily lesson",
   "addFriend": "Add",
   "circleRequests": "Requests",
   "circleRequestsN": "Requests ({count})",

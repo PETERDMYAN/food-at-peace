@@ -888,6 +888,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get yourCircle => 'Your circle';
 
   @override
+  String get evaDailyLesson => 'Daily lesson';
+
+  @override
   String get addFriend => 'Add';
 
   @override

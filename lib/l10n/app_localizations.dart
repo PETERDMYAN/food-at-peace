@@ -1658,6 +1658,12 @@ abstract class AppLocalizations {
   /// **'Your circle'**
   String get yourCircle;
 
+  /// No description provided for @evaDailyLesson.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily lesson'**
+  String get evaDailyLesson;
+
   /// No description provided for @addFriend.
   ///
   /// In en, this message translates to:

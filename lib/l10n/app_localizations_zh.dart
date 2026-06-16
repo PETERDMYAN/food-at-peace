@@ -863,6 +863,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get yourCircle => '我的圈子';
 
   @override
+  String get evaDailyLesson => '每日一课';
+
+  @override
   String get addFriend => '添加';
 
   @override
