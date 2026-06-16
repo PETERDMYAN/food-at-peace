@@ -96,11 +96,13 @@ photo → B reacts ❤️ → A receives it (all confirmed server-side too). Dri
    API, no UI):** the 5 consumables `beans_100…beans_800` are created on app `6777715561`
    with **EN + 中文 localizations**, **prices** (SGD 1.99/3.99/5.99/9.48/13.98, **Singapore
    base** → auto-converts; 9.48/13.98 are Apple's nearest SGD tiers to 9.49/13.99), and
-   **review screenshots** (the iridescent bean mark, not a coin). They show `MISSING_METADATA` **only**
-   because the Paid Apps agreement isn't active. **Next (you, ASC UI — can't be done by
-   API):** (a) accept the **Paid Apps agreement** + banking/tax (Business → Agreements)
-   → flips all 5 to *Ready to Submit*; (b) add a **Sandbox tester** (Users and Access →
-   Sandbox). **Next (me):** switch the paywall (`beans_screen.dart`) from
+   **review screenshots** (the iridescent bean mark, not a coin), **all-territory
+   availability**, and state **`READY_TO_SUBMIT`** — the whole product setup was done via
+   the ASC API (the lingering "Missing Metadata" was just unset availability, fixed via
+   `inAppPurchaseAvailabilities`; *not* the agreement). **Only-when-needed (you, ASC UI —
+   no API):** accept the **Paid Apps agreement** + banking/tax before going live with
+   real sales; add a **Sandbox tester** before on-device purchase testing — neither
+   blocks development. **Next (me):** switch the paywall (`beans_screen.dart`) from
    `purchasePack` → `IapService.buy`, show StoreKit's **localized prices**, drop the
    "Custom" tile (Apple has no arbitrary pricing), and **mock the store** in the
    integration tests (IAP can't run on the sim). **Phase 2:** a backend `/iap/validate`
