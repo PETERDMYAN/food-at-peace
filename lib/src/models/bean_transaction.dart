@@ -1,7 +1,7 @@
 /// What a Beans ledger entry represents. Beans are the in-app credit: one photo
 /// analysis spends one Bean. Pure Dart (no Flutter) so it stays testable.
 enum BeanTxnType {
-  /// The 21 free Beans granted once on first launch.
+  /// The 100 free Beans granted once on first launch.
   signupGrant,
 
   /// Spent one Bean analyzing a food photo.
@@ -65,7 +65,7 @@ class BeanPricing {
   BeanPricing._();
 
   /// Free Beans granted once on first launch.
-  static const int signupGrant = 21;
+  static const int signupGrant = 100;
 
   /// Base pack (the smallest tier) — also the per-100 rate used to price a
   /// custom amount.
@@ -80,8 +80,8 @@ class BeanPricing {
     (beans: 100, sgd: 1.99),
     (beans: 200, sgd: 3.99),
     (beans: 300, sgd: 5.99),
-    (beans: 500, sgd: 9.49),
-    (beans: 800, sgd: 13.99),
+    (beans: 500, sgd: 9.48),
+    (beans: 800, sgd: 13.98),
   ];
 
   /// Indicative price (SGD) for an arbitrary Bean amount at the per-100 rate.

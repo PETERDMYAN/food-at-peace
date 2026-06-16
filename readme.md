@@ -137,7 +137,7 @@ the system locale by default and persists a manual choice.
   enabled from onboarding or **Settings → Reminders**
   (`flutter_local_notifications` + `timezone`)
 
-- [~] **Beans (in-app credit) — client foundation built** — 21 free Beans on
+- [~] **Beans (in-app credit) — client foundation built** — 100 free Beans on
   first launch; 1 Bean per photo scan (Add screen shows "N scans left" unless
   unlimited); iridescent pastel "jelly-bean" wallet in **Profile → Beans** with
   balance, transaction history and a paywall offering packs **100 / 200 / 300 /

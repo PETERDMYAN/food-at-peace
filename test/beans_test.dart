@@ -11,7 +11,7 @@ BeanTransaction _txn(BeanTxnType type, int amount) => BeanTransaction(
 
 void main() {
   test('pricing constants match the spec', () {
-    expect(BeanPricing.signupGrant, 21);
+    expect(BeanPricing.signupGrant, 100);
     expect(BeanPricing.packBeans, 100);
     expect(BeanPricing.packPriceSgd, 1.99);
     expect(BeanPricing.costPerPhoto, 1);
