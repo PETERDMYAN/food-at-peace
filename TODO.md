@@ -65,14 +65,14 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
 - **TestFlight / App Store** — `1.0.1 (14)` built against **prod**
   (`--dart-define-from-file=dart_defines.prod.json`) + uploaded via the ASC API key,
   and submitted to App Store review on 2026-06-16 (first public v2 release; all 5 Beans
-  consumables `beans_100…beans_800` attached, **auto-release on approval**). Then **pulled
-  back to refresh the store metadata** (resubmission pending): a generated **bilingual
-  6-shot screenshot set** (EN `store/app-store-screens/` + 简体中文 `…-zh/`, 1320×2868:
-  Today · Circle · Scan · Trends · Beans · Settings, via
+  consumables `beans_100…beans_800` attached, **auto-release on approval**). Then pulled
+  back, **refreshed the store metadata, and resubmitted (2026-06-16 — "Waiting for
+  Review")**: a generated **bilingual 6-shot screenshot set** (EN `store/app-store-screens/`
+  + 简体中文 `…-zh/`, 1320×2868: Today · Circle · Scan · Trends · Beans · Settings, via
   [`integration_test/store_screenshots.dart`](integration_test/store_screenshots.dart)),
-  Circle + Beans added to the EN/中文 descriptions, and a localized CN app name **食之安**.
-  Also localized the Circle post card (`feedYou`/`feedSomeone` + `kcalValue`) so the
-  feed reads fully in 中文. (14) adds
+  Circle + Beans added to the EN/中文 descriptions, an EN subtitle, and a new **简体中文
+  localization** with the CN app name **食之安**. Also localized the Circle post card
+  (`feedYou`/`feedSomeone` + `kcalValue`) so the feed reads fully in 中文. (14) adds
   **server-side IAP receipt validation** (`/iap/validate`, §2), **APNs background push**
   for circle activity (request / accept / shared-meal / reaction → real Apple banners
   even when the app is closed; key `D2665A2D4P`, [`backend/src/apns.py`](backend/src/apns.py)
