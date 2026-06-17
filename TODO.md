@@ -137,9 +137,10 @@ is now a single plated dish so the AI estimate reads cleanly (~420 kcal, not a 2
    `ap-southeast-1`, OAC). Site source: [`store/website/`](store/website/). Verified
    live: `https://foodatpeace.app/.well-known/apple-app-site-association` → `200`,
    `application/json`, no redirect; `/i/<handle>` → the smart landing (open app · App
-   Store `id6777715561` · WeChat Safari hand-off); HTTP→HTTPS 301. **Remaining (you):**
-   (a) click the **ICANN WHOIS-verification email** (to peter.yandongming@gmail.com,
-   from Amazon Registrar) within 15 days or the domain is suspended; (b) testers
+   Store `id6777715561` · WeChat Safari hand-off); HTTP→HTTPS 301. **(a) ICANN
+   WHOIS-verification — ✅ DONE (2026-06-17):** email verified; Route53 registrar status
+   is clean (`clientTransferProhibited` only — no hold/pending), expiry 2027-06-15, site
+   resolves 200 → not suspended. **Remaining (you):** (b) testers
    **reinstall once** so iOS caches the AASA. **Note:** universal links open the app
    only on builds carrying the `applinks:foodatpeace.app` entitlement (TestFlight build
    4+) — the **public App Store 1.0.0 does not have it**, so until v2 ships to the App
