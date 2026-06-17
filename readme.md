@@ -186,9 +186,12 @@ the system locale by default and persists a manual choice.
   folded in daily from the **App Store Connect Sales report** by a scheduled
   [`downloads.py`](backend/src/downloads.py) Lambda (needs the ASC `.p8` in SSM
   `/food-at-peace/asc-private-key`). `?demo=1` shows the layout with sample numbers.
-  The old in-app 5×-tap screen was
-  **removed**; tapping the version **10×** still reveals + copies this account's
-  **user id** (sync-DB key).
+  CORS is **locked to `https://foodatpeace.app`** (browser-only; the native app is
+  unaffected), and a CloudFront viewer-request function
+  ([`store/website/_cloudfront-rewrite.js`](store/website/_cloudfront-rewrite.js))
+  resolves directory URLs so `…/dashboard/` works as well as `…/dashboard`. The old
+  in-app 5×-tap screen was **removed**; tapping the version **10×** still reveals +
+  copies this account's **user id** (sync-DB key).
 
 **TODO (pricing — StoreKit, mind Apple's rules):**
 - [x] **Beans packs** — each tier (100/200/300/500/800) is a fixed **consumable
