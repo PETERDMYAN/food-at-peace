@@ -180,10 +180,13 @@ the system locale by default and persists a manual choice.
   refunds. The app still emits `open`/`scan`/`purchase` events; the **standalone web
   page** reads **live** aggregates from `GET /metrics` using a **dedicated read-only
   metrics token** (entered in-browser, never in source — kept out of the app so the
-  shared `/analyze` token never ships in a web page). `downloads`/`revenue` stay 0
-  until the App Store Connect API + real IAP land. `?demo=1` shows the layout with
-  sample numbers. The old in-app 5×-tap screen was **removed**; tapping the version
-  **10×** still reveals + copies this account's **user id** (sync-DB key).
+  shared `/analyze` token never ships in a web page). **Revenue + beans-sold are now
+  wired** — recorded server-side in [`iap.py`](backend/src/iap.py) per validated Apple
+  transaction (idempotent, can't be client-faked); `downloads` stays 0 until the **App
+  Store Connect Sales Reports API** is wired (needs a Sales/Finance ASC key + vendor #).
+  `?demo=1` shows the layout with sample numbers. The old in-app 5×-tap screen was
+  **removed**; tapping the version **10×** still reveals + copies this account's
+  **user id** (sync-DB key).
 
 **TODO (pricing — StoreKit, mind Apple's rules):**
 - [x] **Beans packs** — each tier (100/200/300/500/800) is a fixed **consumable

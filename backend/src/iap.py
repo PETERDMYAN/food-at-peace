@@ -19,6 +19,7 @@ import urllib.request
 from datetime import datetime, timezone
 
 import beans  # reuse the Beans table store + bearer parsing
+import metrics  # owner-dashboard counters (beans sold + revenue)
 from common import ProxyError, _get_secret, _parse_body, _response
 from session import verify_session_token
 
@@ -126,6 +127,21 @@ def handler(event, context):
             }
             store.put({"userId": user_id, "sk": sk, "txn": json.dumps(txn)})
             ledger.append(txn)
+            # Owner-dashboard revenue + beans-sold, recorded once per real Apple
+            # transaction (inside this idempotency guard, so re-validation never
+            # double-counts). Best-effort: a metrics hiccup must never fail a paid
+            # purchase. This is the authoritative source — the client no longer
+            # emits a purchase event.
+            try:
+                metrics.record_event(
+                    {
+                        "type": "purchase",
+                        "beans": granted,
+                        "amountCents": round(sgd * 100),
+                    }
+                )
+            except Exception:  # noqa: BLE001 — revenue stat is non-critical
+                pass
 
         return _response(200, {"valid": True, "beans": granted, "ledger": ledger})
     except ProxyError as exc:

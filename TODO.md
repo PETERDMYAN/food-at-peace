@@ -41,12 +41,14 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
 - **Chinese (zh) App Store listing** — [`store/STORE_LISTING_zh.md`](store/STORE_LISTING_zh.md).
 - **Owner analytics (real)** — `POST /event` + `GET /metrics`
   ([`backend/src/metrics.py`](backend/src/metrics.py), `MetricsTable`); the app emits
-  `open`/`scan`/`purchase` events. `GET /metrics` now takes a **dedicated read-only
+  `open`/`scan` events. `GET /metrics` now takes a **dedicated read-only
   metrics token** (`x-metrics-token`, SSM `/food-at-peace/metrics-token`) **or** the
   app token (back-compat); the standalone **web dashboard**
   ([`store/website/dashboard/`](store/website/dashboard/index.html)) reads it.
-  `MetricsService` was **removed from the app**. (`downloads`/`revenue` still need the
-  ASC API / real IAP.)
+  `MetricsService` was **removed from the app**. **Revenue + beans-sold are wired** —
+  recorded server-side in [`iap.py`](backend/src/iap.py) on each validated Apple
+  transaction (idempotent; the client no longer emits `purchase`). **`downloads` still
+  needs the ASC Sales Reports API** (Sales/Finance key + vendor #) — see Remaining §dashboard.
 - **Circle of Food — real backend + UX:**
   - Friend graph: claim `@handle`, invite, accept/decline, list, and privacy-gated
     friend trends ([`backend/src/circle.py`](backend/src/circle.py), `CircleTable`).

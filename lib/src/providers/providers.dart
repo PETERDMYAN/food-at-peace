@@ -807,14 +807,9 @@ class BeansNotifier extends Notifier<BeansState> {
   /// isn't available (no receipt / signed out / the shared secret isn't set yet)
   /// so a paid purchase always lands. Called by the IAP flow.
   Future<void> creditPurchase(int beans, String productId, String receipt) async {
-    // Owner-dashboard signal: a Beans pack was bought (non-PII, best-effort;
-    // a no-op when no proxy is configured). Emitted once per purchase.
-    unawaited(
-      ref.read(analyticsServiceProvider).emit(
-        'purchase',
-        fields: {'beans': beans, 'product': productId},
-      ),
-    );
+    // Owner-dashboard beans-sold + revenue are recorded SERVER-SIDE on receipt
+    // validation (`iap.py`), so they reflect real money once and can't be faked
+    // by the client. No client-side 'purchase' event is emitted here.
     final token = ref.read(authProvider)?.token;
     if (receipt.isNotEmpty &&
         token != null &&

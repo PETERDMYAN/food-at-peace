@@ -40,6 +40,14 @@ def secrets():
     common._secrets.clear()
 
 
+@pytest.fixture(autouse=True)
+def captured_metrics(monkeypatch):
+    """Capture owner-dashboard purchase records (and keep tests off boto3)."""
+    calls = []
+    monkeypatch.setattr(iap.metrics, "record_event", lambda body, **kw: calls.append(body))
+    return calls
+
+
 def _token(user_id="apple:u1"):
     return session.mint_session_token(user_id, SESSION_KEY, 3600)
 
@@ -125,3 +133,21 @@ def test_rejects_product_not_in_receipt(store, monkeypatch):
     assert status == 200
     assert body["valid"] is False
     assert body["reason"] == "product_not_in_receipt"
+
+
+def test_valid_purchase_records_revenue_once(store, monkeypatch, captured_metrics):
+    # A validated purchase records beans sold + revenue (SGD 3.99 -> 399 cents)...
+    monkeypatch.setattr(iap, "_verify", lambda r, s: _apple_ok("beans_200", "tx-rev"))
+    _call(body={"receipt": "r", "productId": "beans_200"})
+    assert captured_metrics == [
+        {"type": "purchase", "beans": 200, "amountCents": 399}
+    ]
+    # ...and re-validating the same Apple transaction records nothing more.
+    _call(body={"receipt": "r", "productId": "beans_200"})
+    assert len(captured_metrics) == 1
+
+
+def test_invalid_receipt_records_no_revenue(store, monkeypatch, captured_metrics):
+    monkeypatch.setattr(iap, "_verify", lambda r, s: {"status": 21002})
+    _call(body={"receipt": "r", "productId": "beans_200"})
+    assert captured_metrics == []

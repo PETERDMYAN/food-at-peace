@@ -302,6 +302,7 @@ Resources:
           BEANS_TABLE: !Ref BeansTable
           SESSION_KEY_PARAM: !Ref SessionKeyParam
           IAP_SECRET_PARAM: !Ref IapSecretParam
+          METRICS_TABLE: !Ref MetricsTable
       Policies:
         - Statement:
             - Sid: ReadWriteBeans
@@ -312,6 +313,11 @@ Resources:
                 - dynamodb:Query
               Resource:
                 - !GetAtt BeansTable.Arn
+            - Sid: RecordRevenueMetric
+              Effect: Allow
+              Action: dynamodb:UpdateItem
+              Resource:
+                - !GetAtt MetricsTable.Arn
             - Sid: ReadSecrets
               Effect: Allow
               Action: ssm:GetParameter
