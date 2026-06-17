@@ -32,6 +32,7 @@ ANTHROPIC_KEY_PARAM = os.environ.get(
     "ANTHROPIC_KEY_PARAM", "/food-at-peace/anthropic-api-key"
 )
 APP_TOKEN_PARAM = os.environ.get("APP_TOKEN_PARAM", "/food-at-peace/app-token")
+METRICS_TABLE = os.environ.get("METRICS_TABLE", "")  # owner-dashboard counters
 
 ANTHROPIC_URL = "https://api.anthropic.com/v1/messages"
 ANTHROPIC_VERSION = "2023-06-01"
@@ -247,6 +248,51 @@ def _call_anthropic(api_key, body):
         raise ProxyError(502, "Analysis service error — please try again shortly.")
 
 
+_ddb = None
+
+
+def _metrics_table():
+    global _ddb
+    if _ddb is None:
+        import boto3  # lazy: keeps the module importable in tests without boto3
+
+        _ddb = boto3.resource("dynamodb").Table(METRICS_TABLE)
+    return _ddb
+
+
+def record_usage(usage):
+    """Best-effort: fold one analyze call's token usage into the metrics `counter`
+    so the owner dashboard can show the prompt-cache hit rate + token cost. Never
+    raises — a stats hiccup must not fail a photo analysis."""
+    if not isinstance(usage, dict) or not METRICS_TABLE:
+        return
+
+    def _i(key):
+        try:
+            return int(usage.get(key) or 0)
+        except (TypeError, ValueError):
+            return 0
+
+    read = _i("cache_read_input_tokens")
+    adds = {
+        "aiCalls": 1,
+        "aiInputTokens": _i("input_tokens"),
+        "aiOutputTokens": _i("output_tokens"),
+        "aiCacheReadTokens": read,
+        "aiCacheWriteTokens": _i("cache_creation_input_tokens"),
+        "aiCacheHitCalls": 1 if read > 0 else 0,
+    }
+    try:
+        _metrics_table().update_item(
+            Key={"pk": "counter"},
+            UpdateExpression="ADD " + ", ".join(f"#{k} :{k}" for k in adds),
+            ExpressionAttributeNames={f"#{k}": k for k in adds},
+            ExpressionAttributeValues={f":{k}": v for k, v in adds.items()},
+        )
+    except Exception:  # noqa: BLE001 — usage stat is non-critical
+        pass
+
+
 def _authorize(event):
     provided = _header(event, "x-app-token")
     expected = _get_secret(APP_TOKEN_PARAM)
@@ -272,6 +318,7 @@ def handler(event, context):
         anthropic_response = _call_anthropic(
             api_key, build_request_body(image, media_type, MODEL, lang)
         )
+        record_usage(anthropic_response.get("usage"))  # best-effort dashboard stat
         return _response(200, parse_tool_input(anthropic_response))
     except ProxyError as exc:
         return _response(exc.status, {"error": {"message": exc.message}})

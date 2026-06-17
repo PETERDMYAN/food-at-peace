@@ -177,7 +177,8 @@ the system locale by default and persists a manual choice.
   ([`store/website/dashboard/`](store/website/dashboard/index.html); prod `/metrics` dual-auth
   deployed 2026-06-17)
   → downloads / active / opens (7-day bars) / photos scanned / Beans sold / revenue /
-  refunds. The app still emits `open`/`scan`/`purchase` events; the **standalone web
+  refunds / **AI prompt-cache hit rate + token usage** (recorded per `/analyze` call by
+  `app.py` from the Anthropic `usage` block). The app still emits `open`/`scan`/`purchase` events; the **standalone web
   page** reads **live** aggregates from `GET /metrics` using a **dedicated read-only
   metrics token** (entered in-browser, never in source — kept out of the app so the
   shared `/analyze` token never ships in a web page). **All cards are now wired** —

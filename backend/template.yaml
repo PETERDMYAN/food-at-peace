@@ -131,6 +131,7 @@ Resources:
           MODEL: !Ref Model
           ANTHROPIC_KEY_PARAM: !Ref AnthropicKeyParam
           APP_TOKEN_PARAM: !Ref AppTokenParam
+          METRICS_TABLE: !Ref MetricsTable
       Policies:
         - Statement:
             - Sid: ReadSecrets
@@ -139,6 +140,11 @@ Resources:
               Resource:
                 - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter${AnthropicKeyParam}
                 - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter${AppTokenParam}
+            - Sid: RecordUsageMetric
+              Effect: Allow
+              Action: dynamodb:UpdateItem
+              Resource:
+                - !GetAtt MetricsTable.Arn
             - Sid: DecryptSecureStrings
               Effect: Allow
               Action: kms:Decrypt

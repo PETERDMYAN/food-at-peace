@@ -224,6 +224,15 @@ is now a single plated dish so the AI estimate reads cleanly (~420 kcal, not a 2
    and after. Keep the request **backward-compatible** with the shipped 1.0.0 app
    (see the `production-safety` skill) and keep the Dart/Python request builders in
    sync. Mirrored in tasks.
+   **Progress (2026-06-17):** **measurement wired** — `app.py` records the Anthropic
+   `usage` block (input/output/cache-read/cache-write tokens + hit counts) into the
+   metrics counter per call; the **owner dashboard now shows AI cache hit-rate + token
+   usage**. **Haiku-vs-Sonnet spot-check** (5 photos via the v2 stack): Haiku tracked
+   Sonnet within ~5–16% on everyday meals (±macros), diverged on a whole-pizza portion
+   (+38%), both correctly refused a non-food image, Haiku ~2× faster + ~3–4× cheaper.
+   **Decision: stay on Sonnet for now** (quality retained); revisit with the live
+   hit-rate/edit-rate data + a larger eval before any switch. Still open: tighten
+   prompt/`max_tokens`, optional confidence-based Haiku→Sonnet escalation.
 5. **Rate-the-app prompt after 5 opens — ✅ DONE on `v3`** (2026-06-17). The native
    `SKStoreReviewController` prompt fires once, on the 5th app open, via the
    `in_app_review` package. [`app_review_service.dart`](lib/src/data/app_review_service.dart):

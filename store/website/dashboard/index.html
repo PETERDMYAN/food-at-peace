@@ -132,7 +132,9 @@
   // the layout is viewable before a token exists. Real data always comes live.
   var SAMPLE = {downloads:1284, activeToday:73, opensTotal:5210,
     opens7d:[62,71,58,80,67,90,73], photosScanned:1840, beansSold:12400,
-    revenueSgd:246.80, refunds:6, refundSgd:11.94, isSample:true};
+    revenueSgd:246.80, refunds:6, refundSgd:11.94, isSample:true,
+    ai:{calls:1840, cacheHitRate:0.82, cacheHitCallRate:0.86,
+        inputTokens:2576000, outputTokens:515200, cacheReadTokens:9430000, cacheWriteTokens:2070000}};
 
   var $ = function(id){ return document.getElementById(id); };
   function getBase(){
@@ -144,6 +146,8 @@
   // ---- formatting ----
   function n(x){ return (x==null?0:x).toLocaleString("en-US"); }
   function money(x){ return "S$" + (x==null?0:x).toFixed(2); }
+  function pct(x){ return Math.round((x==null?0:x)*100) + "%"; }
+  function compact(x){ return (x==null?0:x).toLocaleString("en-US",{notation:"compact",maximumFractionDigits:1}); }
 
   function card(opts){
     var money = opts.money ? " money" : "";
@@ -182,6 +186,12 @@
     html += card({icon:"🫘", label:"Beans sold",      value:n(m.beansSold)});
     html += card({icon:"💵", label:"Revenue",         value:money(m.revenueSgd), money:true});
     html += card({icon:"↩",  label:"Refunds",         value:n(m.refunds)+' <small>'+money(m.refundSgd)+'</small>', wide:true});
+    var ai = m.ai || {};
+    html += card({icon:"⚡", label:"AI cache hit rate", value:pct(ai.cacheHitRate)});
+    html += card({icon:"🧠", label:"Scans analyzed",    value:n(ai.calls)});
+    html += card({icon:"🔤", label:"Tokens (in · out · cached)", wide:true,
+      value:compact(ai.inputTokens)+' <small>in</small> · '+compact(ai.outputTokens)+
+            ' <small>out</small> · '+compact(ai.cacheReadTokens)+' <small>cached</small>'});
     html += chart(Array.isArray(m.opens7d)?m.opens7d:[]);
     $("cards").innerHTML = html;
     var t = new Date();

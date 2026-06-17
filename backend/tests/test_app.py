@@ -177,3 +177,61 @@ def _stub_anthropic(monkeypatch):
 
 def handler_with(body, token):
     return app.handler(_event(body, token=token), None)
+
+
+# --- Usage / cache-hit recording ---------------------------------------------
+
+
+class _FakeMetrics:
+    def __init__(self):
+        self.calls = []
+
+    def update_item(self, **kw):
+        self.calls.append(kw)
+
+
+def test_record_usage_folds_tokens_and_counts_a_hit(monkeypatch):
+    fake = _FakeMetrics()
+    monkeypatch.setattr(app, "METRICS_TABLE", "MetricsTbl")
+    monkeypatch.setattr(app, "_metrics_table", lambda: fake)
+    app.record_usage({"input_tokens": 1500, "output_tokens": 300,
+                      "cache_read_input_tokens": 9000, "cache_creation_input_tokens": 0})
+    v = fake.calls[0]["ExpressionAttributeValues"]
+    assert v[":aiCalls"] == 1
+    assert v[":aiInputTokens"] == 1500 and v[":aiOutputTokens"] == 300
+    assert v[":aiCacheReadTokens"] == 9000 and v[":aiCacheWriteTokens"] == 0
+    assert v[":aiCacheHitCalls"] == 1  # cache_read > 0 → a hit
+
+
+def test_record_usage_write_is_not_a_hit(monkeypatch):
+    fake = _FakeMetrics()
+    monkeypatch.setattr(app, "METRICS_TABLE", "MetricsTbl")
+    monkeypatch.setattr(app, "_metrics_table", lambda: fake)
+    app.record_usage({"input_tokens": 1500, "cache_creation_input_tokens": 9000})
+    v = fake.calls[0]["ExpressionAttributeValues"]
+    assert v[":aiCacheWriteTokens"] == 9000 and v[":aiCacheHitCalls"] == 0
+
+
+def test_record_usage_noop_without_table(monkeypatch):
+    fake = _FakeMetrics()
+    monkeypatch.setattr(app, "METRICS_TABLE", "")  # unconfigured → silent no-op
+    monkeypatch.setattr(app, "_metrics_table", lambda: fake)
+    app.record_usage({"input_tokens": 100})
+    assert fake.calls == []
+
+
+def test_handler_records_usage_best_effort(monkeypatch):
+    fake = _FakeMetrics()
+    monkeypatch.setattr(app, "METRICS_TABLE", "MetricsTbl")
+    monkeypatch.setattr(app, "_metrics_table", lambda: fake)
+
+    def fake_call(api_key, body):
+        r = _anthropic_tool_response()
+        r["usage"] = {"input_tokens": 1500, "output_tokens": 300,
+                      "cache_read_input_tokens": 9000, "cache_creation_input_tokens": 0}
+        return r
+
+    monkeypatch.setattr(app, "_call_anthropic", fake_call)
+    resp = app.handler(_event({"image": "AAAA", "mediaType": "image/jpeg"}), None)
+    assert resp["statusCode"] == 200
+    assert fake.calls[0]["ExpressionAttributeValues"][":aiCacheReadTokens"] == 9000

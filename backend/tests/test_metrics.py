@@ -103,6 +103,24 @@ def test_event_write_accepts_app_token(secrets, monkeypatch):
     assert writes == [("counter", {"photosScanned": 1})]
 
 
+def test_ai_usage_token_weighted_and_call_hit_rates():
+    ai = metrics._ai_usage({
+        "aiCalls": 10, "aiCacheHitCalls": 8,
+        "aiCacheReadTokens": 9000, "aiCacheWriteTokens": 1000,
+        "aiInputTokens": 15000, "aiOutputTokens": 3000,
+    })
+    assert ai["calls"] == 10
+    assert ai["cacheHitRate"] == 0.9          # 9000 / (9000 + 1000), token-weighted
+    assert ai["cacheHitCallRate"] == 0.8      # 8 / 10 calls
+    assert ai["inputTokens"] == 15000 and ai["outputTokens"] == 3000
+
+
+def test_ai_usage_zero_safe_on_empty_counter():
+    ai = metrics._ai_usage({})
+    assert ai["calls"] == 0
+    assert ai["cacheHitRate"] == 0.0 and ai["cacheHitCallRate"] == 0.0
+
+
 def test_unprovisioned_metrics_token_denies(monkeypatch):
     # Before the SSM secret exists, presenting any metrics token must not work.
     def fake(name):

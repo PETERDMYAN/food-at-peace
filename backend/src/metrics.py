@@ -142,6 +142,26 @@ def _get_int(pk, field):
     return int(item.get(field, 0) or 0)
 
 
+def _ai_usage(counter):
+    """Prompt-cache + token usage for the photo-analysis model, recorded per call
+    by app.py. cacheHitRate is token-weighted (cached tokens served from cache /
+    total cacheable tokens); cacheHitCallRate is the share of calls that hit."""
+    calls = int(counter.get("aiCalls", 0) or 0)
+    read = int(counter.get("aiCacheReadTokens", 0) or 0)
+    write = int(counter.get("aiCacheWriteTokens", 0) or 0)
+    hit_calls = int(counter.get("aiCacheHitCalls", 0) or 0)
+    cacheable = read + write
+    return {
+        "calls": calls,
+        "cacheHitRate": round(read / cacheable, 4) if cacheable else 0.0,
+        "cacheHitCallRate": round(hit_calls / calls, 4) if calls else 0.0,
+        "inputTokens": int(counter.get("aiInputTokens", 0) or 0),
+        "outputTokens": int(counter.get("aiOutputTokens", 0) or 0),
+        "cacheReadTokens": read,
+        "cacheWriteTokens": write,
+    }
+
+
 def build_metrics(today=None):
     days = _last_7_days(today)
     counter = _table().get_item(Key={"pk": _COUNTER_PK}).get("Item") or {}
@@ -158,6 +178,8 @@ def build_metrics(today=None):
         "revenueSgd": int(counter.get("revenueCents", 0) or 0) / 100.0,
         "refunds": int(counter.get("refunds", 0) or 0),
         "refundSgd": int(counter.get("refundCents", 0) or 0) / 100.0,
+        # Photo-analysis model usage: prompt-cache hit rate + token counts.
+        "ai": _ai_usage(counter),
         # Live data (not the in-app placeholder set).
         "isSample": False,
     }
