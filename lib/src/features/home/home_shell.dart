@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:food_at_peace/l10n/app_localizations.dart';
 
 import '../../app_globals.dart';
+import '../../data/app_review_service.dart';
 import '../../data/notification_service.dart';
 import '../../data/sync_engine.dart';
 import '../../providers/providers.dart';
@@ -38,6 +39,9 @@ class _HomeShellState extends ConsumerState<HomeShell>
       _refreshReminders();
       _checkCircleActivity();
       _registerPushToken();
+      // Count this open and, on the 5th, ask for an App Store review (once).
+      // Reaching the home shell means onboarding is done — no need to gate.
+      ref.read(appReviewPrompterProvider).registerOpenAndMaybeAsk();
     });
   }
 

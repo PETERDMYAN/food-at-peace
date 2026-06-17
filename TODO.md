@@ -196,12 +196,15 @@ is now a single plated dish so the AI estimate reads cleanly (~420 kcal, not a 2
    and after. Keep the request **backward-compatible** with the shipped 1.0.0 app
    (see the `production-safety` skill) and keep the Dart/Python request builders in
    sync. Mirrored in tasks.
-5. **Rate-the-app prompt after 5 opens** — on the 5th app open, show the native
-   App Store review prompt. Use the `in_app_review` package
-   (`SKStoreReviewController` on iOS); count opens in prefs (the app already
-   emits an `open` analytics event — reuse/extend that), and only request once
-   (iOS rate-limits the prompt anyway). Gate behind onboarding-complete so we
-   don't ask brand-new users.
+5. **Rate-the-app prompt after 5 opens — ✅ DONE on `v3`** (2026-06-17). The native
+   `SKStoreReviewController` prompt fires once, on the 5th app open, via the
+   `in_app_review` package. [`app_review_service.dart`](lib/src/data/app_review_service.dart):
+   an `AppReviewService` interface (so tests inject a fake) + `AppReviewPrompter` that
+   counts opens in prefs (`app_open_count`) and asks once (`app_review_requested`).
+   Driven from [`home_shell.dart`](lib/src/features/home/home_shell.dart) `initState` —
+   the home shell only mounts post-onboarding, so new users aren't asked. Unit-tested
+   (asks exactly on the 5th open, never twice, skips when the OS prompt is unavailable).
+   Ships with the next version (already on `v3`).
 6. **Enable in-WeChat open / download (WeChat Open Platform / Mini Program)** *(you —
    needs a verified WeChat account)* — WeChat's in-app browser **blocks iOS Universal
    Links and App Store redirects**, so a shared `foodatpeace.app/i/<handle>` can't
