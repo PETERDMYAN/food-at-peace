@@ -4,3 +4,7 @@
 #   pip install -r tests/requirements-dev.txt && pytest
 pytest>=8
 PyJWT[crypto]>=2.8,<3
+# boto3 ships in the Lambda runtime (so it's NOT in src/requirements.txt), but
+# tests run outside that runtime. apns.device_tokens imports
+# boto3.dynamodb.conditions.Key, so the suite needs boto3 locally to exercise it.
+boto3>=1.34
