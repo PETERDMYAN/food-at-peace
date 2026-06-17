@@ -81,12 +81,13 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
     [`circle_feed_screen.dart`](lib/src/features/circle/circle_feed_screen.dart)).
     The **story keeps the full-resolution photo**; the AI estimate uses a downscaled
     1024px copy.
-- **TestFlight / App Store** — **`v3` build `1.0.2 (16)` uploaded to TestFlight** (2026-06-17,
-  prod backend, `/tmp/fap_rec/build16.sh`) — adds Eva's daily-lesson card, the `beans_25`
-  entry IAP, the **rate-the-app prompt** (5th open) and **`purchase` analytics**; becomes the
-  1.0.2 submission after 1.0.1 clears review. (`beans_25` server validation needs the v3
-  `iap.py` deployed to prod first — additive, do at 1.0.2 submit.) Build `(15)` was the prior
-  cut (Eva + `beans_25` only).
+- **TestFlight / App Store** — **`v3` build `1.0.2 (17)` uploaded to TestFlight** (2026-06-18,
+  prod backend, `/tmp/fap_rec/build17.sh`) — adds the **Circle stories** rework (Eva + You as
+  tappable stories, lesson attribution) and the **Haiku** photo-analysis model (direct-key
+  `defaultModel`); rides on (16)'s rate-the-app prompt + `purchase` analytics + `beans_25`.
+  Becomes the 1.0.2 submission after 1.0.1 clears review. (`beans_25` server validation +
+  the v3 `iap.py` are already live on prod.) Earlier cuts: (16) Eva card + rate-app +
+  analytics; (15) Eva + `beans_25`.
   Earlier: `1.0.1 (14)` built against **prod**
   (`--dart-define-from-file=dart_defines.prod.json`) + uploaded via the ASC API key,
   and submitted to App Store review on 2026-06-16 (first public v2 release; all 5 Beans
@@ -230,8 +231,13 @@ is now a single plated dish so the AI estimate reads cleanly (~420 kcal, not a 2
    usage**. **Haiku-vs-Sonnet spot-check** (5 photos via the v2 stack): Haiku tracked
    Sonnet within ~5–16% on everyday meals (±macros), diverged on a whole-pizza portion
    (+38%), both correctly refused a non-food image, Haiku ~2× faster + ~3–4× cheaper.
-   **Decision: stay on Sonnet for now** (quality retained); revisit with the live
-   hit-rate/edit-rate data + a larger eval before any switch. **Caching finding:** the
+   **Decision (2026-06-18): switched to `claude-haiku-4-5-20251001`** for ~3–4× lower
+   cost + ~2× faster scans (spot-check kept everyday-meal accuracy). Server-controlled
+   `Model` param — flipped on **prod + v2** (affects all client versions on the proxy
+   path, incl. live 1.0.0, with no app update) and set as the template default; the
+   direct-key path's `defaultModel` also bumped to Haiku (ships build 17+). Instantly
+   revertible by setting `Model` back to `claude-sonnet-4-6`. Watch the live edit-rate;
+   escalate to Sonnet on low-confidence/large-portion cases if it slips. **Caching finding:** the
    measurement showed prompt caching is **currently inert** — the cached prefix
    (system+tools) is **~400 tokens, below Anthropic's ~1024-token cache minimum**, so
    `cache_control` is a no-op (0 read/write). It's also a non-lever here (the ~1.4k-token

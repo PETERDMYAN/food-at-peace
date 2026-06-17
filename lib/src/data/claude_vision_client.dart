@@ -45,9 +45,10 @@ class ClaudeVisionClient {
   ClaudeVisionClient({http.Client? httpClient, this.model = defaultModel})
     : _http = httpClient ?? http.Client();
 
-  /// Good vision + reasoning at moderate cost. Swap to 'claude-haiku-4-5'
-  /// for the cheapest option.
-  static const String defaultModel = 'claude-sonnet-4-6';
+  /// Cheapest fast vision tier (good enough for nutrition estimates; ~3–4×
+  /// cheaper + ~2× faster than Sonnet on a spot-check). Direct-key path only;
+  /// the proxy path's model is server-controlled via the backend `MODEL` env.
+  static const String defaultModel = 'claude-haiku-4-5-20251001';
   static const String toolName = 'log_food';
   static const String _endpoint = 'https://api.anthropic.com/v1/messages';
 

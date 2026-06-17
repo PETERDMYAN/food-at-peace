@@ -7,8 +7,8 @@ Description: >
 Parameters:
   Model:
     Type: String
-    Default: claude-sonnet-4-6
-    Description: Anthropic model used for photo analysis.
+    Default: claude-haiku-4-5-20251001
+    Description: Anthropic model used for photo analysis (server-controlled; swappable without an app update).
   AnthropicKeyParam:
     Type: String
     Default: /food-at-peace/anthropic-api-key
