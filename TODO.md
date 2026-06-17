@@ -281,9 +281,13 @@ is now a single plated dish so the AI estimate reads cleanly (~420 kcal, not a 2
    "you earned N Beans 🫘" notice.
 8. **Eva — a daily "life lesson" everyone follows** *(engagement)* — **✅ SHIPPED as a
    story on `v3`** (2026-06-17→18): the "Your circle" strip on Trends now leads with a
-   **You** story (tap → your shared meals, with a "scan a meal to start your story" nudge)
-   and an **Eva** story avatar (tap → today's lesson in a story-style sheet, with the
-   **author** under it). One lesson per **local date** (same for everyone, flips at local
+   **You** story (tap → a **full-screen, Instagram-style "Food story"** of *today's whole
+   food log* — one page per logged meal, name/kcal/macros; a "scan a meal" nudge if none)
+   and an **Eva** story avatar (tap → today's lesson **full-screen**, with the
+   **author** under it). Both use a shared [`story_viewer.dart`](lib/src/features/circle/story_viewer.dart)
+   (segmented progress bar, tap-to-advance, ✕/swipe-down to close). The food story reads
+   the **food log** (`foodEntriesProvider`), not shared circle posts — so all logged meals
+   show. One lesson per **local date** (same for everyone, flips at local
    midnight) from a bundled set of **100 bilingual (EN/中文) lessons**, each now carrying a
    bilingual **attribution** (`byEn`/`byZh` — a real author where documented, else
    "Proverb"/"Unknown") — [`assets/eva_wisdom.json`](assets/eva_wisdom.json) via

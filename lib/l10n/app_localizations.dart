@@ -1796,16 +1796,16 @@ abstract class AppLocalizations {
   /// **'You'**
   String get feedYou;
 
-  /// No description provided for @yourMeals.
+  /// No description provided for @foodStory.
   ///
   /// In en, this message translates to:
-  /// **'Your meals'**
-  String get yourMeals;
+  /// **'Food story'**
+  String get foodStory;
 
   /// No description provided for @shareFirstMeal.
   ///
   /// In en, this message translates to:
-  /// **'Scan a meal photo and share it to start your story.'**
+  /// **'Scan a meal to start your food story.'**
   String get shareFirstMeal;
 
   /// No description provided for @feedSomeone.

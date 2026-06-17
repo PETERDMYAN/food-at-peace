@@ -326,16 +326,16 @@ void main() {
     await t.tap(find.byIcon(Icons.insights_outlined).first);
     await shot(t, '02-trends', settle: 2400);
 
-    // ── 2b) Eva's daily-lesson story (tap her story avatar) ────────────
+    // ── 2b) Eva's daily-lesson story (full-screen, tap her avatar) ─────
     await t.tap(find.text('Eva').first);
     await shot(t, '09-eva-story', settle: 1800);
-    await t.tapAt(const Offset(20, 40)); // dismiss the sheet (scrim)
+    await t.tap(find.byIcon(Icons.close)); // close the full-screen story
     await beat(t, 700);
 
-    // ── 2c) Your own food story (tap "You") ────────────────────────────
+    // ── 2c) Your food story (full-screen, tap "You") ───────────────────
     await t.tap(find.text(_loc == 'zh' ? '你' : 'You').first);
-    await shot(t, '10-my-meals', settle: 2400); // let the meal photo load
-    await t.tapAt(const Offset(20, 40)); // dismiss
+    await shot(t, '10-food-story', settle: 2000);
+    await t.tap(find.byIcon(Icons.close)); // close
     await beat(t, 700);
 
     // ── 3) Settings (profile + targets + clean "Last synced" + Sources) ─

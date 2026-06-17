@@ -940,10 +940,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get feedYou => '你';
 
   @override
-  String get yourMeals => '你的餐食';
+  String get foodStory => '美食故事';
 
   @override
-  String get shareFirstMeal => '扫一张餐食照片并分享，开启你的动态。';
+  String get shareFirstMeal => '扫一张餐食，开启你的美食故事。';
 
   @override
   String get feedSomeone => '好友';
