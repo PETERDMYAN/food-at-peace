@@ -26,8 +26,10 @@ Parameters:
       shared /analyze secret never has to live in a browser.
   CorsAllowOrigin:
     Type: String
-    Default: "*"
-    Description: Allowed CORS origin. Tighten to your web origin for production.
+    Default: https://foodatpeace.app
+    Description: >
+      Allowed CORS origin — the web dashboard's origin. Only browsers enforce
+      this; the native app (no Origin) is unaffected. Set to "*" for local dev.
   AppleClientId:
     Type: String
     Default: ""
