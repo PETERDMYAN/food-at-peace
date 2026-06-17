@@ -134,6 +134,8 @@ Map<String, dynamic> buildRequestBody({
     'max_tokens': 1024,
     // Stable prefix (tools + system) is cache_control'd; the image is the
     // volatile suffix in messages, so it never breaks the cached prefix.
+    // NOTE: that prefix is ~400 tokens today — below Anthropic's ~1024-token
+    // cache minimum — so caching is currently inert; it engages if it grows.
     'system': [
       {
         'type': 'text',

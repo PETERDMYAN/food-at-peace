@@ -86,6 +86,12 @@ def build_request_body(base64_image, media_type, model, lang=None):
     return {
         "model": model,
         "max_tokens": MAX_TOKENS,
+        # cache_control marks the tools+system prefix for prompt caching. NOTE:
+        # that prefix is only ~400 tokens — below Anthropic's ~1024-token cache
+        # minimum — so caching is currently INERT (0 read/write; see the owner
+        # dashboard's "AI cache hit rate"). It's also a minor lever here: the
+        # ~1.4k-token image dominates input and is inherently uncacheable. Left
+        # in place — harmless, and it auto-engages if the prefix ever grows.
         "system": [
             {
                 "type": "text",

@@ -187,7 +187,9 @@
     html += card({icon:"💵", label:"Revenue",         value:money(m.revenueSgd), money:true});
     html += card({icon:"↩",  label:"Refunds",         value:n(m.refunds)+' <small>'+money(m.refundSgd)+'</small>', wide:true});
     var ai = m.ai || {};
-    html += card({icon:"⚡", label:"AI cache hit rate", value:pct(ai.cacheHitRate)});
+    var cacheable = (ai.cacheReadTokens||0) + (ai.cacheWriteTokens||0);
+    html += card({icon:"⚡", label:"AI cache hit rate",
+      value: cacheable>0 ? pct(ai.cacheHitRate) : 'off <small>prefix &lt;1KB</small>'});
     html += card({icon:"🧠", label:"Scans analyzed",    value:n(ai.calls)});
     html += card({icon:"🔤", label:"Tokens (in · out · cached)", wide:true,
       value:compact(ai.inputTokens)+' <small>in</small> · '+compact(ai.outputTokens)+

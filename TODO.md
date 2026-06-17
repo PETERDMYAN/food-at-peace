@@ -231,7 +231,12 @@ is now a single plated dish so the AI estimate reads cleanly (~420 kcal, not a 2
    Sonnet within ~5–16% on everyday meals (±macros), diverged on a whole-pizza portion
    (+38%), both correctly refused a non-food image, Haiku ~2× faster + ~3–4× cheaper.
    **Decision: stay on Sonnet for now** (quality retained); revisit with the live
-   hit-rate/edit-rate data + a larger eval before any switch. Still open: tighten
+   hit-rate/edit-rate data + a larger eval before any switch. **Caching finding:** the
+   measurement showed prompt caching is **currently inert** — the cached prefix
+   (system+tools) is **~400 tokens, below Anthropic's ~1024-token cache minimum**, so
+   `cache_control` is a no-op (0 read/write). It's also a non-lever here (the ~1.4k-token
+   image dominates input and is uncacheable). Left in place (harmless; auto-engages if the
+   prefix grows); dashboard shows "off" when not engaging. Still open: tighten
    prompt/`max_tokens`, optional confidence-based Haiku→Sonnet escalation.
 5. **Rate-the-app prompt after 5 opens — ✅ DONE on `v3`** (2026-06-17). The native
    `SKStoreReviewController` prompt fires once, on the 5th app open, via the
