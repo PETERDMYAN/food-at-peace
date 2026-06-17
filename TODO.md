@@ -273,26 +273,26 @@ is now a single plated dish so the AI estimate reads cleanly (~420 kcal, not a 2
    handle from link → install → first sign-in, e.g. deferred deep link / pasteboard
    match against `circle.connect`), **one-reward-per-new-account** anti-abuse, and a
    "you earned N Beans 🫘" notice.
-8. **Eva — a daily "life lesson" everyone follows** *(engagement)* — **✅ FIRST CUT
-   SHIPPED on `v3`** (2026-06-17): a pinned **Eva** card at the top of "Your circle" on
-   Trends shows one life lesson for today, keyed to the **local date** (same for everyone,
-   flips at local midnight) from a bundled set of **100 bilingual (EN/中文) lessons** —
-   [`assets/eva_wisdom.json`](assets/eva_wisdom.json), loaded by
+8. **Eva — a daily "life lesson" everyone follows** *(engagement)* — **✅ SHIPPED as a
+   story on `v3`** (2026-06-17→18): the "Your circle" strip on Trends now leads with a
+   **You** story (tap → your shared meals, with a "scan a meal to start your story" nudge)
+   and an **Eva** story avatar (tap → today's lesson in a story-style sheet, with the
+   **author** under it). One lesson per **local date** (same for everyone, flips at local
+   midnight) from a bundled set of **100 bilingual (EN/中文) lessons**, each now carrying a
+   bilingual **attribution** (`byEn`/`byZh` — a real author where documented, else
+   "Proverb"/"Unknown") — [`assets/eva_wisdom.json`](assets/eva_wisdom.json) via
    [`eva_wisdom.dart`](lib/src/data/eva_wisdom.dart) (`evaWisdomProvider` + pure
-   `evaLessonIndex`), rendered by
-   [`eva_lesson_card.dart`](lib/src/features/circle/eva_lesson_card.dart) inside
-   [`circle_strip.dart`](lib/src/features/circle/circle_strip.dart). No runtime model
-   call (offline). Unit tests cover the date→index logic + the 100-entry asset.
-   **Open follow-ups (decisions deferred — pick when you want):**
-   (a) **Eva as a real server account** in `CircleTable` (shows in the friend graph, can
-   post photos to the feed) vs. the current **pure client-side card** — shipped the simple
-   client card; promote to a server account if you want her in the feed/graph.
-   (b) **Server-updatable lessons** (e.g. `/config/wisdom` on the v2 stack) so the list
-   refreshes without an app release — currently bundled.
+   `evaLessonIndex` + `author(lang)`), rendered in
+   [`circle_strip.dart`](lib/src/features/circle/circle_strip.dart). The old pinned
+   `eva_lesson_card.dart` was removed. No runtime model call (offline). Unit tests cover
+   the date→index logic, `author()`, and the 100-entry attributed asset. **✅ (d)** Eva is
+   now the followed story avatar (tap → lesson). **Open follow-ups (deferred):**
+   (a) **Eva as a real server account** in `CircleTable` (friend graph + feed posts) vs.
+   the current client-side story.
+   (b) **Server-updatable lessons** (e.g. `/config/wisdom`) so the list refreshes without
+   an app release — currently bundled.
    (c) **Daily local notification** ("Eva's lesson for today …") gated by the existing
    *Circle activity* toggle — not built yet.
-   (d) Optionally also pin Eva as the **first avatar** in the strip (tap → her full
-   lesson / a little "profile"). The card rides the **next version (1.0.2)** like any v3 work.
 
    *(Original spec below.)* A built-in
    **system Circle account, Eva**, auto-added to **every** user's circle on first run /

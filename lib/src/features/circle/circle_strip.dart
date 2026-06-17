@@ -2,11 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:food_at_peace/l10n/app_localizations.dart';
 
+import '../../data/eva_wisdom.dart';
+import '../../models/circle_post.dart';
 import '../../models/friend.dart';
 import '../../providers/providers.dart';
 import '../../widgets/story_avatar.dart';
 import 'circle_feed_screen.dart';
-import 'eva_lesson_card.dart';
 import 'invite_card.dart';
 import 'manage_friends_screen.dart';
 
@@ -26,6 +27,13 @@ class CircleStrip extends ConsumerWidget {
         friends.where((f) => f.status == FriendStatus.outgoing).toList();
     final incoming =
         friends.where((f) => f.status == FriendStatus.incoming).length;
+
+    // Eva is a story you follow: her daily lesson, keyed to the local date.
+    final lessons = ref.watch(evaWisdomProvider).asData?.value ?? const [];
+    final lang = Localizations.localeOf(context).languageCode;
+    final evaLesson = lessons.isEmpty
+        ? null
+        : lessons[evaLessonIndex(DateTime.now(), lessons.length)];
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -58,13 +66,32 @@ class CircleStrip extends ConsumerWidget {
           ],
         ),
         const SizedBox(height: 10),
-        // Eva — a built-in companion everyone follows; her daily life lesson.
-        const EvaLessonCard(),
         SizedBox(
           height: 96,
           child: ListView(
             scrollDirection: Axis.horizontal,
             children: [
+              // You — your own food story (your shared meals).
+              _AvatarColumn(
+                label: t.feedYou,
+                avatar: StoryAvatar(
+                  icon: Icons.person,
+                  colorSeed: 3,
+                  onTap: () => showMyMeals(context),
+                ),
+                onTap: () => showMyMeals(context),
+              ),
+              // Eva — a companion you follow; tap her story for today's lesson.
+              if (evaLesson != null)
+                _AvatarColumn(
+                  label: 'Eva',
+                  avatar: StoryAvatar(
+                    initials: 'E',
+                    colorSeed: 7,
+                    onTap: () => showEvaStory(context, evaLesson, lang),
+                  ),
+                  onTap: () => showEvaStory(context, evaLesson, lang),
+                ),
               _AvatarColumn(
                 label: t.addFriend,
                 avatar: StoryAvatar(
@@ -436,4 +463,205 @@ class CircleRequestsScreen extends ConsumerWidget {
             ),
     );
   }
+}
+
+// ---------------------------------------------------------------------------
+// Eva's daily-lesson story (tap her avatar)
+// ---------------------------------------------------------------------------
+
+Future<void> showEvaStory(BuildContext context, EvaLesson lesson, String lang) {
+  return showModalBottomSheet<void>(
+    context: context,
+    showDragHandle: true,
+    builder: (_) => _EvaStorySheet(lesson: lesson, lang: lang),
+  );
+}
+
+class _EvaStorySheet extends StatelessWidget {
+  const _EvaStorySheet({required this.lesson, required this.lang});
+
+  final EvaLesson lesson;
+  final String lang;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    final text = Theme.of(context).textTheme;
+    final scheme = Theme.of(context).colorScheme;
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 4, 24, 36),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const StoryAvatar(initials: 'E', colorSeed: 7, size: 44),
+                const SizedBox(width: 12),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Eva',
+                      style: text.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+                    ),
+                    Text(
+                      t.evaDailyLesson,
+                      style: text.labelSmall?.copyWith(color: scheme.onSurfaceVariant),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 30),
+            Text(
+              '“${lesson.text(lang)}”',
+              textAlign: TextAlign.center,
+              style: text.headlineSmall?.copyWith(height: 1.4, fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 18),
+            Text(
+              '— ${lesson.author(lang)}',
+              style: text.titleSmall?.copyWith(color: scheme.onSurfaceVariant),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Your own food story (tap "You") — your shared meals
+// ---------------------------------------------------------------------------
+
+Future<void> showMyMeals(BuildContext context) {
+  return showModalBottomSheet<void>(
+    context: context,
+    showDragHandle: true,
+    isScrollControlled: true,
+    builder: (_) => const _MyMealsSheet(),
+  );
+}
+
+class _MyMealsSheet extends ConsumerWidget {
+  const _MyMealsSheet();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final t = AppLocalizations.of(context);
+    final text = Theme.of(context).textTheme;
+    final scheme = Theme.of(context).colorScheme;
+    final feed = ref.watch(circleFeedProvider);
+
+    Widget nudge() => Padding(
+      padding: const EdgeInsets.symmetric(vertical: 30),
+      child: Column(
+        children: [
+          Icon(Icons.restaurant_outlined, size: 40, color: scheme.onSurfaceVariant),
+          const SizedBox(height: 12),
+          Text(
+            t.shareFirstMeal,
+            textAlign: TextAlign.center,
+            style: text.bodyMedium?.copyWith(color: scheme.onSurfaceVariant),
+          ),
+        ],
+      ),
+    );
+
+    return SafeArea(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const StoryAvatar(icon: Icons.person, colorSeed: 3, size: 44),
+                const SizedBox(width: 12),
+                Text(t.yourMeals, style: text.titleLarge),
+              ],
+            ),
+            const SizedBox(height: 16),
+            feed.when(
+              loading: () => const Padding(
+                padding: EdgeInsets.symmetric(vertical: 30),
+                child: Center(child: CircularProgressIndicator()),
+              ),
+              error: (_, _) => nudge(),
+              data: (posts) {
+                final mine = posts.where((p) => p.mine).toList();
+                if (mine.isEmpty) return nudge();
+                return Flexible(
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    itemCount: mine.length,
+                    separatorBuilder: (_, _) => const SizedBox(height: 12),
+                    itemBuilder: (_, i) => _MyMealRow(post: mine[i]),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MyMealRow extends StatelessWidget {
+  const _MyMealRow({required this.post});
+
+  final CirclePost post;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    final text = Theme.of(context).textTheme;
+    final scheme = Theme.of(context).colorScheme;
+    return Row(
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: post.photoUrl != null
+              ? Image.network(
+                  post.photoUrl!,
+                  width: 58,
+                  height: 58,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, _, _) => _thumbFallback(scheme),
+                )
+              : _thumbFallback(scheme),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                (post.name != null && post.name!.isNotEmpty) ? post.name! : t.feedYou,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: text.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                t.kcalValue('${post.calories}'),
+                style: text.bodySmall?.copyWith(color: scheme.onSurfaceVariant),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _thumbFallback(ColorScheme scheme) => Container(
+    width: 58,
+    height: 58,
+    color: scheme.surfaceContainerHighest,
+    child: Icon(Icons.photo_outlined, color: scheme.onSurfaceVariant),
+  );
 }

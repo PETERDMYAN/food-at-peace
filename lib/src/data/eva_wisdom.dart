@@ -3,18 +3,34 @@ import 'dart:convert';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// One of Eva's daily life lessons, in both supported languages.
+/// One of Eva's daily life lessons, in both supported languages, with an
+/// attribution (`byEn`/`byZh`) — a real author when documented, else a localized
+/// "Proverb" / "Unknown".
 class EvaLesson {
-  const EvaLesson({required this.en, required this.zh});
+  const EvaLesson({
+    required this.en,
+    required this.zh,
+    this.byEn = 'Unknown',
+    this.byZh = '佚名',
+  });
 
   final String en;
   final String zh;
+  final String byEn;
+  final String byZh;
 
-  factory EvaLesson.fromJson(Map<String, dynamic> j) =>
-      EvaLesson(en: j['en'] as String, zh: j['zh'] as String);
+  factory EvaLesson.fromJson(Map<String, dynamic> j) => EvaLesson(
+    en: j['en'] as String,
+    zh: j['zh'] as String,
+    byEn: (j['byEn'] as String?) ?? 'Unknown',
+    byZh: (j['byZh'] as String?) ?? '佚名',
+  );
 
   /// The line in [languageCode] (`zh` → Chinese, anything else → English).
   String text(String languageCode) => languageCode == 'zh' ? zh : en;
+
+  /// Who said it, in [languageCode].
+  String author(String languageCode) => languageCode == 'zh' ? byZh : byEn;
 }
 
 /// Index of today's lesson, keyed to the **local calendar date** so it flips at

@@ -966,6 +966,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get feedYou => 'You';
 
   @override
+  String get yourMeals => 'Your meals';
+
+  @override
+  String get shareFirstMeal =>
+      'Scan a meal photo and share it to start your story.';
+
+  @override
   String get feedSomeone => 'Someone';
 
   @override

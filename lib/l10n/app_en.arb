@@ -462,6 +462,8 @@
   "shareToCircleHint": "Friends in your circle see it for 3 days",
   "feedTitle": "Circle feed",
   "feedYou": "You",
+  "yourMeals": "Your meals",
+  "shareFirstMeal": "Scan a meal photo and share it to start your story.",
   "feedSomeone": "Someone",
   "feedEmpty": "No posts yet. Scan a meal and share it to your circle.",
   "feedReceived": "{count} reactions",

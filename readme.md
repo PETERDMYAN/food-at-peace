@@ -11,9 +11,11 @@ for real calories burned, and speaks **English and 中文**. Built with Flutter.
 > EN subtitle, and a new 简体中文 localization with the CN name **食之安**. Build 14 points
 > at the migrated prod backend, all 5 Beans consumables attached, **auto-release on
 > approval**). **Next up: `v3` build `1.0.2 (16)` is on TestFlight** (prod backend) — it
-> adds **Eva's daily life-lesson card**, a real **25-Bean** entry IAP (`beans_25`,
+> adds **Eva's daily life lesson**, a real **25-Bean** entry IAP (`beans_25`,
 > S$0.48), a **rate-the-app prompt** on the 5th open, and **`purchase` analytics** on the
-> owner dashboard; it becomes the 1.0.2 submission after 1.0.1 clears review.
+> owner dashboard; it becomes the 1.0.2 submission after 1.0.1 clears review. *(Since (16),
+> on `v3` for the next build:* Eva is now a tappable **story** with the quote's **author**,
+> plus a **You** story showing your own shared meals.*)*
 > Active development is on the **`v3`** branch, which adds: AI photo estimates
 > **in your app language** (EN/中文), the **Circle of Food** social layer (friends
 > by `@handle`, **invite universal link + QR with one-tap mutual connect**, a
