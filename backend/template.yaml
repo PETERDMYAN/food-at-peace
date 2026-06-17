@@ -17,6 +17,13 @@ Parameters:
     Type: String
     Default: /food-at-peace/app-token
     Description: SSM SecureString parameter that holds the shared app token.
+  MetricsTokenParam:
+    Type: String
+    Default: /food-at-peace/metrics-token
+    Description: >
+      SSM SecureString holding the read-only token for the standalone web
+      metrics dashboard (GET /metrics). Separate from the app token so the
+      shared /analyze secret never has to live in a browser.
   CorsAllowOrigin:
     Type: String
     Default: "*"
@@ -72,6 +79,7 @@ Resources:
         AllowHeaders:
           - content-type
           - x-app-token
+          - x-metrics-token
           - authorization
         AllowMethods:
           - GET
@@ -395,6 +403,7 @@ Resources:
         Variables:
           METRICS_TABLE: !Ref MetricsTable
           APP_TOKEN_PARAM: !Ref AppTokenParam
+          METRICS_TOKEN_PARAM: !Ref MetricsTokenParam
       Policies:
         - Statement:
             - Sid: ReadWriteMetrics
@@ -409,6 +418,7 @@ Resources:
               Action: ssm:GetParameter
               Resource:
                 - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter${AppTokenParam}
+                - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter${MetricsTokenParam}
             - Sid: DecryptSecureStrings
               Effect: Allow
               Action: kms:Decrypt

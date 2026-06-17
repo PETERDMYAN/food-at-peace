@@ -43,3 +43,73 @@ def test_record_refund_bumps_count_and_amount(monkeypatch):
 def test_record_unknown_event_rejected():
     with pytest.raises(metrics.ProxyError):
         metrics.record_event({"type": "definitely-not-a-real-event"})
+
+
+# --- Auth: GET /metrics dual-token, POST /event app-token only ---------------
+
+def _evt(method, headers, body=None):
+    e = {"requestContext": {"http": {"method": method}}, "headers": headers}
+    if body is not None:
+        e["body"] = body
+    return e
+
+
+@pytest.fixture
+def secrets(monkeypatch):
+    """Stub the two SSM tokens; an unknown param raises (as the real fetch does)."""
+    store = {
+        metrics.APP_TOKEN_PARAM: "app-tok",
+        metrics.METRICS_TOKEN_PARAM: "metrics-tok",
+    }
+
+    def fake(name):
+        if name not in store:
+            raise KeyError(name)
+        return store[name]
+
+    monkeypatch.setattr(metrics, "_get_secret", fake)
+    return store
+
+
+def test_get_metrics_accepts_dedicated_metrics_token(secrets, monkeypatch):
+    monkeypatch.setattr(metrics, "build_metrics", lambda today=None: {"ok": True})
+    resp = metrics.handler(_evt("GET", {"x-metrics-token": "metrics-tok"}), None)
+    assert resp["statusCode"] == 200
+
+
+def test_get_metrics_still_accepts_app_token_backcompat(secrets, monkeypatch):
+    monkeypatch.setattr(metrics, "build_metrics", lambda today=None: {"ok": True})
+    resp = metrics.handler(_evt("GET", {"x-app-token": "app-tok"}), None)
+    assert resp["statusCode"] == 200
+
+
+def test_get_metrics_rejects_wrong_or_missing_token(secrets):
+    assert metrics.handler(_evt("GET", {"x-metrics-token": "nope"}), None)["statusCode"] == 401
+    assert metrics.handler(_evt("GET", {}), None)["statusCode"] == 401
+
+
+def test_event_write_rejects_readonly_metrics_token(secrets, monkeypatch):
+    # The read-only dashboard token must never be able to emit events.
+    monkeypatch.setattr(metrics, "_bump", lambda pk, adds: None)
+    resp = metrics.handler(_evt("POST", {"x-metrics-token": "metrics-tok"}, '{"type":"open"}'), None)
+    assert resp["statusCode"] == 401
+
+
+def test_event_write_accepts_app_token(secrets, monkeypatch):
+    writes = []
+    monkeypatch.setattr(metrics, "_bump", lambda pk, adds: writes.append((pk, adds)))
+    resp = metrics.handler(_evt("POST", {"x-app-token": "app-tok"}, '{"type":"scan"}'), None)
+    assert resp["statusCode"] == 200
+    assert writes == [("counter", {"photosScanned": 1})]
+
+
+def test_unprovisioned_metrics_token_denies(monkeypatch):
+    # Before the SSM secret exists, presenting any metrics token must not work.
+    def fake(name):
+        if name == metrics.APP_TOKEN_PARAM:
+            return "app-tok"
+        raise KeyError(name)
+
+    monkeypatch.setattr(metrics, "_get_secret", fake)
+    resp = metrics.handler(_evt("GET", {"x-metrics-token": "anything"}), None)
+    assert resp["statusCode"] == 401

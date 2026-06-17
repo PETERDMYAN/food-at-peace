@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="robots" content="noindex, nofollow" />
+<title>Food at Peace — Owner dashboard</title>
+<meta name="theme-color" content="#0E0B14" />
+<style>
+  :root{
+    color-scheme:dark;
+    --bg-top:#1B1330; --bg-bot:#0E0B14;
+    --card:#171226; --card-2:#1d1733; --line:#2a2342;
+    --ink:#F4F2FA; --muted:#B4ABC8; --faint:#8c84a5;
+    --accent:#C86BFF; --accent-2:#7C83FF; --good:#34d39a; --warn:#ffb454;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100vh;color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    background:radial-gradient(130% 120% at 50% 0%,var(--bg-top) 0%,var(--bg-bot) 60%);
+    padding:22px 16px 56px;}
+  .wrap{max-width:760px;margin:0 auto}
+  /* header */
+  header{display:flex;align-items:center;gap:13px;margin:6px 2px 18px}
+  header img{width:46px;height:46px;border-radius:12px;box-shadow:0 8px 24px rgba(176,107,255,.35)}
+  header h1{font-size:20px;margin:0;font-weight:800;letter-spacing:.2px}
+  header p{margin:2px 0 0;color:var(--muted);font-size:13px}
+  .spacer{flex:1}
+  .badge{font-size:11px;font-weight:700;padding:5px 9px;border-radius:999px;border:1px solid var(--line)}
+  .badge.live{color:var(--good);border-color:rgba(52,211,154,.4);background:rgba(52,211,154,.08)}
+  .badge.sample{color:var(--warn);border-color:rgba(255,180,84,.4);background:rgba(255,180,84,.08)}
+  /* toolbar */
+  .toolbar{display:flex;align-items:center;gap:10px;margin:0 2px 16px;font-size:12px;color:var(--faint)}
+  .toolbar .when{flex:1}
+  button{font:inherit;cursor:pointer;border-radius:11px;border:1px solid var(--line);
+    background:var(--card-2);color:var(--ink);padding:9px 14px;font-size:13px;font-weight:600}
+  button:hover{border-color:var(--accent-2)}
+  button.primary{border:0;color:#fff;background:linear-gradient(135deg,var(--accent-2),var(--accent));
+    box-shadow:0 10px 26px rgba(124,131,255,.3)}
+  button.ghost{background:transparent}
+  /* grid */
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px 17px}
+  .card .k{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:13px;font-weight:600}
+  .card .k .dot{width:22px;height:22px;border-radius:7px;display:grid;place-items:center;
+    background:rgba(124,131,255,.16);color:var(--accent-2);font-size:13px}
+  .card .v{font-size:30px;font-weight:800;margin-top:9px;letter-spacing:.3px}
+  .card .v small{font-size:15px;font-weight:700;color:var(--muted);margin-left:6px}
+  .card.wide{grid-column:1 / -1}
+  .card.money .v{color:var(--good)}
+  /* chart */
+  .chart{display:flex;align-items:flex-end;gap:9px;height:120px;margin-top:14px}
+  .chart .col{flex:1;display:flex;flex-direction:column;align-items:center;gap:7px;height:100%}
+  .chart .bar{width:100%;border-radius:7px 7px 3px 3px;
+    background:linear-gradient(180deg,var(--accent-2),var(--accent));min-height:4px;
+    display:flex;justify-content:center;align-items:flex-start;transition:height .4s ease}
+  .chart .bar b{font-size:11px;color:#fff;margin-top:-18px;font-weight:700;opacity:.9}
+  .chart .lab{font-size:11px;color:var(--faint)}
+  /* gate / states */
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:24px;max-width:440px;margin:8vh auto 0}
+  .panel h2{margin:0 0 6px;font-size:19px}
+  .panel p{margin:0 0 16px;color:var(--muted);font-size:14px;line-height:1.5}
+  label{display:block;font-size:12px;color:var(--faint);margin:12px 0 6px;font-weight:600}
+  input{width:100%;padding:12px 13px;border-radius:12px;border:1px solid var(--line);
+    background:#0f0b1a;color:var(--ink);font-size:14px}
+  input:focus{outline:none;border-color:var(--accent-2)}
+  .err{color:#ff8a8a;font-size:13px;margin:12px 0 0;min-height:18px}
+  details{margin-top:12px}
+  summary{cursor:pointer;color:var(--faint);font-size:12px}
+  .row{display:flex;gap:10px;margin-top:18px}
+  .hide{display:none!important}
+  footer{margin:26px 2px 0;color:var(--faint);font-size:11px;text-align:center;line-height:1.6}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ============ SIGN-IN GATE ============ -->
+  <section id="gate" class="panel">
+    <h2>Owner dashboard</h2>
+    <p>Enter the read-only metrics token to view live numbers. It’s kept only in
+       this browser (localStorage) and sent as a header to <code>/metrics</code> —
+       it never appears in the page source.</p>
+    <label for="tok">Metrics token</label>
+    <input id="tok" type="password" autocomplete="off" placeholder="paste the read-only token" />
+    <details>
+      <summary>Advanced — API base URL</summary>
+      <label for="base">Base URL</label>
+      <input id="base" type="text" autocomplete="off" />
+    </details>
+    <p class="err" id="gateErr"></p>
+    <div class="row">
+      <button class="primary" id="enter" style="flex:1">View dashboard</button>
+    </div>
+  </section>
+
+  <!-- ============ DASHBOARD ============ -->
+  <main id="dash" class="hide">
+    <header>
+      <img src="/icon.png" alt="" width="46" height="46" />
+      <div>
+        <h1>Owner dashboard</h1>
+        <p>Food at Peace</p>
+      </div>
+      <div class="spacer"></div>
+      <span id="badge" class="badge">—</span>
+    </header>
+
+    <div class="toolbar">
+      <span class="when" id="when">Loading…</span>
+      <button class="ghost" id="refresh">↻ Refresh</button>
+      <button class="ghost" id="signout">Sign out</button>
+    </div>
+
+    <p class="err" id="dashErr"></p>
+
+    <div class="grid" id="cards"></div>
+  </main>
+
+  <footer>
+    Food at Peace · owner-only · numbers are aggregate, non-PII counts.<br/>
+    Downloads &amp; revenue stay 0 until the App Store Connect API + real IAP are wired.
+  </footer>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var PROD = "https://6m19l2b025.execute-api.ap-southeast-1.amazonaws.com";
+  var LS_TOK = "fap_metrics_token", LS_BASE = "fap_metrics_base";
+  // Bundled placeholder numbers — shown only via ?demo (no token, no fetch) so
+  // the layout is viewable before a token exists. Real data always comes live.
+  var SAMPLE = {downloads:1284, activeToday:73, opensTotal:5210,
+    opens7d:[62,71,58,80,67,90,73], photosScanned:1840, beansSold:12400,
+    revenueSgd:246.80, refunds:6, refundSgd:11.94, isSample:true};
+
+  var $ = function(id){ return document.getElementById(id); };
+  function getBase(){
+    // ?base= override (handy for pointing at the v2 dev stack), else saved, else prod.
+    var u = new URLSearchParams(location.search).get("base");
+    return (u || localStorage.getItem(LS_BASE) || PROD).replace(/\/+$/,"");
+  }
+
+  // ---- formatting ----
+  function n(x){ return (x==null?0:x).toLocaleString("en-US"); }
+  function money(x){ return "S$" + (x==null?0:x).toFixed(2); }
+
+  function card(opts){
+    var money = opts.money ? " money" : "";
+    var wide = opts.wide ? " wide" : "";
+    return '<div class="card'+money+wide+'">'+
+      '<div class="k"><span class="dot">'+opts.icon+'</span>'+opts.label+'</div>'+
+      '<div class="v">'+opts.value+'</div></div>';
+  }
+
+  function chart(opens7d){
+    var max = Math.max(1, Math.max.apply(null, opens7d));
+    var labs = dayLabels(opens7d.length);
+    var cols = opens7d.map(function(v,i){
+      var h = Math.round((v/max)*100);
+      return '<div class="col"><div class="bar" style="height:'+h+'%"><b>'+v+'</b></div>'+
+             '<div class="lab">'+labs[i]+'</div></div>';
+    }).join("");
+    return '<div class="card wide"><div class="k"><span class="dot">📈</span>Opens · last 7 days</div>'+
+           '<div class="chart">'+cols+'</div></div>';
+  }
+
+  function dayLabels(len){
+    var names=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"], out=[], d=new Date();
+    for(var i=len-1;i>=0;i--){ var t=new Date(d); t.setDate(d.getDate()-i); out.push(names[t.getDay()]); }
+    return out;
+  }
+
+  function render(m){
+    $("badge").className = "badge " + (m.isSample ? "sample" : "live");
+    $("badge").textContent = m.isSample ? "Sample data" : "Live";
+    var html = "";
+    html += card({icon:"⬇",  label:"Downloads",      value:n(m.downloads)});
+    html += card({icon:"⚡", label:"Active today",    value:n(m.activeToday)});
+    html += card({icon:"👆", label:"Total opens",     value:n(m.opensTotal)});
+    html += card({icon:"📷", label:"Photos scanned",  value:n(m.photosScanned)});
+    html += card({icon:"🫘", label:"Beans sold",      value:n(m.beansSold)});
+    html += card({icon:"💵", label:"Revenue",         value:money(m.revenueSgd), money:true});
+    html += card({icon:"↩",  label:"Refunds",         value:n(m.refunds)+' <small>'+money(m.refundSgd)+'</small>', wide:true});
+    html += chart(Array.isArray(m.opens7d)?m.opens7d:[]);
+    $("cards").innerHTML = html;
+    var t = new Date();
+    $("when").textContent = "Updated " + t.toLocaleTimeString();
+  }
+
+  function showGate(msg){
+    $("dash").classList.add("hide");
+    $("gate").classList.remove("hide");
+    $("gateErr").textContent = msg || "";
+    $("base").value = getBase();
+    $("tok").value = "";
+    $("tok").focus();
+  }
+  function showDash(){
+    $("gate").classList.add("hide");
+    $("dash").classList.remove("hide");
+  }
+
+  function load(){
+    if(new URLSearchParams(location.search).has("demo")){ showDash(); render(SAMPLE); return; }
+    var tok = localStorage.getItem(LS_TOK);
+    if(!tok){ showGate(); return; }
+    showDash();
+    $("dashErr").textContent = "";
+    $("when").textContent = "Loading…";
+    fetch(getBase()+"/metrics", { headers: { "x-metrics-token": tok } })
+      .then(function(r){
+        if(r.status===401){ var e=new Error("Token rejected (401)."); e.auth=true; throw e; }
+        if(!r.ok) throw new Error("Server returned "+r.status+".");
+        return r.json();
+      })
+      .then(render)
+      .catch(function(err){
+        if(err.auth){ localStorage.removeItem(LS_TOK); showGate("That token was rejected. Try again."); return; }
+        $("dashErr").textContent = "Couldn’t load metrics: " + err.message +
+          " (check the base URL / that CORS + the token are deployed).";
+        $("when").textContent = "—";
+      });
+  }
+
+  // ---- events ----
+  $("enter").addEventListener("click", function(){
+    var tok = $("tok").value.trim();
+    if(!tok){ $("gateErr").textContent = "Enter the metrics token."; return; }
+    localStorage.setItem(LS_TOK, tok);
+    var base = $("base").value.trim();
+    if(base) localStorage.setItem(LS_BASE, base.replace(/\/+$/,""));
+    load();
+  });
+  $("tok").addEventListener("keydown", function(e){ if(e.key==="Enter") $("enter").click(); });
+  $("refresh").addEventListener("click", load);
+  $("signout").addEventListener("click", function(){ localStorage.removeItem(LS_TOK); showGate("Signed out."); });
+
+  load();
+})();
+</script>
+</body>
+</html>

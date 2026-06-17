@@ -31,8 +31,12 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
 - **Chinese (zh) App Store listing** — [`store/STORE_LISTING_zh.md`](store/STORE_LISTING_zh.md).
 - **Owner analytics (real)** — `POST /event` + `GET /metrics`
   ([`backend/src/metrics.py`](backend/src/metrics.py), `MetricsTable`); the app emits
-  `open`/`scan`; `MetricsService` reads live aggregates (`downloads`/`revenue` still
-  need the ASC API / real IAP).
+  `open`/`scan`/`purchase` events. `GET /metrics` now takes a **dedicated read-only
+  metrics token** (`x-metrics-token`, SSM `/food-at-peace/metrics-token`) **or** the
+  app token (back-compat); the standalone **web dashboard**
+  ([`store/website/dashboard/`](store/website/dashboard/index.html)) reads it.
+  `MetricsService` was **removed from the app**. (`downloads`/`revenue` still need the
+  ASC API / real IAP.)
 - **Circle of Food — real backend + UX:**
   - Friend graph: claim `@handle`, invite, accept/decline, list, and privacy-gated
     friend trends ([`backend/src/circle.py`](backend/src/circle.py), `CircleTable`).
@@ -88,7 +92,9 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
   Since (11): **Beans follow the account**
   (the server ledger is now synced client-side — pull on sign-in, push on append) and a
   hidden **owner gesture** (tap the version **10×** to reveal + copy this account's user
-  id; **5×** still opens the metrics dashboard). (11) shipped the real **StoreKit Beans
+  id). The in-app **metrics dashboard was removed** in v3 → it's now a **standalone web
+  page** ([`store/website/dashboard/`](store/website/dashboard/index.html)) reading
+  `GET /metrics` with a dedicated read-only token. (11) shipped the real **StoreKit Beans
   paywall** + 100 free grant + SGD prices; unlimited subscription removed; the Circle
   notification work. Associated Domains + `foodatpeace://` scheme shipped in (4); the
   invite links are **live** on `foodatpeace.app` (§1).

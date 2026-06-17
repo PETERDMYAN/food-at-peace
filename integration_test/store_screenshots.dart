@@ -27,7 +27,6 @@ import 'package:food_at_peace/src/data/health_service.dart';
 import 'package:food_at_peace/src/data/sync_engine.dart';
 import 'package:food_at_peace/src/features/add/add_entry_screen.dart';
 import 'package:food_at_peace/src/features/circle/circle_feed_screen.dart';
-import 'package:food_at_peace/src/features/dashboard/dashboard_screen.dart';
 import 'package:food_at_peace/src/features/home/home_shell.dart';
 import 'package:food_at_peace/src/features/wallet/beans_screen.dart';
 import 'package:food_at_peace/src/models/bean_transaction.dart';
@@ -116,7 +115,7 @@ Future<void> beat(WidgetTester t, int ms) async {
   }
 }
 
-/// Ask the host server to capture the current device screen into out/<name>.png.
+/// Ask the host server to capture the current device screen into `out/<name>.png`.
 Future<void> shot(WidgetTester t, String name, {int settle = 1400}) async {
   await beat(t, settle);
   try {
@@ -345,10 +344,6 @@ void main() {
       await t.tap(topUp.first);
       await shot(t, '07-paywall', settle: 2800);
     }
-
-    // ── 5c) Owner dashboard (hidden 5×-tap screen; beans sold + revenue) ─
-    await mount(const DashboardScreen());
-    await shot(t, '08-dashboard', settle: 2600);
 
     // ── 6) Add (manual + photo scan entry) ─────────────────────────────
     await mount(const AddEntryScreen());

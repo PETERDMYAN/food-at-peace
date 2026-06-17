@@ -1,13 +1,15 @@
 """Food at Peace — owner analytics (AWS Lambda).
 
-Two routes, both guarded by the shared app token (same one the vision proxy
-uses):
+Two routes:
 
 * ``POST /event`` — the app emits lightweight, non-PII usage events
   (``open`` / ``scan`` / ``purchase`` / ``refund``). Each does an atomic
-  DynamoDB ``ADD`` so counts are correct under concurrency.
-* ``GET /metrics`` — the owner dashboard reads the aggregate counts back in the
-  exact shape ``AppMetrics`` expects.
+  DynamoDB ``ADD`` so counts are correct under concurrency. Guarded by the
+  shared **app token** (same one the vision proxy uses) — only the app writes.
+* ``GET /metrics`` — reads the aggregate counts back. Accepts the shared app
+  token (back-compat for the shipped app's old in-app dashboard) **or** a
+  dedicated read-only **metrics token** used by the standalone web dashboard,
+  so the costly ``/analyze`` secret never has to live in a browser.
 
 Counts live in one tiny table:
 
@@ -31,6 +33,7 @@ from common import (
 )
 
 APP_TOKEN_PARAM = os.environ.get("APP_TOKEN_PARAM", "/food-at-peace/app-token")
+METRICS_TOKEN_PARAM = os.environ.get("METRICS_TOKEN_PARAM", "/food-at-peace/metrics-token")
 METRICS_TABLE = os.environ.get("METRICS_TABLE", "")
 
 _COUNTER_PK = "counter"
@@ -46,11 +49,34 @@ def _table():
     return _ddb
 
 
+def _matches_secret(provided, param):
+    """Constant-time check of a header against an SSM secret. Returns False
+    (never raises) when the header is absent or the secret isn't configured —
+    so an un-provisioned token simply doesn't grant access."""
+    if not provided:
+        return False
+    try:
+        expected = _get_secret(param)
+    except Exception:  # noqa: BLE001 — missing/unfetchable param → no access
+        return False
+    return bool(expected) and hmac.compare_digest(provided, expected)
+
+
 def _authorize(event):
-    provided = _header(event, "x-app-token")
-    expected = _get_secret(APP_TOKEN_PARAM)
-    if not provided or not hmac.compare_digest(provided, expected):
+    """Write path (POST /event): only the shared app token may emit events."""
+    if not _matches_secret(_header(event, "x-app-token"), APP_TOKEN_PARAM):
         raise ProxyError(401, "Not authorized.")
+
+
+def _authorize_read(event):
+    """Read path (GET /metrics): the shared app token (back-compat for the
+    shipped app's old in-app dashboard) OR the dedicated read-only metrics
+    token used by the standalone web dashboard."""
+    if _matches_secret(_header(event, "x-app-token"), APP_TOKEN_PARAM):
+        return
+    if _matches_secret(_header(event, "x-metrics-token"), METRICS_TOKEN_PARAM):
+        return
+    raise ProxyError(401, "Not authorized.")
 
 
 def _today(now=None):
@@ -137,10 +163,11 @@ def build_metrics(today=None):
 
 def handler(event, context):
     try:
-        _authorize(event)
         method = (event.get("requestContext", {}).get("http", {}).get("method") or "").upper()
         if method == "GET":
+            _authorize_read(event)
             return _response(200, build_metrics())
+        _authorize(event)
         record_event(_parse_body(event))
         return _response(200, {"ok": True})
     except ProxyError as exc:

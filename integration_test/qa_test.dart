@@ -14,7 +14,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:food_at_peace/app.dart';
 import 'package:food_at_peace/l10n/app_localizations.dart';
 import 'package:food_at_peace/src/data/iap_service.dart';
-import 'package:food_at_peace/src/features/dashboard/dashboard_screen.dart';
 import 'package:food_at_peace/src/features/settings/reminders_screen.dart';
 import 'package:food_at_peace/src/features/trends/trends_screen.dart';
 import 'package:food_at_peace/src/features/wallet/beans_screen.dart';
@@ -225,14 +224,6 @@ void main() {
     await t.tap(find.text('Mia Tan').first);
     await beat(t);
     expect(find.text('On-target · last 7 days'), findsOneWidget);
-  });
-
-  testWidgets('Dashboard renders metrics', (t) async {
-    final prefs = await seed({});
-    await pumpScreen(t, prefs, const DashboardScreen());
-    await beat(t, 700);
-    expect(find.text('Downloads'), findsOneWidget);
-    expect(find.text('Revenue'), findsOneWidget);
   });
 
   testWidgets('Language toggle switches to Chinese and back', (t) async {

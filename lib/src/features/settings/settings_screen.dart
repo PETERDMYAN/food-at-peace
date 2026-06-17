@@ -19,7 +19,6 @@ import '../../util/format.dart';
 import '../../util/l10n_labels.dart';
 import '../../widgets/bean_icon.dart';
 import '../../widgets/icon_tile.dart';
-import '../dashboard/dashboard_screen.dart';
 import '../feedback/feedback_screen.dart';
 import '../sources/sources_screen.dart';
 import '../wallet/beans_screen.dart';
@@ -310,9 +309,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 }
 
 /// App version at the bottom of Profile — a hidden owner/debug entry, not for
-/// regular users. A short debounce lets one row carry two gestures: tap it **5×**
-/// to open the owner metrics dashboard, or **10×** to reveal this account's
-/// stable user id (the key it syncs under in the backend DB), with copy.
+/// regular users. Tap it **10×** to reveal this account's stable user id (the
+/// key it syncs under in the backend DB), with copy. (Owner metrics moved to a
+/// standalone web dashboard, so the old 5×-tap screen is gone.)
 class _VersionFooter extends ConsumerStatefulWidget {
   const _VersionFooter();
 
@@ -339,10 +338,8 @@ class _VersionFooterState extends ConsumerState<_VersionFooter> {
     super.dispose();
   }
 
-  // Two hidden gestures on one row. We can't act on the 5th tap immediately —
-  // that would navigate away before the user could reach 10 — so each tap
-  // (re)starts a short timer and we act once tapping pauses: 10+ → account id,
-  // else 5+ → owner dashboard.
+  // One hidden gesture: act once tapping pauses so a stray tap doesn't trigger
+  // it. 10+ taps → reveal this account's stable user id.
   void _tap() {
     _taps++;
     _resetTimer?.cancel();
@@ -352,10 +349,6 @@ class _VersionFooterState extends ConsumerState<_VersionFooter> {
       if (!mounted) return;
       if (taps >= 10) {
         _showAccountId();
-      } else if (taps >= 5) {
-        Navigator.of(
-          context,
-        ).push(MaterialPageRoute(builder: (_) => const DashboardScreen()));
       }
     });
   }

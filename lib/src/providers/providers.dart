@@ -16,7 +16,6 @@ import '../data/food_photo_analyzer.dart';
 import '../data/food_repository.dart';
 import '../data/health_service.dart';
 import '../data/iap_service.dart';
-import '../data/metrics_service.dart';
 import '../data/notification_service.dart';
 import '../data/posts_client.dart';
 import '../data/profile_repository.dart';
@@ -1343,21 +1342,12 @@ List<CirclePost> freshFriendPosts(List<CirclePost> feed, int lastSeenMs) =>
 final circleActivityProvider =
     NotifierProvider<CircleActivityNotifier, int>(CircleActivityNotifier.new);
 
-// ---- Owner metrics dashboard ----
+// ---- Owner metrics ----
 
-final metricsServiceProvider = Provider<MetricsService>(
-  (ref) => MetricsService(baseUrl: proxyBaseUrl, appToken: proxyAppToken),
-);
-
-/// Aggregate product metrics for the owner dashboard. Live from the analytics
-/// backend when a proxy is configured; clearly-labelled sample data otherwise
-/// (see [MetricsService]).
-final metricsProvider = FutureProvider<AppMetrics>(
-  (ref) => ref.read(metricsServiceProvider).fetch(),
-);
-
-/// Fire-and-forget product analytics (`open` / `scan` / …) feeding the owner
-/// dashboard counters. No-op when no proxy URL is baked in.
+/// Fire-and-forget product analytics (`open` / `scan` / `purchase` / …) feeding
+/// the owner metrics counters (`POST <proxy>/event`). The aggregates are read
+/// by the standalone **web dashboard** (`GET <proxy>/metrics`), not the app.
+/// No-op when no proxy URL is baked in.
 final analyticsServiceProvider = Provider<AnalyticsService>(
   (ref) => AnalyticsService(baseUrl: proxyBaseUrl, appToken: proxyAppToken),
 );

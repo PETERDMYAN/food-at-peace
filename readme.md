@@ -173,12 +173,15 @@ the system locale by default and persists a manual choice.
   follows you across devices and survives a reinstall; account deletion clears it too.
   Remaining: `/iap/validate` receipt validation — see `TODO.md` §2.
 
-- [x] **Owner metrics dashboard (v2 — now real)** — Profile → tap the version row 5×
+- [x] **Owner metrics dashboard — moved to the web** ([`store/website/dashboard/`](store/website/dashboard/index.html))
   → downloads / active / opens (7-day bars) / photos scanned / Beans sold / revenue /
-  refunds. The app emits `open`/`scan` events and `MetricsService` reads **live**
-  aggregates from `GET /metrics`; `downloads`/`revenue` stay 0 until the App Store
-  Connect API + real IAP land. Tapping the version **10×** instead reveals + copies
-  this account's **user id** (its key in the sync DB) — a hidden owner/debug helper.
+  refunds. The app still emits `open`/`scan`/`purchase` events; the **standalone web
+  page** reads **live** aggregates from `GET /metrics` using a **dedicated read-only
+  metrics token** (entered in-browser, never in source — kept out of the app so the
+  shared `/analyze` token never ships in a web page). `downloads`/`revenue` stay 0
+  until the App Store Connect API + real IAP land. `?demo=1` shows the layout with
+  sample numbers. The old in-app 5×-tap screen was **removed**; tapping the version
+  **10×** still reveals + copies this account's **user id** (sync-DB key).
 
 **TODO (pricing — StoreKit, mind Apple's rules):**
 - [x] **Beans packs** — each tier (100/200/300/500/800) is a fixed **consumable
@@ -193,8 +196,10 @@ the system locale by default and persists a manual choice.
   auto-renewable plan and its local `subscribed` flag were removed).
 
 **TODO (dashboard):**
-- [x] **(v2)** Emit `open`/`scan` events + a `GET /metrics` aggregation endpoint the
-  dashboard reads. Still TODO: `purchase`/`refund` events (needs IAP) and
+- [x] **(v2)** Emit `open`/`scan`/`purchase` events + a `GET /metrics` aggregation
+  endpoint. **(v3)** Dashboard moved out of the app to a standalone web page
+  ([`store/website/dashboard/`](store/website/dashboard/index.html)) reading
+  `GET /metrics` with a dedicated read-only token. Still TODO: `refund` events and
   **downloads** from the **App Store Connect API**.
 
 - [x] **Circle of Food — real backend + UX (v2)** — story-style friend avatars on the
