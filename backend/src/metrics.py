@@ -16,8 +16,9 @@ Counts live in one tiny table:
 * ``pk = "counter"``            → lifetime totals (opens, scans, beans, revenue…)
 * ``pk = "day#<YYYY-MM-DD>"``   → opens that day (for the 7-day sparkline + DAU)
 
-``downloads`` needs the App Store Connect API and ``revenue`` only moves once
-real IAP is wired, so those start at 0 — everything else is live.
+``revenue``/``beansSold`` are folded in by ``iap.py`` on each validated purchase;
+``downloads`` is folded in daily by ``downloads.py`` from the App Store Connect
+Sales report. Everything is live.
 """
 
 import datetime
@@ -146,8 +147,9 @@ def build_metrics(today=None):
     counter = _table().get_item(Key={"pk": _COUNTER_PK}).get("Item") or {}
     opens7d = [_get_int(f"day#{d}", "opens") for d in days]
     return {
-        # Needs the App Store Connect API — not wired yet, so reported as 0.
-        "downloads": 0,
+        # Cumulative first-time downloads, folded in daily from the App Store
+        # Connect Sales report by downloads.py (0 until that first runs).
+        "downloads": int(counter.get("downloads", 0) or 0),
         "activeToday": opens7d[-1],
         "opensTotal": int(counter.get("opensTotal", 0) or 0),
         "opens7d": opens7d,

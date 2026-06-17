@@ -62,6 +62,28 @@ Parameters:
     Type: Number
     Default: 60
     Description: How long an issued session token stays valid (days).
+  # App Store Connect Sales-report config for the downloads counter. These are
+  # non-secret identifiers (like ApnsTeamId); only the .p8 below is a secret.
+  AscKeyId:
+    Type: String
+    Default: 3FQVCHD8RS
+    Description: App Store Connect API key id (must hold Admin/Finance/Sales access to read Sales reports).
+  AscIssuerId:
+    Type: String
+    Default: e2aaa7a5-b40d-4828-be06-59f80f1219cc
+    Description: App Store Connect API issuer id.
+  AscVendorNumber:
+    Type: String
+    Default: "94423912"
+    Description: App Store Connect vendor number (Payments and Financial Reports).
+  AscAppleId:
+    Type: String
+    Default: "6777715561"
+    Description: The app's Apple id (filters the Sales report to this app).
+  AscKeyParam:
+    Type: String
+    Default: /food-at-peace/asc-private-key
+    Description: SSM SecureString holding the App Store Connect API .p8 private key.
 
 Globals:
   Function:
@@ -445,6 +467,49 @@ Resources:
             ApiId: !Ref VisionApi
             Path: /metrics
             Method: GET
+
+  # Scheduled: pull the App Store Connect Sales report daily and fold first-time
+  # downloads into the metrics `counter` item (idempotent per report date). No
+  # HTTP route — EventBridge only. Inert until the .p8 SSM secret is provisioned.
+  DownloadsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/
+      Handler: downloads.handler
+      Timeout: 60
+      Environment:
+        Variables:
+          METRICS_TABLE: !Ref MetricsTable
+          ASC_KEY_ID: !Ref AscKeyId
+          ASC_ISSUER_ID: !Ref AscIssuerId
+          ASC_VENDOR_NUMBER: !Ref AscVendorNumber
+          ASC_APPLE_ID: !Ref AscAppleId
+          ASC_KEY_PARAM: !Ref AscKeyParam
+      Policies:
+        - Statement:
+            - Sid: WriteDownloadsCounter
+              Effect: Allow
+              Action: dynamodb:UpdateItem
+              Resource:
+                - !GetAtt MetricsTable.Arn
+            - Sid: ReadAscKey
+              Effect: Allow
+              Action: ssm:GetParameter
+              Resource:
+                - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter${AscKeyParam}
+            - Sid: DecryptSecureStrings
+              Effect: Allow
+              Action: kms:Decrypt
+              Resource: "*"
+              Condition:
+                StringEquals:
+                  kms:ViaService: !Sub ssm.${AWS::Region}.amazonaws.com
+      Events:
+        Daily:
+          Type: Schedule
+          Properties:
+            Schedule: rate(1 day)
+            Description: Daily App Store Connect downloads pull.
 
   # Circle of Food: handle directory + friendship edges. PK/SK single-table.
   CircleTable:

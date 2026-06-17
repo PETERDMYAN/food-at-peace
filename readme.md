@@ -180,11 +180,13 @@ the system locale by default and persists a manual choice.
   refunds. The app still emits `open`/`scan`/`purchase` events; the **standalone web
   page** reads **live** aggregates from `GET /metrics` using a **dedicated read-only
   metrics token** (entered in-browser, never in source — kept out of the app so the
-  shared `/analyze` token never ships in a web page). **Revenue + beans-sold are now
-  wired** — recorded server-side in [`iap.py`](backend/src/iap.py) per validated Apple
-  transaction (idempotent, can't be client-faked); `downloads` stays 0 until the **App
-  Store Connect Sales Reports API** is wired (needs a Sales/Finance ASC key + vendor #).
-  `?demo=1` shows the layout with sample numbers. The old in-app 5×-tap screen was
+  shared `/analyze` token never ships in a web page). **All cards are now wired** —
+  revenue + beans-sold are recorded server-side in [`iap.py`](backend/src/iap.py) per
+  validated Apple transaction (idempotent, can't be client-faked), and `downloads` is
+  folded in daily from the **App Store Connect Sales report** by a scheduled
+  [`downloads.py`](backend/src/downloads.py) Lambda (needs the ASC `.p8` in SSM
+  `/food-at-peace/asc-private-key`). `?demo=1` shows the layout with sample numbers.
+  The old in-app 5×-tap screen was
   **removed**; tapping the version **10×** still reveals + copies this account's
   **user id** (sync-DB key).
 

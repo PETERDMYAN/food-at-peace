@@ -47,8 +47,11 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
   ([`store/website/dashboard/`](store/website/dashboard/index.html)) reads it.
   `MetricsService` was **removed from the app**. **Revenue + beans-sold are wired** —
   recorded server-side in [`iap.py`](backend/src/iap.py) on each validated Apple
-  transaction (idempotent; the client no longer emits `purchase`). **`downloads` still
-  needs the ASC Sales Reports API** (Sales/Finance key + vendor #) — see Remaining §dashboard.
+  transaction (idempotent; the client no longer emits `purchase`). **`downloads` is wired**
+  too — a scheduled [`downloads.py`](backend/src/downloads.py) Lambda pulls the ASC Sales
+  report daily and folds first-time downloads into the counter (idempotent per date).
+  Remaining (you): store the ASC `.p8` in SSM `/food-at-peace/asc-private-key` so the
+  Lambda can authenticate (key id `3FQVCHD8RS` / vendor `94423912` are template defaults).
 - **Circle of Food — real backend + UX:**
   - Friend graph: claim `@handle`, invite, accept/decline, list, and privacy-gated
     friend trends ([`backend/src/circle.py`](backend/src/circle.py), `CircleTable`).
