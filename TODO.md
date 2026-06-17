@@ -171,7 +171,11 @@ is now a single plated dish so the AI estimate reads cleanly (~420 kcal, not a 2
    (`kDebugMode`) so it never reaches TestFlight/the App Store. **The Apple shared secret
    is now live in SSM** (`/food-at-peace/iap-shared-secret`, SecureString, ap-southeast-1,
    2026-06-16), so receipt validation runs server-side (no redeploy — read per cold start).
-   **Remaining:** referral Beans (§7) and `purchase`/`refund` analytics.
+   **Remaining:** referral Beans (§7). ✅ **`purchase` analytics** now emitted on every
+   Beans purchase (`BeansNotifier.creditPurchase` → `AnalyticsService.emit('purchase',
+   {beans, product})`, on `v3`). **`refund` analytics** is deferred — refunds aren't
+   client-observable; they'd need **App Store Server Notifications v2** (a server webhook),
+   so that's a separate backend task.
 3. **APNs push for circle notifications — DONE (needs on-device verification).**
    Local notifications already fire on launch/resume + present as foreground Apple
    banners; **build 14 adds true background Apple Push**: APNs key `D2665A2D4P`

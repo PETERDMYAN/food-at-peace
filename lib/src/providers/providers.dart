@@ -808,6 +808,14 @@ class BeansNotifier extends Notifier<BeansState> {
   /// isn't available (no receipt / signed out / the shared secret isn't set yet)
   /// so a paid purchase always lands. Called by the IAP flow.
   Future<void> creditPurchase(int beans, String productId, String receipt) async {
+    // Owner-dashboard signal: a Beans pack was bought (non-PII, best-effort;
+    // a no-op when no proxy is configured). Emitted once per purchase.
+    unawaited(
+      ref.read(analyticsServiceProvider).emit(
+        'purchase',
+        fields: {'beans': beans, 'product': productId},
+      ),
+    );
     final token = ref.read(authProvider)?.token;
     if (receipt.isNotEmpty &&
         token != null &&
