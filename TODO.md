@@ -14,6 +14,16 @@ contract still holds. The **public 1.0.1 release points at prod** (build with
 isolated dev stack** (`dart_defines.json`) — ongoing dev still targets v2, and you
 still **never deploy to prod for in-progress work** (only deliberate release
 cutovers, with a changeset preview). See the `production-safety` skill + `CLAUDE.md`.
+
+**Prod deploy (2026-06-17):** additive changeset to prod (built from `v3`, changeset
+previewed): `GET /metrics` dual-auth (new `x-metrics-token` for the web dashboard +
+existing `x-app-token` back-compat) and `beans_25` added to `iap.py` validation. The
+shared `app.py`/`auth.py`/`sync.py`/`account.py` handlers are byte-identical to the
+cutover baseline → 1.0.0/1.0.1 contract intact. Verified live: `/metrics` 401 without
+a token, preflight allows `x-metrics-token`. **Remaining (you):** create SSM
+SecureString `/food-at-peace/metrics-token` (shared by both stacks) so the web
+dashboard can authenticate.
+
 Deploy v2:
 
 ```bash

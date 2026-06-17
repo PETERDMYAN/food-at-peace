@@ -173,7 +173,9 @@ the system locale by default and persists a manual choice.
   follows you across devices and survives a reinstall; account deletion clears it too.
   Remaining: `/iap/validate` receipt validation — see `TODO.md` §2.
 
-- [x] **Owner metrics dashboard — moved to the web** ([`store/website/dashboard/`](store/website/dashboard/index.html))
+- [x] **Owner metrics dashboard — moved to the web, LIVE at `foodatpeace.app/dashboard`**
+  ([`store/website/dashboard/`](store/website/dashboard/index.html); prod `/metrics` dual-auth
+  deployed 2026-06-17)
   → downloads / active / opens (7-day bars) / photos scanned / Beans sold / revenue /
   refunds. The app still emits `open`/`scan`/`purchase` events; the **standalone web
   page** reads **live** aggregates from `GET /metrics` using a **dedicated read-only
