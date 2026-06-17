@@ -18,6 +18,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:in_app_purchase/in_app_purchase.dart' show ProductDetails;
 import 'package:integration_test/integration_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -26,6 +27,7 @@ import 'package:food_at_peace/src/data/health_service.dart';
 import 'package:food_at_peace/src/data/sync_engine.dart';
 import 'package:food_at_peace/src/features/add/add_entry_screen.dart';
 import 'package:food_at_peace/src/features/circle/circle_feed_screen.dart';
+import 'package:food_at_peace/src/features/dashboard/dashboard_screen.dart';
 import 'package:food_at_peace/src/features/home/home_shell.dart';
 import 'package:food_at_peace/src/features/wallet/beans_screen.dart';
 import 'package:food_at_peace/src/models/bean_transaction.dart';
@@ -277,6 +279,11 @@ void main() {
       ),
       healthServiceProvider.overrideWithValue(_NoHealth()),
       circleFeedProvider.overrideWith((ref) async => _seedFeed()),
+      // No live StoreKit on the sim → show the indicative SGD prices (the
+      // sim's storefront would otherwise return USD).
+      beanProductsProvider.overrideWith(
+        (ref) async => const <String, ProductDetails>{},
+      ),
     ];
     final signedInOverrides = [
       ...baseOverrides,
@@ -284,11 +291,18 @@ void main() {
       syncEngineProvider.overrideWith(_CleanSync.new),
     ];
 
+    // Each mount keys the MaterialApp uniquely so pumpWidget builds a FRESH
+    // Navigator — otherwise Flutter reuses the same Navigator element and any
+    // route pushed on top (e.g. the paywall modal sheet) bleeds into the next
+    // screen. The ProviderScope sits outside the key, so seeded state persists.
+    var mountSeq = 0;
     Future<void> mount(Widget home, {bool signedIn = true}) async {
+      mountSeq += 1;
       await t.pumpWidget(
         ProviderScope(
           overrides: signedIn ? signedInOverrides : baseOverrides,
           child: MaterialApp(
+            key: ValueKey('mount-$mountSeq'),
             debugShowCheckedModeBanner: false,
             theme: AppTheme.dark(),
             locale: Locale(_loc),
@@ -324,6 +338,17 @@ void main() {
     // ── 5) Beans wallet (balance + history) ────────────────────────────
     await mount(const BeansScreen());
     await shot(t, '04-beans', settle: 2200);
+
+    // ── 5b) Top-up paywall — shows the new 25-Bean entry pack ───────────
+    final topUp = find.text('Top up');
+    if (topUp.evaluate().isNotEmpty) {
+      await t.tap(topUp.first);
+      await shot(t, '07-paywall', settle: 2800);
+    }
+
+    // ── 5c) Owner dashboard (hidden 5×-tap screen; beans sold + revenue) ─
+    await mount(const DashboardScreen());
+    await shot(t, '08-dashboard', settle: 2600);
 
     // ── 6) Add (manual + photo scan entry) ─────────────────────────────
     await mount(const AddEntryScreen());
