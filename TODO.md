@@ -81,8 +81,12 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
     [`circle_feed_screen.dart`](lib/src/features/circle/circle_feed_screen.dart)).
     The **story keeps the full-resolution photo**; the AI estimate uses a downscaled
     1024px copy.
-- **TestFlight / App Store** — **`v3` build `1.0.2 (17)` uploaded to TestFlight** (2026-06-18,
-  prod backend, `/tmp/fap_rec/build17.sh`) — adds the **Circle stories** rework (Eva + You as
+- **TestFlight / App Store** — **`v3` build `1.0.2 (18)` uploaded to TestFlight** (2026-06-18,
+  prod backend, `/tmp/fap_rec/build18.sh`) — full-screen **Food story** (reads the food log;
+  fixes "logged 2, showed 1") + **per-entry meal photos** ([`meal_photos.dart`](lib/src/data/meal_photos.dart),
+  local `<docs>/meal_photos/<id>.jpg`, shown full-bleed in the story). (17) was the first
+  Circle-stories cut + Haiku. Earlier builds —
+  prod backend, `/tmp/fap_rec/build17.sh` — added the **Circle stories** rework (Eva + You as
   tappable stories, lesson attribution) and the **Haiku** photo-analysis model (direct-key
   `defaultModel`); rides on (16)'s rate-the-app prompt + `purchase` analytics + `beans_25`.
   Becomes the 1.0.2 submission after 1.0.1 clears review. (`beans_25` server validation +

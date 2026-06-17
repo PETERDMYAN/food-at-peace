@@ -10,9 +10,10 @@ for real calories burned, and speaks **English and 中文**. Built with Flutter.
 > set** (EN + 简体中文, incl. Circle + Beans), Circle/Beans in the EN/中文 descriptions, an
 > EN subtitle, and a new 简体中文 localization with the CN name **食之安**. Build 14 points
 > at the migrated prod backend, all 5 Beans consumables attached, **auto-release on
-> approval**). **Next up: `v3` build `1.0.2 (17)` is on TestFlight** (prod backend) — it
-> adds the **Circle stories** rework (Eva + **You** as tappable stories; each daily lesson
-> shows its **author**), the **Haiku** photo-analysis model (~3–4× cheaper, server-wide),
+> approval**). **Next up: `v3` build `1.0.2 (18)` is on TestFlight** (prod backend) — it
+> adds the **Circle stories** rework (Eva + **You** as tappable full-screen stories; each
+> daily lesson shows its **author**; the **Food story** shows your logged meals with their
+> photos), the **Haiku** photo-analysis model (~3–4× cheaper, server-wide),
 > a real **25-Bean** IAP (`beans_25`), a **rate-the-app prompt** (5th open), and
 > **`purchase` analytics** on the owner dashboard; it becomes the 1.0.2 submission after
 > 1.0.1 clears review.

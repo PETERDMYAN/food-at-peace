@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -7,6 +9,7 @@ import 'package:image/image.dart' as img;
 import 'package:image_picker/image_picker.dart';
 
 import '../../data/claude_vision_client.dart';
+import '../../data/meal_photos.dart';
 import '../../models/food_analysis.dart';
 import '../../models/food_entry.dart';
 import '../../models/meal_type.dart';
@@ -99,6 +102,10 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
           : _serving.text.trim(),
     );
     ref.read(foodEntriesProvider.notifier).add(entry);
+    // Persist the meal photo locally, keyed by entry id, for the Food story.
+    if (_photoBytes != null) {
+      unawaited(ref.read(mealPhotosProvider).save(entry.id, _photoBytes!));
+    }
     _maybeShareToCircle(entry);
     Navigator.of(context).pop();
   }

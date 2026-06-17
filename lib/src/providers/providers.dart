@@ -13,6 +13,7 @@ import '../data/claude_vision_client.dart';
 import '../data/analytics_service.dart';
 import '../data/circle_client.dart';
 import '../data/food_photo_analyzer.dart';
+import '../data/meal_photos.dart';
 import '../data/food_repository.dart';
 import '../data/health_service.dart';
 import '../data/iap_service.dart';
@@ -74,6 +75,7 @@ class FoodEntriesNotifier extends Notifier<List<FoodEntry>> {
         if (e.id == id) e.copyWith(deleted: true, updatedAt: now) else e,
     ];
     await ref.read(foodRepositoryProvider).saveAll(state);
+    unawaited(ref.read(mealPhotosProvider).delete(id)); // reclaim its photo
   }
 
   Future<void> update(FoodEntry entry) async {

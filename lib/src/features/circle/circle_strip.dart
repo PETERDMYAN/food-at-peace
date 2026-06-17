@@ -1,8 +1,11 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:food_at_peace/l10n/app_localizations.dart';
 
 import '../../data/eva_wisdom.dart';
+import '../../data/meal_photos.dart';
 import '../../models/food_entry.dart';
 import '../../models/friend.dart';
 import '../../providers/providers.dart';
@@ -90,9 +93,9 @@ class CircleStrip extends ConsumerWidget {
                 avatar: StoryAvatar(
                   icon: Icons.person,
                   colorSeed: 3,
-                  onTap: () => showFoodStory(context, todayFood, lang),
+                  onTap: () => showFoodStory(context, todayFood, lang, ref.read(mealPhotosProvider)),
                 ),
-                onTap: () => showFoodStory(context, todayFood, lang),
+                onTap: () => showFoodStory(context, todayFood, lang, ref.read(mealPhotosProvider)),
               ),
               // Eva — a companion you follow; tap her story for today's lesson.
               if (evaLesson != null)
@@ -495,11 +498,13 @@ Future<void> showFoodStory(
   BuildContext context,
   List<FoodEntry> entries,
   String lang,
+  MealPhotos photos,
 ) {
   final pages = entries.isEmpty
       ? <Widget>[const _FoodNudgePage()]
       : [
-          for (final e in entries) _FoodStoryPage(entry: e),
+          for (final e in entries)
+            _FoodStoryPage(entry: e, photoPath: photos.pathFor(e.id)),
         ];
   return showStory(context, pages: pages);
 }
@@ -598,57 +603,89 @@ class _EvaStoryPage extends StatelessWidget {
 }
 
 class _FoodStoryPage extends StatelessWidget {
-  const _FoodStoryPage({required this.entry});
+  const _FoodStoryPage({required this.entry, required this.photoPath});
 
   final FoodEntry entry;
+  final String photoPath;
 
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
     final time = MaterialLocalizations.of(context)
         .formatTimeOfDay(TimeOfDay.fromDateTime(entry.timestamp));
-    return _StoryScaffold(
-      colors: const [Color(0xFF241A40), Color(0xFF0E0B14)],
-      header: _storyHeader(
-        t.foodStory,
-        time,
-        const StoryAvatar(icon: Icons.person, colorSeed: 3, size: 40),
-      ),
-      body: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            entry.name,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 24,
-              fontWeight: FontWeight.w700,
+    final header = _storyHeader(
+      t.foodStory,
+      time,
+      const StoryAvatar(icon: Icons.person, colorSeed: 3, size: 40),
+    );
+    final info = _foodInfo(t, entry);
+
+    // No saved photo (manual entry / older log) → a styled card.
+    if (!File(photoPath).existsSync()) {
+      return _StoryScaffold(
+        colors: const [Color(0xFF241A40), Color(0xFF0E0B14)],
+        header: header,
+        body: info,
+      );
+    }
+
+    // Photo-backed page: full-bleed image, dark scrim, header up top, info below.
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        Image.file(
+          File(photoPath),
+          fit: BoxFit.cover,
+          errorBuilder: (_, _, _) => const ColoredBox(color: Color(0xFF0E0B14)),
+        ),
+        const DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Colors.black54, Colors.transparent, Colors.black87, Colors.black],
+              stops: [0.0, 0.35, 0.82, 1.0],
             ),
           ),
-          const SizedBox(height: 22),
-          Text(
-            t.kcalValue(entry.calories.round().toString()),
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 46,
-              fontWeight: FontWeight.w800,
+        ),
+        SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(26, _storyTopPad, 26, 44),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [header, const Spacer(), info],
             ),
           ),
-          const SizedBox(height: 24),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              _Macro(label: t.protein, value: entry.proteinG),
-              const SizedBox(width: 30),
-              _Macro(label: t.saturatedFat, value: entry.satFatG),
-            ],
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
+
+Widget _foodInfo(AppLocalizations t, FoodEntry entry) => Column(
+  mainAxisSize: MainAxisSize.min,
+  children: [
+    Text(
+      entry.name,
+      textAlign: TextAlign.center,
+      style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w700),
+    ),
+    const SizedBox(height: 18),
+    Text(
+      t.kcalValue(entry.calories.round().toString()),
+      style: const TextStyle(color: Colors.white, fontSize: 46, fontWeight: FontWeight.w800),
+    ),
+    const SizedBox(height: 20),
+    Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        _Macro(label: t.protein, value: entry.proteinG),
+        const SizedBox(width: 30),
+        _Macro(label: t.saturatedFat, value: entry.satFatG),
+      ],
+    ),
+  ],
+);
 
 class _Macro extends StatelessWidget {
   const _Macro({required this.label, required this.value});

@@ -24,6 +24,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:food_at_peace/l10n/app_localizations.dart';
 import 'package:food_at_peace/src/data/health_service.dart';
+import 'package:food_at_peace/src/data/meal_photos.dart';
 import 'package:food_at_peace/src/data/sync_engine.dart';
 import 'package:food_at_peace/src/features/add/add_entry_screen.dart';
 import 'package:food_at_peace/src/features/circle/circle_feed_screen.dart';
@@ -277,6 +278,9 @@ void main() {
         (ref) async => const Weather(tempC: 30, code: 1, isDay: true),
       ),
       healthServiceProvider.overrideWithValue(_NoHealth()),
+      mealPhotosProvider.overrideWithValue(
+        MealPhotos(Directory.systemTemp.createTempSync('fap_shots_meal')),
+      ),
       circleFeedProvider.overrideWith((ref) async => _seedFeed()),
       // No live StoreKit on the sim → show the indicative SGD prices (the
       // sim's storefront would otherwise return USD).
