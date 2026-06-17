@@ -326,6 +326,18 @@ void main() {
     await t.tap(find.byIcon(Icons.insights_outlined).first);
     await shot(t, '02-trends', settle: 2400);
 
+    // ── 2b) Eva's daily-lesson story (tap her story avatar) ────────────
+    await t.tap(find.text('Eva').first);
+    await shot(t, '09-eva-story', settle: 1800);
+    await t.tapAt(const Offset(20, 40)); // dismiss the sheet (scrim)
+    await beat(t, 700);
+
+    // ── 2c) Your own food story (tap "You") ────────────────────────────
+    await t.tap(find.text(_loc == 'zh' ? '你' : 'You').first);
+    await shot(t, '10-my-meals', settle: 2400); // let the meal photo load
+    await t.tapAt(const Offset(20, 40)); // dismiss
+    await beat(t, 700);
+
     // ── 3) Settings (profile + targets + clean "Last synced" + Sources) ─
     await t.tap(find.byIcon(Icons.settings_outlined).first);
     await shot(t, '06-settings', settle: 2200);
