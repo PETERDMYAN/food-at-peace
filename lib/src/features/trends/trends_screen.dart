@@ -37,9 +37,9 @@ class _TrendsScreenState extends ConsumerState<TrendsScreen> {
     final profile = ref.watch(profileProvider);
     final localeName = Localizations.localeOf(context).toLanguageTag();
 
-    // Sum each metric per day.
+    // Sum each metric per day. One-off entries bucket into their own day.
     final totals = <DateTime, _DayTotals>{};
-    for (final e in entries) {
+    for (final e in entries.where((e) => !e.recurring)) {
       final acc = totals.putIfAbsent(dateOnly(e.timestamp), _DayTotals.new);
       acc.calories += e.calories;
       acc.protein += e.proteinG;
@@ -54,6 +54,19 @@ class _TrendsScreenState extends ConsumerState<TrendsScreen> {
       for (var d = start; !d.isAfter(end); d = d.add(const Duration(days: 1)))
         d,
     ];
+
+    // Daily (recurring) entries count on every day in view from their start, so
+    // the chart matches what Today shows.
+    final recurring = entries.where((e) => e.recurring).toList();
+    for (final d in days) {
+      for (final e in recurring) {
+        if (d.isBefore(dateOnly(e.timestamp))) continue;
+        final acc = totals.putIfAbsent(d, _DayTotals.new);
+        acc.calories += e.calories;
+        acc.protein += e.proteinG;
+        acc.satFat += e.satFatG;
+      }
+    }
 
     // Target reference from the current profile (historical days have no
     // per-day HealthKit reading, so use the estimated burn baseline).

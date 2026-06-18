@@ -365,6 +365,26 @@ class AppLocalizationsZh extends AppLocalizations {
   String get servingHint => '例如：1 碗、200 克';
 
   @override
+  String get repeatDaily => '每天记录';
+
+  @override
+  String get repeatDailyHint => '适合补剂或每日常吃的食物——每天都会计入，无需重复记录';
+
+  @override
+  String get dailyBadge => '每天';
+
+  @override
+  String get takeDailyTitle => '每天都吃吗？';
+
+  @override
+  String takeDailyBody(String name) {
+    return '把「$name」当作补剂一样每天计入？你随时可以在「今日」中修改。';
+  }
+
+  @override
+  String get takeDailyJustToday => '仅这一次';
+
+  @override
   String get saveEntry => '保存记录';
 
   @override
@@ -952,7 +972,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get deleteStory => '从故事中删除';
 
   @override
-  String get deleteStoryBody => '将这餐从美食故事中移除？该日志记录也会一并删除。';
+  String get deleteStoryBody => '将这餐从美食故事中移除？你的饮食日志仍会保留。';
 
   @override
   String get storyDeleted => '已从美食故事中移除';

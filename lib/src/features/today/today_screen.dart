@@ -185,6 +185,7 @@ class TodayScreen extends ConsumerWidget {
                       entry: e,
                       onDelete: () =>
                           ref.read(foodEntriesProvider.notifier).remove(e.id),
+                      onTap: () => showEntryDailySheet(context, ref, e),
                     ),
                   ),
               ],
@@ -498,15 +499,62 @@ class _MacroCard extends StatelessWidget {
   }
 }
 
+/// Tap a Today entry → a sheet to mark it "Take daily" (recurring). Toggling
+/// applies immediately so it's also the place to turn a daily item back off.
+Future<void> showEntryDailySheet(
+  BuildContext context,
+  WidgetRef ref,
+  FoodEntry entry,
+) {
+  final t = AppLocalizations.of(context);
+  return showModalBottomSheet<void>(
+    context: context,
+    showDragHandle: true,
+    builder: (ctx) {
+      var on = entry.recurring;
+      return SafeArea(
+        child: StatefulBuilder(
+          builder: (ctx, setSheet) => Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 4),
+                child: Text(
+                  entry.name,
+                  textAlign: TextAlign.center,
+                  style: Theme.of(ctx).textTheme.titleMedium,
+                ),
+              ),
+              SwitchListTile(
+                value: on,
+                onChanged: (v) {
+                  setSheet(() => on = v);
+                  ref.read(foodEntriesProvider.notifier).setRecurring(entry.id, v);
+                },
+                secondary: const Icon(Icons.event_repeat_outlined),
+                title: Text(t.repeatDaily),
+                subtitle: Text(t.repeatDailyHint),
+              ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
+      );
+    },
+  );
+}
+
 class _EntryTile extends StatelessWidget {
-  const _EntryTile({required this.entry, required this.onDelete});
+  const _EntryTile({required this.entry, required this.onDelete, this.onTap});
 
   final FoodEntry entry;
   final VoidCallback onDelete;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
+    final scheme = Theme.of(context).colorScheme;
     // Bottom inset separates consecutive entries (cards have no margin).
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
@@ -522,11 +570,53 @@ class _EntryTile extends StatelessWidget {
         ),
         child: Card(
           child: ListTile(
+            onTap: onTap,
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,
               vertical: 6,
             ),
-            title: Text(entry.name),
+            title: entry.recurring
+                ? Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          entry.name,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: scheme.secondaryContainer,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.event_repeat,
+                              size: 12,
+                              color: scheme.onSecondaryContainer,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              t.dailyBadge,
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: scheme.onSecondaryContainer,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  )
+                : Text(entry.name),
             subtitle: Text(
               '${entry.mealType.labelOf(t)} · '
               '${t.protein} ${t.gramsValue(kcal(entry.proteinG))} · '

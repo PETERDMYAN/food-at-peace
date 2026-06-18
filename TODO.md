@@ -81,8 +81,20 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
     [`circle_feed_screen.dart`](lib/src/features/circle/circle_feed_screen.dart)).
     The **story keeps the full-resolution photo**; the AI estimate uses a downscaled
     1024px copy.
-- **TestFlight / App Store** — **`v3` build `1.0.2 (22)` uploaded to TestFlight** (2026-06-18,
-  prod backend, `/tmp/fap_rec/build22.sh`) — **story chaining + photo resolution**: the
+- **TestFlight / App Store** — **`v3` build `1.0.2 (23)` uploaded to TestFlight** (2026-06-18,
+  prod backend, `/tmp/fap_rec/build23.sh`) — **"Take daily" recurring foods + story-delete
+  fix**:
+  - A [`FoodEntry.recurring`](lib/src/models/food_entry.dart) flag marks a supplement / daily
+    staple; logged **once**, it's counted on **every** day from its start (Today list + daily
+    summary via `entriesForSelectedDayProvider` (sorted into its time-of-day slot per day), and
+    Trends), shown with a **Daily** badge. The choice is offered as a **prompt after saving** a
+    food, and is also reachable by **tapping a Today (今日饮食) item** (a sheet to toggle it),
+    via `FoodEntriesNotifier.setRecurring`.
+  - **Deleting a Food-story page no longer deletes the log entry** — it now sets
+    [`hiddenFromStory`](lib/src/models/food_entry.dart) (`hideFromStory`), so the meal stays in
+    Today/Trends. (Earlier build 19 wrongly soft-deleted the log.)
+  Both fields additive + backward-compatible (old clients treat as one-off / visible).
+  (22) was **story chaining + photo resolution**: the
   full-screen viewer is now a **tray** ([`story_viewer.dart`](lib/src/features/circle/story_viewer.dart)
   `showStories`/`Story`) — advancing past the last page of *your* food story **rolls into
   Eva's story** (and back past the first returns), instead of quitting; the progress bar

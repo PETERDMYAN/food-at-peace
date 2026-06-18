@@ -716,6 +716,42 @@ abstract class AppLocalizations {
   /// **'e.g. 1 bowl, 200 g'**
   String get servingHint;
 
+  /// No description provided for @repeatDaily.
+  ///
+  /// In en, this message translates to:
+  /// **'Take daily'**
+  String get repeatDaily;
+
+  /// No description provided for @repeatDailyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'For a supplement or daily staple — counts every day, no need to re-log'**
+  String get repeatDailyHint;
+
+  /// No description provided for @dailyBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Daily'**
+  String get dailyBadge;
+
+  /// No description provided for @takeDailyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Take this daily?'**
+  String get takeDailyTitle;
+
+  /// No description provided for @takeDailyBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Count {name} every day, like a supplement? You can change this anytime from Today.'**
+  String takeDailyBody(String name);
+
+  /// No description provided for @takeDailyJustToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Just this time'**
+  String get takeDailyJustToday;
+
   /// No description provided for @saveEntry.
   ///
   /// In en, this message translates to:
@@ -1823,7 +1859,7 @@ abstract class AppLocalizations {
   /// No description provided for @deleteStoryBody.
   ///
   /// In en, this message translates to:
-  /// **'Remove this meal from your food story? This also deletes the log entry.'**
+  /// **'Remove this meal from your food story? Your food log keeps it.'**
   String get deleteStoryBody;
 
   /// No description provided for @storyDeleted.

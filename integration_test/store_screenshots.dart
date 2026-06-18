@@ -158,6 +158,7 @@ FoodEntry _e(
   MealType meal,
   DateTime ts, {
   FoodSource source = FoodSource.manual,
+  bool recurring = false,
 }) => FoodEntry(
   id: id,
   name: name,
@@ -168,6 +169,7 @@ FoodEntry _e(
   timestamp: ts,
   source: source,
   updatedAt: ts,
+  recurring: recurring,
 );
 
 List<FoodEntry> _seedEntries() {
@@ -184,9 +186,14 @@ List<FoodEntry> _seedEntries() {
   final rice = _s('Chicken fried rice', '鸡肉炒饭');
   final pasta = _s('Pesto pasta', '青酱意面');
 
+  final vitamin = _s('Vitamin D + Omega-3', '维生素D + 鱼油');
   final out = <FoodEntry>[];
   // Today: 920 kcal eaten of a ~1344 budget → ~424 left, protein meets 96 g.
   out.addAll([
+    // A "Take daily" supplement, started 5 days ago — shows every day with a
+    // Daily badge, counted automatically (no re-logging). Timed latest so the
+    // badge sits at the top of the list for the screenshot.
+    _e('sup-vd', vitamin, 15, 1, 1, MealType.snack, at(5, 14, 30), recurring: true),
     _e('t-bf', yogurt, 220, 18, 2, MealType.breakfast, at(0, 8, 20)),
     _e('t-sn', shake, 160, 40, 1, MealType.snack, at(0, 12, 10)),
     // Newest today entry + a (seeded) photo → the food story opens on it.
@@ -366,6 +373,15 @@ void main() {
     await mount(const HomeShell());
     await shot(t, '01-today', settle: 2600);
 
+    // ── 1b) Tap a Today item → the "Take daily" sheet ──────────────────
+    final tapItem = find.text(_s('Salmon poke bowl', '三文鱼盖饭'));
+    if (tapItem.evaluate().isNotEmpty) {
+      await t.tap(tapItem.first);
+      await shot(t, '13-daily-sheet', settle: 1400);
+      await t.tapAt(const Offset(200, 60)); // tap the scrim to dismiss
+      await beat(t, 700);
+    }
+
     // ── 2) Trends (tap the Trends nav destination) ─────────────────────
     await t.tap(find.byIcon(Icons.insights_outlined).first);
     await shot(t, '02-trends', settle: 2400);
@@ -414,5 +430,17 @@ void main() {
     // ── 6) Add (manual + photo scan entry) ─────────────────────────────
     await mount(const AddEntryScreen());
     await shot(t, '05-add', settle: 2200);
+    // Fill a manual entry + Save → the post-save "Take this daily?" prompt.
+    final fields = find.byType(TextFormField);
+    await t.enterText(fields.at(0), _s('Vitamin C', '维生素C')); // name
+    await t.enterText(fields.at(1), '20'); // calories
+    await beat(t, 500);
+    await t.tap(
+      find.descendant(
+        of: find.byType(AppBar),
+        matching: find.text(_s('Save', '保存')),
+      ),
+    );
+    await shot(t, '14-takedaily-prompt', settle: 1600);
   });
 }

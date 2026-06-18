@@ -374,6 +374,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String get servingHint => 'e.g. 1 bowl, 200 g';
 
   @override
+  String get repeatDaily => 'Take daily';
+
+  @override
+  String get repeatDailyHint =>
+      'For a supplement or daily staple — counts every day, no need to re-log';
+
+  @override
+  String get dailyBadge => 'Daily';
+
+  @override
+  String get takeDailyTitle => 'Take this daily?';
+
+  @override
+  String takeDailyBody(String name) {
+    return 'Count $name every day, like a supplement? You can change this anytime from Today.';
+  }
+
+  @override
+  String get takeDailyJustToday => 'Just this time';
+
+  @override
   String get saveEntry => 'Save entry';
 
   @override
@@ -979,7 +1000,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get deleteStoryBody =>
-      'Remove this meal from your food story? This also deletes the log entry.';
+      'Remove this meal from your food story? Your food log keeps it.';
 
   @override
   String get storyDeleted => 'Removed from your food story';

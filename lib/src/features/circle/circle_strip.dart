@@ -53,7 +53,8 @@ class CircleStrip extends ConsumerWidget {
         DateTime(now.year, now.month, now.day).subtract(const Duration(days: 6));
     final recentFood = ref
         .watch(foodEntriesProvider)
-        .where((e) => !e.deleted && !e.timestamp.isBefore(weekStart))
+        .where((e) =>
+            !e.deleted && !e.hiddenFromStory && !e.timestamp.isBefore(weekStart))
         .toList()
       ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
 
@@ -868,8 +869,9 @@ class _FoodStoryPage extends ConsumerWidget {
     );
   }
 
-  /// Confirm, then soft-delete the log entry (which also drops its meal photo)
-  /// and close the story. The strip rebuilds, so the archive updates.
+  /// Confirm, then hide this meal from the story only — the log entry stays in
+  /// Today/Trends — and close the story. The strip rebuilds, so the archive
+  /// updates.
   Future<void> _confirmDelete(
     BuildContext context,
     WidgetRef ref,
@@ -900,7 +902,8 @@ class _FoodStoryPage extends ConsumerWidget {
       ),
     );
     if (confirmed != true) return;
-    await ref.read(foodEntriesProvider.notifier).remove(entry.id);
+    // Hide from the story only — keep the food-log entry (Today/Trends).
+    await ref.read(foodEntriesProvider.notifier).hideFromStory(entry.id);
     nav.pop(); // close the whole story viewer
     messenger.showSnackBar(SnackBar(content: Text(t.storyDeleted)));
   }

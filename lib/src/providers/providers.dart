@@ -78,6 +78,28 @@ class FoodEntriesNotifier extends Notifier<List<FoodEntry>> {
     unawaited(ref.read(mealPhotosProvider).delete(id)); // reclaim its photo
   }
 
+  /// Toggle "take daily" (recurring supplement/staple) on an existing entry —
+  /// e.g. from the Today list or the post-save prompt.
+  Future<void> setRecurring(String id, bool value) async {
+    final now = DateTime.now();
+    state = [
+      for (final e in state)
+        if (e.id == id) e.copyWith(recurring: value, updatedAt: now) else e,
+    ];
+    await ref.read(foodRepositoryProvider).saveAll(state);
+  }
+
+  /// Remove an entry from the photo "Food story" only — it stays in the log,
+  /// Today totals and Trends (NOT a tombstone). Syncs via [hiddenFromStory].
+  Future<void> hideFromStory(String id) async {
+    final now = DateTime.now();
+    state = [
+      for (final e in state)
+        if (e.id == id) e.copyWith(hiddenFromStory: true, updatedAt: now) else e,
+    ];
+    await ref.read(foodRepositoryProvider).saveAll(state);
+  }
+
   Future<void> update(FoodEntry entry) async {
     final stamped = entry.copyWith(updatedAt: DateTime.now());
     state = [
@@ -202,13 +224,26 @@ final profileProvider = NotifierProvider<ProfileNotifier, UserProfile>(
   ProfileNotifier.new,
 );
 
-/// Entries for the selected day, newest first.
+/// Entries for the selected day, newest first. A one-off entry shows on its own
+/// day; a [FoodEntry.recurring] one (a daily supplement/staple) shows on every
+/// day from its start ([timestamp]) onward — logged once, counted daily.
 final entriesForSelectedDayProvider = Provider<List<FoodEntry>>((ref) {
   final all = ref.watch(foodEntriesProvider);
   final date = ref.watch(selectedDateProvider);
+  // Recurring entries sort by their time-of-day ON the viewed date, so a daily
+  // supplement lands in its natural slot each day (not pinned to its start day).
+  DateTime slot(FoodEntry e) => e.recurring
+      ? DateTime(date.year, date.month, date.day, e.timestamp.hour,
+          e.timestamp.minute, e.timestamp.second)
+      : e.timestamp;
   final list =
-      all.where((e) => !e.deleted && isSameDay(e.timestamp, date)).toList()
-        ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
+      all.where((e) {
+        if (e.deleted) return false;
+        return e.recurring
+            ? !date.isBefore(dateOnly(e.timestamp)) // every day since it started
+            : isSameDay(e.timestamp, date);
+      }).toList()
+        ..sort((a, b) => slot(b).compareTo(slot(a)));
   return list;
 });
 

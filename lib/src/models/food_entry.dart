@@ -19,6 +19,8 @@ class FoodEntry {
     this.updatedAt,
     this.deleted = false,
     this.photoThumb,
+    this.recurring = false,
+    this.hiddenFromStory = false,
   });
 
   final String id;
@@ -45,6 +47,18 @@ class FoodEntry {
   final DateTime? updatedAt;
   final bool deleted;
 
+  /// A "taken daily" entry (e.g. a supplement / vitamin / daily staple): logged
+  /// once, it counts on **every** day from its [timestamp] onward without
+  /// re-logging. Additive + backward-compatible — older clients that ignore the
+  /// field simply treat it as a one-off on its original day.
+  final bool recurring;
+
+  /// Hidden from the photo "Food story" only — the entry still counts in the log,
+  /// Today totals and Trends. Set when the user deletes a page from their story
+  /// (which must NOT delete the log entry). Distinct from [deleted] (a real
+  /// tombstone). Additive + backward-compatible.
+  final bool hiddenFromStory;
+
   DateTime get syncUpdatedAt => updatedAt ?? timestamp;
 
   FoodEntry copyWith({
@@ -59,6 +73,8 @@ class FoodEntry {
     DateTime? updatedAt,
     bool? deleted,
     String? photoThumb,
+    bool? recurring,
+    bool? hiddenFromStory,
   }) {
     return FoodEntry(
       id: id,
@@ -73,6 +89,8 @@ class FoodEntry {
       updatedAt: updatedAt ?? this.updatedAt,
       deleted: deleted ?? this.deleted,
       photoThumb: photoThumb ?? this.photoThumb,
+      recurring: recurring ?? this.recurring,
+      hiddenFromStory: hiddenFromStory ?? this.hiddenFromStory,
     );
   }
 
@@ -89,6 +107,8 @@ class FoodEntry {
         'updatedAt': updatedAt?.toIso8601String(),
         'deleted': deleted,
         if (photoThumb != null) 'photoThumb': photoThumb,
+        if (recurring) 'recurring': true,
+        if (hiddenFromStory) 'hiddenFromStory': true,
       };
 
   factory FoodEntry.fromJson(Map<String, dynamic> json) => FoodEntry(
@@ -107,5 +127,7 @@ class FoodEntry {
             : null,
         deleted: (json['deleted'] as bool?) ?? false,
         photoThumb: json['photoThumb'] as String?,
+        recurring: (json['recurring'] as bool?) ?? false,
+        hiddenFromStory: (json['hiddenFromStory'] as bool?) ?? false,
       );
 }

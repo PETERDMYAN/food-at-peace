@@ -120,7 +120,38 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
       unawaited(ref.read(mealPhotosProvider).save(entry.id, _photoBytes!));
     }
     _maybeShareToCircle(entry);
+    // Ask whether this is a daily supplement/staple (counted every day).
+    if (!mounted) return;
+    final daily = await _askTakeDaily(entry.name);
+    if (daily == true) {
+      await ref.read(foodEntriesProvider.notifier).setRecurring(entry.id, true);
+    }
     if (mounted) Navigator.of(context).pop();
+  }
+
+  /// Post-save prompt: is this food taken daily (like a supplement)? Returns true
+  /// for "take daily"; null/false leaves it as a one-off. Changeable later from
+  /// the Today list.
+  Future<bool?> _askTakeDaily(String name) {
+    final t = AppLocalizations.of(context);
+    return showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        icon: const Icon(Icons.event_repeat_outlined),
+        title: Text(t.takeDailyTitle),
+        content: Text(t.takeDailyBody(name)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(t.takeDailyJustToday),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(t.repeatDaily),
+          ),
+        ],
+      ),
+    );
   }
 
   /// Fire-and-forget: when sharing is on and this is a scanned photo, post it to
