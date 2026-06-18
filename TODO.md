@@ -291,114 +291,19 @@ is now a single plated dish so the AI estimate reads cleanly (~420 kcal, not a 2
    handle from link → install → first sign-in, e.g. deferred deep link / pasteboard
    match against `circle.connect`), **one-reward-per-new-account** anti-abuse, and a
    "you earned N Beans 🫘" notice.
-5. **Eva — a daily "life lesson" everyone follows** *(engagement)* — **✅ SHIPPED as a
-   story on `v3`** (2026-06-17→18): the "Your circle" strip on Trends now leads with a
-   **You** story (tap → a **full-screen, Instagram-style "Food story"** of *today's whole
-   food log* — one page per logged meal, name/kcal/macros; a "scan a meal" nudge if none)
-   and an **Eva** story avatar (tap → today's lesson **full-screen**, with the
-   **author** under it). Both use a shared [`story_viewer.dart`](lib/src/features/circle/story_viewer.dart)
-   (segmented progress bar, tap-to-advance, ✕/swipe-down to close). The food story reads
-   the **food log** (`foodEntriesProvider`), not shared circle posts — so all logged meals
-   show. One lesson per **local date** (same for everyone, flips at local
-   midnight) from a bundled set of **100 bilingual (EN/中文) lessons**, each now carrying a
-   bilingual **attribution** (`byEn`/`byZh` — a real author where documented, else
-   "Proverb"/"Unknown") — [`assets/eva_wisdom.json`](assets/eva_wisdom.json) via
-   [`eva_wisdom.dart`](lib/src/data/eva_wisdom.dart) (`evaWisdomProvider` + pure
-   `evaLessonIndex` + `author(lang)`), rendered in
-   [`circle_strip.dart`](lib/src/features/circle/circle_strip.dart). The old pinned
-   `eva_lesson_card.dart` was removed. No runtime model call (offline). Unit tests cover
-   the date→index logic, `author()`, and the 100-entry attributed asset. **✅ (d)** Eva is
-   now the followed story avatar (tap → lesson). **✅ Story polish (build 19, 2026-06-18):**
-   the **Food story** is **photo-hero** (meal photo fills the frame; calories/macros are a
-   bottom **caption**); **Eva's lesson is a Calm-style scene** (per-lesson gradient + warm
-   glow + elegant type, `_calmScenes` cycled across the 100 lessons); the food story now
-   spans the **last 7 days** (archive, newest-first) with a **per-story delete** (confirm →
-   soft-deletes the log entry + its meal photo); and a **profile photo**
-   ([`profile_photo.dart`](lib/src/data/profile_photo.dart), local in-memory bytes, square
-   512px) set in Settings (camera-badge avatar) renders in the circle **You** avatar +
-   story header. **Open follow-ups (deferred):**
-   (a) **Eva as a real server account** in `CircleTable` (friend graph + feed posts) vs.
-   the current client-side story.
-   (b) **Server-updatable lessons** (e.g. `/config/wisdom`) so the list refreshes without
-   an app release — currently bundled.
-   (c) **Daily local notification** ("Eva's lesson for today …") gated by the existing
-   *Circle activity* toggle — not built yet.
-   (d) **Profile photo is local-only** — it shows in *your* UI (You avatar, story header,
-   Settings). Making **friends** see it needs an S3 upload + a URL on the circle/profile
-   record (mirror `posts.py`'s presigned-photo pattern); `setFromBytes` is the hook.
-   (e) **Real licensed photography for Eva's scenes** — today they're procedural gradients
-   (`_calmScenes`); bundling/streaming a curated photo set would be the Calm-grade upgrade.
+## 🔭 Deferred / later (not active dev)
 
-   *(Original spec below.)* A built-in
-   **system Circle account, Eva**, auto-added to **every** user's circle on first run /
-   sign-in and **non-removable** (everyone follows her — Eva is the primary demo persona).
-   Each day Eva surfaces **one fresh life-lesson aphorism** (a short "adage about life")
-   in the **Circle** ("Your circle" on Trends — a pinned Eva card: her avatar + today's
-   line). The line is keyed to the **user's local date**, so it flips at local midnight
-   and is the **same for everyone that day** (communal): `index = localEpochDay % 100`.
-   Source is a **config file of 100 Claude-generated, bilingual (EN/中文) lessons**,
-   **rotated one-per-day over a 100-day cycle**, then repeats — pre-generated, so **no
-   runtime model call** (offline-friendly; "fresh" = a new line each local day).
-   Optionally a daily local notification ("Eva's lesson for today …") gated by the
-   existing **Circle activity** toggle. **To build:** (a) **Claude generates** the 100
-   bilingual lessons into the config — bundled `assets/eva_wisdom.json` (declared in
-   `pubspec` assets) is the simplest first cut, *or* a server config (e.g. `/config/wisdom`
-   on the v2 stack) so the list updates without an app release; (b) a `dailyWisdomProvider`
-   that picks today's line by local date; (c) the pinned Eva card in the circle UI
-   ([`circle_feed_screen.dart`](lib/src/features/circle/circle_feed_screen.dart) /
-   Trends circle strip); (d) decide whether Eva is a **real server account** in
-   `CircleTable` (shows in the friend graph, can post to the feed) or a **pure
-   client-side pinned card** (no backend — simplest). Keep any bundled-config/asset
-   changes backward-compatible per the `production-safety` skill.
-
-6. **Make the micro Bean pack a REAL production IAP (not debug-only)** —
-   **DECISION (2026-06): `beans_25` = 25 Beans @ S$0.48** (Apple's actual SGD floor — there's
-   no 0.49 SGD point; a literal 1-Bean/S$0.02 can't be sold). **Client + server code landed
-   on `v3`:** `beans_25` added to `BeanPricing.packs`
-   ([`bean_transaction.dart`](lib/src/models/bean_transaction.dart)), `kBeanProductIds`
-   ([`iap_service.dart`](lib/src/data/iap_service.dart)) and the server `PRODUCTS` map
-   ([`backend/src/iap.py`](backend/src/iap.py)); unit + backend tests added (green). The
-   **hidden 1-Bean debug freebie stays as-is** (separate, `kDebugMode`-only). **✅ ASC product
-   created** — consumable `beans_25` (Apple ID 6780952980), S$0.48 base (US$0.29 / AUD$0.49
-   comparable), EN ("25 Beans") + 简体中文 ("25 颗豆子") localizations, review screenshot,
-   all-territory availability — status **Ready to Submit**. **Remaining:** (a) it rides the
-   **next version (1.0.2)** — a new IAP must accompany a version submission, and 1.0.1 is
-   still in review; (b) deploy the updated `iap.py` to prod when 1.0.2 ships. *(Below: the
-   original blocker write-up.)*
-
-   (Original note — today the **1-Bean / S$0.02** pack is a
-   `kDebugMode`-only **free local credit**: it's hidden in `BeanPricing.hiddenPacks`
-   ([`bean_transaction.dart`](lib/src/models/bean_transaction.dart)), revealed only by
-   tapping the paywall title **10×** in a debug build (the `!kDebugMode` guard +
-   `isHidden` local-credit bypass in
-   [`beans_screen.dart`](lib/src/features/wallet/beans_screen.dart)), so it never
-   reaches TestFlight/the App Store and takes no real money. Goal: a genuinely
-   purchasable pack that works in production.
-   - **⚠️ Hard blocker — Apple will not sell S$0.02.** In-app digital goods *must* go
-     through IAP, and IAP has a **price floor** (Apple's lowest point is ≈ US$0.29; the
-     SGD floor is ≈ **S$0.38–0.49** — confirm the exact tier in ASC). There is **no
-     compliant way to charge S$0.02**. So the micro-pack **must be repriced to Apple's
-     lowest tier** to become real, or it stays a non-purchasable dev shortcut.
-     **Decision needed (you):** at the floor (~S$0.49) a single Bean is ~25× the
-     per-Bean rate of the 100-pack (S$1.99 → ~S$0.02/Bean), so a real "1 Bean" pack is
-     poor value — consider a **"smallest real pack"** (e.g. 25–50 Beans at the floor
-     tier) instead of literally 1 Bean. Confirm price + size before building.
-   - **ASC product** — create a new consumable (e.g. `beans_1` / `beans_25`) via the ASC
-     API exactly like `beans_100…800` (§1): EN + 中文 localization, price at the chosen
-     tier (Singapore base auto-converts), review screenshot, all-territory availability.
-     First appearance of a new IAP **must ride a version submission**.
-   - **Client** — move the pack out of `hiddenPacks` into `BeanPricing.packs`; add its id
-     to `beanProductId`/`productBeans`
-     ([`iap_service.dart`](lib/src/data/iap_service.dart)); and **delete the bypass** —
-     the `isHidden` local-credit branch, the 10-tap reveal + `beansSecretUnlocked` string,
-     and the `!kDebugMode` guard — so it buys through `IapService.buy` → `/iap/validate`
-     like every other pack. **Keep the debug-only FREE credit separate** (it can stay,
-     gated to `kDebugMode`); a paid product must never hit the free local path.
-   - **Server** — no contract change: `/iap/validate` already credits any consumable,
-     idempotent by Apple txn id (§1 Phase 3); just map the new product id → its Bean
-     grant. Additive only — apply the `production-safety` skill.
-   - **Tests** — extend the fake-store integration test + `BeanPricing`/`beanProductId`
-     unit coverage for the new id.
+Shipped/complete — only optional or release-time tails remain:
+- **Eva story (shipped on `v3`)** — optional polish, none required: Eva as a real server
+  account in `CircleTable`; server-updatable lessons (`/config/wisdom`) so the list
+  refreshes without an app release; a daily lesson notification (gated by the *Circle
+  activity* toggle); a **friend-visible** profile photo (S3 upload + URL, mirroring
+  `posts.py` — it's local-only today); real licensed scene photography (today
+  `_calmScenes` are procedural gradients).
+- **`beans_25` IAP (code done on `v3` + already live on prod)** — just **attach the ASC
+  product** (Ready to Submit, Apple ID 6780952980) **to the 1.0.2 submission** once 1.0.1
+  clears review. The prod `iap.py` validation is already live (additive, backward-compatible
+  — doesn't touch the 1.0.0/v2 contract).
 
 ## 📱 Device-only QA (QA_REPORT §5)
 
