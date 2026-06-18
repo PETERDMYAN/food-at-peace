@@ -52,6 +52,16 @@ class _StoryViewerState extends State<_StoryViewer> {
         onVerticalDragEnd: (d) {
           if ((d.primaryVelocity ?? 0) > 80) Navigator.of(context).pop();
         },
+        // Swipe horizontally to move between stories (flick or drag-release):
+        // right-to-left → next, left-to-right → previous.
+        onHorizontalDragEnd: (d) {
+          final v = d.primaryVelocity ?? 0;
+          if (v < -80) {
+            _next();
+          } else if (v > 80) {
+            _prev();
+          }
+        },
         child: Stack(
           fit: StackFit.expand,
           children: [

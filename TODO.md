@@ -81,9 +81,11 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
     [`circle_feed_screen.dart`](lib/src/features/circle/circle_feed_screen.dart)).
     The **story keeps the full-resolution photo**; the AI estimate uses a downscaled
     1024px copy.
-- **TestFlight / App Store** — **`v3` build `1.0.2 (20)` uploaded to TestFlight** (2026-06-18,
-  prod backend, `/tmp/fap_rec/build20.sh`) — **fixes "I don't see the food photo, only nutrient
-  info"**: meal photos were **device-local only and never synced**, so any food-story entry that
+- **TestFlight / App Store** — **`v3` build `1.0.2 (21)` uploaded to TestFlight** (2026-06-18,
+  prod backend, `/tmp/fap_rec/build21.sh`) — adds **left/right swipe navigation** to the
+  full-screen story viewer ([`story_viewer.dart`](lib/src/features/circle/story_viewer.dart)
+  `onHorizontalDragEnd`: swipe → next, ← previous; tap-to-advance still works). (20)
+  **fixes "I don't see the food photo, only nutrient info"**: meal photos were **device-local only and never synced**, so any food-story entry that
   arrived via cloud sync (e.g. meals logged on the demo simulators) or predated photo capture
   fell back to the nutrient card. Now a **small base64 thumbnail rides on the `FoodEntry`**
   ([`food_entry.dart`](lib/src/models/food_entry.dart) `photoThumb`, `encodeMealThumb` in
