@@ -56,6 +56,9 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
 
   // Retained from a successful scan so the photo can be shared to the circle.
   Uint8List? _photoBytes;
+  // The downscaled (~1024px) copy made for the AI estimate — reused as a fast,
+  // cheap source for the synced thumbnail (no second decode of the full original).
+  Uint8List? _analysisBytes;
   String _photoMediaType = 'image/jpeg';
   bool _shareToCircle = true;
 
@@ -77,10 +80,18 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
     super.dispose();
   }
 
-  void _save() {
+  Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     final selected = ref.read(selectedDateProvider);
     final now = DateTime.now();
+    // A small thumbnail rides ON the entry so the meal photo syncs across
+    // devices / survives a reinstall (the full-res original stays device-local).
+    // Built off the UI isolate from the already-downscaled analysis copy.
+    String? thumb;
+    if (_photoBytes != null) {
+      thumb = await compute(encodeMealThumb, _analysisBytes ?? _photoBytes!);
+      if (!mounted) return;
+    }
     final entry = FoodEntry(
       id: now.microsecondsSinceEpoch.toString(),
       name: _name.text.trim(),
@@ -100,14 +111,16 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
       servingDescription: _serving.text.trim().isEmpty
           ? null
           : _serving.text.trim(),
+      photoThumb: thumb,
     );
     ref.read(foodEntriesProvider.notifier).add(entry);
-    // Persist the meal photo locally, keyed by entry id, for the Food story.
+    // Persist the full-resolution original locally, keyed by entry id, for the
+    // crispest Food story on this device.
     if (_photoBytes != null) {
       unawaited(ref.read(mealPhotosProvider).save(entry.id, _photoBytes!));
     }
     _maybeShareToCircle(entry);
-    Navigator.of(context).pop();
+    if (mounted) Navigator.of(context).pop();
   }
 
   /// Fire-and-forget: when sharing is on and this is a scanned photo, post it to
@@ -180,6 +193,7 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
         _analysis = analysis;
         _source = FoodSource.photo;
         _photoBytes = original;
+        _analysisBytes = analysisBytes;
         _photoMediaType = 'image/jpeg';
         _name.text = analysis.name;
         _calories.text = analysis.calories.round().toString();

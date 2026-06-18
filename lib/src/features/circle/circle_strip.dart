@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -796,8 +797,17 @@ class _FoodStoryPage extends ConsumerWidget {
       ),
     );
 
-    // No saved photo (manual entry / older log) → caption centered on a card.
-    if (!File(photoPath).existsSync()) {
+    // Prefer the full-resolution original kept on THIS device; fall back to the
+    // small thumbnail that syncs on the entry (so the photo still shows on other
+    // devices / after a reinstall). Manual entries have neither → caption card.
+    final thumbBytes = File(photoPath).existsSync()
+        ? null
+        : _decodeThumb(entry.photoThumb);
+    final ImageProvider? hero = File(photoPath).existsSync()
+        ? FileImage(File(photoPath))
+        : (thumbBytes != null ? MemoryImage(thumbBytes) : null);
+
+    if (hero == null) {
       return _StoryScaffold(
         colors: const [Color(0xFF241A40), Color(0xFF0E0B14)],
         header: header,
@@ -810,8 +820,8 @@ class _FoodStoryPage extends ConsumerWidget {
     return Stack(
       fit: StackFit.expand,
       children: [
-        Image.file(
-          File(photoPath),
+        Image(
+          image: hero,
           fit: BoxFit.cover,
           errorBuilder: (_, _, _) => const ColoredBox(color: Color(0xFF0E0B14)),
         ),
@@ -883,6 +893,16 @@ class _FoodStoryPage extends ConsumerWidget {
 /// The meal's calories + macros as a single Instagram-style caption (name on
 /// top, nutrition beneath). Centered on the no-photo card; left-aligned over a
 /// photo so the picture stays the hero.
+/// Decode the entry's synced base64 thumbnail to bytes (null/invalid → null).
+Uint8List? _decodeThumb(String? b64) {
+  if (b64 == null || b64.isEmpty) return null;
+  try {
+    return base64Decode(b64);
+  } catch (_) {
+    return null;
+  }
+}
+
 Widget _foodCaption(AppLocalizations t, FoodEntry entry, {required bool centered}) {
   final nutrition = [
     t.kcalValue(entry.calories.round().toString()),

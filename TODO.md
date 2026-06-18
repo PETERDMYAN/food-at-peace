@@ -81,8 +81,16 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
     [`circle_feed_screen.dart`](lib/src/features/circle/circle_feed_screen.dart)).
     The **story keeps the full-resolution photo**; the AI estimate uses a downscaled
     1024px copy.
-- **TestFlight / App Store** — **`v3` build `1.0.2 (19)` uploaded to TestFlight** (2026-06-18,
-  prod backend, `/tmp/fap_rec/build19.sh`) — **story polish batch**: the **Food story** is
+- **TestFlight / App Store** — **`v3` build `1.0.2 (20)` uploaded to TestFlight** (2026-06-18,
+  prod backend, `/tmp/fap_rec/build20.sh`) — **fixes "I don't see the food photo, only nutrient
+  info"**: meal photos were **device-local only and never synced**, so any food-story entry that
+  arrived via cloud sync (e.g. meals logged on the demo simulators) or predated photo capture
+  fell back to the nutrient card. Now a **small base64 thumbnail rides on the `FoodEntry`**
+  ([`food_entry.dart`](lib/src/models/food_entry.dart) `photoThumb`, `encodeMealThumb` in
+  [`meal_photos.dart`](lib/src/data/meal_photos.dart)) so the photo **syncs across devices /
+  survives a reinstall**; the story prefers the full-res local original and falls back to the
+  thumb. **No backend deploy** — it rides inside the sync `data` blob (opaque JSON), additive +
+  backward-compatible with the live 1.0.x contract. (19) was the **story polish batch**: the **Food story** is
   now **photo-hero** (the meal photo fills the frame; calories/macros are an Instagram-style
   **caption**), **Eva's lesson is a Calm-style scene** (per-lesson gradient + glow across the
   100 lessons, [`circle_strip.dart`](lib/src/features/circle/circle_strip.dart) `_calmScenes`),

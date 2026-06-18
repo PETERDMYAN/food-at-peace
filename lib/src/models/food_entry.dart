@@ -18,6 +18,7 @@ class FoodEntry {
     this.servingDescription,
     this.updatedAt,
     this.deleted = false,
+    this.photoThumb,
   });
 
   final String id;
@@ -29,6 +30,14 @@ class FoodEntry {
   final DateTime timestamp;
   final FoodSource source;
   final String? servingDescription;
+
+  /// A small base64 JPEG thumbnail of the meal photo, carried ON the entry so it
+  /// **syncs** and shows on every device / after a reinstall. The full-resolution
+  /// original stays device-local in `MealPhotos` (preferred when present). Null
+  /// for manual entries, older rows, and the shipped 1.0.x clients (which simply
+  /// ignore the field — additive + backward-compatible). See `MealPhotos` /
+  /// `encodeMealThumb`.
+  final String? photoThumb;
 
   /// Sync metadata: when this row last changed, and whether it's a tombstone.
   /// [updatedAt] is null for rows created before sync existed; [syncUpdatedAt]
@@ -49,6 +58,7 @@ class FoodEntry {
     String? servingDescription,
     DateTime? updatedAt,
     bool? deleted,
+    String? photoThumb,
   }) {
     return FoodEntry(
       id: id,
@@ -62,6 +72,7 @@ class FoodEntry {
       servingDescription: servingDescription ?? this.servingDescription,
       updatedAt: updatedAt ?? this.updatedAt,
       deleted: deleted ?? this.deleted,
+      photoThumb: photoThumb ?? this.photoThumb,
     );
   }
 
@@ -77,6 +88,7 @@ class FoodEntry {
         'servingDescription': servingDescription,
         'updatedAt': updatedAt?.toIso8601String(),
         'deleted': deleted,
+        if (photoThumb != null) 'photoThumb': photoThumb,
       };
 
   factory FoodEntry.fromJson(Map<String, dynamic> json) => FoodEntry(
@@ -94,5 +106,6 @@ class FoodEntry {
             ? DateTime.parse(json['updatedAt'] as String)
             : null,
         deleted: (json['deleted'] as bool?) ?? false,
+        photoThumb: json['photoThumb'] as String?,
       );
 }

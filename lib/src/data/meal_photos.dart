@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -61,3 +62,26 @@ class MealPhotos {
 final mealPhotosProvider = Provider<MealPhotos>(
   (ref) => throw UnimplementedError('mealPhotosProvider must be overridden in main()'),
 );
+
+/// A small (≤[maxSide]px) JPEG of [bytes] as a base64 string — the thumbnail we
+/// store ON the [FoodEntry] so the meal photo **syncs** across devices / survives
+/// a reinstall (the full-resolution original stays device-local in [MealPhotos]).
+/// Kept small on purpose so it doesn't bloat the synced row. Top-level + single
+/// positional arg so it runs off the UI isolate via `compute`. Null on failure.
+String? encodeMealThumb(Uint8List bytes, {int maxSide = 480, int quality = 72}) {
+  try {
+    final d = img.decodeImage(bytes);
+    if (d == null) return null;
+    final longest = d.width >= d.height ? d.width : d.height;
+    final out = longest > maxSide
+        ? img.copyResize(
+            d,
+            width: d.width >= d.height ? maxSide : null,
+            height: d.height > d.width ? maxSide : null,
+          )
+        : d;
+    return base64Encode(img.encodeJpg(out, quality: quality));
+  } catch (_) {
+    return null;
+  }
+}
