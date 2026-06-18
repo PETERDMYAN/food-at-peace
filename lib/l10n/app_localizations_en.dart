@@ -969,7 +969,26 @@ class AppLocalizationsEn extends AppLocalizations {
   String get foodStory => 'Food story';
 
   @override
+  String get foodStoryArchive => 'Last 7 days';
+
+  @override
   String get shareFirstMeal => 'Scan a meal to start your food story.';
+
+  @override
+  String get deleteStory => 'Delete from story';
+
+  @override
+  String get deleteStoryBody =>
+      'Remove this meal from your food story? This also deletes the log entry.';
+
+  @override
+  String get storyDeleted => 'Removed from your food story';
+
+  @override
+  String get profilePhoto => 'Profile photo';
+
+  @override
+  String get removePhoto => 'Remove photo';
 
   @override
   String get feedSomeone => 'Someone';

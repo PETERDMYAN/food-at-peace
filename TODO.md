@@ -81,10 +81,17 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
     [`circle_feed_screen.dart`](lib/src/features/circle/circle_feed_screen.dart)).
     The **story keeps the full-resolution photo**; the AI estimate uses a downscaled
     1024px copy.
-- **TestFlight / App Store** — **`v3` build `1.0.2 (18)` uploaded to TestFlight** (2026-06-18,
-  prod backend, `/tmp/fap_rec/build18.sh`) — full-screen **Food story** (reads the food log;
-  fixes "logged 2, showed 1") + **per-entry meal photos** ([`meal_photos.dart`](lib/src/data/meal_photos.dart),
-  local `<docs>/meal_photos/<id>.jpg`, shown full-bleed in the story). (17) was the first
+- **TestFlight / App Store** — **`v3` build `1.0.2 (19)` uploaded to TestFlight** (2026-06-18,
+  prod backend, `/tmp/fap_rec/build19.sh`) — **story polish batch**: the **Food story** is
+  now **photo-hero** (the meal photo fills the frame; calories/macros are an Instagram-style
+  **caption**), **Eva's lesson is a Calm-style scene** (per-lesson gradient + glow across the
+  100 lessons, [`circle_strip.dart`](lib/src/features/circle/circle_strip.dart) `_calmScenes`),
+  the food story now spans the **last 7 days** (archive, newest-first) with a **per-story
+  delete** (confirm → removes the log entry + its meal photo), and a **profile photo**
+  ([`profile_photo.dart`](lib/src/data/profile_photo.dart)) you set in Settings (camera-badge
+  avatar) that shows in the circle **You** avatar + your story header. (18) added the
+  full-screen Food story + per-entry meal photos ([`meal_photos.dart`](lib/src/data/meal_photos.dart),
+  local `<docs>/meal_photos/<id>.jpg`). (17) was the first
   Circle-stories cut + Haiku. Earlier builds —
   prod backend, `/tmp/fap_rec/build17.sh` — added the **Circle stories** rework (Eva + You as
   tappable stories, lesson attribution) and the **Haiku** photo-analysis model (direct-key
@@ -300,13 +307,26 @@ is now a single plated dish so the AI estimate reads cleanly (~420 kcal, not a 2
    [`circle_strip.dart`](lib/src/features/circle/circle_strip.dart). The old pinned
    `eva_lesson_card.dart` was removed. No runtime model call (offline). Unit tests cover
    the date→index logic, `author()`, and the 100-entry attributed asset. **✅ (d)** Eva is
-   now the followed story avatar (tap → lesson). **Open follow-ups (deferred):**
+   now the followed story avatar (tap → lesson). **✅ Story polish (build 19, 2026-06-18):**
+   the **Food story** is **photo-hero** (meal photo fills the frame; calories/macros are a
+   bottom **caption**); **Eva's lesson is a Calm-style scene** (per-lesson gradient + warm
+   glow + elegant type, `_calmScenes` cycled across the 100 lessons); the food story now
+   spans the **last 7 days** (archive, newest-first) with a **per-story delete** (confirm →
+   soft-deletes the log entry + its meal photo); and a **profile photo**
+   ([`profile_photo.dart`](lib/src/data/profile_photo.dart), local in-memory bytes, square
+   512px) set in Settings (camera-badge avatar) renders in the circle **You** avatar +
+   story header. **Open follow-ups (deferred):**
    (a) **Eva as a real server account** in `CircleTable` (friend graph + feed posts) vs.
    the current client-side story.
    (b) **Server-updatable lessons** (e.g. `/config/wisdom`) so the list refreshes without
    an app release — currently bundled.
    (c) **Daily local notification** ("Eva's lesson for today …") gated by the existing
    *Circle activity* toggle — not built yet.
+   (d) **Profile photo is local-only** — it shows in *your* UI (You avatar, story header,
+   Settings). Making **friends** see it needs an S3 upload + a URL on the circle/profile
+   record (mirror `posts.py`'s presigned-photo pattern); `setFromBytes` is the hook.
+   (e) **Real licensed photography for Eva's scenes** — today they're procedural gradients
+   (`_calmScenes`); bundling/streaming a curated photo set would be the Calm-grade upgrade.
 
    *(Original spec below.)* A built-in
    **system Circle account, Eva**, auto-added to **every** user's circle on first run /

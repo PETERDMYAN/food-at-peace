@@ -943,7 +943,25 @@ class AppLocalizationsZh extends AppLocalizations {
   String get foodStory => '美食故事';
 
   @override
+  String get foodStoryArchive => '最近 7 天';
+
+  @override
   String get shareFirstMeal => '扫一张餐食，开启你的美食故事。';
+
+  @override
+  String get deleteStory => '从故事中删除';
+
+  @override
+  String get deleteStoryBody => '将这餐从美食故事中移除？该日志记录也会一并删除。';
+
+  @override
+  String get storyDeleted => '已从美食故事中移除';
+
+  @override
+  String get profilePhoto => '头像';
+
+  @override
+  String get removePhoto => '移除照片';
 
   @override
   String get feedSomeone => '好友';

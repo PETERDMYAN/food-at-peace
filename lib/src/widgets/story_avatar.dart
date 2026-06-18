@@ -1,12 +1,16 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 
 /// An Instagram-story-style circular avatar: a sweep-gradient ring around a
-/// solid initials (or icon) bubble. Used for the Circle of Food friend strip.
+/// solid initials (or icon) bubble — or the user's photo when [imageBytes] is
+/// set. Used for the Circle of Food friend strip + the "You" / profile avatar.
 class StoryAvatar extends StatelessWidget {
   const StoryAvatar({
     super.key,
     this.initials,
     this.icon,
+    this.imageBytes,
     this.size = 60,
     this.ring = true,
     this.muted = false,
@@ -17,6 +21,9 @@ class StoryAvatar extends StatelessWidget {
 
   final String? initials;
   final IconData? icon;
+
+  /// JPEG/PNG bytes of a photo to show in the bubble (e.g. the profile photo).
+  final Uint8List? imageBytes;
   final double size;
 
   /// Whether to draw the gradient story ring (false = plain bubble, e.g. "Add").
@@ -56,22 +63,32 @@ class StoryAvatar extends StatelessWidget {
     final bubbleColor = ring
         ? _palette[(colorSeed ?? 0).abs() % _palette.length]
         : scheme.surfaceContainerHighest;
-    final inner = Container(
-      width: size,
-      height: size,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(shape: BoxShape.circle, color: bubbleColor),
-      child: icon != null
-          ? Icon(icon, color: ring ? Colors.white : scheme.onSurfaceVariant, size: size * 0.42)
-          : Text(
-              initials ?? '?',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w800,
-                fontSize: size * 0.34,
-              ),
+    final inner = imageBytes != null
+        ? ClipOval(
+            child: Image.memory(
+              imageBytes!,
+              width: size,
+              height: size,
+              fit: BoxFit.cover,
+              gaplessPlayback: true,
             ),
-    );
+          )
+        : Container(
+            width: size,
+            height: size,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(shape: BoxShape.circle, color: bubbleColor),
+            child: icon != null
+                ? Icon(icon, color: ring ? Colors.white : scheme.onSurfaceVariant, size: size * 0.42)
+                : Text(
+                    initials ?? '?',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w800,
+                      fontSize: size * 0.34,
+                    ),
+                  ),
+          );
 
     Widget avatar = ring
         ? Container(

@@ -1802,11 +1802,47 @@ abstract class AppLocalizations {
   /// **'Food story'**
   String get foodStory;
 
+  /// No description provided for @foodStoryArchive.
+  ///
+  /// In en, this message translates to:
+  /// **'Last 7 days'**
+  String get foodStoryArchive;
+
   /// No description provided for @shareFirstMeal.
   ///
   /// In en, this message translates to:
   /// **'Scan a meal to start your food story.'**
   String get shareFirstMeal;
+
+  /// No description provided for @deleteStory.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete from story'**
+  String get deleteStory;
+
+  /// No description provided for @deleteStoryBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove this meal from your food story? This also deletes the log entry.'**
+  String get deleteStoryBody;
+
+  /// No description provided for @storyDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Removed from your food story'**
+  String get storyDeleted;
+
+  /// No description provided for @profilePhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile photo'**
+  String get profilePhoto;
+
+  /// No description provided for @removePhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove photo'**
+  String get removePhoto;
 
   /// No description provided for @feedSomeone.
   ///

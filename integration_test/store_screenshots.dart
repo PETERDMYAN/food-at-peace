@@ -25,6 +25,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:food_at_peace/l10n/app_localizations.dart';
 import 'package:food_at_peace/src/data/health_service.dart';
 import 'package:food_at_peace/src/data/meal_photos.dart';
+import 'package:food_at_peace/src/data/profile_photo.dart';
 import 'package:food_at_peace/src/data/sync_engine.dart';
 import 'package:food_at_peace/src/features/add/add_entry_screen.dart';
 import 'package:food_at_peace/src/features/circle/circle_feed_screen.dart';
@@ -116,6 +117,24 @@ Future<void> beat(WidgetTester t, int ms) async {
   }
 }
 
+/// Fetch bytes from [url] (the hosted demo photos) for seeding local images.
+/// Returns null on any failure so the harness still runs offline.
+Future<List<int>?> _fetch(String url) async {
+  try {
+    final c = HttpClient();
+    final req = await c.getUrl(Uri.parse(url));
+    final resp = await req.close();
+    final bytes = <int>[];
+    await for (final chunk in resp) {
+      bytes.addAll(chunk);
+    }
+    c.close();
+    return bytes.isEmpty ? null : bytes;
+  } catch (_) {
+    return null;
+  }
+}
+
 /// Ask the host server to capture the current device screen into `out/<name>.png`.
 Future<void> shot(WidgetTester t, String name, {int settle = 1400}) async {
   await beat(t, settle);
@@ -168,8 +187,9 @@ List<FoodEntry> _seedEntries() {
   // Today: 920 kcal eaten of a ~1344 budget → ~424 left, protein meets 96 g.
   out.addAll([
     _e('t-bf', yogurt, 220, 18, 2, MealType.breakfast, at(0, 8, 20)),
-    _e('t-ln', poke, 540, 38, 5, MealType.lunch, at(0, 12, 40), source: FoodSource.photo),
-    _e('t-sn', shake, 160, 40, 1, MealType.snack, at(0, 16, 10)),
+    _e('t-sn', shake, 160, 40, 1, MealType.snack, at(0, 12, 10)),
+    // Newest today entry + a (seeded) photo → the food story opens on it.
+    _e('t-ln', poke, 540, 38, 5, MealType.lunch, at(0, 13, 40), source: FoodSource.photo),
   ]);
   // Six prior days: balanced "good" days (1190 kcal / 98 g protein, on target)
   // and a couple of indulgent ones (1460 kcal / 62 g) so the trend reads ~5/7.
@@ -272,15 +292,28 @@ void main() {
     });
     final prefs = await SharedPreferences.getInstance();
 
+    // Seed a real meal photo (so the food story is photo-led) and a profile
+    // photo (so the "You" avatar + story header show it) by fetching the same
+    // hosted demo images used by the Circle feed.
+    final mealPhotos = MealPhotos(
+      Directory.systemTemp.createTempSync('fap_shots_meal'),
+    );
+    final profileFile = File(
+      '${Directory.systemTemp.createTempSync('fap_shots_profile').path}/profile.jpg',
+    );
+    final fish = await _fetch(_photoFish);
+    if (fish != null) File(mealPhotos.pathFor('t-ln')).writeAsBytesSync(fish);
+    final pasta = await _fetch(_photoPasta);
+    if (pasta != null) profileFile.writeAsBytesSync(pasta);
+
     final baseOverrides = [
       sharedPreferencesProvider.overrideWithValue(prefs),
       weatherProvider.overrideWith(
         (ref) async => const Weather(tempC: 30, code: 1, isDay: true),
       ),
       healthServiceProvider.overrideWithValue(_NoHealth()),
-      mealPhotosProvider.overrideWithValue(
-        MealPhotos(Directory.systemTemp.createTempSync('fap_shots_meal')),
-      ),
+      mealPhotosProvider.overrideWithValue(mealPhotos),
+      profilePhotoFileProvider.overrideWithValue(profileFile),
       circleFeedProvider.overrideWith((ref) async => _seedFeed()),
       // No live StoreKit on the sim → show the indicative SGD prices (the
       // sim's storefront would otherwise return USD).
@@ -336,10 +369,20 @@ void main() {
     await t.tap(find.byIcon(Icons.close)); // close the full-screen story
     await beat(t, 700);
 
-    // ── 2c) Your food story (full-screen, tap "You") ───────────────────
+    // ── 2c) Your food story (full-screen, tap "You") — photo-led, caption ─
     await t.tap(find.text(_loc == 'zh' ? '你' : 'You').first);
-    await shot(t, '10-food-story', settle: 2000);
-    await t.tap(find.byIcon(Icons.close)); // close
+    await shot(t, '10-food-story', settle: 2200);
+    // ── 2d) Delete-from-story confirm (the 7-day archive control) ──────
+    final del = find.byIcon(Icons.delete_outline);
+    if (del.evaluate().isNotEmpty) {
+      await t.tap(del.first);
+      await shot(t, '11-story-delete', settle: 1400);
+      final cancel = find.text(_s('Cancel', '取消'));
+      if (cancel.evaluate().isNotEmpty) await t.tap(cancel.first);
+      await beat(t, 500);
+    }
+    final close = find.byIcon(Icons.close);
+    if (close.evaluate().isNotEmpty) await t.tap(close.first); // close story
     await beat(t, 700);
 
     // ── 3) Settings (profile + targets + clean "Last synced" + Sources) ─

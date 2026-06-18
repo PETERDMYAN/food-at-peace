@@ -4,11 +4,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:food_at_peace/l10n/app_localizations.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 import '../../data/auth_client.dart';
+import '../../data/profile_photo.dart';
 import '../../data/sync_client.dart';
 import '../../data/sync_engine.dart';
 import '../../models/daily_summary.dart';
@@ -19,6 +21,7 @@ import '../../util/format.dart';
 import '../../util/l10n_labels.dart';
 import '../../widgets/bean_icon.dart';
 import '../../widgets/icon_tile.dart';
+import '../../widgets/story_avatar.dart';
 import '../feedback/feedback_screen.dart';
 import '../sources/sources_screen.dart';
 import '../wallet/beans_screen.dart';
@@ -453,12 +456,65 @@ class _ProfileStatsCardState extends ConsumerState<_ProfileStatsCard> {
     }
   }
 
+  /// Take / choose / remove the profile photo (used in the circle "You" avatar
+  /// and your food-story header). Square-cropped + downscaled by the notifier.
+  Future<void> _editPhoto() async {
+    final t = AppLocalizations.of(context);
+    final hasPhoto = ref.read(profilePhotoProvider) != null;
+    final action = await showModalBottomSheet<String>(
+      context: context,
+      builder: (ctx) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_camera_outlined),
+              title: Text(t.takePhoto),
+              onTap: () => Navigator.pop(ctx, 'camera'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined),
+              title: Text(t.chooseFromLibrary),
+              onTap: () => Navigator.pop(ctx, 'library'),
+            ),
+            if (hasPhoto)
+              ListTile(
+                leading: const Icon(Icons.delete_outline),
+                title: Text(t.removePhoto),
+                onTap: () => Navigator.pop(ctx, 'remove'),
+              ),
+          ],
+        ),
+      ),
+    );
+    if (action == null || !mounted) return;
+    final notifier = ref.read(profilePhotoProvider.notifier);
+    if (action == 'remove') {
+      await notifier.clear();
+      return;
+    }
+    final XFile? file;
+    try {
+      file = await ImagePicker().pickImage(
+        source: action == 'camera' ? ImageSource.camera : ImageSource.gallery,
+        imageQuality: 92,
+        maxWidth: 1024,
+        maxHeight: 1024,
+      );
+    } catch (_) {
+      return;
+    }
+    if (file == null) return;
+    await notifier.setFromBytes(await file.readAsBytes());
+  }
+
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
     final profile = widget.profile;
     final cfg = profile.isConfigured;
+    final photo = ref.watch(profilePhotoProvider);
     final connected = ref.watch(healthConnectedProvider);
     final lastSync = ref.watch(healthSyncProvider);
     return Card(
@@ -484,12 +540,39 @@ class _ProfileStatsCardState extends ConsumerState<_ProfileStatsCard> {
             ),
             Row(
               children: [
-                Icon(
-                  Icons.person_outline,
-                  size: 18,
-                  color: scheme.onSurfaceVariant,
+                // Tap the avatar to set/change the profile photo.
+                GestureDetector(
+                  onTap: _editPhoto,
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      StoryAvatar(
+                        imageBytes: photo,
+                        icon: photo == null ? Icons.person : null,
+                        colorSeed: 3,
+                        size: 48,
+                      ),
+                      Positioned(
+                        right: -2,
+                        bottom: -2,
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: BoxDecoration(
+                            color: scheme.primary,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: scheme.surface, width: 2),
+                          ),
+                          child: Icon(
+                            Icons.photo_camera,
+                            size: 12,
+                            color: scheme.onPrimary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     (profile.name?.trim().isNotEmpty ?? false)

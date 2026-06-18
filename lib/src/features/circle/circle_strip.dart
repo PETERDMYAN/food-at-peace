@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -6,6 +7,7 @@ import 'package:food_at_peace/l10n/app_localizations.dart';
 
 import '../../data/eva_wisdom.dart';
 import '../../data/meal_photos.dart';
+import '../../data/profile_photo.dart';
 import '../../models/food_entry.dart';
 import '../../models/friend.dart';
 import '../../providers/providers.dart';
@@ -35,21 +37,24 @@ class CircleStrip extends ConsumerWidget {
     // Eva is a story you follow: her daily lesson, keyed to the local date.
     final lessons = ref.watch(evaWisdomProvider).asData?.value ?? const [];
     final lang = Localizations.localeOf(context).languageCode;
-    final evaLesson = lessons.isEmpty
-        ? null
-        : lessons[evaLessonIndex(DateTime.now(), lessons.length)];
+    final evaIndex = lessons.isEmpty
+        ? 0
+        : evaLessonIndex(DateTime.now(), lessons.length);
+    final evaLesson = lessons.isEmpty ? null : lessons[evaIndex];
 
-    // Your food story = today's food log (all of it — not just shared meals).
+    // Your profile photo (used for the "You" avatar + your story header).
+    final myPhoto = ref.watch(profilePhotoProvider);
+
+    // Your food story = the last 7 days of food log (the archive), newest first
+    // — all of it, not just meals shared to the circle.
     final now = DateTime.now();
-    final todayFood = ref
+    final weekStart =
+        DateTime(now.year, now.month, now.day).subtract(const Duration(days: 6));
+    final recentFood = ref
         .watch(foodEntriesProvider)
-        .where((e) =>
-            !e.deleted &&
-            e.timestamp.year == now.year &&
-            e.timestamp.month == now.month &&
-            e.timestamp.day == now.day)
+        .where((e) => !e.deleted && !e.timestamp.isBefore(weekStart))
         .toList()
-      ..sort((a, b) => a.timestamp.compareTo(b.timestamp));
+      ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -87,15 +92,19 @@ class CircleStrip extends ConsumerWidget {
           child: ListView(
             scrollDirection: Axis.horizontal,
             children: [
-              // You — your own food story (today's food log, story-style).
+              // You — your own food story (last 7 days, story-style). Shows your
+              // profile photo when set, else a person icon.
               _AvatarColumn(
                 label: t.feedYou,
                 avatar: StoryAvatar(
-                  icon: Icons.person,
+                  imageBytes: myPhoto,
+                  icon: myPhoto == null ? Icons.person : null,
                   colorSeed: 3,
-                  onTap: () => showFoodStory(context, todayFood, lang, ref.read(mealPhotosProvider)),
+                  onTap: () => showFoodStory(
+                    context, recentFood, lang, ref.read(mealPhotosProvider), myPhoto),
                 ),
-                onTap: () => showFoodStory(context, todayFood, lang, ref.read(mealPhotosProvider)),
+                onTap: () => showFoodStory(
+                    context, recentFood, lang, ref.read(mealPhotosProvider), myPhoto),
               ),
               // Eva — a companion you follow; tap her story for today's lesson.
               if (evaLesson != null)
@@ -104,9 +113,9 @@ class CircleStrip extends ConsumerWidget {
                   avatar: StoryAvatar(
                     initials: 'E',
                     colorSeed: 7,
-                    onTap: () => showEvaStory(context, evaLesson, lang),
+                    onTap: () => showEvaStory(context, evaLesson, lang, evaIndex),
                   ),
-                  onTap: () => showEvaStory(context, evaLesson, lang),
+                  onTap: () => showEvaStory(context, evaLesson, lang, evaIndex),
                 ),
               _AvatarColumn(
                 label: t.addFriend,
@@ -488,23 +497,36 @@ class CircleRequestsScreen extends ConsumerWidget {
 
 const double _storyTopPad = 80; // clear the progress bar + close button
 
-/// Eva's daily lesson as a one-page story.
-Future<void> showEvaStory(BuildContext context, EvaLesson lesson, String lang) =>
-    showStory(context, pages: [_EvaStoryPage(lesson: lesson, lang: lang)]);
+/// Eva's daily lesson as a one-page Calm-style story. [index] picks her scene.
+Future<void> showEvaStory(
+  BuildContext context,
+  EvaLesson lesson,
+  String lang,
+  int index,
+) => showStory(
+  context,
+  pages: [_EvaStoryPage(lesson: lesson, lang: lang, index: index)],
+);
 
-/// Your food story = one page per food logged today (a nudge if none yet). Shows
-/// the whole day's log — not just meals shared to the circle.
+/// Your food story = one page per food logged in the last 7 days (a nudge if
+/// none). Shows the whole log — not just meals shared to the circle. [photo] is
+/// your profile photo for the story-header avatar.
 Future<void> showFoodStory(
   BuildContext context,
   List<FoodEntry> entries,
   String lang,
   MealPhotos photos,
+  Uint8List? photo,
 ) {
   final pages = entries.isEmpty
-      ? <Widget>[const _FoodNudgePage()]
+      ? <Widget>[_FoodNudgePage(photo: photo)]
       : [
           for (final e in entries)
-            _FoodStoryPage(entry: e, photoPath: photos.pathFor(e.id)),
+            _FoodStoryPage(
+              entry: e,
+              photoPath: photos.pathFor(e.id),
+              photo: photo,
+            ),
         ];
   return showStory(context, pages: pages);
 }
@@ -539,97 +561,252 @@ class _StoryScaffold extends StatelessWidget {
   }
 }
 
-Widget _storyHeader(String title, String subtitle, Widget avatar) => Row(
+Widget _storyHeader(
+  String title,
+  String subtitle,
+  Widget avatar, {
+  Widget? trailing,
+}) => Row(
   children: [
     avatar,
     const SizedBox(width: 10),
-    Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          title,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 16,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-        if (subtitle.isNotEmpty)
-          Text(subtitle, style: const TextStyle(color: Colors.white70, fontSize: 12)),
-      ],
-    ),
-  ],
-);
-
-class _EvaStoryPage extends StatelessWidget {
-  const _EvaStoryPage({required this.lesson, required this.lang});
-
-  final EvaLesson lesson;
-  final String lang;
-
-  @override
-  Widget build(BuildContext context) {
-    final t = AppLocalizations.of(context);
-    return _StoryScaffold(
-      colors: const [Color(0xFF3A1D5C), Color(0xFF0E0B14)],
-      header: _storyHeader(
-        'Eva',
-        t.evaDailyLesson,
-        const StoryAvatar(initials: 'E', colorSeed: 7, size: 40),
-      ),
-      body: Column(
+    Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            '“${lesson.text(lang)}”',
-            textAlign: TextAlign.center,
+            title,
             style: const TextStyle(
               color: Colors.white,
-              fontSize: 27,
-              height: 1.4,
-              fontWeight: FontWeight.w600,
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
             ),
           ),
-          const SizedBox(height: 20),
-          Text(
-            '— ${lesson.author(lang)}',
-            style: const TextStyle(color: Colors.white70, fontSize: 15),
-          ),
+          if (subtitle.isNotEmpty)
+            Text(
+              subtitle,
+              style: const TextStyle(color: Colors.white70, fontSize: 12),
+            ),
         ],
       ),
+    ),
+    ?trailing,
+  ],
+);
+
+/// A small dark-backed delete button for a story page (legible over photos).
+class _StoryDeleteButton extends StatelessWidget {
+  const _StoryDeleteButton({required this.onPressed});
+
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      visualDensity: VisualDensity.compact,
+      tooltip: AppLocalizations.of(context).deleteStory,
+      style: IconButton.styleFrom(
+        backgroundColor: Colors.black.withValues(alpha: 0.32),
+      ),
+      icon: const Icon(Icons.delete_outline, color: Colors.white, size: 20),
+      onPressed: onPressed,
     );
   }
 }
 
-class _FoodStoryPage extends StatelessWidget {
-  const _FoodStoryPage({required this.entry, required this.photoPath});
+// ---------------------------------------------------------------------------
+// Eva — Calm-style scenes. A curated set of soft gradients + a warm glow; each
+// daily lesson maps to one deterministically, so the 100 lessons cycle through
+// varied dawn/dusk/ocean/forest backdrops (no asset download, works offline).
+// Real licensed photography would be a nice follow-up.
+// ---------------------------------------------------------------------------
 
-  final FoodEntry entry;
-  final String photoPath;
+class _CalmScene {
+  const _CalmScene(this.colors, this.glow);
+
+  final List<Color> colors; // top → bottom gradient
+  final Color glow; // soft radial light near the top
+}
+
+const List<_CalmScene> _calmScenes = [
+  _CalmScene([Color(0xFFFFCBA4), Color(0xFFFF9A76), Color(0xFF6D4068)], Color(0xFFFFE7C7)),
+  _CalmScene([Color(0xFFFF7E5F), Color(0xFFFEB47B), Color(0xFF5B2C6F)], Color(0xFFFFD9A0)),
+  _CalmScene([Color(0xFF3A7BD5), Color(0xFF3A6073), Color(0xFF0F2027)], Color(0xFF9BE7FF)),
+  _CalmScene([Color(0xFF2E7D5B), Color(0xFF1E5631), Color(0xFF0C2A1E)], Color(0xFFB9F6CA)),
+  _CalmScene([Color(0xFF9D7BB5), Color(0xFF6A4C93), Color(0xFF2C1B3D)], Color(0xFFE6D6FF)),
+  _CalmScene([Color(0xFF4B6CB7), Color(0xFF314A8A), Color(0xFF182848)], Color(0xFFA9C0FF)),
+  _CalmScene([Color(0xFFE8A2B8), Color(0xFFC76B98), Color(0xFF6E3B5E)], Color(0xFFFFD6E8)),
+  _CalmScene([Color(0xFF7FD8BE), Color(0xFF4FB0A5), Color(0xFF1F5F73)], Color(0xFFCFFFE6)),
+  _CalmScene([Color(0xFFFFC371), Color(0xFFFF8C42), Color(0xFF9A4F3B)], Color(0xFFFFE9C2)),
+  _CalmScene([Color(0xFF3F4C9B), Color(0xFF2A2A72), Color(0xFF11102B)], Color(0xFF8E9BFF)),
+  _CalmScene([Color(0xFF49C5C0), Color(0xFF2E8C8C), Color(0xFF12404A)], Color(0xFFC8FFF4)),
+  _CalmScene([Color(0xFF7B4397), Color(0xFF5A2A82), Color(0xFF2B1240)], Color(0xFFE0B3FF)),
+  _CalmScene([Color(0xFFE0C3A0), Color(0xFFC99E75), Color(0xFF7A5A3A)], Color(0xFFFFEFD6)),
+  _CalmScene([Color(0xFFA8C8A0), Color(0xFF7BA67D), Color(0xFF3F5E47)], Color(0xFFE4F6DD)),
+  _CalmScene([Color(0xFFB24592), Color(0xFF8E2D72), Color(0xFF431A3D)], Color(0xFFFFC2E8)),
+  _CalmScene([Color(0xFF6E7F8D), Color(0xFF47606E), Color(0xFF22323C)], Color(0xFFCFE4F0)),
+];
+
+_CalmScene _calmSceneFor(int index) =>
+    _calmScenes[index.abs() % _calmScenes.length];
+
+class _EvaStoryPage extends StatelessWidget {
+  const _EvaStoryPage({
+    required this.lesson,
+    required this.lang,
+    required this.index,
+  });
+
+  final EvaLesson lesson;
+  final String lang;
+  final int index;
 
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
-    final time = MaterialLocalizations.of(context)
-        .formatTimeOfDay(TimeOfDay.fromDateTime(entry.timestamp));
+    final scene = _calmSceneFor(index);
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        // Base calming gradient.
+        DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: scene.colors,
+            ),
+          ),
+        ),
+        // Soft warm glow near the top (a sun/moon feel).
+        DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: RadialGradient(
+              center: const Alignment(0, -0.62),
+              radius: 1.15,
+              colors: [scene.glow.withValues(alpha: 0.55), Colors.transparent],
+              stops: const [0, 0.72],
+            ),
+          ),
+        ),
+        // Gentle bottom scrim so the attribution stays legible on bright scenes.
+        const DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.center,
+              end: Alignment.bottomCenter,
+              colors: [Colors.transparent, Colors.black38],
+            ),
+          ),
+        ),
+        SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(30, _storyTopPad, 30, 54),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _storyHeader(
+                  'Eva',
+                  t.evaDailyLesson,
+                  const StoryAvatar(initials: 'E', colorSeed: 7, size: 40),
+                ),
+                Expanded(
+                  child: Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text(
+                          '“',
+                          style: TextStyle(
+                            color: Colors.white54,
+                            fontSize: 76,
+                            height: 0.6,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 18),
+                        Text(
+                          lesson.text(lang),
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 27,
+                            height: 1.45,
+                            fontWeight: FontWeight.w600,
+                            shadows: [
+                              Shadow(blurRadius: 14, color: Colors.black38),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 22),
+                        Text(
+                          '— ${lesson.author(lang)}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 15,
+                            fontStyle: FontStyle.italic,
+                            shadows: [
+                              Shadow(blurRadius: 10, color: Colors.black45),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _FoodStoryPage extends ConsumerWidget {
+  const _FoodStoryPage({
+    required this.entry,
+    required this.photoPath,
+    required this.photo,
+  });
+
+  final FoodEntry entry;
+  final String photoPath;
+  final Uint8List? photo;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final t = AppLocalizations.of(context);
+    final ml = MaterialLocalizations.of(context);
+    final when =
+        '${ml.formatMediumDate(entry.timestamp)} · '
+        '${ml.formatTimeOfDay(TimeOfDay.fromDateTime(entry.timestamp))}';
     final header = _storyHeader(
       t.foodStory,
-      time,
-      const StoryAvatar(icon: Icons.person, colorSeed: 3, size: 40),
+      when,
+      StoryAvatar(
+        imageBytes: photo,
+        icon: photo == null ? Icons.person : null,
+        colorSeed: 3,
+        size: 40,
+      ),
+      trailing: _StoryDeleteButton(
+        onPressed: () => _confirmDelete(context, ref, t),
+      ),
     );
-    final info = _foodInfo(t, entry);
 
-    // No saved photo (manual entry / older log) → a styled card.
+    // No saved photo (manual entry / older log) → caption centered on a card.
     if (!File(photoPath).existsSync()) {
       return _StoryScaffold(
         colors: const [Color(0xFF241A40), Color(0xFF0E0B14)],
         header: header,
-        body: info,
+        body: _foodCaption(t, entry, centered: true),
       );
     }
 
-    // Photo-backed page: full-bleed image, dark scrim, header up top, info below.
+    // Photo is the hero: full-bleed image, dark scrim, header up top, the
+    // calories/macros as a caption at the bottom.
     return Stack(
       fit: StackFit.expand,
       children: [
@@ -644,7 +821,7 @@ class _FoodStoryPage extends StatelessWidget {
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [Colors.black54, Colors.transparent, Colors.black87, Colors.black],
-              stops: [0.0, 0.35, 0.82, 1.0],
+              stops: [0.0, 0.4, 0.85, 1.0],
             ),
           ),
         ),
@@ -653,66 +830,102 @@ class _FoodStoryPage extends StatelessWidget {
             padding: const EdgeInsets.fromLTRB(26, _storyTopPad, 26, 44),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [header, const Spacer(), info],
+              children: [
+                header,
+                const Spacer(),
+                _foodCaption(t, entry, centered: false),
+              ],
             ),
           ),
         ),
       ],
     );
   }
-}
 
-Widget _foodInfo(AppLocalizations t, FoodEntry entry) => Column(
-  mainAxisSize: MainAxisSize.min,
-  children: [
-    Text(
-      entry.name,
-      textAlign: TextAlign.center,
-      style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w700),
-    ),
-    const SizedBox(height: 18),
-    Text(
-      t.kcalValue(entry.calories.round().toString()),
-      style: const TextStyle(color: Colors.white, fontSize: 46, fontWeight: FontWeight.w800),
-    ),
-    const SizedBox(height: 20),
-    Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        _Macro(label: t.protein, value: entry.proteinG),
-        const SizedBox(width: 30),
-        _Macro(label: t.saturatedFat, value: entry.satFatG),
-      ],
-    ),
-  ],
-);
-
-class _Macro extends StatelessWidget {
-  const _Macro({required this.label, required this.value});
-
-  final String label;
-  final double value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text(
-          '${value.round()} g',
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 20,
-            fontWeight: FontWeight.w800,
+  /// Confirm, then soft-delete the log entry (which also drops its meal photo)
+  /// and close the story. The strip rebuilds, so the archive updates.
+  Future<void> _confirmDelete(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations t,
+  ) async {
+    final nav = Navigator.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    final scheme = Theme.of(context).colorScheme;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(t.deleteStory),
+        content: Text(t.deleteStoryBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(t.cancel),
           ),
-        ),
-        Text(label, style: const TextStyle(color: Colors.white60, fontSize: 12)),
-      ],
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: scheme.error,
+              foregroundColor: scheme.onError,
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(t.deleteStory),
+          ),
+        ],
+      ),
     );
+    if (confirmed != true) return;
+    await ref.read(foodEntriesProvider.notifier).remove(entry.id);
+    nav.pop(); // close the whole story viewer
+    messenger.showSnackBar(SnackBar(content: Text(t.storyDeleted)));
   }
 }
 
+/// The meal's calories + macros as a single Instagram-style caption (name on
+/// top, nutrition beneath). Centered on the no-photo card; left-aligned over a
+/// photo so the picture stays the hero.
+Widget _foodCaption(AppLocalizations t, FoodEntry entry, {required bool centered}) {
+  final nutrition = [
+    t.kcalValue(entry.calories.round().toString()),
+    '${t.protein} ${entry.proteinG.round()} g',
+    '${t.saturatedFat} ${entry.satFatG.round()} g',
+  ].join('   ·   ');
+  final align = centered ? TextAlign.center : TextAlign.start;
+  return Column(
+    mainAxisSize: MainAxisSize.min,
+    crossAxisAlignment:
+        centered ? CrossAxisAlignment.center : CrossAxisAlignment.start,
+    children: [
+      Text(
+        entry.name,
+        textAlign: align,
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 26,
+          fontWeight: FontWeight.w800,
+          height: 1.15,
+          shadows: [Shadow(blurRadius: 12, color: Colors.black54)],
+        ),
+      ),
+      const SizedBox(height: 10),
+      Text(
+        nutrition,
+        textAlign: align,
+        style: TextStyle(
+          color: Colors.white.withValues(alpha: 0.92),
+          fontSize: 15,
+          fontWeight: FontWeight.w500,
+          height: 1.35,
+          shadows: const [Shadow(blurRadius: 10, color: Colors.black54)],
+        ),
+      ),
+    ],
+  );
+}
+
 class _FoodNudgePage extends StatelessWidget {
-  const _FoodNudgePage();
+  const _FoodNudgePage({required this.photo});
+
+  final Uint8List? photo;
 
   @override
   Widget build(BuildContext context) {
@@ -722,7 +935,12 @@ class _FoodNudgePage extends StatelessWidget {
       header: _storyHeader(
         t.foodStory,
         '',
-        const StoryAvatar(icon: Icons.person, colorSeed: 3, size: 40),
+        StoryAvatar(
+          imageBytes: photo,
+          icon: photo == null ? Icons.person : null,
+          colorSeed: 3,
+          size: 40,
+        ),
       ),
       body: Column(
         mainAxisSize: MainAxisSize.min,

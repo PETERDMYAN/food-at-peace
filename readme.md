@@ -10,13 +10,16 @@ for real calories burned, and speaks **English and 中文**. Built with Flutter.
 > set** (EN + 简体中文, incl. Circle + Beans), Circle/Beans in the EN/中文 descriptions, an
 > EN subtitle, and a new 简体中文 localization with the CN name **食之安**. Build 14 points
 > at the migrated prod backend, all 5 Beans consumables attached, **auto-release on
-> approval**). **Next up: `v3` build `1.0.2 (18)` is on TestFlight** (prod backend) — it
-> adds the **Circle stories** rework (Eva + **You** as tappable full-screen stories; each
-> daily lesson shows its **author**; the **Food story** shows your logged meals with their
-> photos), the **Haiku** photo-analysis model (~3–4× cheaper, server-wide),
-> a real **25-Bean** IAP (`beans_25`), a **rate-the-app prompt** (5th open), and
-> **`purchase` analytics** on the owner dashboard; it becomes the 1.0.2 submission after
-> 1.0.1 clears review.
+> approval**). **Next up: `v3` build `1.0.2 (19)` is on TestFlight** (prod backend) — a
+> **story polish** batch: the **Food story** is now **photo-hero** (the meal photo fills the
+> frame, calories/macros become a caption), **Eva's lesson is a Calm-style scene** (a
+> per-lesson gradient + warm glow across all 100 lessons), the food story spans the **last 7
+> days** with a **per-story delete**, and you can set a **profile photo** (in Settings) that
+> shows in your circle **You** avatar + story header. Build (18) added the full-screen
+> **Food story** + per-entry meal photos; (17) the first Circle-stories cut + the **Haiku**
+> photo-analysis model (~3–4× cheaper, server-wide), a real **25-Bean** IAP (`beans_25`), a
+> **rate-the-app prompt** (5th open), and **`purchase` analytics**; it becomes the 1.0.2
+> submission after 1.0.1 clears review.
 > Active development is on the **`v3`** branch, which adds: AI photo estimates
 > **in your app language** (EN/中文), the **Circle of Food** social layer (friends
 > by `@handle`, **invite universal link + QR with one-tap mutual connect**, a
