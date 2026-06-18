@@ -63,12 +63,14 @@ final mealPhotosProvider = Provider<MealPhotos>(
   (ref) => throw UnimplementedError('mealPhotosProvider must be overridden in main()'),
 );
 
-/// A small (≤[maxSide]px) JPEG of [bytes] as a base64 string — the thumbnail we
-/// store ON the [FoodEntry] so the meal photo **syncs** across devices / survives
-/// a reinstall (the full-resolution original stays device-local in [MealPhotos]).
-/// Kept small on purpose so it doesn't bloat the synced row. Top-level + single
-/// positional arg so it runs off the UI isolate via `compute`. Null on failure.
-String? encodeMealThumb(Uint8List bytes, {int maxSide = 480, int quality = 72}) {
+/// A JPEG of [bytes] (≤[maxSide]px) as a base64 string — the copy we store ON
+/// the [FoodEntry] so the meal photo **syncs** across devices / survives a
+/// reinstall (the full-resolution original stays device-local in [MealPhotos]).
+/// Sized to match the local original (1080px) so synced entries look as crisp as
+/// freshly-scanned ones full-screen, while staying well under DynamoDB's 400 KB
+/// item limit (~150–250 KB base64). Top-level + single positional arg so it runs
+/// off the UI isolate via `compute`. Null on failure.
+String? encodeMealThumb(Uint8List bytes, {int maxSide = 1080, int quality = 78}) {
   try {
     final d = img.decodeImage(bytes);
     if (d == null) return null;

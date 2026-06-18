@@ -44,16 +44,16 @@ void main() {
     );
   });
 
-  test('encodeMealThumb yields a small, decodable base64 JPEG', () {
+  test('encodeMealThumb yields a crisp, decodable base64 JPEG under the DDB cap', () {
     final thumb = encodeMealThumb(_jpg());
     expect(thumb, isNotNull);
     final bytes = base64Decode(thumb!);
     final decoded = img.decodeImage(bytes);
     expect(decoded, isNotNull);
-    // Downscaled to <=480px on the longest side…
-    expect(decoded!.width <= 480 && decoded.height <= 480, isTrue);
-    // …and small enough to ride on a synced row without bloating it.
-    expect(bytes.length, lessThan(120 * 1024));
+    // Downscaled to <=1080px on the longest side (matches the local original)…
+    expect(decoded!.width <= 1080 && decoded.height <= 1080, isTrue);
+    // …and comfortably under DynamoDB's 400 KB per-item limit so it syncs.
+    expect(bytes.length, lessThan(380 * 1024));
   });
 
   test('photoThumb round-trips through toJson/fromJson (so it syncs)', () {

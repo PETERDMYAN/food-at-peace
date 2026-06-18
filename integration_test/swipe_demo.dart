@@ -14,6 +14,7 @@ import 'package:integration_test/integration_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:food_at_peace/l10n/app_localizations.dart';
+import 'package:food_at_peace/src/data/eva_wisdom.dart';
 import 'package:food_at_peace/src/data/health_service.dart';
 import 'package:food_at_peace/src/data/meal_photos.dart';
 import 'package:food_at_peace/src/data/profile_photo.dart';
@@ -32,7 +33,6 @@ import 'package:food_at_peace/src/theme/app_theme.dart';
 const _loc = String.fromEnvironment('LOCALE', defaultValue: 'en');
 const _photoFish = 'https://files.catbox.moe/r1t9y1.jpg';
 const _photoPasta = 'https://files.catbox.moe/36sgmo.jpg';
-const _photoRice = 'https://files.catbox.moe/8ulvy6.jpg';
 
 class _DemoAuth extends AuthNotifier {
   @override
@@ -125,18 +125,16 @@ void main() {
 
     final fish = await _fetch(_photoFish);
     final pasta = await _fetch(_photoPasta);
-    final rice = await _fetch(_photoRice);
     String? thumb(List<int>? b) =>
         b != null ? encodeMealThumb(Uint8List.fromList(b)) : null;
 
+    // Two photo meals → a short, reliable 2-page food story; the 2nd swipe then
+    // crosses into Eva's story.
     final entries = [
       _e('d1', 'Salmon poke bowl', 540, MealType.lunch, at(13, 40),
           thumb: thumb(fish)),
       _e('d2', 'Pesto pasta', 620, MealType.dinner, at(12, 10),
           thumb: thumb(pasta)),
-      _e('d3', 'Chicken fried rice', 480, MealType.lunch, at(9, 30),
-          thumb: thumb(rice)),
-      _e('d4', 'Greek yogurt & berries', 220, MealType.breakfast, at(8, 0)),
     ];
 
     SharedPreferences.setMockInitialValues(<String, Object>{
@@ -176,6 +174,17 @@ void main() {
           profilePhotoFileProvider.overrideWithValue(profileFile),
           authProvider.overrideWith(_DemoAuth.new),
           syncEngineProvider.overrideWith(_CleanSync.new),
+          // Guarantee Eva is in the tray so the You → Eva roll-over is shown.
+          evaWisdomProvider.overrideWith(
+            (ref) async => const [
+              EvaLesson(
+                en: 'Courage is feeling the fear and going anyway.',
+                zh: '勇气，就是带着恐惧依然前行。',
+                byEn: 'Susan Jeffers',
+                byZh: 'Susan Jeffers',
+              ),
+            ],
+          ),
         ],
         child: MaterialApp(
           debugShowCheckedModeBanner: false,
@@ -201,11 +210,12 @@ void main() {
       await beat(t, 1500);
     }
 
-    await swipe(-320); // → next
-    await swipe(-320); // → next
-    await swipe(-320); // → next
-    await swipe(320); // ← back
-    await swipe(320); // ← back
-    await beat(t, 1200);
+    await beat(t, 1400); // hold on your first food page (poke)
+    await swipe(-320); // poke → pasta (last page of YOUR story)
+    await beat(t, 1600);
+    await swipe(-320); // past the last page → rolls into Eva's story!
+    await beat(t, 2400); // hold on Eva so the cross-person roll-over is clear
+    await swipe(320); // ← back into your food story
+    await beat(t, 1600);
   });
 }

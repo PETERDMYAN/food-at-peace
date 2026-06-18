@@ -81,10 +81,16 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
     [`circle_feed_screen.dart`](lib/src/features/circle/circle_feed_screen.dart)).
     The **story keeps the full-resolution photo**; the AI estimate uses a downscaled
     1024px copy.
-- **TestFlight / App Store** — **`v3` build `1.0.2 (21)` uploaded to TestFlight** (2026-06-18,
-  prod backend, `/tmp/fap_rec/build21.sh`) — adds **left/right swipe navigation** to the
-  full-screen story viewer ([`story_viewer.dart`](lib/src/features/circle/story_viewer.dart)
-  `onHorizontalDragEnd`: swipe → next, ← previous; tap-to-advance still works). (20)
+- **TestFlight / App Store** — **`v3` build `1.0.2 (22)` uploaded to TestFlight** (2026-06-18,
+  prod backend, `/tmp/fap_rec/build22.sh`) — **story chaining + photo resolution**: the
+  full-screen viewer is now a **tray** ([`story_viewer.dart`](lib/src/features/circle/story_viewer.dart)
+  `showStories`/`Story`) — advancing past the last page of *your* food story **rolls into
+  Eva's story** (and back past the first returns), instead of quitting; the progress bar
+  resets per person. And the **synced photo thumbnail is now 1080px** (was 480px;
+  [`meal_photos.dart`](lib/src/data/meal_photos.dart) `encodeMealThumb`) so synced /
+  reinstalled entries look as crisp as freshly-scanned ones, with `FilterQuality.medium` on
+  the story image. (21) added **left/right swipe navigation** to the story viewer
+  (`onHorizontalDragEnd`: swipe → next, ← previous; tap-to-advance still works). (20)
   **fixes "I don't see the food photo, only nutrient info"**: meal photos were **device-local only and never synced**, so any food-story entry that
   arrived via cloud sync (e.g. meals logged on the demo simulators) or predated photo capture
   fell back to the nutrient card. Now a **small base64 thumbnail rides on the `FoodEntry`**

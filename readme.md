@@ -10,8 +10,10 @@ for real calories burned, and speaks **English and 中文**. Built with Flutter.
 > set** (EN + 简体中文, incl. Circle + Beans), Circle/Beans in the EN/中文 descriptions, an
 > EN subtitle, and a new 简体中文 localization with the CN name **食之安**. Build 14 points
 > at the migrated prod backend, all 5 Beans consumables attached, **auto-release on
-> approval**). **Next up: `v3` build `1.0.2 (21)` is on TestFlight** (prod backend). Build (21)
-> adds **left/right swipe** navigation to the full-screen stories (tap still works). Build (20)
+> approval**). **Next up: `v3` build `1.0.2 (22)` is on TestFlight** (prod backend). Build (22)
+> makes the stories a **tray** — swiping past the end of your food story rolls into **Eva's**
+> story instead of closing — and bumps the **synced photo to 1080px** so it looks crisp on
+> every device. Build (21) added **left/right swipe** navigation (tap still works). Build (20)
 > **fixes meal photos not showing in the food story** — they were device-local only, so synced
 > or older entries fell back to the nutrient card; a small thumbnail now rides on the entry and
 > **syncs across devices / survives a reinstall** (no backend change). Build (19) was a **story

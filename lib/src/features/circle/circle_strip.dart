@@ -57,6 +57,19 @@ class CircleStrip extends ConsumerWidget {
         .toList()
       ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
 
+    // Open the chained story tray (You → Eva). [initialStory] 0 = your food
+    // story, 1 = Eva — advancing past the end of one rolls into the next.
+    void openStories(int initialStory) => openCircleStories(
+      context,
+      food: recentFood,
+      lang: lang,
+      photos: ref.read(mealPhotosProvider),
+      photo: myPhoto,
+      evaLesson: evaLesson,
+      evaIndex: evaIndex,
+      initialStory: initialStory,
+    );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -94,29 +107,29 @@ class CircleStrip extends ConsumerWidget {
             scrollDirection: Axis.horizontal,
             children: [
               // You — your own food story (last 7 days, story-style). Shows your
-              // profile photo when set, else a person icon.
+              // profile photo when set, else a person icon. Opens the chained
+              // story tray (You → Eva) starting on your story.
               _AvatarColumn(
                 label: t.feedYou,
                 avatar: StoryAvatar(
                   imageBytes: myPhoto,
                   icon: myPhoto == null ? Icons.person : null,
                   colorSeed: 3,
-                  onTap: () => showFoodStory(
-                    context, recentFood, lang, ref.read(mealPhotosProvider), myPhoto),
+                  onTap: () => openStories(0),
                 ),
-                onTap: () => showFoodStory(
-                    context, recentFood, lang, ref.read(mealPhotosProvider), myPhoto),
+                onTap: () => openStories(0),
               ),
-              // Eva — a companion you follow; tap her story for today's lesson.
+              // Eva — a companion you follow; opens the same tray on her story,
+              // so swiping back/forward moves between You and Eva.
               if (evaLesson != null)
                 _AvatarColumn(
                   label: 'Eva',
                   avatar: StoryAvatar(
                     initials: 'E',
                     colorSeed: 7,
-                    onTap: () => showEvaStory(context, evaLesson, lang, evaIndex),
+                    onTap: () => openStories(1),
                   ),
-                  onTap: () => showEvaStory(context, evaLesson, lang, evaIndex),
+                  onTap: () => openStories(1),
                 ),
               _AvatarColumn(
                 label: t.addFriend,
@@ -498,39 +511,41 @@ class CircleRequestsScreen extends ConsumerWidget {
 
 const double _storyTopPad = 80; // clear the progress bar + close button
 
-/// Eva's daily lesson as a one-page Calm-style story. [index] picks her scene.
-Future<void> showEvaStory(
-  BuildContext context,
-  EvaLesson lesson,
-  String lang,
-  int index,
-) => showStory(
-  context,
-  pages: [_EvaStoryPage(lesson: lesson, lang: lang, index: index)],
-);
+/// Open the circle stories as one chained tray: your food story, then Eva's.
+/// Advancing past the end of one rolls into the next (and back past the start
+/// returns to the previous), Instagram-style. [initialStory] picks which opens
+/// first (0 = your food story, 1 = Eva).
+Future<void> openCircleStories(
+  BuildContext context, {
+  required List<FoodEntry> food,
+  required String lang,
+  required MealPhotos photos,
+  required Uint8List? photo,
+  required EvaLesson? evaLesson,
+  required int evaIndex,
+  required int initialStory,
+}) {
+  final stories = <Story>[
+    Story(pages: _foodStoryPages(food, photos, photo)),
+    if (evaLesson != null)
+      Story(pages: [_EvaStoryPage(lesson: evaLesson, lang: lang, index: evaIndex)]),
+  ];
+  return showStories(context, stories: stories, initialStory: initialStory);
+}
 
-/// Your food story = one page per food logged in the last 7 days (a nudge if
+/// Your food story pages = one per food logged in the last 7 days (a nudge if
 /// none). Shows the whole log — not just meals shared to the circle. [photo] is
 /// your profile photo for the story-header avatar.
-Future<void> showFoodStory(
-  BuildContext context,
+List<Widget> _foodStoryPages(
   List<FoodEntry> entries,
-  String lang,
   MealPhotos photos,
   Uint8List? photo,
-) {
-  final pages = entries.isEmpty
-      ? <Widget>[_FoodNudgePage(photo: photo)]
-      : [
-          for (final e in entries)
-            _FoodStoryPage(
-              entry: e,
-              photoPath: photos.pathFor(e.id),
-              photo: photo,
-            ),
-        ];
-  return showStory(context, pages: pages);
-}
+) => entries.isEmpty
+    ? [_FoodNudgePage(photo: photo)]
+    : [
+        for (final e in entries)
+          _FoodStoryPage(entry: e, photoPath: photos.pathFor(e.id), photo: photo),
+      ];
 
 class _StoryScaffold extends StatelessWidget {
   const _StoryScaffold({required this.header, required this.body, required this.colors});
@@ -823,6 +838,7 @@ class _FoodStoryPage extends ConsumerWidget {
         Image(
           image: hero,
           fit: BoxFit.cover,
+          filterQuality: FilterQuality.medium,
           errorBuilder: (_, _, _) => const ColoredBox(color: Color(0xFF0E0B14)),
         ),
         const DecoratedBox(
