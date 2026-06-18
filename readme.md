@@ -5,13 +5,14 @@ or by **snapping a photo** — see how much you can still eat today, and keep an
 on your protein and saturated-fat quotas. Connects to **Apple Health / Garmin**
 for real calories burned, and speaks **English and 中文**. Built with Flutter.
 
-> **Status:** **v1.0.0 is live on the App Store; v1.0.1 (14) is "Waiting for Review"**
-> (submitted 2026-06-16 with a refreshed store listing — a **bilingual 6-shot screenshot
-> set** (EN + 简体中文, incl. Circle + Beans), Circle/Beans in the EN/中文 descriptions, an
-> EN subtitle, and a new 简体中文 localization with the CN name **食之安**. Build 14 points
-> at the migrated prod backend, all 5 Beans consumables attached, **auto-release on
-> approval**). **Next up: `v3` build `1.0.2 (26)` is on TestFlight** (prod backend). Build (26)
-> turns **Circle activity notifications on by default** (permission requested when a friend
+> **Status:** **v1.0.1 (14) is approved & live on the App Store** (the CN name is **食之安**).
+> Repo is now a single `main` branch; the live build is tagged **`v1.0.1`** (commit `1c6ca03`).
+> **Submitting next: `1.0.2 (27)`** (prod backend) — the full v3 feature wave (Circle stories:
+> photo-hero food story, Calm Eva scenes, story tray + swipe, 7-day archive + delete; profile
+> photo; synced meal photos; "Take daily" recurring foods; Data Sources energy priority;
+> Circle activity on by default) **plus a fix so a new user no longer sees seeded sample
+> friends**. Build (26)
+> turned **Circle activity notifications on by default** (permission requested when a friend
 > first does something; an explicit off sticks). Build (25)
 > adds **Data sources** in Settings — choose which device's active energy takes priority when
 > several (Garmin, Apple Watch, iPhone) write to Apple Health. Build (24)

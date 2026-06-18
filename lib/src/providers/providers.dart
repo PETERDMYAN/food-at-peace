@@ -964,14 +964,29 @@ class CircleNotifier extends Notifier<List<Friend>> {
   List<Friend> build() {
     // Rebuild when auth changes: sign in → switch to the backend; out → local.
     ref.watch(authProvider);
+    _dropLegacySeededFriends();
     if (_online) {
       // Defer: _refresh()/_ensureHandle write myCircleHandleProvider, which must
       // not happen during this build (Riverpod asserts), so the circle would
       // never load on launch for a returning user with a handle already set.
       Future.microtask(_refresh);
-      return _loadLocal() ?? const []; // show cache while loading; no mock seed online
     }
-    return _seededOrLocal();
+    // No mock seed: a real (esp. signed-out) user starts with an empty circle —
+    // just You + Eva + Add — never fake friends.
+    return _loadLocal() ?? const [];
+  }
+
+  /// One-time cleanup for users upgrading from a build that seeded sample friends
+  /// (Mia/Jay/Sara/Ben) for the signed-out state. Strip those ids from the cache
+  /// so nobody keeps seeing fake friends, and clear the legacy "seeded" flag.
+  static const _seedIds = {'f_mia', 'f_jay', 'f_sara', 'f_ben'};
+  void _dropLegacySeededFriends() {
+    if (!(_prefs.getBool(_seededKey) ?? false)) return;
+    _prefs.remove(_seededKey);
+    final local = _loadLocal();
+    if (local == null) return;
+    final cleaned = local.where((f) => !_seedIds.contains(f.id)).toList();
+    if (cleaned.length != local.length) _prefs.setString(_key, _encode(cleaned));
   }
 
   // ---- local (offline / cache) store ----
@@ -991,18 +1006,6 @@ class CircleNotifier extends Notifier<List<Friend>> {
     } catch (_) {
       return null;
     }
-  }
-
-  List<Friend> _seededOrLocal() {
-    final local = _loadLocal();
-    if (local != null) return local;
-    if (!(_prefs.getBool(_seededKey) ?? false)) {
-      final seed = Friend.seed();
-      _prefs.setBool(_seededKey, true);
-      _prefs.setString(_key, _encode(seed));
-      return seed;
-    }
-    return const [];
   }
 
   List<Friend> get connected =>

@@ -81,8 +81,13 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
     [`circle_feed_screen.dart`](lib/src/features/circle/circle_feed_screen.dart)).
     The **story keeps the full-resolution photo**; the AI estimate uses a downscaled
     1024px copy.
-- **TestFlight / App Store** — **`v3` build `1.0.2 (26)` uploaded to TestFlight** (2026-06-18,
-  prod backend, `/tmp/fap_rec/build26.sh`) — **Circle activity notifications on by default**:
+- **TestFlight / App Store** — **`main` build `1.0.2 (27)` → submitting to App Store** (2026-06-18,
+  prod backend, `/tmp/fap_rec/build27.sh`) — **fix: no seeded fake friends for real users**.
+  `CircleNotifier` no longer writes `Friend.seed()` (Mia/Jay/Sara/Ben) for the signed-out state;
+  a one-time migration (`_dropLegacySeededFriends`) strips those ids from anyone who already
+  cached them — new/upgrading users start with an **empty circle** (You + Eva + Add). Shipped in
+  live 1.0.1, so it rolls out with this 1.0.2 submission. (26) **Circle activity notifications on
+  by default**:
   `circleNotifyProvider` now defaults **true** (was opt-in); the OS notification permission is
   requested **lazily** the first time there's real circle activity
   ([`home_shell._checkCircleActivity`](lib/src/features/home/home_shell.dart)) so the toggle
