@@ -150,7 +150,7 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
   Circle + Beans added to the EN/中文 descriptions, an EN subtitle, and a new **简体中文
   localization** with the CN app name **食之安**. Also localized the Circle post card
   (`feedYou`/`feedSomeone` + `kcalValue`) so the feed reads fully in 中文. (14) adds
-  **server-side IAP receipt validation** (`/iap/validate`, §2), **APNs background push**
+  **server-side IAP receipt validation** (`/iap/validate`, §1), **APNs background push**
   for circle activity (request / accept / shared-meal / reaction → real Apple banners
   even when the app is closed; key `D2665A2D4P`, [`backend/src/apns.py`](backend/src/apns.py)
   + `/circle/register-device`, token captured in `AppDelegate` → `shared_preferences`),
@@ -164,7 +164,7 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
   `GET /metrics` with a dedicated read-only token. (11) shipped the real **StoreKit Beans
   paywall** + 100 free grant + SGD prices; unlimited subscription removed; the Circle
   notification work. Associated Domains + `foodatpeace://` scheme shipped in (4); the
-  invite links are **live** on `foodatpeace.app` (§1).
+  invite links are **live** on `foodatpeace.app`.
 
 Verified: Flutter 119 + backend 95 tests + 12 integration, `flutter analyze` clean. The full signed-in
 Circle flow was exercised **in-app on two simulators** against the live v2 backend
@@ -183,24 +183,7 @@ is now a single plated dish so the AI estimate reads cleanly (~420 kcal, not a 2
 
 ## 🚧 Remaining
 
-1. **✅ `foodatpeace.app` is LIVE — invite site hosted on AWS** (2026-06-15) —
-   registered via **Route53** (privacy + auto-renew) and served by **CloudFront
-   `E2M22G0LAT1HKW` + ACM HTTPS** over a private S3 bucket (`foodatpeace-app-web`,
-   `ap-southeast-1`, OAC). Site source: [`store/website/`](store/website/). Verified
-   live: `https://foodatpeace.app/.well-known/apple-app-site-association` → `200`,
-   `application/json`, no redirect; `/i/<handle>` → the smart landing (open app · App
-   Store `id6777715561` · WeChat Safari hand-off); HTTP→HTTPS 301. **(a) ICANN
-   WHOIS-verification — ✅ DONE (2026-06-17):** email verified; Route53 registrar status
-   is clean (`clientTransferProhibited` only — no hold/pending), expiry 2027-06-15, site
-   resolves 200 → not suspended. **Remaining (you):** (b) testers
-   **reinstall once** so iOS caches the AASA. **Note:** universal links open the app
-   only on builds carrying the `applinks:foodatpeace.app` entitlement (TestFlight build
-   4+) — the **public App Store 1.0.0 does not have it**, so until v2 ships to the App
-   Store the link's download path lands on 1.0.0 (no Circle). Re-deploy the site after
-   edits with: `aws s3 sync store/website s3://foodatpeace-app-web --delete` +
-   `aws cloudfront create-invalidation --distribution-id E2M22G0LAT1HKW --paths '/*'`.
-   Native in-WeChat open is the §5 follow-up.
-2. **Beans IAP** *(in progress)* — the paywall still **dev-stubs** purchases (credits
+1. **Beans IAP** *(in progress)* — the paywall still **dev-stubs** purchases (credits
    locally; a reinstall resets the balance). **Done:** `in_app_purchase` added +
    `IapService` ([`lib/src/data/iap_service.dart`](lib/src/data/iap_service.dart),
    consumable products `beans_100…beans_800`) + the wallet credit hook
@@ -247,25 +230,12 @@ is now a single plated dish so the AI estimate reads cleanly (~420 kcal, not a 2
    (`kDebugMode`) so it never reaches TestFlight/the App Store. **The Apple shared secret
    is now live in SSM** (`/food-at-peace/iap-shared-secret`, SecureString, ap-southeast-1,
    2026-06-16), so receipt validation runs server-side (no redeploy — read per cold start).
-   **Remaining:** referral Beans (§6). ✅ **`purchase` analytics** now emitted on every
+   **Remaining:** referral Beans (§4). ✅ **`purchase` analytics** now emitted on every
    Beans purchase (`BeansNotifier.creditPurchase` → `AnalyticsService.emit('purchase',
    {beans, product})`, on `v3`). **`refund` analytics** is deferred — refunds aren't
    client-observable; they'd need **App Store Server Notifications v2** (a server webhook),
    so that's a separate backend task.
-3. **APNs push for circle notifications — DONE (needs on-device verification).**
-   Local notifications already fire on launch/resume + present as foreground Apple
-   banners; **build 14 adds true background Apple Push**: APNs key `D2665A2D4P`
-   (Sandbox & Production, team-scoped) in SSM (`apns-key`/`apns-key-id`); the client
-   registers for remote notifications, `AppDelegate` writes the token to
-   `shared_preferences`, and `home_shell` POSTs it to `/circle/register-device`; the
-   server pushes via [`backend/src/apns.py`](backend/src/apns.py) (pure-Python ES256
-   JWT via `ecdsa` + HTTP/2 via `httpx`, best-effort) on **invite / accept**
-   ([`circle.py`](backend/src/circle.py)) and **shared-meal / reaction**
-   ([`posts.py`](backend/src/posts.py)). aps-environment entitlement added; Push
-   capability auto-provisioned in the build. **Remaining:** verify end-to-end on a
-   physical device (couldn't be tested in the sim); push copy is English-only for now.
-   The in-app toggle ("Circle activity") still gates the in-app banner.
-4. **Optimise model usage** — tune the photo-analysis Claude call for cost &
+2. **Optimise model usage** — tune the photo-analysis Claude call for cost &
    latency. The model is server-side via the `MODEL` env var (default
    `claude-sonnet-4-6`), so it's swappable without an app update. Levers to
    evaluate: try a **cheaper/faster tier** (e.g. Haiku) and measure estimate
@@ -295,7 +265,7 @@ is now a single plated dish so the AI estimate reads cleanly (~420 kcal, not a 2
    image dominates input and is uncacheable). Left in place (harmless; auto-engages if the
    prefix grows); dashboard shows "off" when not engaging. Still open: tighten
    prompt/`max_tokens`, optional confidence-based Haiku→Sonnet escalation.
-5. **Enable in-WeChat open / download (WeChat Open Platform / Mini Program)** *(you —
+3. **Enable in-WeChat open / download (WeChat Open Platform / Mini Program)** *(you —
    needs a verified WeChat account)* — WeChat's in-app browser **blocks iOS Universal
    Links and App Store redirects**, so a shared `foodatpeace.app/i/<handle>` can't
    natively open or install the app inside WeChat; the landing page can only fall back
@@ -310,18 +280,18 @@ is now a single plated dish so the AI estimate reads cleanly (~420 kcal, not a 2
    - Prereq: a **verified business entity** (营业执照 — China-registered company, or a
      third-party agent), ~300 RMB/yr verification. Then add the WeChat SDK + a new iOS
      build. Until then, the landing page's Safari hand-off is the supported WeChat path.
-6. **Referral / new-user Beans** *(growth — pairs with the invite links + §2 IAP)* —
+4. **Referral / new-user Beans** *(growth — pairs with the invite links + §1 IAP)* —
    reward Beans through the invite loop. New users **already** get a **100-Bean welcome
    grant** on first launch (`BeanPricing.signupGrant`, granted locally in
    `BeansNotifier.build`). Add a **referral bonus**: when someone installs via an
    invite link (`foodatpeace.app/i/<handle>`) and becomes a **verified new user**
    (Sign in with Apple → first account), credit the **inviter** Beans — and optionally
    give the new user an extra welcome bonus. Needs: a **server-side Beans ledger**
-   (Beans are local stubs today, see §2), invite **attribution** (carry the inviter
+   (Beans are local stubs today, see §1), invite **attribution** (carry the inviter
    handle from link → install → first sign-in, e.g. deferred deep link / pasteboard
    match against `circle.connect`), **one-reward-per-new-account** anti-abuse, and a
    "you earned N Beans 🫘" notice.
-7. **Eva — a daily "life lesson" everyone follows** *(engagement)* — **✅ SHIPPED as a
+5. **Eva — a daily "life lesson" everyone follows** *(engagement)* — **✅ SHIPPED as a
    story on `v3`** (2026-06-17→18): the "Your circle" strip on Trends now leads with a
    **You** story (tap → a **full-screen, Instagram-style "Food story"** of *today's whole
    food log* — one page per logged meal, name/kcal/macros; a "scan a meal" nudge if none)
@@ -381,7 +351,7 @@ is now a single plated dish so the AI estimate reads cleanly (~420 kcal, not a 2
    client-side pinned card** (no backend — simplest). Keep any bundled-config/asset
    changes backward-compatible per the `production-safety` skill.
 
-8. **Make the micro Bean pack a REAL production IAP (not debug-only)** —
+6. **Make the micro Bean pack a REAL production IAP (not debug-only)** —
    **DECISION (2026-06): `beans_25` = 25 Beans @ S$0.48** (Apple's actual SGD floor — there's
    no 0.49 SGD point; a literal 1-Bean/S$0.02 can't be sold). **Client + server code landed
    on `v3`:** `beans_25` added to `BeanPricing.packs`
@@ -414,7 +384,7 @@ is now a single plated dish so the AI estimate reads cleanly (~420 kcal, not a 2
      poor value — consider a **"smallest real pack"** (e.g. 25–50 Beans at the floor
      tier) instead of literally 1 Bean. Confirm price + size before building.
    - **ASC product** — create a new consumable (e.g. `beans_1` / `beans_25`) via the ASC
-     API exactly like `beans_100…800` (§2): EN + 中文 localization, price at the chosen
+     API exactly like `beans_100…800` (§1): EN + 中文 localization, price at the chosen
      tier (Singapore base auto-converts), review screenshot, all-territory availability.
      First appearance of a new IAP **must ride a version submission**.
    - **Client** — move the pack out of `hiddenPacks` into `BeanPricing.packs`; add its id
@@ -425,7 +395,7 @@ is now a single plated dish so the AI estimate reads cleanly (~420 kcal, not a 2
      like every other pack. **Keep the debug-only FREE credit separate** (it can stay,
      gated to `kDebugMode`); a paid product must never hit the free local path.
    - **Server** — no contract change: `/iap/validate` already credits any consumable,
-     idempotent by Apple txn id (§2 Phase 3); just map the new product id → its Bean
+     idempotent by Apple txn id (§1 Phase 3); just map the new product id → its Bean
      grant. Additive only — apply the `production-safety` skill.
    - **Tests** — extend the fake-store integration test + `BeanPricing`/`beanProductId`
      unit coverage for the new id.
@@ -434,3 +404,17 @@ is now a single plated dish so the AI estimate reads cleanly (~420 kcal, not a 2
 
 Sign in with Apple · Apple Health · local notifications · camera capture · weather
 GPS · the signed-in Circle invites/feed — can't be automated on the simulator.
+
+Carried over from now-removed Remaining items (infra/logic done & verified 2026-06-18;
+only the on-device step is left):
+- **Invite universal links** — testers **reinstall once** so iOS caches the AASA, then
+  tapping `foodatpeace.app/i/<handle>` opens the app. Universal links need the
+  `applinks:foodatpeace.app` entitlement (TestFlight build 4+); the public App Store
+  1.0.0 lacks it, so its links land on the App Store until v2 ships publicly. Site +
+  AASA verified live; chain (AASA appID, entitlement, `kInviteDomain`, landing page) all
+  correct.
+- **APNs background push** — verify true end-to-end delivery (server → Apple → a
+  backgrounded device) on a **physical device**: a sim has no real APNs token, so the
+  register-device → push loop can't run there. Server signing/triggers + the payload
+  shape are unit-verified (`test_push`/`test_circle`/`test_posts`); the sim accepts the
+  exact payload. Push copy is English-only for now.
