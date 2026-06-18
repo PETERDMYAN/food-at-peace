@@ -66,6 +66,11 @@ class _HomeShellState extends ConsumerState<HomeShell>
     }
 
     final svc = ref.read(notificationServiceProvider);
+    // Circle activity is on by default — ensure OS notification permission the
+    // first time there's actually something to notify about (no-op after the
+    // user's first decision). Without it, iOS silently drops the notifications.
+    await svc.requestPermission();
+    if (!mounted) return;
     for (final e in events) {
       svc.show(
         id: NotificationService.circleId + e.kind.index,

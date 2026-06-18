@@ -1238,13 +1238,16 @@ final circleFeedProvider = FutureProvider<List<CirclePost>>((ref) async {
 });
 
 /// Whether to notify the user when a friend shares a meal. Managed alongside the
-/// food reminders (same notification permission + service). Opt-in, persisted.
+/// food reminders (same notification permission + service). **On by default**;
+/// the OS notification permission is requested lazily the first time there's real
+/// circle activity (see `home_shell._checkCircleActivity`). Persisted once the
+/// user toggles it, so an explicit "off" sticks.
 class CircleNotifyNotifier extends Notifier<bool> {
   static const _prefsKey = 'circle_notify_enabled';
 
   @override
   bool build() =>
-      ref.read(sharedPreferencesProvider).getBool(_prefsKey) ?? false;
+      ref.read(sharedPreferencesProvider).getBool(_prefsKey) ?? true;
 
   /// Requests OS notification permission; flips on only if granted.
   Future<bool> enable() async {

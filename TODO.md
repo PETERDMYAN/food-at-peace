@@ -81,8 +81,13 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
     [`circle_feed_screen.dart`](lib/src/features/circle/circle_feed_screen.dart)).
     The **story keeps the full-resolution photo**; the AI estimate uses a downscaled
     1024px copy.
-- **TestFlight / App Store** — **`v3` build `1.0.2 (25)` uploaded to TestFlight** (2026-06-18,
-  prod backend, `/tmp/fap_rec/build25.sh`) — **Data sources + active-energy priority**:
+- **TestFlight / App Store** — **`v3` build `1.0.2 (26)` uploaded to TestFlight** (2026-06-18,
+  prod backend, `/tmp/fap_rec/build26.sh`) — **Circle activity notifications on by default**:
+  `circleNotifyProvider` now defaults **true** (was opt-in); the OS notification permission is
+  requested **lazily** the first time there's real circle activity
+  ([`home_shell._checkCircleActivity`](lib/src/features/home/home_shell.dart)) so the toggle
+  isn't "on but silent". An explicit off still persists. (25) **Data sources + active-energy
+  priority**:
   Settings ▸ **Data sources** ([`data_sources_screen.dart`](lib/src/features/settings/data_sources_screen.dart))
   lists each device writing active energy to Apple Health (Garmin Connect / Apple Watch /
   iPhone — discovered via `HealthService.energySources()`) and lets you pick which **takes
@@ -194,7 +199,7 @@ is now a single plated dish so the AI estimate reads cleanly (~420 kcal, not a 2
    Store the link's download path lands on 1.0.0 (no Circle). Re-deploy the site after
    edits with: `aws s3 sync store/website s3://foodatpeace-app-web --delete` +
    `aws cloudfront create-invalidation --distribution-id E2M22G0LAT1HKW --paths '/*'`.
-   Native in-WeChat open is the §6 follow-up.
+   Native in-WeChat open is the §5 follow-up.
 2. **Beans IAP** *(in progress)* — the paywall still **dev-stubs** purchases (credits
    locally; a reinstall resets the balance). **Done:** `in_app_purchase` added +
    `IapService` ([`lib/src/data/iap_service.dart`](lib/src/data/iap_service.dart),
@@ -242,7 +247,7 @@ is now a single plated dish so the AI estimate reads cleanly (~420 kcal, not a 2
    (`kDebugMode`) so it never reaches TestFlight/the App Store. **The Apple shared secret
    is now live in SSM** (`/food-at-peace/iap-shared-secret`, SecureString, ap-southeast-1,
    2026-06-16), so receipt validation runs server-side (no redeploy — read per cold start).
-   **Remaining:** referral Beans (§7). ✅ **`purchase` analytics** now emitted on every
+   **Remaining:** referral Beans (§6). ✅ **`purchase` analytics** now emitted on every
    Beans purchase (`BeansNotifier.creditPurchase` → `AnalyticsService.emit('purchase',
    {beans, product})`, on `v3`). **`refund` analytics** is deferred — refunds aren't
    client-observable; they'd need **App Store Server Notifications v2** (a server webhook),
@@ -290,16 +295,7 @@ is now a single plated dish so the AI estimate reads cleanly (~420 kcal, not a 2
    image dominates input and is uncacheable). Left in place (harmless; auto-engages if the
    prefix grows); dashboard shows "off" when not engaging. Still open: tighten
    prompt/`max_tokens`, optional confidence-based Haiku→Sonnet escalation.
-5. **Rate-the-app prompt after 5 opens — ✅ DONE on `v3`** (2026-06-17). The native
-   `SKStoreReviewController` prompt fires once, on the 5th app open, via the
-   `in_app_review` package. [`app_review_service.dart`](lib/src/data/app_review_service.dart):
-   an `AppReviewService` interface (so tests inject a fake) + `AppReviewPrompter` that
-   counts opens in prefs (`app_open_count`) and asks once (`app_review_requested`).
-   Driven from [`home_shell.dart`](lib/src/features/home/home_shell.dart) `initState` —
-   the home shell only mounts post-onboarding, so new users aren't asked. Unit-tested
-   (asks exactly on the 5th open, never twice, skips when the OS prompt is unavailable).
-   Ships with the next version (already on `v3`).
-6. **Enable in-WeChat open / download (WeChat Open Platform / Mini Program)** *(you —
+5. **Enable in-WeChat open / download (WeChat Open Platform / Mini Program)** *(you —
    needs a verified WeChat account)* — WeChat's in-app browser **blocks iOS Universal
    Links and App Store redirects**, so a shared `foodatpeace.app/i/<handle>` can't
    natively open or install the app inside WeChat; the landing page can only fall back
@@ -314,7 +310,7 @@ is now a single plated dish so the AI estimate reads cleanly (~420 kcal, not a 2
    - Prereq: a **verified business entity** (营业执照 — China-registered company, or a
      third-party agent), ~300 RMB/yr verification. Then add the WeChat SDK + a new iOS
      build. Until then, the landing page's Safari hand-off is the supported WeChat path.
-7. **Referral / new-user Beans** *(growth — pairs with the invite links + §2 IAP)* —
+6. **Referral / new-user Beans** *(growth — pairs with the invite links + §2 IAP)* —
    reward Beans through the invite loop. New users **already** get a **100-Bean welcome
    grant** on first launch (`BeanPricing.signupGrant`, granted locally in
    `BeansNotifier.build`). Add a **referral bonus**: when someone installs via an
@@ -325,7 +321,7 @@ is now a single plated dish so the AI estimate reads cleanly (~420 kcal, not a 2
    handle from link → install → first sign-in, e.g. deferred deep link / pasteboard
    match against `circle.connect`), **one-reward-per-new-account** anti-abuse, and a
    "you earned N Beans 🫘" notice.
-8. **Eva — a daily "life lesson" everyone follows** *(engagement)* — **✅ SHIPPED as a
+7. **Eva — a daily "life lesson" everyone follows** *(engagement)* — **✅ SHIPPED as a
    story on `v3`** (2026-06-17→18): the "Your circle" strip on Trends now leads with a
    **You** story (tap → a **full-screen, Instagram-style "Food story"** of *today's whole
    food log* — one page per logged meal, name/kcal/macros; a "scan a meal" nudge if none)
@@ -385,7 +381,7 @@ is now a single plated dish so the AI estimate reads cleanly (~420 kcal, not a 2
    client-side pinned card** (no backend — simplest). Keep any bundled-config/asset
    changes backward-compatible per the `production-safety` skill.
 
-9. **Make the micro Bean pack a REAL production IAP (not debug-only)** —
+8. **Make the micro Bean pack a REAL production IAP (not debug-only)** —
    **DECISION (2026-06): `beans_25` = 25 Beans @ S$0.48** (Apple's actual SGD floor — there's
    no 0.49 SGD point; a literal 1-Bean/S$0.02 can't be sold). **Client + server code landed
    on `v3`:** `beans_25` added to `BeanPricing.packs`

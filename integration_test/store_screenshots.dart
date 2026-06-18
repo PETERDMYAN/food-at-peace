@@ -32,6 +32,7 @@ import 'package:food_at_peace/src/features/add/add_entry_screen.dart';
 import 'package:food_at_peace/src/features/circle/circle_feed_screen.dart';
 import 'package:food_at_peace/src/features/home/home_shell.dart';
 import 'package:food_at_peace/src/features/settings/data_sources_screen.dart';
+import 'package:food_at_peace/src/features/settings/reminders_screen.dart';
 import 'package:food_at_peace/src/features/wallet/beans_screen.dart';
 import 'package:food_at_peace/src/models/bean_transaction.dart';
 import 'package:food_at_peace/src/models/circle_post.dart';
@@ -76,6 +77,14 @@ class _CleanSync extends SyncEngine {
   @override
   SyncState build() =>
       SyncState(phase: SyncPhase.idle, lastSyncedAt: DateTime.now());
+}
+
+/// Forces the Circle-activity toggle to a fixed state for the before/after shot.
+class _FixedCircleNotify extends CircleNotifyNotifier {
+  _FixedCircleNotify(this.value);
+  final bool value;
+  @override
+  bool build() => value;
 }
 
 /// Health is irrelevant for screenshots — report unsupported so nothing tries to
@@ -442,5 +451,37 @@ void main() {
     // ── 7) Data sources — active-energy source priority ────────────────
     await mount(const DataSourcesScreen());
     await shot(t, '15-data-sources', settle: 1800);
+
+    // ── 8) Circle activity notifications — on by default (before/after) ─
+    Future<void> reminders(String name, bool on) async {
+      mountSeq += 1;
+      await t.pumpWidget(
+        ProviderScope(
+          // A distinct key per pump → a fresh scope, so adding the circle
+          // override doesn't trip Riverpod's "overrides length changed" assert
+          // against the previous (un-keyed) scope.
+          key: ValueKey('scope-$mountSeq'),
+          overrides: [
+            ...signedInOverrides,
+            circleNotifyProvider.overrideWith(() => _FixedCircleNotify(on)),
+          ],
+          child: MaterialApp(
+            key: ValueKey('mount-$mountSeq'),
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.dark(),
+            locale: Locale(_loc),
+            localizationsDelegates: AppLocalizations.localizationsDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
+            home: const RemindersScreen(),
+          ),
+        ),
+      );
+      await beat(t, 1600);
+      await t.drag(find.byType(Scrollable).first, const Offset(0, -500));
+      await shot(t, name, settle: 1400);
+    }
+
+    await reminders('16-circle-off', false);
+    await reminders('16-circle-on', true);
   });
 }
