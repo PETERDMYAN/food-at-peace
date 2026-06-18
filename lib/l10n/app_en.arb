@@ -294,6 +294,13 @@
   "healthConnectBody": "Connect Apple Health to use your real calories burned (incl. Garmin), auto-sync your weight, see your workouts, and write logged food back.",
   "connectAppleHealth": "Connect Apple Health",
 
+  "dataSources": "Data sources",
+  "dataSourcesHeader": "Active-energy source",
+  "dataSourcesBody": "When more than one device writes active energy to Apple Health (e.g. Garmin and Apple Watch), Food at Peace uses your preferred source — otherwise it combines them. Garmin syncs in through Apple Health.",
+  "sourceAutomatic": "Automatic (combine all)",
+  "dataSourcesConnectFirst": "Connect Apple Health first to choose a source.",
+  "dataSourcesNone": "No active-energy sources found in Apple Health yet.",
+
   "language": "Language",
   "languageSystem": "System default",
   "languageEnglish": "English",

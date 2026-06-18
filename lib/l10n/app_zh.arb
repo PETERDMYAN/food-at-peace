@@ -168,6 +168,13 @@
   "healthConnectBody": "连接 Apple 健康即可使用真实消耗的卡路里（含 Garmin）、自动同步体重、查看锻炼，并把记录的食物写回健康。",
   "connectAppleHealth": "连接 Apple 健康",
 
+  "dataSources": "数据来源",
+  "dataSourcesHeader": "活动能量来源",
+  "dataSourcesBody": "当有多个设备向 Apple 健康写入活动能量时（例如 Garmin 和 Apple Watch），食之安会优先采用你选定的来源，否则会合并计算。Garmin 通过 Apple 健康同步进来。",
+  "sourceAutomatic": "自动（合并全部）",
+  "dataSourcesConnectFirst": "请先连接 Apple 健康再选择来源。",
+  "dataSourcesNone": "尚未在 Apple 健康中找到活动能量来源。",
+
   "language": "语言",
   "languageSystem": "跟随系统",
   "languageEnglish": "English",

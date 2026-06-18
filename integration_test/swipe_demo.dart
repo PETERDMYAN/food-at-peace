@@ -66,7 +66,10 @@ class _NoHealth implements HealthService {
   @override
   Future<double?> readLatestWeightKg() async => null;
   @override
-  Future<EnergyOut?> readEnergyOut(DateTime day) async => null;
+  Future<EnergyOut?> readEnergyOut(DateTime day, {String? preferredSource}) async =>
+      null;
+  @override
+  Future<List<String>> energySources() async => const [];
   @override
   Future<List<WorkoutSummary>> readWorkouts(DateTime day) async => const [];
   @override

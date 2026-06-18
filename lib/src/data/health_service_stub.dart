@@ -20,7 +20,11 @@ class _UnsupportedHealthService implements HealthService {
   Future<bool> hasPermissions() async => false;
 
   @override
-  Future<EnergyOut?> readEnergyOut(DateTime day) async => null;
+  Future<EnergyOut?> readEnergyOut(DateTime day, {String? preferredSource}) async =>
+      null;
+
+  @override
+  Future<List<String>> energySources() async => const [];
 
   @override
   Future<double?> readLatestWeightKg() async => null;

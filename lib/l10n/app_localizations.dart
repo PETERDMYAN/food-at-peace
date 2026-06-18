@@ -1064,6 +1064,42 @@ abstract class AppLocalizations {
   /// **'Connect Apple Health'**
   String get connectAppleHealth;
 
+  /// No description provided for @dataSources.
+  ///
+  /// In en, this message translates to:
+  /// **'Data sources'**
+  String get dataSources;
+
+  /// No description provided for @dataSourcesHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'Active-energy source'**
+  String get dataSourcesHeader;
+
+  /// No description provided for @dataSourcesBody.
+  ///
+  /// In en, this message translates to:
+  /// **'When more than one device writes active energy to Apple Health (e.g. Garmin and Apple Watch), Food at Peace uses your preferred source — otherwise it combines them. Garmin syncs in through Apple Health.'**
+  String get dataSourcesBody;
+
+  /// No description provided for @sourceAutomatic.
+  ///
+  /// In en, this message translates to:
+  /// **'Automatic (combine all)'**
+  String get sourceAutomatic;
+
+  /// No description provided for @dataSourcesConnectFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Connect Apple Health first to choose a source.'**
+  String get dataSourcesConnectFirst;
+
+  /// No description provided for @dataSourcesNone.
+  ///
+  /// In en, this message translates to:
+  /// **'No active-energy sources found in Apple Health yet.'**
+  String get dataSourcesNone;
+
   /// No description provided for @language.
   ///
   /// In en, this message translates to:

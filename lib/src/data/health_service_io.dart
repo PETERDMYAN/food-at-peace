@@ -73,7 +73,7 @@ class HealthKitService implements HealthService {
   }
 
   @override
-  Future<EnergyOut?> readEnergyOut(DateTime day) async {
+  Future<EnergyOut?> readEnergyOut(DateTime day, {String? preferredSource}) async {
     if (!isSupported) return null;
     await _health.configure();
     final w = _window(day);
@@ -95,14 +95,17 @@ class HealthKitService implements HealthService {
     // Remove overlapping duplicates (e.g. Garmin + Apple Watch both writing).
     final deduped = _health.removeDuplicates(points);
 
-    var active = 0.0, resting = 0.0;
+    // Active energy keeps its source so a preferred device can win; resting
+    // (basal) is combined across sources.
+    final activePts = <ActiveEnergyPoint>[];
+    var resting = 0.0;
     var hasActive = false, hasResting = false;
     for (final p in deduped) {
       final value = p.value;
       if (value is! NumericHealthValue) continue;
       final kcal = value.numericValue.toDouble();
       if (p.type == HealthDataType.ACTIVE_ENERGY_BURNED) {
-        active += kcal;
+        activePts.add((source: p.sourceName, kcal: kcal));
         hasActive = true;
       } else if (p.type == HealthDataType.BASAL_ENERGY_BURNED) {
         resting += kcal;
@@ -111,10 +114,36 @@ class HealthKitService implements HealthService {
     }
     if (!hasActive && !hasResting) return null;
     return EnergyOut(
-      activeEnergy: active,
+      activeEnergy: sumActiveEnergy(activePts, preferredSource),
       restingEnergy: hasResting ? resting : null,
       asOf: w.end,
     );
+  }
+
+  @override
+  Future<List<String>> energySources() async {
+    if (!isSupported) return const [];
+    await _health.configure();
+    final now = DateTime.now();
+    final List<HealthDataPoint> points;
+    try {
+      points = await _health.getHealthDataFromTypes(
+        types: const [HealthDataType.ACTIVE_ENERGY_BURNED],
+        startTime: now.subtract(const Duration(days: 14)),
+        endTime: now,
+      );
+    } catch (_) {
+      return const [];
+    }
+    // Distinct source names, most-recently-seen first.
+    final seen = <String>{};
+    final ordered = <String>[];
+    for (final p in points.reversed) {
+      if (p.sourceName.isNotEmpty && seen.add(p.sourceName)) {
+        ordered.add(p.sourceName);
+      }
+    }
+    return ordered;
   }
 
   @override

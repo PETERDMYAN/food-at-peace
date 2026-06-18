@@ -25,6 +25,7 @@ import '../../widgets/story_avatar.dart';
 import '../feedback/feedback_screen.dart';
 import '../sources/sources_screen.dart';
 import '../wallet/beans_screen.dart';
+import 'data_sources_screen.dart';
 import 'edit_profile_dialog.dart';
 import 'reminders_screen.dart';
 
@@ -296,6 +297,8 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             const _AccountCard(),
             const SizedBox(height: 12),
             const _HealthCard(),
+            const SizedBox(height: 12),
+            const _DataSourcesTile(),
             const SizedBox(height: 12),
             const _RemindersTile(),
             const SizedBox(height: 12),
@@ -775,6 +778,56 @@ class _BeansTile extends ConsumerWidget {
                   children: [
                     Text(
                       t.beans,
+                      style: Theme.of(context).textTheme.titleSmall,
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      status,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: scheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(Icons.chevron_right, color: scheme.onSurfaceVariant),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Entry point to the Data Sources screen — which device's active energy counts
+/// (Garmin / Apple Watch / iPhone, via Apple Health). Shows the current pick.
+class _DataSourcesTile extends ConsumerWidget {
+  const _DataSourcesTile();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final t = AppLocalizations.of(context);
+    final scheme = Theme.of(context).colorScheme;
+    final preferred = ref.watch(energySourcePriorityProvider);
+    final status = preferred ?? t.sourceAutomatic;
+    return Card(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(26),
+        onTap: () => Navigator.of(
+          context,
+        ).push(MaterialPageRoute(builder: (_) => const DataSourcesScreen())),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              IconTile(icon: Icons.dataset_outlined, color: scheme.primary),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      t.dataSources,
                       style: Theme.of(context).textTheme.titleSmall,
                     ),
                     const SizedBox(height: 2),

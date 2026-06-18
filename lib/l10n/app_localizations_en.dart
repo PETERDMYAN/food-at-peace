@@ -566,6 +566,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String get connectAppleHealth => 'Connect Apple Health';
 
   @override
+  String get dataSources => 'Data sources';
+
+  @override
+  String get dataSourcesHeader => 'Active-energy source';
+
+  @override
+  String get dataSourcesBody =>
+      'When more than one device writes active energy to Apple Health (e.g. Garmin and Apple Watch), Food at Peace uses your preferred source — otherwise it combines them. Garmin syncs in through Apple Health.';
+
+  @override
+  String get sourceAutomatic => 'Automatic (combine all)';
+
+  @override
+  String get dataSourcesConnectFirst =>
+      'Connect Apple Health first to choose a source.';
+
+  @override
+  String get dataSourcesNone =>
+      'No active-energy sources found in Apple Health yet.';
+
+  @override
   String get language => 'Language';
 
   @override

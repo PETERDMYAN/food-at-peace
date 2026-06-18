@@ -430,13 +430,52 @@ final healthConnectedProvider = NotifierProvider<HealthConnectedNotifier, bool>(
   HealthConnectedNotifier.new,
 );
 
+/// The user's preferred active-energy source (a HealthKit source name like
+/// "Garmin Connect"); null = Automatic (combine all sources). Persisted, so the
+/// choice sticks; changing it re-pulls [energyOutProvider].
+class EnergySourcePriorityNotifier extends Notifier<String?> {
+  static const _prefsKey = 'energy_source_priority';
+
+  @override
+  String? build() {
+    final v = ref.read(sharedPreferencesProvider).getString(_prefsKey);
+    return (v == null || v.isEmpty) ? null : v;
+  }
+
+  Future<void> set(String? source) async {
+    state = (source == null || source.isEmpty) ? null : source;
+    final prefs = ref.read(sharedPreferencesProvider);
+    if (state == null) {
+      await prefs.remove(_prefsKey);
+    } else {
+      await prefs.setString(_prefsKey, state!);
+    }
+  }
+}
+
+final energySourcePriorityProvider =
+    NotifierProvider<EnergySourcePriorityNotifier, String?>(
+      EnergySourcePriorityNotifier.new,
+    );
+
+/// The selectable data sources writing active energy to Apple Health (e.g.
+/// "Garmin Connect", "Apple Watch"). Empty when unsupported / not connected.
+final energySourcesProvider = FutureProvider<List<String>>((ref) async {
+  final connected = ref.watch(healthConnectedProvider);
+  if (!connected) return const [];
+  return ref.read(healthServiceProvider).energySources();
+});
+
 /// Measured "calories out" for the selected day (null when unsupported,
-/// not connected, or no data).
+/// not connected, or no data). Honors the preferred active-energy source.
 final energyOutProvider = FutureProvider<EnergyOut?>((ref) async {
   final connected = ref.watch(healthConnectedProvider);
   if (!connected) return null;
   final date = ref.watch(selectedDateProvider);
-  return ref.read(healthServiceProvider).readEnergyOut(date);
+  final preferred = ref.watch(energySourcePriorityProvider);
+  return ref
+      .read(healthServiceProvider)
+      .readEnergyOut(date, preferredSource: preferred);
 });
 
 /// Most recent body weight (kg) from Apple Health, e.g. a Garmin/Fitdays scale.

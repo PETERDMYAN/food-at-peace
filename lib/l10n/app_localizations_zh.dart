@@ -551,6 +551,25 @@ class AppLocalizationsZh extends AppLocalizations {
   String get connectAppleHealth => '连接 Apple 健康';
 
   @override
+  String get dataSources => '数据来源';
+
+  @override
+  String get dataSourcesHeader => '活动能量来源';
+
+  @override
+  String get dataSourcesBody =>
+      '当有多个设备向 Apple 健康写入活动能量时（例如 Garmin 和 Apple Watch），食之安会优先采用你选定的来源，否则会合并计算。Garmin 通过 Apple 健康同步进来。';
+
+  @override
+  String get sourceAutomatic => '自动（合并全部）';
+
+  @override
+  String get dataSourcesConnectFirst => '请先连接 Apple 健康再选择来源。';
+
+  @override
+  String get dataSourcesNone => '尚未在 Apple 健康中找到活动能量来源。';
+
+  @override
   String get language => '语言';
 
   @override

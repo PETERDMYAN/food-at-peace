@@ -31,6 +31,7 @@ import 'package:food_at_peace/src/data/sync_engine.dart';
 import 'package:food_at_peace/src/features/add/add_entry_screen.dart';
 import 'package:food_at_peace/src/features/circle/circle_feed_screen.dart';
 import 'package:food_at_peace/src/features/home/home_shell.dart';
+import 'package:food_at_peace/src/features/settings/data_sources_screen.dart';
 import 'package:food_at_peace/src/features/wallet/beans_screen.dart';
 import 'package:food_at_peace/src/models/bean_transaction.dart';
 import 'package:food_at_peace/src/models/circle_post.dart';
@@ -95,7 +96,11 @@ class _NoHealth implements HealthService {
   @override
   Future<double?> readLatestWeightKg() async => null;
   @override
-  Future<EnergyOut?> readEnergyOut(DateTime day) async => null;
+  Future<EnergyOut?> readEnergyOut(DateTime day, {String? preferredSource}) async =>
+      null;
+  @override
+  Future<List<String>> energySources() async =>
+      const ['Garmin Connect', 'Apple Watch', 'Eva’s iPhone'];
   @override
   Future<List<WorkoutSummary>> readWorkouts(DateTime day) async => const [];
   @override
@@ -317,6 +322,9 @@ void main() {
       'beans_granted': true,
       'beans_ledger_v1': jsonEncode([for (final b in _seedBeans()) b.toJson()]),
       'reminders_enabled': false,
+      // Health connected + a chosen active-energy source, for the Data Sources shot.
+      'health_connected': true,
+      'energy_source_priority': 'Garmin Connect',
     });
     final prefs = await SharedPreferences.getInstance();
 
@@ -430,5 +438,9 @@ void main() {
     // ── 6) Add (manual + photo scan entry) ─────────────────────────────
     await mount(const AddEntryScreen());
     await shot(t, '05-add', settle: 2200);
+
+    // ── 7) Data sources — active-energy source priority ────────────────
+    await mount(const DataSourcesScreen());
+    await shot(t, '15-data-sources', settle: 1800);
   });
 }

@@ -24,7 +24,10 @@ class _FakeHealth implements HealthService {
   @override
   Future<bool> hasPermissions() async => true;
   @override
-  Future<EnergyOut?> readEnergyOut(DateTime day) async => null;
+  Future<EnergyOut?> readEnergyOut(DateTime day, {String? preferredSource}) async =>
+      null;
+  @override
+  Future<List<String>> energySources() async => const [];
   @override
   Future<double?> readLatestWeightKg() async => weightKg;
   @override

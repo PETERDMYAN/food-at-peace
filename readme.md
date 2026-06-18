@@ -10,7 +10,9 @@ for real calories burned, and speaks **English and 中文**. Built with Flutter.
 > set** (EN + 简体中文, incl. Circle + Beans), Circle/Beans in the EN/中文 descriptions, an
 > EN subtitle, and a new 简体中文 localization with the CN name **食之安**. Build 14 points
 > at the migrated prod backend, all 5 Beans consumables attached, **auto-release on
-> approval**). **Next up: `v3` build `1.0.2 (24)` is on TestFlight** (prod backend). Build (24)
+> approval**). **Next up: `v3` build `1.0.2 (25)` is on TestFlight** (prod backend). Build (25)
+> adds **Data sources** in Settings — choose which device's active energy takes priority when
+> several (Garmin, Apple Watch, iPhone) write to Apple Health. Build (24)
 > has **"Take daily" foods** — tap an item in 今日饮食 to mark a supplement/staple as daily,
 > counted every day with a Daily badge, no re-logging (the post-save prompt from build 23 was
 > removed per feedback). It also **fixes Food-story delete** so it no longer removes the

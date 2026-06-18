@@ -81,9 +81,16 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
     [`circle_feed_screen.dart`](lib/src/features/circle/circle_feed_screen.dart)).
     The **story keeps the full-resolution photo**; the AI estimate uses a downscaled
     1024px copy.
-- **TestFlight / App Store** — **`v3` build `1.0.2 (24)` uploaded to TestFlight** (2026-06-18,
-  prod backend, `/tmp/fap_rec/build24.sh`) — **"Take daily" recurring foods + story-delete
-  fix**:
+- **TestFlight / App Store** — **`v3` build `1.0.2 (25)` uploaded to TestFlight** (2026-06-18,
+  prod backend, `/tmp/fap_rec/build25.sh`) — **Data sources + active-energy priority**:
+  Settings ▸ **Data sources** ([`data_sources_screen.dart`](lib/src/features/settings/data_sources_screen.dart))
+  lists each device writing active energy to Apple Health (Garmin Connect / Apple Watch /
+  iPhone — discovered via `HealthService.energySources()`) and lets you pick which **takes
+  priority**; the choice persists (`energySourcePriorityProvider`) and `readEnergyOut`
+  honors it (pure, tested `sumActiveEnergy`: preferred source wins when it has data, else
+  combine). A *fully direct* Garmin link is out of scope (needs Garmin's Developer Program +
+  a backend); Garmin still flows via Apple Health. (24) **"Take daily" recurring foods +
+  story-delete fix**:
   - A [`FoodEntry.recurring`](lib/src/models/food_entry.dart) flag marks a supplement / daily
     staple; logged **once**, it's counted on **every** day from its start (Today list + daily
     summary via `entriesForSelectedDayProvider` (sorted into its time-of-day slot per day), and

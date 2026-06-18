@@ -23,8 +23,16 @@ abstract interface class HealthService {
   Future<bool> hasPermissions();
 
   /// Active + resting energy burned for [day] (up to now if today), or null if
-  /// unavailable / not permitted / no data.
-  Future<EnergyOut?> readEnergyOut(DateTime day);
+  /// unavailable / not permitted / no data. When [preferredSource] is set and it
+  /// has active-energy data that day, only that source's active energy is counted
+  /// (so a chosen device — e.g. Garmin — wins over others writing to Health);
+  /// otherwise all sources are combined.
+  Future<EnergyOut?> readEnergyOut(DateTime day, {String? preferredSource});
+
+  /// Distinct source names (e.g. "Garmin Connect", "Apple Watch", "iPhone") that
+  /// have written **active energy** to the health store recently — the selectable
+  /// data sources. Empty when unavailable / not permitted / none found.
+  Future<List<String>> energySources();
 
   /// The most recent body weight in kg (e.g. from a Garmin/Fitdays scale synced
   /// via Apple Health), or null if unavailable.
@@ -59,3 +67,20 @@ abstract interface class HealthService {
 
 /// Platform-appropriate instance (real on mobile, stub on web).
 HealthService createHealthService() => makeHealthService();
+
+/// One active-energy sample reduced to its source + kcal.
+typedef ActiveEnergyPoint = ({String source, double kcal});
+
+/// Sum active energy, honoring [preferred] when that source has data: if the
+/// preferred source contributed any points, only its points count (avoids
+/// double-counting a second device); otherwise everything is summed. Pure +
+/// unit-tested so the source-priority rule is verifiable without HealthKit.
+double sumActiveEnergy(List<ActiveEnergyPoint> points, String? preferred) {
+  if (preferred != null && preferred.isNotEmpty) {
+    final pref = points.where((p) => p.source == preferred).toList();
+    if (pref.isNotEmpty) {
+      return pref.fold(0.0, (s, p) => s + p.kcal);
+    }
+  }
+  return points.fold(0.0, (s, p) => s + p.kcal);
+}
