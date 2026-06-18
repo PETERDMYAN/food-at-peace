@@ -111,12 +111,6 @@
   "repeatDaily": "每天记录",
   "repeatDailyHint": "适合补剂或每日常吃的食物——每天都会计入，无需重复记录",
   "dailyBadge": "每天",
-  "takeDailyTitle": "每天都吃吗？",
-  "takeDailyBody": "把「{name}」当作补剂一样每天计入？你随时可以在「今日」中修改。",
-  "@takeDailyBody": {
-    "placeholders": { "name": { "type": "String" } }
-  },
-  "takeDailyJustToday": "仅这一次",
   "saveEntry": "保存记录",
   "required": "必填",
   "enterValidNumber": "请输入有效数字",

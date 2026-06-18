@@ -374,17 +374,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get dailyBadge => '每天';
 
   @override
-  String get takeDailyTitle => '每天都吃吗？';
-
-  @override
-  String takeDailyBody(String name) {
-    return '把「$name」当作补剂一样每天计入？你随时可以在「今日」中修改。';
-  }
-
-  @override
-  String get takeDailyJustToday => '仅这一次';
-
-  @override
   String get saveEntry => '保存记录';
 
   @override

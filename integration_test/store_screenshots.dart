@@ -430,17 +430,5 @@ void main() {
     // ── 6) Add (manual + photo scan entry) ─────────────────────────────
     await mount(const AddEntryScreen());
     await shot(t, '05-add', settle: 2200);
-    // Fill a manual entry + Save → the post-save "Take this daily?" prompt.
-    final fields = find.byType(TextFormField);
-    await t.enterText(fields.at(0), _s('Vitamin C', '维生素C')); // name
-    await t.enterText(fields.at(1), '20'); // calories
-    await beat(t, 500);
-    await t.tap(
-      find.descendant(
-        of: find.byType(AppBar),
-        matching: find.text(_s('Save', '保存')),
-      ),
-    );
-    await shot(t, '14-takedaily-prompt', settle: 1600);
   });
 }

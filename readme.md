@@ -10,11 +10,11 @@ for real calories burned, and speaks **English and 中文**. Built with Flutter.
 > set** (EN + 简体中文, incl. Circle + Beans), Circle/Beans in the EN/中文 descriptions, an
 > EN subtitle, and a new 简体中文 localization with the CN name **食之安**. Build 14 points
 > at the migrated prod backend, all 5 Beans consumables attached, **auto-release on
-> approval**). **Next up: `v3` build `1.0.2 (23)` is on TestFlight** (prod backend). Build (23)
-> adds **"Take daily" foods** — after you save a food it asks whether to take it daily (a
-> supplement/staple), counted every day with a Daily badge, no re-logging; you can also toggle
-> it by tapping an item in 今日饮食. It also **fixes Food-story delete** so it no longer removes
-> the food-log entry. Build (22)
+> approval**). **Next up: `v3` build `1.0.2 (24)` is on TestFlight** (prod backend). Build (24)
+> has **"Take daily" foods** — tap an item in 今日饮食 to mark a supplement/staple as daily,
+> counted every day with a Daily badge, no re-logging (the post-save prompt from build 23 was
+> removed per feedback). It also **fixes Food-story delete** so it no longer removes the
+> food-log entry. Build (22)
 > makes the stories a **tray** — swiping past the end of your food story rolls into **Eva's**
 > story instead of closing — and bumps the **synced photo to 1080px** so it looks crisp on
 > every device. Build (21) added **left/right swipe** navigation (tap still works). Build (20)

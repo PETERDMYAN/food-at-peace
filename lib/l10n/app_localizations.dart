@@ -734,24 +734,6 @@ abstract class AppLocalizations {
   /// **'Daily'**
   String get dailyBadge;
 
-  /// No description provided for @takeDailyTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Take this daily?'**
-  String get takeDailyTitle;
-
-  /// No description provided for @takeDailyBody.
-  ///
-  /// In en, this message translates to:
-  /// **'Count {name} every day, like a supplement? You can change this anytime from Today.'**
-  String takeDailyBody(String name);
-
-  /// No description provided for @takeDailyJustToday.
-  ///
-  /// In en, this message translates to:
-  /// **'Just this time'**
-  String get takeDailyJustToday;
-
   /// No description provided for @saveEntry.
   ///
   /// In en, this message translates to:

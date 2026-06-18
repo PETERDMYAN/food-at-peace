@@ -216,12 +216,6 @@
   "repeatDaily": "Take daily",
   "repeatDailyHint": "For a supplement or daily staple — counts every day, no need to re-log",
   "dailyBadge": "Daily",
-  "takeDailyTitle": "Take this daily?",
-  "takeDailyBody": "Count {name} every day, like a supplement? You can change this anytime from Today.",
-  "@takeDailyBody": {
-    "placeholders": { "name": { "type": "String" } }
-  },
-  "takeDailyJustToday": "Just this time",
   "saveEntry": "Save entry",
   "required": "Required",
   "enterValidNumber": "Enter a valid number",

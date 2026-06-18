@@ -384,17 +384,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dailyBadge => 'Daily';
 
   @override
-  String get takeDailyTitle => 'Take this daily?';
-
-  @override
-  String takeDailyBody(String name) {
-    return 'Count $name every day, like a supplement? You can change this anytime from Today.';
-  }
-
-  @override
-  String get takeDailyJustToday => 'Just this time';
-
-  @override
   String get saveEntry => 'Save entry';
 
   @override
