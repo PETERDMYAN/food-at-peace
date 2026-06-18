@@ -1034,6 +1034,51 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get feedPostMenu => 'Post options';
+
+  @override
+  String get feedReport => 'Report';
+
+  @override
+  String get feedUnfollow => 'Unfollow';
+
+  @override
+  String get feedReportTitle => 'Report this post';
+
+  @override
+  String get feedReportSpam => 'Spam or scam';
+
+  @override
+  String get feedReportNudity => 'Nudity or sexual content';
+
+  @override
+  String get feedReportHarassment => 'Harassment or bullying';
+
+  @override
+  String get feedReportViolence => 'Violence or harmful content';
+
+  @override
+  String get feedReportOther => 'Something else';
+
+  @override
+  String get feedReportThanks =>
+      'Thanks for reporting. We review reports and remove violating content within 24 hours. You can also unfollow this person to stop seeing their posts.';
+
+  @override
+  String feedUnfollowTitle(String name) {
+    return 'Unfollow $name?';
+  }
+
+  @override
+  String get feedUnfollowBody =>
+      'You\'ll stop seeing each other\'s posts, and they\'ll be removed from your circle.';
+
+  @override
+  String feedUnfollowed(String name) {
+    return 'Unfollowed $name.';
+  }
+
+  @override
   String get todayLabel => 'Today';
 
   @override

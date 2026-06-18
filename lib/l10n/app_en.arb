@@ -486,6 +486,25 @@
   "@feedReceived": {
     "placeholders": { "count": { "type": "int" } }
   },
+  "feedPostMenu": "Post options",
+  "feedReport": "Report",
+  "feedUnfollow": "Unfollow",
+  "feedReportTitle": "Report this post",
+  "feedReportSpam": "Spam or scam",
+  "feedReportNudity": "Nudity or sexual content",
+  "feedReportHarassment": "Harassment or bullying",
+  "feedReportViolence": "Violence or harmful content",
+  "feedReportOther": "Something else",
+  "feedReportThanks": "Thanks for reporting. We review reports and remove violating content within 24 hours. You can also unfollow this person to stop seeing their posts.",
+  "feedUnfollowTitle": "Unfollow {name}?",
+  "@feedUnfollowTitle": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "feedUnfollowBody": "You'll stop seeing each other's posts, and they'll be removed from your circle.",
+  "feedUnfollowed": "Unfollowed {name}.",
+  "@feedUnfollowed": {
+    "placeholders": { "name": { "type": "String" } }
+  },
   "todayLabel": "Today",
   "streakLabel": "Streak",
   "streakDays": "{count} days",

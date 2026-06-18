@@ -433,6 +433,36 @@ void main() {
     await mount(const CircleFeedScreen());
     await shot(t, '03-circle', settle: 5200); // let the photos download
 
+    // ── 4b) Per-post ⋯ menu → Report / Unfollow (Apple 1.2 UGC moderation) ─
+    final more = find.byIcon(Icons.more_horiz);
+    if (more.evaluate().isNotEmpty) {
+      await t.tap(more.first); // Eva's post (not mine → has the ⋯)
+      await beat(t, 900);
+      await shot(t, '17-post-menu', settle: 900);
+      final report = find.text(_s('Report', '举报'));
+      if (report.evaluate().isNotEmpty) {
+        await t.tap(report.first);
+        await beat(t, 900);
+        await shot(t, '18-report-sheet', settle: 900); // reason picker
+        await t.tapAt(const Offset(200, 40)); // dismiss the sheet scrim
+        await beat(t, 800);
+      }
+      final more2 = find.byIcon(Icons.more_horiz);
+      if (more2.evaluate().isNotEmpty) {
+        await t.tap(more2.first);
+        await beat(t, 900);
+        final unfollow = find.text(_s('Unfollow', '取消关注'));
+        if (unfollow.evaluate().isNotEmpty) {
+          await t.tap(unfollow.first);
+          await beat(t, 900);
+          await shot(t, '19-unfollow', settle: 900); // confirm dialog
+          final cancel = find.text(_s('Cancel', '取消'));
+          if (cancel.evaluate().isNotEmpty) await t.tap(cancel.first);
+          await beat(t, 600);
+        }
+      }
+    }
+
     // ── 5) Beans wallet (balance + history) ────────────────────────────
     await mount(const BeansScreen());
     await shot(t, '04-beans', settle: 2200);

@@ -7,9 +7,9 @@ import '../../providers/providers.dart';
 import '../../widgets/story_avatar.dart';
 
 Future<void> showCircleFeed(BuildContext context) {
-  return Navigator.of(context).push(
-    MaterialPageRoute(builder: (_) => const CircleFeedScreen()),
-  );
+  return Navigator.of(
+    context,
+  ).push(MaterialPageRoute(builder: (_) => const CircleFeedScreen()));
 }
 
 /// The circle photo feed: friends' (and your own) shared meals, with emoji
@@ -32,26 +32,37 @@ class CircleFeedScreen extends ConsumerWidget {
               Padding(padding: const EdgeInsets.all(24), child: Text('$e')),
             ],
           ),
-          data: (posts) => posts.isEmpty
-              ? ListView(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(28, 96, 28, 24),
-                      child: Text(
-                        t.feedEmpty,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+          data: (posts) {
+            // Drop locally hidden posts (reported, or authored by someone the
+            // viewer unfollowed) so flagged content disappears immediately.
+            final hidden = ref.watch(hiddenPostsProvider);
+            final visible = [
+              for (final p in posts)
+                if (!hidden.contains(p.postId)) p,
+            ];
+            return visible.isEmpty
+                ? ListView(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(28, 96, 28, 24),
+                        child: Text(
+                          t.feedEmpty,
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
+                          ),
                         ),
                       ),
-                    ),
-                  ],
-                )
-              : ListView.builder(
-                  padding: const EdgeInsets.fromLTRB(12, 10, 12, 32),
-                  itemCount: posts.length,
-                  itemBuilder: (_, i) => _PostCard(post: posts[i]),
-                ),
+                    ],
+                  )
+                : ListView.builder(
+                    padding: const EdgeInsets.fromLTRB(12, 10, 12, 32),
+                    itemCount: visible.length,
+                    itemBuilder: (_, i) => _PostCard(post: visible[i]),
+                  );
+          },
         ),
       ),
     );
@@ -87,6 +98,35 @@ class _PostCard extends ConsumerWidget {
             ),
             title: Text(title, style: text.titleSmall),
             subtitle: Text(sub),
+            // No moderation actions on your own post.
+            trailing: post.mine
+                ? null
+                : PopupMenuButton<String>(
+                    icon: const Icon(Icons.more_horiz),
+                    tooltip: t.feedPostMenu,
+                    onSelected: (v) {
+                      if (v == 'report') _report(context, ref, t);
+                      if (v == 'unfollow') _unfollow(context, ref, t, title);
+                    },
+                    itemBuilder: (_) => [
+                      PopupMenuItem(
+                        value: 'report',
+                        child: ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: const Icon(Icons.flag_outlined),
+                          title: Text(t.feedReport),
+                        ),
+                      ),
+                      PopupMenuItem(
+                        value: 'unfollow',
+                        child: ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: const Icon(Icons.person_remove_outlined),
+                          title: Text(t.feedUnfollow),
+                        ),
+                      ),
+                    ],
+                  ),
           ),
           if (post.photoUrl != null)
             AspectRatio(
@@ -144,6 +184,90 @@ class _PostCard extends ConsumerWidget {
     } catch (_) {
       // A failed reaction shouldn't surface; the next refresh reconciles.
     }
+  }
+
+  /// Apple Guideline 1.2: let the viewer flag objectionable content. Pick a
+  /// reason, then hide the post immediately and confirm we act within 24h.
+  Future<void> _report(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations t,
+  ) async {
+    final reason = await showModalBottomSheet<String>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetCtx) => SafeArea(
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 4, 20, 8),
+                child: Text(
+                  t.feedReportTitle,
+                  style: Theme.of(sheetCtx).textTheme.titleMedium,
+                ),
+              ),
+              for (final r in [
+                t.feedReportSpam,
+                t.feedReportNudity,
+                t.feedReportHarassment,
+                t.feedReportViolence,
+                t.feedReportOther,
+              ])
+                ListTile(
+                  title: Text(r),
+                  onTap: () => Navigator.of(sheetCtx).pop(r),
+                ),
+              const SizedBox(height: 8),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (reason == null) return;
+    // Client-side moderation: the post vanishes for the reporter at once.
+    await ref.read(hiddenPostsProvider.notifier).hide(post.postId);
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(t.feedReportThanks)));
+  }
+
+  /// Apple Guideline 1.2: let the viewer block an abusive user. Removes the
+  /// friendship (server-side, so they stop seeing each other) and hides the post.
+  Future<void> _unfollow(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations t,
+    String name,
+  ) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (dialogCtx) => AlertDialog(
+        title: Text(t.feedUnfollowTitle(name)),
+        content: Text(t.feedUnfollowBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogCtx).pop(false),
+            child: Text(t.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogCtx).pop(true),
+            child: Text(t.feedUnfollow),
+          ),
+        ],
+      ),
+    );
+    if (ok != true) return;
+    await ref.read(circleProvider.notifier).remove(post.authorId);
+    await ref.read(hiddenPostsProvider.notifier).hide(post.postId);
+    ref.invalidate(circleFeedProvider);
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(t.feedUnfollowed(name))));
   }
 
   static String _initials(String name) {

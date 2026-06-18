@@ -1916,6 +1916,84 @@ abstract class AppLocalizations {
   /// **'{count} reactions'**
   String feedReceived(int count);
 
+  /// No description provided for @feedPostMenu.
+  ///
+  /// In en, this message translates to:
+  /// **'Post options'**
+  String get feedPostMenu;
+
+  /// No description provided for @feedReport.
+  ///
+  /// In en, this message translates to:
+  /// **'Report'**
+  String get feedReport;
+
+  /// No description provided for @feedUnfollow.
+  ///
+  /// In en, this message translates to:
+  /// **'Unfollow'**
+  String get feedUnfollow;
+
+  /// No description provided for @feedReportTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Report this post'**
+  String get feedReportTitle;
+
+  /// No description provided for @feedReportSpam.
+  ///
+  /// In en, this message translates to:
+  /// **'Spam or scam'**
+  String get feedReportSpam;
+
+  /// No description provided for @feedReportNudity.
+  ///
+  /// In en, this message translates to:
+  /// **'Nudity or sexual content'**
+  String get feedReportNudity;
+
+  /// No description provided for @feedReportHarassment.
+  ///
+  /// In en, this message translates to:
+  /// **'Harassment or bullying'**
+  String get feedReportHarassment;
+
+  /// No description provided for @feedReportViolence.
+  ///
+  /// In en, this message translates to:
+  /// **'Violence or harmful content'**
+  String get feedReportViolence;
+
+  /// No description provided for @feedReportOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Something else'**
+  String get feedReportOther;
+
+  /// No description provided for @feedReportThanks.
+  ///
+  /// In en, this message translates to:
+  /// **'Thanks for reporting. We review reports and remove violating content within 24 hours. You can also unfollow this person to stop seeing their posts.'**
+  String get feedReportThanks;
+
+  /// No description provided for @feedUnfollowTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Unfollow {name}?'**
+  String feedUnfollowTitle(String name);
+
+  /// No description provided for @feedUnfollowBody.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'ll stop seeing each other\'s posts, and they\'ll be removed from your circle.'**
+  String get feedUnfollowBody;
+
+  /// No description provided for @feedUnfollowed.
+  ///
+  /// In en, this message translates to:
+  /// **'Unfollowed {name}.'**
+  String feedUnfollowed(String name);
+
   /// No description provided for @todayLabel.
   ///
   /// In en, this message translates to:

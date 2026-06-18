@@ -1003,6 +1003,50 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get feedPostMenu => '动态选项';
+
+  @override
+  String get feedReport => '举报';
+
+  @override
+  String get feedUnfollow => '取消关注';
+
+  @override
+  String get feedReportTitle => '举报这条动态';
+
+  @override
+  String get feedReportSpam => '垃圾信息或诈骗';
+
+  @override
+  String get feedReportNudity => '色情或裸露内容';
+
+  @override
+  String get feedReportHarassment => '骚扰或欺凌';
+
+  @override
+  String get feedReportViolence => '暴力或有害内容';
+
+  @override
+  String get feedReportOther => '其他问题';
+
+  @override
+  String get feedReportThanks =>
+      '感谢举报。我们会在 24 小时内审核并移除违规内容。你也可以取消关注此人，以后不再看到他的动态。';
+
+  @override
+  String feedUnfollowTitle(String name) {
+    return '取消关注 $name？';
+  }
+
+  @override
+  String get feedUnfollowBody => '你们将不再看到彼此的动态，对方也会被移出你的圈子。';
+
+  @override
+  String feedUnfollowed(String name) {
+    return '已取消关注 $name。';
+  }
+
+  @override
   String get todayLabel => '今天';
 
   @override

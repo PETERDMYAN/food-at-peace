@@ -81,8 +81,19 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
     [`circle_feed_screen.dart`](lib/src/features/circle/circle_feed_screen.dart)).
     The **story keeps the full-resolution photo**; the AI estimate uses a downscaled
     1024px copy.
-- **TestFlight / App Store** — **`main` build `1.0.2 (27)` → submitting to App Store** (2026-06-18,
-  prod backend, `/tmp/fap_rec/build27.sh`) — **fix: no seeded fake friends for real users**.
+- **TestFlight / App Store** — **`main` build `1.0.2 (28)` → submitting to App Store** (2026-06-18,
+  prod backend, `/tmp/fap_rec/build28.sh`). (28) **Circle post moderation — Apple Guideline 1.2
+  (UGC safety)**: every Circle feed post (others', not your own) now has a **⋯ menu** with
+  **Report** and **Unfollow**
+  ([`circle_feed_screen.dart`](lib/src/features/circle/circle_feed_screen.dart)). Report opens a
+  reason picker (spam / nudity / harassment / violence / other) and **hides the post for the
+  reporter immediately** via a persisted [`hiddenPostsProvider`](lib/src/providers/providers.dart)
+  (`circle_hidden_posts`), with a "we review & remove within 24h" confirmation. Unfollow confirms,
+  then **removes the friend both ways** through the existing live `/circle/remove`
+  (`circleProvider.remove(post.authorId)`) and hides their post. **Client-side only — no backend
+  change** (uses the already-live remove endpoint), so it's prod-safe. Tests:
+  `test/circle_feed_menu_test.dart` + `test/circle_hidden_posts_test.dart`. (27) **fix: no seeded
+  fake friends for real users**.
   `CircleNotifier` no longer writes `Friend.seed()` (Mia/Jay/Sara/Ben) for the signed-out state;
   a one-time migration (`_dropLegacySeededFriends`) strips those ids from anyone who already
   cached them — new/upgrading users start with an **empty circle** (You + Eva + Add). Shipped in

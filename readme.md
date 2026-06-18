@@ -7,11 +7,14 @@ for real calories burned, and speaks **English and 中文**. Built with Flutter.
 
 > **Status:** **v1.0.1 (14) is approved & live on the App Store** (the CN name is **食之安**).
 > Repo is now a single `main` branch; the live build is tagged **`v1.0.1`** (commit `1c6ca03`).
-> **Submitting next: `1.0.2 (27)`** (prod backend) — the full v3 feature wave (Circle stories:
+> **Submitting next: `1.0.2 (28)`** (prod backend) — the full v3 feature wave (Circle stories:
 > photo-hero food story, Calm Eva scenes, story tray + swipe, 7-day archive + delete; profile
 > photo; synced meal photos; "Take daily" recurring foods; Data Sources energy priority;
 > Circle activity on by default) **plus a fix so a new user no longer sees seeded sample
-> friends**. Build (26)
+> friends**. Build (28)
+> adds a **⋯ menu on every Circle post — Report (Apple Guideline 1.2 reason picker; the post
+> hides for you immediately) and Unfollow (removes the friend both ways)** — closing the last
+> UGC-safety gap before submission. Build (26)
 > turned **Circle activity notifications on by default** (permission requested when a friend
 > first does something; an explicit off sticks). Build (25)
 > adds **Data sources** in Settings — choose which device's active energy takes priority when

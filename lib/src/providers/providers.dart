@@ -1240,6 +1240,31 @@ final circleFeedProvider = FutureProvider<List<CirclePost>>((ref) async {
   return ref.read(postsClientProvider).feed(token);
 });
 
+/// Posts the viewer has locally hidden via Report or Unfollow. Persisted so a
+/// reported/blocked post stays gone across launches even though the feed itself
+/// is server-driven. Apple Guideline 1.2 (UGC safety): reported content must
+/// disappear for the reporter immediately, and blocking a user must hide them.
+class HiddenPostsNotifier extends Notifier<Set<String>> {
+  static const _key = 'circle_hidden_posts';
+
+  @override
+  Set<String> build() {
+    final raw = ref.read(sharedPreferencesProvider).getStringList(_key);
+    return raw == null ? <String>{} : raw.toSet();
+  }
+
+  Future<void> hide(String postId) async {
+    if (postId.isEmpty || state.contains(postId)) return;
+    state = {...state, postId};
+    await ref
+        .read(sharedPreferencesProvider)
+        .setStringList(_key, state.toList());
+  }
+}
+
+final hiddenPostsProvider =
+    NotifierProvider<HiddenPostsNotifier, Set<String>>(HiddenPostsNotifier.new);
+
 /// Whether to notify the user when a friend shares a meal. Managed alongside the
 /// food reminders (same notification permission + service). **On by default**;
 /// the OS notification permission is requested lazily the first time there's real
