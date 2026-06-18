@@ -13,7 +13,14 @@ phone*.
   backend touches also `pytest backend/tests/` + `sam validate`, and obey the
   `production-safety` skill (additive, v2 first, confirm prod).
 
-## 1. Before / after screenshots — always show the user
+## 1. Before / after screenshots — ALWAYS send the actual pictures
+**Non-negotiable:** for **every** user-facing feature change, `SendUserFile` a
+**before picture AND an after picture** — real captured images, never just a
+written description. **One before/after pair per feature** in the batch (if the
+change touches 4 surfaces, the user gets 4 before/after pairs). The user has been
+explicit about this: they want to *see* it, per feature, every time. A
+side-by-side stitch (BEFORE | AFTER, labeled) is the preferred format.
+
 Capture on the booted sim via the screenshot harness (it drives real screens):
 1. Start the host capture server + clean status bar:
    - `xcrun simctl status_bar <udid> override --time 9:41 --batteryState charged --batteryLevel 100 --cellularBars 4 --wifiBars 3 --dataNetwork wifi --cellularMode active`

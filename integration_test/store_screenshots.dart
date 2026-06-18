@@ -14,6 +14,7 @@
 //     --dart-define=LOCALE=en
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -281,20 +282,7 @@ void main() {
       name: 'Eva',
     );
 
-    SharedPreferences.setMockInitialValues(<String, Object>{
-      'onboarding_complete': true,
-      'app_locale': _loc,
-      'user_profile_v1': jsonEncode(profile.toJson()),
-      'food_entries_v1': jsonEncode([for (final e in _seedEntries()) e.toJson()]),
-      'beans_granted': true,
-      'beans_ledger_v1': jsonEncode([for (final b in _seedBeans()) b.toJson()]),
-      'reminders_enabled': false,
-    });
-    final prefs = await SharedPreferences.getInstance();
-
-    // Seed a real meal photo (so the food story is photo-led) and a profile
-    // photo (so the "You" avatar + story header show it) by fetching the same
-    // hosted demo images used by the Circle feed.
+    // Seed photos by fetching the hosted demo images used by the Circle feed.
     final mealPhotos = MealPhotos(
       Directory.systemTemp.createTempSync('fap_shots_meal'),
     );
@@ -302,9 +290,28 @@ void main() {
       '${Directory.systemTemp.createTempSync('fap_shots_profile').path}/profile.jpg',
     );
     final fish = await _fetch(_photoFish);
-    if (fish != null) File(mealPhotos.pathFor('t-ln')).writeAsBytesSync(fish);
     final pasta = await _fetch(_photoPasta);
     if (pasta != null) profileFile.writeAsBytesSync(pasta);
+    // The newest entry (t-ln) carries ONLY a synced thumbnail — no local file —
+    // exactly like an entry pulled from the cloud onto a fresh device. This is
+    // the case the fix addresses: the food story shows the photo from the thumb.
+    final fishThumb =
+        fish != null ? encodeMealThumb(Uint8List.fromList(fish)) : null;
+    final entries = [
+      for (final e in _seedEntries())
+        e.id == 't-ln' ? e.copyWith(photoThumb: fishThumb) : e,
+    ];
+
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      'onboarding_complete': true,
+      'app_locale': _loc,
+      'user_profile_v1': jsonEncode(profile.toJson()),
+      'food_entries_v1': jsonEncode([for (final e in entries) e.toJson()]),
+      'beans_granted': true,
+      'beans_ledger_v1': jsonEncode([for (final b in _seedBeans()) b.toJson()]),
+      'reminders_enabled': false,
+    });
+    final prefs = await SharedPreferences.getInstance();
 
     final baseOverrides = [
       sharedPreferencesProvider.overrideWithValue(prefs),
