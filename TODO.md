@@ -81,6 +81,20 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
     [`circle_feed_screen.dart`](lib/src/features/circle/circle_feed_screen.dart)).
     The **story keeps the full-resolution photo**; the AI estimate uses a downscaled
     1024px copy.
+- **Android port — builds + runs (emulator-verified) 🤖** — the Flutter app is now an Android app.
+  Toolchain (JDK17 + cmdline-tools/SDK 35+36 + emulator), [`android/app/build.gradle.kts`](android/app/build.gradle.kts)
+  (minSdk 26, core-library desugaring), [`android/build.gradle.kts`](android/build.gradle.kts)
+  (force plugin subprojects to compileSdk 36 — `health` pinned 34), full
+  [`AndroidManifest.xml`](android/app/src/main/AndroidManifest.xml) (internet/camera/location/
+  notifications + Health Connect perms & rationale + `foodatpeace.app` App Links),
+  [`MainActivity`](android/app/src/main/kotlin/com/foodatpeace/food_at_peace/MainActivity.kt) →
+  `FlutterFragmentActivity` (fixes the `ComponentActivity` plugin-registration crash), platform-aware
+  [`health_service_io.dart`](lib/src/data/health_service_io.dart) (no birth-date/sex on HC), Android
+  launcher icon. ⏭️ **Needs the user's Google accounts:** Sign in with Apple on Android (Apple
+  Services ID + `/auth/apple` audience), **FCM** push (Firebase), **Google Play Billing** + Play
+  Console products mirroring `beans_*`, Play Console listing/screenshots. Health Connect runtime
+  reads need the HC app on the device. (Optional: deep-verify App Links via assetlinks.json once the
+  release signing key exists.)
 - **Meal-photo durability fix (next build, 29)** — the synced photo copy
   ([`encodeMealThumb`](lib/src/data/meal_photos.dart)) now **adaptively shrinks** (size + quality
   ladder) so its **base64 string** always stays under DynamoDB's 400 KB row limit. Root cause: a

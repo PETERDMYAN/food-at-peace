@@ -14,7 +14,12 @@ for real calories burned, and speaks **English and 中文**. Built with Flutter.
 > oversized row can't fail the whole push. **Build 30** adds the **proper fix — a durable per-user
 > S3 photo store**: the full-resolution original is uploaded to S3 (presigned URLs, no size limit)
 > and restored to the Food story on any device, with the synced thumbnail as the instant/offline
-> preview. An **Android port** is also in progress.
+> preview. **Android:** the Flutter app now **builds + runs on Android** (emulator-verified) —
+> JDK17/SDK toolchain, minSdk 26 + core-library desugaring, AndroidManifest with internet/camera/
+> location/notifications + **Health Connect** perms + **foodatpeace.app deep links**,
+> `MainActivity` on `FlutterFragmentActivity` (so all plugins register), and a platform-aware
+> health service. **Remaining for a Play release (need Google accounts):** Sign in with Apple on
+> Android (Apple Services ID), FCM push, Google Play Billing, and the Play Console listing.
 > **Submitting next: `1.0.2 (28)`** (prod backend) — the full v3 feature wave (Circle stories:
 > photo-hero food story, Calm Eva scenes, story tray + swipe, 7-day archive + delete; profile
 > photo; synced meal photos; "Take daily" recurring foods; Data Sources energy priority;

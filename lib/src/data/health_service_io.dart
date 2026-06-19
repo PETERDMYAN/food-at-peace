@@ -16,32 +16,37 @@ HealthService makeHealthService() => HealthKitService();
 class HealthKitService implements HealthService {
   final Health _health = Health();
 
-  // Types and their access, kept index-aligned for requestAuthorization.
-  static const List<HealthDataType> _types = [
-    HealthDataType.ACTIVE_ENERGY_BURNED,
-    HealthDataType.BASAL_ENERGY_BURNED,
-    HealthDataType.WEIGHT,
-    HealthDataType.HEIGHT,
-    HealthDataType.BIRTH_DATE,
-    HealthDataType.GENDER,
-    HealthDataType.WORKOUT,
-    HealthDataType.DIETARY_ENERGY_CONSUMED,
-    HealthDataType.DIETARY_PROTEIN_CONSUMED,
-    HealthDataType.DIETARY_FAT_SATURATED,
+  // (type, access) pairs. BIRTH_DATE + GENDER are HealthKit-only characteristics
+  // with no Health Connect counterpart, so they're dropped on Android — the
+  // platform falls back to the manual profile values there.
+  static const List<(HealthDataType, HealthDataAccess)> _all = [
+    (HealthDataType.ACTIVE_ENERGY_BURNED, HealthDataAccess.READ),
+    (HealthDataType.BASAL_ENERGY_BURNED, HealthDataAccess.READ),
+    (HealthDataType.WEIGHT, HealthDataAccess.READ_WRITE), // read latest + log
+    (HealthDataType.HEIGHT, HealthDataAccess.READ_WRITE), // read latest + edits
+    (HealthDataType.BIRTH_DATE, HealthDataAccess.READ), // iOS only (→ age)
+    (HealthDataType.GENDER, HealthDataAccess.READ), // iOS only
+    (HealthDataType.WORKOUT, HealthDataAccess.READ),
+    (HealthDataType.DIETARY_ENERGY_CONSUMED, HealthDataAccess.WRITE),
+    (HealthDataType.DIETARY_PROTEIN_CONSUMED, HealthDataAccess.WRITE),
+    (HealthDataType.DIETARY_FAT_SATURATED, HealthDataAccess.WRITE),
   ];
 
-  static const List<HealthDataAccess> _access = [
-    HealthDataAccess.READ, // active energy
-    HealthDataAccess.READ, // basal energy
-    HealthDataAccess.READ_WRITE, // weight (read latest + log new)
-    HealthDataAccess.READ_WRITE, // height (read latest + write edits)
-    HealthDataAccess.READ, // date of birth (→ age)
-    HealthDataAccess.READ, // biological sex
-    HealthDataAccess.READ, // workouts
-    HealthDataAccess.WRITE, // dietary energy
-    HealthDataAccess.WRITE, // dietary protein
-    HealthDataAccess.WRITE, // dietary saturated fat
-  ];
+  static const Set<HealthDataType> _iosOnly = {
+    HealthDataType.BIRTH_DATE,
+    HealthDataType.GENDER,
+  };
+
+  // Index-aligned type/access lists, platform-filtered for requestAuthorization.
+  List<(HealthDataType, HealthDataAccess)> get _pairs => Platform.isAndroid
+      ? [
+          for (final p in _all)
+            if (!_iosOnly.contains(p.$1)) p,
+        ]
+      : _all;
+
+  List<HealthDataType> get _types => [for (final p in _pairs) p.$1];
+  List<HealthDataAccess> get _access => [for (final p in _pairs) p.$2];
 
   @override
   bool get isSupported => Platform.isIOS || Platform.isAndroid;
@@ -173,6 +178,7 @@ class HealthKitService implements HealthService {
   @override
   Future<int?> readAge() async {
     if (!isSupported) return null;
+    if (Platform.isAndroid) return null; // Health Connect has no birth date
     await _health.configure();
     final now = DateTime.now();
     final List<HealthDataPoint> points;
@@ -207,6 +213,7 @@ class HealthKitService implements HealthService {
   @override
   Future<Sex?> readSex() async {
     if (!isSupported) return null;
+    if (Platform.isAndroid) return null; // Health Connect has no biological sex
     await _health.configure();
     final List<HealthDataPoint> points;
     try {
