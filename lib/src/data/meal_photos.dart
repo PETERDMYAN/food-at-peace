@@ -63,26 +63,52 @@ final mealPhotosProvider = Provider<MealPhotos>(
   (ref) => throw UnimplementedError('mealPhotosProvider must be overridden in main()'),
 );
 
-/// A JPEG of [bytes] (≤[maxSide]px) as a base64 string — the copy we store ON
-/// the [FoodEntry] so the meal photo **syncs** across devices / survives a
-/// reinstall (the full-resolution original stays device-local in [MealPhotos]).
-/// Sized to match the local original (1080px) so synced entries look as crisp as
-/// freshly-scanned ones full-screen, while staying well under DynamoDB's 400 KB
-/// item limit (~150–250 KB base64). Top-level + single positional arg so it runs
-/// off the UI isolate via `compute`. Null on failure.
+/// Largest base64 string we'll store for a meal thumb. DynamoDB caps a synced
+/// row at 400 KB and the **base64 string is what's stored** (≈33% bigger than the
+/// JPEG bytes), so we keep the encoded string well under that, leaving headroom
+/// for the rest of the entry's fields + attribute overhead. A detailed 1080px
+/// photo can otherwise blow past 400 KB and silently fail to sync — after a
+/// reinstall (the device-local original is gone) the photo then vanishes.
+const int _thumbBase64Cap = 290 * 1024;
+
+/// A base64 JPEG copy of [bytes] — the copy we store ON the [FoodEntry] so the
+/// meal photo **syncs** across devices / survives a reinstall (the full-res
+/// original stays device-local in [MealPhotos]). Starts crisp ([maxSide]px /
+/// [quality]) and steps the size + quality down only as needed so the encoded
+/// string always fits under [_thumbBase64Cap]. Top-level + single positional arg
+/// so it runs off the UI isolate via `compute`. Null on failure.
 String? encodeMealThumb(Uint8List bytes, {int maxSide = 1080, int quality = 78}) {
   try {
     final d = img.decodeImage(bytes);
     if (d == null) return null;
-    final longest = d.width >= d.height ? d.width : d.height;
-    final out = longest > maxSide
-        ? img.copyResize(
-            d,
-            width: d.width >= d.height ? maxSide : null,
-            height: d.height > d.width ? maxSide : null,
-          )
-        : d;
-    return base64Encode(img.encodeJpg(out, quality: quality));
+    // Crisp first, then degrade. Each rung is (longest-side px, JPEG quality).
+    // The low rungs guarantee a fit even for an extreme (highly-detailed) photo
+    // — a synced low-res photo always beats one that silently vanishes.
+    final ladder = <(int, int)>[
+      (maxSide, quality),
+      (maxSide, 64),
+      (900, 64),
+      (760, 60),
+      (640, 56),
+      (520, 52),
+      (420, 48),
+      (340, 44),
+    ];
+    String? best;
+    for (final (side, q) in ladder) {
+      final longest = d.width >= d.height ? d.width : d.height;
+      final out = longest > side
+          ? img.copyResize(
+              d,
+              width: d.width >= d.height ? side : null,
+              height: d.height > d.width ? side : null,
+            )
+          : d;
+      final b64 = base64Encode(img.encodeJpg(out, quality: q));
+      best = b64;
+      if (b64.length <= _thumbBase64Cap) return b64;
+    }
+    return best; // smallest we could manage — still better than no photo
   } catch (_) {
     return null;
   }

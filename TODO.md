@@ -81,6 +81,17 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
     [`circle_feed_screen.dart`](lib/src/features/circle/circle_feed_screen.dart)).
     The **story keeps the full-resolution photo**; the AI estimate uses a downscaled
     1024px copy.
+- **Meal-photo durability fix (next build, 29)** — the synced photo copy
+  ([`encodeMealThumb`](lib/src/data/meal_photos.dart)) now **adaptively shrinks** (size + quality
+  ladder) so its **base64 string** always stays under DynamoDB's 400 KB row limit. Root cause: a
+  detailed 1080px photo's base64 is ~33% bigger than the JPEG and could exceed 400 KB; the old
+  test measured the *decoded* bytes (a 33% under-count) on a *solid-colour* image (compresses to
+  nothing), so it never caught it. Worse, [`sync.py`](backend/src/sync.py) put each record in one
+  top-level try/except, so a single oversized row **500'd the entire push** (blocking ALL sync) →
+  after a reinstall (device-local original gone) the photo vanished. Tests now assert the **base64
+  length** under cap on a **detailed** image. ⏳ **Still TODO (needs prod deploy + user OK):**
+  harden `sync.py` to skip/limit an oversized row instead of failing the whole push (unblocks
+  already-stuck users; the shipped 1.0.1 can't be patched).
 - **TestFlight / App Store** — **`main` build `1.0.2 (28)` → submitting to App Store** (2026-06-18,
   prod backend, `/tmp/fap_rec/build28.sh`). (28) **Circle post moderation — Apple Guideline 1.2
   (UGC safety)**: every Circle feed post (others', not your own) now has a **⋯ menu** with
