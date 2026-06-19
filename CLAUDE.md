@@ -51,8 +51,8 @@ There are **two isolated AWS stacks sharing the same SSM secrets**:
 > (`com.foodatpeace.foodAtPeace`) — every TestFlight build the **real user** installs
 > **and** every App Store submission — MUST build with
 > `--dart-define-from-file=dart_defines.prod.json` (**prod** `6m19l2b025`, where the
-> real user data lives). `dart_defines.json` (**v2** `p21hoawoi5`) is **dev-only** — for
-> the separate `com.foodatpeace.foodAtPeace.dev` app. Building the **main** app against
+> real user data lives). `dart_defines.json` (**v2** `p21hoawoi5`) is **dev / simulator
+> testing only**. Building the **main** app against
 > v2 makes a returning user's data look **blank** (their rows are on prod). Prod already
 > runs the full migrated feature set, so a current client works against it. (Memory:
 > `dart-defines-prod-vs-v2`.)
