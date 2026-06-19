@@ -219,6 +219,7 @@ class SyncEngine extends Notifier<SyncState> {
 
       bool changed(DateTime t) => t.millisecondsSinceEpoch > since;
 
+      final localProfile = profileRepo.load();
       final result = await ref
           .read(syncClientProvider)
           .sync(
@@ -232,8 +233,13 @@ class SyncEngine extends Notifier<SyncState> {
               for (final e in weightRepo.loadAll())
                 if (changed(e.syncUpdatedAt)) _weightToRecord(e),
             ],
-            profile: changed(profileRepo.load().syncUpdatedAt)
-                ? _profileToRecord(profileRepo.load())
+            // Never push an UNCONFIGURED profile: a fresh-install default (even
+            // filled with launch-time HealthKit stats) has nothing worth syncing
+            // and would clobber the user's real configured profile on the server
+            // before the restore is pulled. Only push once the user has one.
+            profile: (localProfile.isConfigured &&
+                    changed(localProfile.syncUpdatedAt))
+                ? _profileToRecord(localProfile)
                 : null,
           );
 

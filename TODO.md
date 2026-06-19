@@ -95,6 +95,12 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
   Console products mirroring `beans_*`, Play Console listing/screenshots. Health Connect runtime
   reads need the HC app on the device. (Optional: deep-verify App Links via assetlinks.json once the
   release signing key exists.)
+- **Profile-restore hardening — never push an unconfigured profile (build 38)** — belt-and-braces
+  for the restore bug: [`sync_engine`](lib/src/data/sync_engine.dart) now **only pushes the profile
+  once it's `isConfigured`**. A fresh-install default (even with launch-time health stats) is never
+  pushed, so it can't clobber the user's real server profile before the restore is pulled — making
+  reinstall (not just update) safe. (Also manually **restored roro's clobbered prod profile** via a
+  direct DynamoDB put with a fresh timestamp + pinned age.) ✅ build 38.
 - **Notification permission — ask + one-tap iOS Settings (build 37)** — per feedback: the in-app
   toggles stay **default-on**, but the key is actively getting the **OS permission** (independent of
   the toggle). The "Turn on notifications" card ([`_NotifyCta`](lib/src/features/circle/circle_strip.dart))
