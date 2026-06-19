@@ -401,7 +401,7 @@ is now a single plated dish so the AI estimate reads cleanly (~420 kcal, not a 2
    {beans, product})`, on `v3`). **`refund` analytics** is deferred — refunds aren't
    client-observable; they'd need **App Store Server Notifications v2** (a server webhook),
    so that's a separate backend task.
-   **Web recharge (Stripe) — NEW, landed on v2 (this session):** a standalone
+   **Web recharge (Stripe) — NEW, live on prod + v2 (this session):** a standalone
    top-up page at **`foodatpeace.app/recharge`** that credits the same `/beans`
    ledger via Stripe — no Apple cut, and a path for **Android / web** users who
    have no StoreKit. New Lambda [`backend/src/recharge.py`](backend/src/recharge.py):
@@ -417,7 +417,7 @@ is now a single plated dish so the AI estimate reads cleanly (~420 kcal, not a 2
    same ledger; a paste-token field stays under *Advanced* for testing), so there's
    **no app change** and the App Store app is untouched. It shows the live balance + the
    6 packs, redirects to Stripe Checkout, and polls `/beans` on return. Needs a one-time
-   Apple **Services ID** (`com.foodatpeace.web`, already in v2's `APPLE_CLIENT_ID`) + a
+   Apple **Services ID** (`com.foodatpeace.web`, in **prod's + v2's** `APPLE_CLIENT_ID`) + a
    domain-association file. Tests:
    [`backend/tests/test_recharge.py`](backend/tests/test_recharge.py) (12, incl.
    signature verify, idempotency, unpaid / other-event ignored). Setup + deploy steps
@@ -428,8 +428,12 @@ is now a single plated dish so the AI estimate reads cleanly (~420 kcal, not a 2
    secret** in `/food-at-peace/stripe-webhook-secret` (after registering
    `<api>/recharge/webhook` in the Stripe dashboard for event
    `checkout.session.completed`); until both exist, `/checkout` returns
-   `{configured:false}` and the page shows a graceful "not on yet". Prod cutover is a
-   separate, deliberate step (the page defaults to the v2 API for now).
+   `{configured:false}` and the page shows a graceful "not on yet". ✅ **Cut over to prod
+   2026-06-19** — additive changeset (every shared handler byte-identical except a
+   backward-compatible `auth.py` audience tweak; 1.0.0 contract verified intact via a
+   no-execute changeset review + post-deploy probes), Services ID added to prod's
+   `APPLE_CLIENT_ID`, and the page's `DEFAULT_BASE` flipped to prod + republished. Still
+   needed before charging: Stripe keys + the Apple Services ID/domain file.
 2. **Optimise model usage** — tune the photo-analysis Claude call for cost &
    latency. The model is server-side via the `MODEL` env var (default
    `claude-sonnet-4-6`), so it's swappable without an app update. Levers to

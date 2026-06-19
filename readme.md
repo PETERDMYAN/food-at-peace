@@ -9,9 +9,12 @@ for real calories burned, and speaks **English and 中文**. Built with Flutter.
 > Repo is now a single `main` branch; the live build is tagged **`v1.0.1`** (commit `1c6ca03`).
 > **Web recharge (new, this session):** a standalone Stripe top-up page at **`foodatpeace.app/recharge`**
 > credits the same server Beans ledger via a signature-verified, idempotent webhook — a no-Apple-cut
-> path that also covers Android/web users with no StoreKit. Built + unit-tested on the **v2** stack;
-> it's a *standalone* page (no in-app link, so the App Store app is untouched), and awaits Stripe keys
-> + a deliberate prod cutover before it's user-facing.
+> path that also covers Android/web users with no StoreKit. Now **deployed to prod** (`6m19l2b025`)
+> via an additive changeset — every shared handler byte-identical except a backward-compatible
+> `auth.py` audience tweak, so the **1.0.0 contract was verified intact** — and the page points at
+> prod. It identifies the account with **Sign in with Apple on the web** (reuses `/auth/apple`). It's
+> a *standalone* page (no in-app link, so the App Store app is untouched). Remaining before it can
+> charge: Stripe keys + an Apple **Services ID** (`com.foodatpeace.web`) and its domain-association file.
 > **1.0.2 (28)** is **in App Review**. **Build 41** restructures **Manage circle** (header now reads
 > "Officials · N" with distinct Coach/Creator badges; the friend list is split into Requests / Friends
 > / Invited; the always-on QR is collapsed behind a "Show QR" button) and gives **Circle its own

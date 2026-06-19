@@ -62,8 +62,9 @@ next sync. No new endpoint, and no app change.
 
 This needs a **Services ID** (one-time, in the Apple Developer portal). The page expects
 the identifier **`com.foodatpeace.web`** (constant `APPLE_SERVICES_ID` in
-[`recharge/index.html`](website/recharge/index.html)); it's already in the v2 stack's
-accepted-audience list (`APPLE_CLIENT_ID`).
+[`recharge/index.html`](website/recharge/index.html)); it's already in **both** stacks'
+accepted-audience list (`APPLE_CLIENT_ID` = `com.foodatpeace.foodAtPeace,com.foodatpeace.web`
+on prod and v2).
 
 1. **Certificates, IDs & Profiles → Identifiers → ＋ → Services IDs.** Description
    "Food at Peace Web", identifier **`com.foodatpeace.web`** (must match `APPLE_SERVICES_ID`;
@@ -86,8 +87,10 @@ accepted-audience list (`APPLE_CLIENT_ID`).
 
 ## Deploy + go-live (one-time)
 
-> Dev/test runs against **v2** (`p21hoawoi5`). The page defaults to the v2 API. Prod
-> (`6m19l2b025`) cutover is a separate, deliberate step — see the bottom.
+> **Live status (2026-06-19):** the recharge endpoints are deployed to **prod**
+> (`6m19l2b025`) and the page now points there (`DEFAULT_BASE = PROD`). They're also on
+> **v2** (`p21hoawoi5`) for testing — append `?base=<v2 url>` to use it. The steps below
+> are the original v2 bring-up, kept for reference; prod was cut over per the bottom section.
 
 1. **Create the Stripe secrets in SSM** (region `ap-southeast-1`). Use **test** keys
    first (`sk_test_…`). The webhook secret comes from step 3, so set a placeholder now:
@@ -148,11 +151,27 @@ accepted-audience list (`APPLE_CLIENT_ID`).
      -H "authorization: Bearer <sessionToken>" | python3 -m json.tool
    ```
 
-## Prod cutover (when you're ready for real users)
+## Prod cutover
 
-1. Put **live** Stripe keys (`sk_live_…`, and a webhook registered against the **prod**
-   `…6m19l2b025…/recharge/webhook` → its own `whsec_…`) in the prod account's SSM.
-2. Deploy `RechargeFunction` to **prod** with a previewed changeset (additive — it does
-   not touch the 1.0.0 contract; follow the `production-safety` skill).
-3. Flip `DEFAULT_BASE` in [`recharge/index.html`](website/recharge/index.html) from `V2`
-   to `PROD`, re-sync the site, invalidate CloudFront.
+✅ **Done 2026-06-19:** `RechargeFunction` + routes deployed to **prod** via a previewed,
+additive changeset (every shared handler byte-identical except the backward-compatible
+`auth.py` comma-audience change; 1.0.0 contract verified intact). The Services ID was added
+to prod's `APPLE_CLIENT_ID`, and the page's `DEFAULT_BASE` was flipped to `PROD` + republished.
+
+Still needed before a real user can actually pay:
+1. **Live Stripe keys** in prod SSM — `sk_live_…` in `/food-at-peace/stripe-secret-key`, plus a
+   webhook registered against `https://6m19l2b025…/recharge/webhook` → its `whsec_…` in
+   `/food-at-peace/stripe-webhook-secret`. (Test-mode keys work too, for a real end-to-end dry run.)
+2. **Apple Services ID + domain-association file** (the Identity section above) so Sign in with
+   Apple works in the browser.
+3. **Retire the v2 dev stack** (optional cleanup the owner asked about — now that prod
+   carries recharge). First repoint anything still on v2 (the `.dev` app's
+   `dart_defines.json`, the live-backend integration test). CloudFormation won't delete
+   non-empty S3 buckets, so empty them first:
+   ```bash
+   for b in $(aws cloudformation describe-stack-resources --stack-name food-at-peace-vision-proxy-v2 \
+       --region ap-southeast-1 --query "StackResources[?ResourceType=='AWS::S3::Bucket'].PhysicalResourceId" --output text); do
+     aws s3 rm "s3://$b" --recursive
+   done
+   aws cloudformation delete-stack --stack-name food-at-peace-vision-proxy-v2 --region ap-southeast-1
+   ```

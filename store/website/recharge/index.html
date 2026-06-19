@@ -155,8 +155,8 @@
   // --- backends. Default to the v2 (dev) stack; ?base= overrides (and is saved). ---
   var V2   = "https://p21hoawoi5.execute-api.ap-southeast-1.amazonaws.com";
   var PROD = "https://6m19l2b025.execute-api.ap-southeast-1.amazonaws.com";
-  var DEFAULT_BASE = V2;
-  void PROD; // PROD is the go-live target — flip DEFAULT_BASE to it after deploy.
+  var DEFAULT_BASE = PROD;  // live — recharge endpoints deployed to prod 2026-06-19.
+  void V2; // v2/dev stack kept for testing; append ?base=<v2 url> to point there.
 
   var SS_TOKEN = "fap_recharge_token";   // session token (sessionStorage, per-tab)
   var SS_PRE   = "fap_recharge_pre";     // balance before redirecting to Stripe
