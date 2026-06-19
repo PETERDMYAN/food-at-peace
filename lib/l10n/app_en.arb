@@ -533,7 +533,8 @@
   "notifyCtaTitle": "Turn on notifications",
   "notifyCtaBody": "Know the moment a friend reacts to your meal or shares one — plus gentle nudges to log.",
   "notifyCtaAction": "Turn on",
-  "notifyDeniedHint": "Notifications are off. Turn them on in Settings ▸ Food at Peace ▸ Notifications.",
+  "notifyOpenSettings": "Open Settings",
+  "notifyDeniedHint": "Notifications are off. Tap Open Settings, then turn on Notifications.",
   "removeFriend": "Remove from circle",
   "removeFriendQ": "Remove {name} from your circle?",
   "@removeFriendQ": {

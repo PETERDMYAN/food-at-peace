@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:food_at_peace/l10n/app_localizations.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../data/eva_wisdom.dart';
 import '../../data/meal_photos.dart';
@@ -247,6 +248,10 @@ class _NotifyCta extends ConsumerWidget {
     final t = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
     final text = Theme.of(context).textTheme;
+    // After the first ask, iOS won't prompt again — so switch to a one-tap
+    // "Open Settings" route. The in-app toggle and OS permission are independent;
+    // this is purely about granting the OS permission.
+    final asked = ref.watch(notificationAskedProvider);
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),
@@ -274,7 +279,7 @@ class _NotifyCta extends ConsumerWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  t.notifyCtaBody,
+                  asked ? t.notifyDeniedHint : t.notifyCtaBody,
                   style: text.bodySmall?.copyWith(
                     color: scheme.onPrimaryContainer.withValues(alpha: 0.85),
                     height: 1.3,
@@ -285,29 +290,31 @@ class _NotifyCta extends ConsumerWidget {
           ),
           const SizedBox(width: 8),
           FilledButton(
-            onPressed: () => _enable(context, ref, t),
-            child: Text(t.notifyCtaAction),
+            onPressed: () => _enable(context, ref, asked),
+            child: Text(asked ? t.notifyOpenSettings : t.notifyCtaAction),
           ),
         ],
       ),
     );
   }
 
-  Future<void> _enable(
-    BuildContext context,
-    WidgetRef ref,
-    AppLocalizations t,
-  ) async {
-    final messenger = ScaffoldMessenger.of(context);
-    final granted = await ref
-        .read(notificationServiceProvider)
-        .requestPermission();
-    // Re-check status → the CTA hides itself once permission is granted.
-    ref.invalidate(notificationsAllowedProvider);
-    if (!granted) {
-      // iOS only shows its prompt once; after a prior denial, point to Settings.
-      messenger.showSnackBar(SnackBar(content: Text(t.notifyDeniedHint)));
+  Future<void> _enable(BuildContext context, WidgetRef ref, bool asked) async {
+    if (!asked) {
+      // First time: show the native iOS permission prompt.
+      await ref.read(notificationServiceProvider).requestPermission();
+      await ref.read(notificationAskedProvider.notifier).markAsked();
+      ref.invalidate(notificationsAllowedProvider);
+      return;
     }
+    // iOS won't prompt again — take them straight to the app's iOS Settings page,
+    // where Notifications can be turned on in one tap.
+    try {
+      await launchUrl(
+        Uri.parse('app-settings:'),
+        mode: LaunchMode.externalApplication,
+      );
+    } catch (_) {}
+    ref.invalidate(notificationsAllowedProvider);
   }
 }
 

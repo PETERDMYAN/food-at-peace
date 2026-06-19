@@ -1117,7 +1117,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get notifyCtaAction => '开启';
 
   @override
-  String get notifyDeniedHint => '通知已关闭。请在 设置 ▸ 食之安 ▸ 通知 中开启。';
+  String get notifyOpenSettings => '打开设置';
+
+  @override
+  String get notifyDeniedHint => '通知已关闭。点击“打开设置”，然后开启通知。';
 
   @override
   String get removeFriend => '移出圈子';

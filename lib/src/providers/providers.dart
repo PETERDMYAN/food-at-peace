@@ -1380,6 +1380,27 @@ final notificationsAllowedProvider = FutureProvider<bool>(
   (ref) => ref.read(notificationServiceProvider).hasPermission(),
 );
 
+/// Whether we've already shown the OS notification prompt once. iOS only shows
+/// its system prompt the first time, so after that the CTA switches to a
+/// one-tap "Open Settings" instead of a prompt that won't reappear.
+class NotificationAskedNotifier extends Notifier<bool> {
+  static const _key = 'notif_permission_asked';
+
+  @override
+  bool build() => ref.read(sharedPreferencesProvider).getBool(_key) ?? false;
+
+  Future<void> markAsked() async {
+    if (state) return;
+    state = true;
+    await ref.read(sharedPreferencesProvider).setBool(_key, true);
+  }
+}
+
+final notificationAskedProvider =
+    NotifierProvider<NotificationAskedNotifier, bool>(
+      NotificationAskedNotifier.new,
+    );
+
 /// A circle "something happened" event the UI turns into a notification + banner.
 enum CircleEventKind { request, accepted, posted, reaction }
 

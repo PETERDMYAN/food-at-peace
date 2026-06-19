@@ -1152,8 +1152,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get notifyCtaAction => 'Turn on';
 
   @override
+  String get notifyOpenSettings => 'Open Settings';
+
+  @override
   String get notifyDeniedHint =>
-      'Notifications are off. Turn them on in Settings ▸ Food at Peace ▸ Notifications.';
+      'Notifications are off. Tap Open Settings, then turn on Notifications.';
 
   @override
   String get removeFriend => 'Remove from circle';

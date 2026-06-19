@@ -7,7 +7,10 @@ for real calories burned, and speaks **English and 中文**. Built with Flutter.
 
 > **Status:** **v1.0.1 (14) is approved & live on the App Store** (the CN name is **食之安**).
 > Repo is now a single `main` branch; the live build is tagged **`v1.0.1`** (commit `1c6ca03`).
-> **1.0.2 (28)** is **in App Review**. **Build 36** fixes **profile restore on reinstall** (the
+> **1.0.2 (28)** is **in App Review**. **Build 37** makes the **notification call-to-action** actually
+> get OS permission: the "Turn on notifications" card prompts on first tap, then becomes **"Open
+> Settings"** (one tap into the app's iOS Settings) — the in-app toggles stay default-on but are
+> independent of the OS permission. **Build 36** fixes **profile restore on reinstall** (the
 > profile stayed blank even on prod: launch-time HealthKit refresh stamped the fresh local profile
 > newer than the server, so last-write-wins discarded the real one — now a *configured* server
 > profile always wins over an *unconfigured* local one) and adds a **tappable avatar on the Manage

@@ -2126,10 +2126,16 @@ abstract class AppLocalizations {
   /// **'Turn on'**
   String get notifyCtaAction;
 
+  /// No description provided for @notifyOpenSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Open Settings'**
+  String get notifyOpenSettings;
+
   /// No description provided for @notifyDeniedHint.
   ///
   /// In en, this message translates to:
-  /// **'Notifications are off. Turn them on in Settings ▸ Food at Peace ▸ Notifications.'**
+  /// **'Notifications are off. Tap Open Settings, then turn on Notifications.'**
   String get notifyDeniedHint;
 
   /// No description provided for @removeFriend.

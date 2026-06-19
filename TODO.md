@@ -95,6 +95,13 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
   Console products mirroring `beans_*`, Play Console listing/screenshots. Health Connect runtime
   reads need the HC app on the device. (Optional: deep-verify App Links via assetlinks.json once the
   release signing key exists.)
+- **Notification permission — ask + one-tap iOS Settings (build 37)** — per feedback: the in-app
+  toggles stay **default-on**, but the key is actively getting the **OS permission** (independent of
+  the toggle). The "Turn on notifications" card ([`_NotifyCta`](lib/src/features/circle/circle_strip.dart))
+  now: **first tap → native iOS permission prompt**; once asked (iOS won't prompt again) the button
+  becomes **"Open Settings"** and one tap deep-links to the app's iOS Settings page (`app-settings:`
+  via `url_launcher`) to flip Notifications on. Tracks the asked-state in
+  [`notificationAskedProvider`](lib/src/providers/providers.dart). ✅ build 37.
 - **Profile-restore fix + Manage-circle avatar (build 36)** — two things:
   1. **Profile still didn't restore on reinstall even on prod.** Meals/weight came back but the
      profile (name, targets) stayed blank. Root cause: a fresh device's local profile is
