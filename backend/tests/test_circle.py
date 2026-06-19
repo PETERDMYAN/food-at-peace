@@ -80,6 +80,17 @@ class FakeCircleTable:
     def delete_item(self, Key):
         self.items.pop((Key["pk"], Key["sk"]), None)
 
+    def update_item(self, Key, UpdateExpression, ExpressionAttributeNames=None,
+                    ExpressionAttributeValues=None):
+        # Minimal SET support: "SET #a = :x, b = :y".
+        item = self.items.setdefault((Key["pk"], Key["sk"]), dict(Key))
+        names = ExpressionAttributeNames or {}
+        vals = ExpressionAttributeValues or {}
+        body = UpdateExpression.strip()[len("SET "):]
+        for assign in body.split(","):
+            lhs, rhs = (s.strip() for s in assign.split("="))
+            item[names.get(lhs, lhs)] = vals[rhs.strip()]
+
 
 @pytest.fixture
 def circle_table(monkeypatch):
@@ -148,3 +159,43 @@ def test_connect_rejects_self(circle_table):
     with pytest.raises(circle.ProxyError) as e:
         circle.connect("u_a", {"handle": "alex"})
     assert e.value.status == 400
+
+
+# --- follow the creator (@roro): request -> Roro accepts -> mutual friends ----
+
+
+def test_follow_roro_request_then_accept_makes_friends(circle_table, monkeypatch):
+    """The scenario: a user follows @roro, Roro accepts, they become friends."""
+    # Accept fires a best-effort APNs push (needs creds) — stub it for the test.
+    monkeypatch.setattr(circle, "_push", lambda *a, **k: None)
+
+    circle.register("u_roro", {"handle": "roro", "name": "Roro"})  # creator account
+    circle.register("u_user", {"handle": "foodie", "name": "Foodie"})
+
+    # 1) The user follows Roro -> a request is sent (outgoing for them, incoming for Roro).
+    out = circle.invite("u_user", {"handle": "roro"})
+    assert out["status"] == "outgoing"
+    assert _edge(circle_table, "u_user", "u_roro")["status"] == "outgoing"
+    assert _edge(circle_table, "u_roro", "u_user")["status"] == "incoming"
+
+    # 2) Roro accepts the request.
+    out = circle.respond("u_roro", {"userId": "u_user", "action": "accept"})
+    assert out["status"] == "connected"
+
+    # 3) They are now mutual friends in the food circle.
+    assert _edge(circle_table, "u_user", "u_roro")["status"] == "connected"
+    assert _edge(circle_table, "u_roro", "u_user")["status"] == "connected"
+    assert _edge(circle_table, "u_user", "u_roro")["handle"] == "@roro"
+    assert _edge(circle_table, "u_roro", "u_user")["handle"] == "@foodie"
+    # No dangling request remains on the user's side.
+    assert _edge(circle_table, "u_user", "u_roro")["status"] != "outgoing"
+
+
+def test_follow_roro_one_tap_connect_makes_friends(circle_table):
+    """The app's current Follow button: one-tap connect (instant, no accept)."""
+    circle.register("u_roro", {"handle": "roro", "name": "Roro"})
+    circle.register("u_user", {"handle": "foodie", "name": "Foodie"})
+    out = circle.connect("u_user", {"handle": "roro"})
+    assert out["status"] == "connected"
+    assert _edge(circle_table, "u_user", "u_roro")["status"] == "connected"
+    assert _edge(circle_table, "u_roro", "u_user")["status"] == "connected"
