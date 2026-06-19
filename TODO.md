@@ -95,6 +95,10 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
   Console products mirroring `beans_*`, Play Console listing/screenshots. Health Connect runtime
   reads need the HC app on the device. (Optional: deep-verify App Links via assetlinks.json once the
   release signing key exists.)
+- **Manage-circle avatar alignment (build 40)** — the handle-card avatar was size 46 while the
+  section-tile avatars are 40, so it sat larger and ~2px further left (the "name icon starts from a
+  different position" report). Matched it to **size 40 + a 12px left inset** so the You/Official/peer
+  icons all line up down the column. ✅ build 40.
 - **Food-story photos: hydrate S3 without a thumbnail + recovered roro's shared photos (build 39)** —
   the food story only showed a photo when a local file or synced thumbnail existed, so a meal whose
   full-res is backed up in **S3 but has no thumbnail** (after a reinstall, or when the thumb was too
@@ -389,6 +393,31 @@ is now a single plated dish so the AI estimate reads cleanly (~420 kcal, not a 2
    {beans, product})`, on `v3`). **`refund` analytics** is deferred — refunds aren't
    client-observable; they'd need **App Store Server Notifications v2** (a server webhook),
    so that's a separate backend task.
+   **Web recharge (Stripe) — NEW, landed on v2 (this session):** a standalone
+   top-up page at **`foodatpeace.app/recharge`** that credits the same `/beans`
+   ledger via Stripe — no Apple cut, and a path for **Android / web** users who
+   have no StoreKit. New Lambda [`backend/src/recharge.py`](backend/src/recharge.py):
+   `POST /recharge/checkout` (bearer-auth) creates a Stripe Checkout session;
+   `POST /recharge/webhook` verifies Stripe's HMAC signature and credits Beans
+   **server-side, idempotent by Stripe session id** — same fraud model as
+   [`iap.py`](backend/src/iap.py) (a forged request can't mint Beans; Beans are
+   recomputed from `productId`, never trusted from client metadata). Hand-rolled
+   Stripe (urllib + `hmac`) so nothing is added to the shared `src/requirements.txt`.
+   Page [`store/website/recharge/index.html`](store/website/recharge/index.html) is
+   bilingual EN/中文, takes the account's session token (via `?t=` or a paste field —
+   **no app change**, so the App Store app is untouched), shows the live balance + the
+   6 packs, redirects to Stripe Checkout, and polls `/beans` on return. Tests:
+   [`backend/tests/test_recharge.py`](backend/tests/test_recharge.py) (12, incl.
+   signature verify, idempotency, unpaid / other-event ignored). Setup + deploy steps
+   in [`store/RECHARGE.md`](store/RECHARGE.md). ⚠️ **App Store 3.1.1:** keep this a
+   *standalone* page — do **not** add an in-app button to it, or the iOS app risks
+   rejection (in-app buying stays on StoreKit). **Remaining (you):** (a) put the Stripe
+   **secret key** in SSM `/food-at-peace/stripe-secret-key` and (b) the **webhook signing
+   secret** in `/food-at-peace/stripe-webhook-secret` (after registering
+   `<api>/recharge/webhook` in the Stripe dashboard for event
+   `checkout.session.completed`); until both exist, `/checkout` returns
+   `{configured:false}` and the page shows a graceful "not on yet". Prod cutover is a
+   separate, deliberate step (the page defaults to the v2 API for now).
 2. **Optimise model usage** — tune the photo-analysis Claude call for cost &
    latency. The model is server-side via the `MODEL` env var (default
    `claude-sonnet-4-6`), so it's swappable without an app update. Levers to

@@ -142,7 +142,9 @@ class MyHandleCard extends ConsumerWidget {
     final at = '@$handle';
     final photo = ref.watch(profilePhotoProvider);
     return Container(
-      padding: const EdgeInsets.fromLTRB(14, 8, 4, 8),
+      // Left inset matches the section tiles' ListTile contentPadding (12) so the
+      // avatar lines up vertically with the official/peer rows below.
+      padding: const EdgeInsets.fromLTRB(12, 8, 4, 8),
       decoration: BoxDecoration(
         color: scheme.surfaceContainerHighest.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(14),
@@ -154,11 +156,12 @@ class MyHandleCard extends ConsumerWidget {
               imageBytes: photo,
               icon: photo == null ? Icons.person : null,
               colorSeed: 3,
-              size: 46,
+              // Same size as the tile avatars below (40) so they all align.
+              size: 40,
               seen: seen,
               onTap: onAvatarTap,
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: 16),
           ],
           Expanded(
             child: Column(
