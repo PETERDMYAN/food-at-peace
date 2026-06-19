@@ -118,7 +118,13 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
   ([`_HeroPhoto`](lib/src/features/circle/circle_strip.dart)) shows the synced thumb instantly and
   upgrades to the S3 full-res, hydrating the local cache on a new device / after a reinstall. All
   best-effort → falls back to the thumb. Smoke-tested on v2 (routes return 401 unauth). Prod
-  deploy + build 30 next.
+  deploy + build 30 done.
+- **Profile photo now durable too** — was the only remaining local-only *content* (lost on
+  reinstall, like meal photos were). [`profile_photo.dart`](lib/src/data/profile_photo.dart) now
+  reuses the same S3 store (reserved id `__profile__`): uploaded on set, **restored from the cloud
+  on sign-in**, deleted on clear. No backend change (the endpoint accepts any sanitized id). Found
+  via a full local-vs-synced audit — everything else of value (food, weight, profile fields, Beans
+  ledger, @handle/friends/circle) is already server-backed; the rest is just preferences that reset.
 - **TestFlight / App Store** — **`main` build `1.0.2 (28)` → submitting to App Store** (2026-06-18,
   prod backend, `/tmp/fap_rec/build28.sh`). (28) **Circle post moderation — Apple Guideline 1.2
   (UGC safety)**: every Circle feed post (others', not your own) now has a **⋯ menu** with

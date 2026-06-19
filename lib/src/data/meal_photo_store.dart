@@ -56,12 +56,11 @@ class MealPhotoStore {
     }
   }
 
-  /// Ensure the full-res original for [entryId] is in the local cache, pulling it
-  /// from S3 if missing. Returns true if a local file is available afterwards.
-  Future<bool> ensureLocal(String entryId, String token) async {
-    final file = File(photos.pathFor(entryId));
-    if (await file.exists()) return true;
-    if (_base.isEmpty || token.isEmpty) return false;
+  /// Download the full-res bytes for [entryId] from S3 (presigned GET). Returns
+  /// null on any failure. Doesn't cache — the caller decides where to store it
+  /// (meal photos → the [MealPhotos] cache; the profile photo → its own file).
+  Future<Uint8List?> fetchBytes(String entryId, String token) async {
+    if (_base.isEmpty || token.isEmpty) return null;
     try {
       final signed = await _http.post(
         Uri.parse('$_base/photo/get-urls'),
@@ -70,17 +69,27 @@ class MealPhotoStore {
           'entryIds': [entryId],
         }),
       );
-      if (signed.statusCode != 200) return false;
+      if (signed.statusCode != 200) return null;
       final urls = (jsonDecode(signed.body) as Map)['urls'] as Map?;
       final url = urls?[entryId] as String?;
-      if (url == null) return false;
+      if (url == null) return null;
       final resp = await _http.get(Uri.parse(url));
-      if (resp.statusCode != 200 || resp.bodyBytes.isEmpty) return false;
-      await file.writeAsBytes(resp.bodyBytes, flush: true);
-      return true;
+      if (resp.statusCode != 200 || resp.bodyBytes.isEmpty) return null;
+      return resp.bodyBytes;
     } catch (_) {
-      return false;
+      return null;
     }
+  }
+
+  /// Ensure the full-res original for [entryId] is in the [MealPhotos] cache,
+  /// pulling it from S3 if missing. Returns true if a local file is available.
+  Future<bool> ensureLocal(String entryId, String token) async {
+    final file = File(photos.pathFor(entryId));
+    if (await file.exists()) return true;
+    final bytes = await fetchBytes(entryId, token);
+    if (bytes == null) return false;
+    await file.writeAsBytes(bytes, flush: true);
+    return true;
   }
 
   /// Best-effort remote delete (when the user deletes the meal).
