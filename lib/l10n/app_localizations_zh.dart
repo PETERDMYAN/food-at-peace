@@ -1068,9 +1068,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get followingLabel => '已关注';
 
   @override
-  String get evaTipOfDay => 'Eva 今日小贴士';
-
-  @override
   String get evaUnfollowedMsg => '已取消关注 Eva——随时可在“推荐关注”中找回。';
 
   @override

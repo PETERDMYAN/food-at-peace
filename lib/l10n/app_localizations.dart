@@ -2036,12 +2036,6 @@ abstract class AppLocalizations {
   /// **'Following'**
   String get followingLabel;
 
-  /// No description provided for @evaTipOfDay.
-  ///
-  /// In en, this message translates to:
-  /// **'Eva\'s tip of the day'**
-  String get evaTipOfDay;
-
   /// No description provided for @evaUnfollowedMsg.
   ///
   /// In en, this message translates to:

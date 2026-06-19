@@ -1100,9 +1100,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get followingLabel => 'Following';
 
   @override
-  String get evaTipOfDay => 'Eva\'s tip of the day';
-
-  @override
   String get evaUnfollowedMsg =>
       'Unfollowed Eva — find her under Suggested anytime.';
 

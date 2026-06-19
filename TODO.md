@@ -97,7 +97,7 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
   release signing key exists.)
 - **Official Circle accounts — Eva + Roro (build 31)** — Eva (built-in AI coach) is now a
   followable Official member ([`evaFollowedProvider`](lib/src/providers/providers.dart), default
-  **followed**): her daily-lesson story **+ a "tip of the day" card** in the strip
+  **followed**): her daily-lesson story in the strip
   ([`circle_strip.dart`](lib/src/features/circle/circle_strip.dart)); unfollow → she moves to a new
   **"Suggested to follow"** section in [`manage_friends_screen.dart`](lib/src/features/circle/manage_friends_screen.dart).
   Roro = the creator's **real** @handle ([`kRoroHandle`](lib/src/providers/providers.dart)),
