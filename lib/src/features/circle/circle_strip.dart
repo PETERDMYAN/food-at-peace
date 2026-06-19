@@ -49,6 +49,16 @@ class CircleStrip extends ConsumerWidget {
     // Your profile photo (used for the "You" avatar + your story header).
     final myPhoto = ref.watch(profilePhotoProvider);
 
+    // Strong CTA to actually grant OS notification permission: defaulting the
+    // circle-notify toggle on is meaningless if iOS notifications are off, so we
+    // prompt for it right here where Circle lives. (Defaults to "allowed" while
+    // the status is still loading, so the card never flashes in.)
+    final signedIn = ref.watch(authProvider) != null;
+    final notifyWanted = ref.watch(circleNotifyProvider);
+    final notifAllowed =
+        ref.watch(notificationsAllowedProvider).asData?.value ?? true;
+    final showNotifyCta = signedIn && notifyWanted && !notifAllowed;
+
     // Your food story = the last 7 days of food log (the archive), newest first
     // — all of it, not just meals shared to the circle.
     final now = DateTime.now();
@@ -61,8 +71,23 @@ class CircleStrip extends ConsumerWidget {
         .toList()
       ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
 
+    // Story "seen" rings: the key embeds the content (newest meal + count / the
+    // day's Eva lesson) so fresh content resets the ring back to unseen.
+    final seen = ref.watch(seenStoriesProvider);
+    final youKey = youStoryKey(recentFood);
+    final evaKey = evaStoryKey(evaIndex);
+
+    // Roro (the creator's official account) belongs with the official accounts —
+    // left of the Add icon, next to Eva — not mixed in among your peers.
+    final roroMatches =
+        connected.where((f) => f.handle == '@$kRoroHandle').toList();
+    final roroFriend = roroMatches.isEmpty ? null : roroMatches.first;
+    final peers =
+        connected.where((f) => f.handle != '@$kRoroHandle').toList();
+
     // Open the chained story tray (You → Eva). [initialStory] 0 = your food
-    // story, 1 = Eva — advancing past the end of one rolls into the next.
+    // story, 1 = Eva — advancing past the end of one rolls into the next. Each
+    // story is marked "seen" as the viewer shows it.
     void openStories(int initialStory) => openCircleStories(
       context,
       food: recentFood,
@@ -72,6 +97,8 @@ class CircleStrip extends ConsumerWidget {
       evaLesson: evaLesson,
       evaIndex: evaIndex,
       initialStory: initialStory,
+      onStorySeen: (key) =>
+          ref.read(seenStoriesProvider.notifier).markSeen(key),
     );
 
     return Column(
@@ -105,6 +132,7 @@ class CircleStrip extends ConsumerWidget {
           ],
         ),
         const SizedBox(height: 10),
+        if (showNotifyCta) const _NotifyCta(),
         SizedBox(
           height: 96,
           child: ListView(
@@ -119,6 +147,7 @@ class CircleStrip extends ConsumerWidget {
                   imageBytes: myPhoto,
                   icon: myPhoto == null ? Icons.person : null,
                   colorSeed: 3,
+                  seen: seen.contains(youKey),
                   onTap: () => openStories(0),
                 ),
                 onTap: () => openStories(0),
@@ -132,9 +161,22 @@ class CircleStrip extends ConsumerWidget {
                   avatar: StoryAvatar(
                     initials: 'E',
                     colorSeed: 7,
+                    seen: seen.contains(evaKey),
                     onTap: () => openStories(1),
                   ),
                   onTap: () => openStories(1),
+                ),
+              // Roro — the creator's official account, grouped with Eva (left of
+              // the Add icon). Tapping shows their trend, like any friend.
+              if (roroFriend != null)
+                _AvatarColumn(
+                  label: roroFriend.name,
+                  avatar: StoryAvatar(
+                    initials: roroFriend.initials,
+                    colorSeed: roroFriend.id.hashCode,
+                    onTap: () => showFriendTrend(context, roroFriend),
+                  ),
+                  onTap: () => showFriendTrend(context, roroFriend),
                 ),
               _AvatarColumn(
                 label: t.addFriend,
@@ -145,7 +187,7 @@ class CircleStrip extends ConsumerWidget {
                 ),
                 onTap: () => showInviteSheet(context),
               ),
-              for (final f in connected)
+              for (final f in peers)
                 _AvatarColumn(
                   label: f.name,
                   avatar: StoryAvatar(
@@ -201,6 +243,82 @@ class _AvatarColumn extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+/// A prominent "turn on notifications" call-to-action, shown in the Circle strip
+/// when the circle-notify toggle is on but the OS hasn't granted notification
+/// permission — so the default-on toggle actually means something. Tapping
+/// requests permission (the iOS prompt the first time; a Settings hint after).
+class _NotifyCta extends ConsumerWidget {
+  const _NotifyCta();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final t = AppLocalizations.of(context);
+    final scheme = Theme.of(context).colorScheme;
+    final text = Theme.of(context).textTheme;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),
+      decoration: BoxDecoration(
+        color: scheme.primaryContainer,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.notifications_active_outlined,
+            color: scheme.onPrimaryContainer,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  t.notifyCtaTitle,
+                  style: text.titleSmall?.copyWith(
+                    color: scheme.onPrimaryContainer,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  t.notifyCtaBody,
+                  style: text.bodySmall?.copyWith(
+                    color: scheme.onPrimaryContainer.withValues(alpha: 0.85),
+                    height: 1.3,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          FilledButton(
+            onPressed: () => _enable(context, ref, t),
+            child: Text(t.notifyCtaAction),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _enable(
+    BuildContext context,
+    WidgetRef ref,
+    AppLocalizations t,
+  ) async {
+    final messenger = ScaffoldMessenger.of(context);
+    final granted = await ref
+        .read(notificationServiceProvider)
+        .requestPermission();
+    // Re-check status → the CTA hides itself once permission is granted.
+    ref.invalidate(notificationsAllowedProvider);
+    if (!granted) {
+      // iOS only shows its prompt once; after a prior denial, point to Settings.
+      messenger.showSnackBar(SnackBar(content: Text(t.notifyDeniedHint)));
+    }
   }
 }
 
@@ -343,7 +461,7 @@ class _FriendTrendSheet extends ConsumerWidget {
                   foregroundColor: Theme.of(context).colorScheme.error,
                 ),
                 icon: const Icon(Icons.person_remove_outlined),
-                label: Text(t.removeFriend),
+                label: Text(t.feedUnfollow),
               ),
             ),
           ],
@@ -360,8 +478,8 @@ class _FriendTrendSheet extends ConsumerWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(t.removeFriend),
-        content: Text(t.removeFriendQ(friend.name)),
+        title: Text(t.feedUnfollowTitle(friend.name)),
+        content: Text(t.feedUnfollowBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -372,7 +490,7 @@ class _FriendTrendSheet extends ConsumerWidget {
               backgroundColor: Theme.of(ctx).colorScheme.error,
             ),
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text(t.removeFriend),
+            child: Text(t.feedUnfollow),
           ),
         ],
       ),
@@ -520,6 +638,14 @@ const double _storyTopPad = 80; // clear the progress bar + close button
 /// Advancing past the end of one rolls into the next (and back past the start
 /// returns to the previous), Instagram-style. [initialStory] picks which opens
 /// first (0 = your food story, 1 = Eva).
+/// Story-key helpers — the strip uses them for the avatar "seen" ring, and the
+/// viewer marks them as each story is shown. The key embeds the content (newest
+/// meal + count / the day's Eva lesson) so fresh content shows as unseen again.
+String youStoryKey(List<FoodEntry> food) =>
+    food.isEmpty ? 'you:empty' : 'you:${food.first.id}:${food.length}';
+
+String evaStoryKey(int index) => 'eva:$index';
+
 Future<void> openCircleStories(
   BuildContext context, {
   required List<FoodEntry> food,
@@ -529,13 +655,27 @@ Future<void> openCircleStories(
   required EvaLesson? evaLesson,
   required int evaIndex,
   required int initialStory,
+  void Function(String key)? onStorySeen,
 }) {
-  final stories = <Story>[
-    Story(pages: _foodStoryPages(food, photos, photo)),
+  // Stories paired with their seen-keys (same order) so the viewer's
+  // onStoryViewed(index) maps straight back to the right key.
+  final items = <(Story, String)>[
+    (Story(pages: _foodStoryPages(food, photos, photo)), youStoryKey(food)),
     if (evaLesson != null)
-      Story(pages: [_EvaStoryPage(lesson: evaLesson, lang: lang, index: evaIndex)]),
+      (
+        Story(
+          pages: [_EvaStoryPage(lesson: evaLesson, lang: lang, index: evaIndex)],
+        ),
+        evaStoryKey(evaIndex),
+      ),
   ];
-  return showStories(context, stories: stories, initialStory: initialStory);
+  return showStories(
+    context,
+    stories: [for (final it in items) it.$1],
+    initialStory: initialStory,
+    onStoryViewed:
+        onStorySeen == null ? null : (i) => onStorySeen(items[i].$2),
+  );
 }
 
 /// Your food story pages = one per food logged in the last 7 days (a nudge if

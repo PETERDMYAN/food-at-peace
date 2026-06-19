@@ -17,15 +17,19 @@ Future<void> showStories(
   BuildContext context, {
   required List<Story> stories,
   int initialStory = 0,
+  void Function(int storyIndex)? onStoryViewed,
 }) {
   // Drop empty stories, remapping the initial index so it still points at the
-  // intended (or nearest preceding) one.
+  // intended (or nearest preceding) one. [onStoryViewed] is reported in terms of
+  // the *original* indices, so callers can map straight back to their own list.
   final live = <Story>[];
+  final origIndex = <int>[];
   var start = 0;
   for (var i = 0; i < stories.length; i++) {
     if (stories[i].pages.isEmpty) continue;
     if (i <= initialStory) start = live.length;
     live.add(stories[i]);
+    origIndex.add(i);
   }
   if (live.isEmpty) return Future<void>.value();
   return Navigator.of(context, rootNavigator: true).push(
@@ -33,7 +37,13 @@ Future<void> showStories(
       opaque: true,
       barrierColor: Colors.black,
       transitionDuration: const Duration(milliseconds: 220),
-      pageBuilder: (_, _, _) => _StoryViewer(stories: live, initialStory: start),
+      pageBuilder: (_, _, _) => _StoryViewer(
+        stories: live,
+        initialStory: start,
+        onStoryViewed: onStoryViewed == null
+            ? null
+            : (liveIndex) => onStoryViewed(origIndex[liveIndex]),
+      ),
       transitionsBuilder: (_, anim, _, child) =>
           FadeTransition(opacity: anim, child: child),
     ),
@@ -45,10 +55,18 @@ Future<void> showStory(BuildContext context, {required List<Widget> pages}) =>
     showStories(context, stories: [Story(pages: pages)]);
 
 class _StoryViewer extends StatefulWidget {
-  const _StoryViewer({required this.stories, required this.initialStory});
+  const _StoryViewer({
+    required this.stories,
+    required this.initialStory,
+    this.onStoryViewed,
+  });
 
   final List<Story> stories;
   final int initialStory;
+
+  /// Fired with a story's index the moment it is shown (the initial one, and
+  /// each time the tray rolls into another) — used to mark it "seen".
+  final void Function(int storyIndex)? onStoryViewed;
 
   @override
   State<_StoryViewer> createState() => _StoryViewerState();
@@ -60,6 +78,15 @@ class _StoryViewerState extends State<_StoryViewer> {
 
   List<Widget> get _pages => widget.stories[_s].pages;
 
+  @override
+  void initState() {
+    super.initState();
+    // Mark the first story seen as soon as it's on screen.
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => widget.onStoryViewed?.call(_s),
+    );
+  }
+
   void _next() {
     if (_p < _pages.length - 1) {
       setState(() => _p++);
@@ -69,6 +96,7 @@ class _StoryViewerState extends State<_StoryViewer> {
         _s++;
         _p = 0;
       });
+      widget.onStoryViewed?.call(_s);
     } else {
       Navigator.of(context).pop(); // end of the last story → close
     }
@@ -83,6 +111,7 @@ class _StoryViewerState extends State<_StoryViewer> {
         _s--;
         _p = widget.stories[_s].pages.length - 1;
       });
+      widget.onStoryViewed?.call(_s);
     }
     // else: very first page — stay put.
   }

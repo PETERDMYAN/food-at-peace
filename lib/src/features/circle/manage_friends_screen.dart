@@ -89,13 +89,11 @@ class ManageCircleScreen extends ConsumerWidget {
                 role: t.roroRole,
                 seed: f.id.hashCode,
                 subtitle: f.handle,
-                trailing: IconButton(
-                  tooltip: t.removeFriend,
-                  icon: Icon(
-                    Icons.person_remove_outlined,
-                    color: Theme.of(context).colorScheme.error,
-                  ),
+                // Official accounts use "Unfollow" (same as Eva) — not the
+                // peer-style "remove from circle" — so the verb is consistent.
+                trailing: TextButton(
                   onPressed: () => _confirmRemove(context, ref, t, f),
+                  child: Text(t.feedUnfollow),
                 ),
               ),
           ],
@@ -163,7 +161,7 @@ class ManageCircleScreen extends ConsumerWidget {
             _FriendTile(
               friend: f,
               trailing: IconButton(
-                tooltip: t.removeFriend,
+                tooltip: t.feedUnfollow,
                 icon: Icon(
                   Icons.person_remove_outlined,
                   color: Theme.of(context).colorScheme.error,
@@ -224,8 +222,8 @@ class ManageCircleScreen extends ConsumerWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text(t.removeFriend),
-        content: Text(t.removeFriendQ(friend.name)),
+        title: Text(t.feedUnfollowTitle(friend.name)),
+        content: Text(t.feedUnfollowBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -236,7 +234,7 @@ class ManageCircleScreen extends ConsumerWidget {
               backgroundColor: Theme.of(ctx).colorScheme.error,
             ),
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text(t.removeFriend),
+            child: Text(t.feedUnfollow),
           ),
         ],
       ),

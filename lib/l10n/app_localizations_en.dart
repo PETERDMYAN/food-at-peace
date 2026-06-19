@@ -1142,6 +1142,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get friendAdherence => 'On-target · last 7 days';
 
   @override
+  String get notifyCtaTitle => 'Turn on notifications';
+
+  @override
+  String get notifyCtaBody =>
+      'Know the moment a friend reacts to your meal or shares one — plus gentle nudges to log.';
+
+  @override
+  String get notifyCtaAction => 'Turn on';
+
+  @override
+  String get notifyDeniedHint =>
+      'Notifications are off. Turn them on in Settings ▸ Food at Peace ▸ Notifications.';
+
+  @override
   String get removeFriend => 'Remove from circle';
 
   @override

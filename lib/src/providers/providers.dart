@@ -1314,6 +1314,31 @@ class HiddenPostsNotifier extends Notifier<Set<String>> {
 final hiddenPostsProvider =
     NotifierProvider<HiddenPostsNotifier, Set<String>>(HiddenPostsNotifier.new);
 
+/// Story keys ("you:…", "eva:…") the user has already viewed, so the strip shows
+/// a grey "seen" ring instead of the colourful one (Instagram-style). The key
+/// embeds the content (newest meal + count / the day's Eva lesson), so fresh
+/// content resets the ring to unseen.
+class SeenStoriesNotifier extends Notifier<Set<String>> {
+  static const _key = 'circle_seen_stories';
+
+  @override
+  Set<String> build() {
+    final raw = ref.read(sharedPreferencesProvider).getStringList(_key);
+    return raw == null ? <String>{} : raw.toSet();
+  }
+
+  Future<void> markSeen(String key) async {
+    if (key.isEmpty || state.contains(key)) return;
+    state = {...state, key};
+    await ref
+        .read(sharedPreferencesProvider)
+        .setStringList(_key, state.toList());
+  }
+}
+
+final seenStoriesProvider =
+    NotifierProvider<SeenStoriesNotifier, Set<String>>(SeenStoriesNotifier.new);
+
 /// Whether to notify the user when a friend shares a meal. Managed alongside the
 /// food reminders (same notification permission + service). **On by default**;
 /// the OS notification permission is requested lazily the first time there's real
@@ -1344,6 +1369,15 @@ class CircleNotifyNotifier extends Notifier<bool> {
 
 final circleNotifyProvider = NotifierProvider<CircleNotifyNotifier, bool>(
   CircleNotifyNotifier.new,
+);
+
+/// Whether the OS currently permits notifications (a status check, no prompt).
+/// Drives the "turn on notifications" call-to-action: defaulting the in-app
+/// circle-notify toggle on is meaningless if iOS notifications are off, so we
+/// surface a strong CTA when this is false. Refresh after requesting permission
+/// or when the app resumes (the user may have changed it in iOS Settings).
+final notificationsAllowedProvider = FutureProvider<bool>(
+  (ref) => ref.read(notificationServiceProvider).hasPermission(),
 );
 
 /// A circle "something happened" event the UI turns into a notification + banner.

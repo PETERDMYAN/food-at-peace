@@ -2108,6 +2108,30 @@ abstract class AppLocalizations {
   /// **'On-target · last 7 days'**
   String get friendAdherence;
 
+  /// No description provided for @notifyCtaTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn on notifications'**
+  String get notifyCtaTitle;
+
+  /// No description provided for @notifyCtaBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Know the moment a friend reacts to your meal or shares one — plus gentle nudges to log.'**
+  String get notifyCtaBody;
+
+  /// No description provided for @notifyCtaAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn on'**
+  String get notifyCtaAction;
+
+  /// No description provided for @notifyDeniedHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications are off. Turn them on in Settings ▸ Food at Peace ▸ Notifications.'**
+  String get notifyDeniedHint;
+
   /// No description provided for @removeFriend.
   ///
   /// In en, this message translates to:

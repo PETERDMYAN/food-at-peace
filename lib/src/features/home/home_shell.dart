@@ -141,6 +141,9 @@ class _HomeShellState extends ConsumerState<HomeShell>
       _refreshReminders();
       _checkCircleActivity();
       _registerPushToken();
+      // Re-check notification permission — the user may have toggled it in iOS
+      // Settings; this hides the "turn on notifications" CTA once allowed.
+      ref.invalidate(notificationsAllowedProvider);
     }
   }
 

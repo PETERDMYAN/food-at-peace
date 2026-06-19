@@ -14,6 +14,7 @@ class StoryAvatar extends StatelessWidget {
     this.size = 60,
     this.ring = true,
     this.muted = false,
+    this.seen = false,
     this.onTap,
     this.badgeCount = 0,
     this.colorSeed,
@@ -31,6 +32,10 @@ class StoryAvatar extends StatelessWidget {
 
   /// Dim the ring (e.g. pending/outgoing invites).
   final bool muted;
+
+  /// Story already viewed → a plain grey ring instead of the colourful gradient
+  /// (Instagram-style "seen" state). Ignored when [ring] is false or [muted].
+  final bool seen;
   final VoidCallback? onTap;
   final int badgeCount;
 
@@ -95,8 +100,12 @@ class StoryAvatar extends StatelessWidget {
             padding: const EdgeInsets.all(2.5),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              gradient: muted ? null : _ring,
-              color: muted ? scheme.outline : null,
+              // Colourful ring = unseen; plain grey = already viewed (or muted
+              // for pending invites).
+              gradient: (muted || seen) ? null : _ring,
+              color: muted
+                  ? scheme.outline
+                  : (seen ? scheme.outlineVariant : null),
             ),
             child: Container(
               padding: const EdgeInsets.all(2),

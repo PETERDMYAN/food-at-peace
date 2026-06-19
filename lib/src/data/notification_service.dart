@@ -149,6 +149,31 @@ class NotificationService {
     return false;
   }
 
+  /// Whether the OS currently allows notifications — a *status check* with no
+  /// prompt (unlike [requestPermission]). Used to decide whether to show the
+  /// "turn on notifications" call-to-action. False on web / when undeterminable.
+  Future<bool> hasPermission() async {
+    if (kIsWeb) return false;
+    try {
+      await init();
+      final ios = _plugin
+          .resolvePlatformSpecificImplementation<
+            IOSFlutterLocalNotificationsPlugin
+          >();
+      if (ios != null) {
+        return (await ios.checkPermissions())?.isEnabled ?? false;
+      }
+      final android = _plugin
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >();
+      if (android != null) {
+        return await android.areNotificationsEnabled() ?? false;
+      }
+    } catch (_) {}
+    return false;
+  }
+
   /// Cancels everything and schedules the given reminders, each repeating daily
   /// at its time.
   Future<void> sync(List<ScheduledReminder> reminders) async {

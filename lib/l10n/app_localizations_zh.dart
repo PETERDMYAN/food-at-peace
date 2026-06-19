@@ -1108,6 +1108,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get friendAdherence => '达标 · 近 7 天';
 
   @override
+  String get notifyCtaTitle => '开启通知';
+
+  @override
+  String get notifyCtaBody => '好友为你的美食点赞或分享时第一时间提醒你，还有温柔的记录提醒。';
+
+  @override
+  String get notifyCtaAction => '开启';
+
+  @override
+  String get notifyDeniedHint => '通知已关闭。请在 设置 ▸ 食之安 ▸ 通知 中开启。';
+
+  @override
   String get removeFriend => '移出圈子';
 
   @override

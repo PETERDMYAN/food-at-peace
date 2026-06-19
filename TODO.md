@@ -95,6 +95,26 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
   Console products mirroring `beans_*`, Play Console listing/screenshots. Health Connect runtime
   reads need the HC app on the device. (Optional: deep-verify App Links via assetlinks.json once the
   release signing key exists.)
+- **Circle UX pass + notification CTA (build 34)** — a new-user review found four things:
+  1. **Story "seen" rings** — a viewed story now shows a grey ring instead of the colourful one
+     ([`StoryAvatar.seen`](lib/src/widgets/story_avatar.dart), [`seenStoriesProvider`](lib/src/providers/providers.dart)
+     + the viewer's `onStoryViewed` callback). Keys embed the content (newest meal + count / the
+     day's Eva lesson) so fresh content resets the ring to unseen.
+  2. **Roro moved left of the Add icon** — grouped with the official accounts in the strip
+     (You · Eva · Roro · ＋ · peers), via a roro/peers split in [`circle_strip.dart`](lib/src/features/circle/circle_strip.dart).
+  3. **Unfollow wording unified** — official accounts (Eva, Roro) **and** peers all say
+     **"Unfollow"** now (Manage/trend previously said "Remove from circle", and Roro used a
+     remove-icon while Eva said "Unfollow"). Consistent across the feed ⋯ menu, Manage circle,
+     and the friend-trend sheet (`feedUnfollow*` strings everywhere).
+  4. **Strong notification CTA** — defaulting circle-notify on is meaningless without OS
+     permission, so the strip shows a prominent **"Turn on notifications"** card when notify is on
+     but permission isn't granted ([`notificationsAllowedProvider`](lib/src/providers/providers.dart)
+     + [`NotificationService.hasPermission`](lib/src/data/notification_service.dart)); tapping
+     requests permission, re-checked on resume. Capture: `integration_test/circle_strip_shots.dart`.
+  ✅ **Uploaded to TestFlight (build 34).**
+- **New skill — `new-user-experience`** — `.claude/skills/new-user-experience/SKILL.md`: after every
+  user-facing change, check the fresh-onboard path (empty data, no permissions, just signed in /
+  signed out) — empty states, permission CTAs, sensible defaults — before calling it done.
 - **IAP purchase feedback fix (build 33)** — after Apple's payment sheet closed, the only
   feedback was a tiny per-tile spinner while the receipt validated server-side (1–5s), so a paid
   purchase felt like *"I paid but nothing happened"*. The Beans paywall

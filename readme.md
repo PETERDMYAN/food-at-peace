@@ -7,7 +7,12 @@ for real calories burned, and speaks **English and 中文**. Built with Flutter.
 
 > **Status:** **v1.0.1 (14) is approved & live on the App Store** (the CN name is **食之安**).
 > Repo is now a single `main` branch; the live build is tagged **`v1.0.1`** (commit `1c6ca03`).
-> **1.0.2 (28)** is **in App Review**. **Build 33** fixes the **IAP purchase feedback**: after
+> **1.0.2 (28)** is **in App Review**. **Build 34** is a Circle polish pass: story avatars now show
+> a **grey "seen" ring** once viewed, **Roro sits left of the ＋** with the official accounts,
+> **"Unfollow"** is the one consistent word everywhere (was a mix of "Unfollow" / "Remove from
+> circle"), and a strong **"Turn on notifications"** card appears when circle alerts are on but iOS
+> permission hasn't been granted (so the default-on toggle actually means something). **Build 33**
+> fixes the **IAP purchase feedback**: after
 > Apple's payment sheet closed there was only a tiny spinner while the receipt validated, so a paid
 > top-up felt like *"nothing happened"* — the Beans paywall now shows a clear full-screen
 > **"Processing your payment…"** state and then a **success view** (✓ "Added N Beans" + new balance)
