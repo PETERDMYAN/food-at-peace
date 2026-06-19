@@ -95,6 +95,16 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
   Console products mirroring `beans_*`, Play Console listing/screenshots. Health Connect runtime
   reads need the HC app on the device. (Optional: deep-verify App Links via assetlinks.json once the
   release signing key exists.)
+- **Data-restore fix — main app now points at PROD (build 35)** — a returning user (deleted +
+  reinstalled, signed back in with Apple) saw all their info **blank**. Root cause: this session's
+  TestFlight builds 33/34 were built with `dart_defines.json` (**v2** `p21hoawoi5`, near-empty)
+  instead of `dart_defines.prod.json` (**prod** `6m19l2b025`), where the real data lives — verified
+  **26 rows on prod** (profile + 24 meals + weight) vs **1 empty profile on v2**. **No data lost.**
+  Build 35 = build 34's code rebuilt against prod (defines verified: `PROXY_BASE_URL=6m19l2b025`);
+  reinstalling restores everything. Guardrail added to CLAUDE.md (build target ↔ which dart_defines)
+  + memory `dart-defines-prod-vs-v2`. ⚠️ **Release check:** confirm the App Store 1.0.2 binary
+  (build 28, in review) points at prod before releasing — couldn't verify it retroactively; safest
+  is to submit a prod-verified build (35+) for the public release.
 - **Circle UX pass + notification CTA (build 34)** — a new-user review found four things:
   1. **Story "seen" rings** — a viewed story now shows a grey ring instead of the colourful one
      ([`StoryAvatar.seen`](lib/src/widgets/story_avatar.dart), [`seenStoriesProvider`](lib/src/providers/providers.dart)

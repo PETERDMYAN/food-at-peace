@@ -7,7 +7,12 @@ for real calories burned, and speaks **English and 中文**. Built with Flutter.
 
 > **Status:** **v1.0.1 (14) is approved & live on the App Store** (the CN name is **食之安**).
 > Repo is now a single `main` branch; the live build is tagged **`v1.0.1`** (commit `1c6ca03`).
-> **1.0.2 (28)** is **in App Review**. **Build 34** is a Circle polish pass: story avatars now show
+> **1.0.2 (28)** is **in App Review**. **Build 35** rebuilds the app against the **production
+> backend** (`6m19l2b025`): a returning user who reinstalled saw blank data because this session's
+> builds 33/34 were accidentally pointed at the empty **v2/dev** stack — their real data (profile +
+> 24 meals + weight) was safe on prod the whole time. Reinstalling build 35 restores everything;
+> the main app must always build with `dart_defines.prod.json` (CLAUDE.md guardrail added).
+> **Build 34** is a Circle polish pass: story avatars now show
 > a **grey "seen" ring** once viewed, **Roro sits left of the ＋** with the official accounts,
 > **"Unfollow"** is the one consistent word everywhere (was a mix of "Unfollow" / "Remove from
 > circle"), and a strong **"Turn on notifications"** card appears when circle alerts are on but iOS
