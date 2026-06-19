@@ -94,8 +94,12 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
   un-storable `photoThumb` and saves the meal** (or skips just that one row) instead of 500-ing
   the whole push — unblocks already-stuck users the client fix can't reach. Tests:
   `test_oversized_photo_saves_meal_without_photo_not_500` + `_skipped_not_500`. ⏭️ **Proper fix
-  next (approved):** S3 full-res per-user photo store (reuse the circle bucket pattern, no TTL) so
-  large photos keep full quality — row holds an S3 key + tiny preview; full image via presigned URL.
+  (in progress):** S3 full-res per-user photo store so large photos keep full quality.
+  ✅ **Backend built + on v2:** new [`mealphotos.py`](backend/src/mealphotos.py) Lambda +
+  no-TTL `MealPhotosBucket` + routes `/photo/put-url|get-urls|delete` (presigned PUT/GET so
+  full-res bypasses Lambda's 6 MB + DynamoDB's 400 KB limits; session-gated, per-user
+  `meal/<uid>/<entryId>.jpg`). Tests: `test_mealphotos.py` (7). 🔜 **Client next:** upload full-res
+  on save, hydrate the local cache from S3 for the food story; then build 30 + prod deploy.
 - **TestFlight / App Store** — **`main` build `1.0.2 (28)` → submitting to App Store** (2026-06-18,
   prod backend, `/tmp/fap_rec/build28.sh`). (28) **Circle post moderation — Apple Guideline 1.2
   (UGC safety)**: every Circle feed post (others', not your own) now has a **⋯ menu** with

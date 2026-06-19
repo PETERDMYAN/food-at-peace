@@ -738,6 +738,76 @@ Resources:
             Path: /circle/react
             Method: POST
 
+  # Durable per-user meal photos — full-resolution originals, NO lifecycle expiry
+  # (unlike CirclePhotosBucket). Private; only ever reached via presigned URLs.
+  MealPhotosBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      CorsConfiguration:
+        CorsRules:
+          - AllowedMethods: [GET, PUT]
+            AllowedOrigins: ["*"]
+            AllowedHeaders: ["*"]
+            MaxAge: 3000
+
+  # Private meal-photo store: presigned PUT/GET/delete, session-token auth. The
+  # full-res original lives here durably; the synced photoThumb is just a preview.
+  MealPhotosFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/
+      Handler: mealphotos.handler
+      Environment:
+        Variables:
+          MEAL_PHOTOS_BUCKET: !Ref MealPhotosBucket
+          SESSION_KEY_PARAM: !Ref SessionKeyParam
+      Policies:
+        - Statement:
+            - Sid: MealPhotoStorage
+              Effect: Allow
+              Action:
+                - s3:PutObject
+                - s3:GetObject
+                - s3:DeleteObject
+              Resource:
+                - !Sub ${MealPhotosBucket.Arn}/*
+            - Sid: ReadSessionSecret
+              Effect: Allow
+              Action: ssm:GetParameter
+              Resource:
+                - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter${SessionKeyParam}
+            - Sid: DecryptSecureStrings
+              Effect: Allow
+              Action: kms:Decrypt
+              Resource: "*"
+              Condition:
+                StringEquals:
+                  kms:ViaService: !Sub ssm.${AWS::Region}.amazonaws.com
+      Events:
+        PutUrl:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref VisionApi
+            Path: /photo/put-url
+            Method: POST
+        GetUrls:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref VisionApi
+            Path: /photo/get-urls
+            Method: POST
+        DeletePhoto:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref VisionApi
+            Path: /photo/delete
+            Method: POST
+
 Outputs:
   ProxyBaseUrl:
     Description: >
