@@ -332,6 +332,7 @@
   "feedUnfollowBody": "你们将不再看到彼此的动态，对方也会被移出你的圈子。",
   "feedUnfollowed": "已取消关注 {name}。",
   "sectionSuggested": "推荐关注",
+  "sectionOfficial": "官方账号",
   "officialBadge": "官方",
   "evaRole": "AI 教练",
   "roroName": "Roro",

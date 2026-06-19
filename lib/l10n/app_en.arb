@@ -506,6 +506,7 @@
     "placeholders": { "name": { "type": "String" } }
   },
   "sectionSuggested": "Suggested to follow",
+  "sectionOfficial": "Official account",
   "officialBadge": "Official",
   "evaRole": "AI coach",
   "roroName": "Roro",

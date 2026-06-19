@@ -27,6 +27,13 @@ class ManageCircleScreen extends ConsumerWidget {
         friends.where((f) => f.status == FriendStatus.incoming).toList();
     final outgoing =
         friends.where((f) => f.status == FriendStatus.outgoing).toList();
+    // The creator's real account (@roro), if connected, is shown as Official —
+    // not among your peer friends.
+    final roroTag = '@$kRoroHandle';
+    final roroFriends =
+        connected.where((f) => f.handle.toLowerCase() == roroTag).toList();
+    final peers =
+        connected.where((f) => f.handle.toLowerCase() != roroTag).toList();
 
     return Scaffold(
       appBar: AppBar(
@@ -46,67 +53,42 @@ class ManageCircleScreen extends ConsumerWidget {
             handle: myHandle,
             onEdit: () => editCircleHandle(context, ref),
           ),
-          const SizedBox(height: 20),
-          if (myHandle != null) InviteShareCard(handle: myHandle),
-          // Eva — the built-in AI coach — is a followable Official member.
-          if (evaFollowed)
-            _OfficialTile(
-              name: 'Eva',
-              role: t.evaRole,
-              seed: 'eva'.hashCode,
-              trailing: TextButton(
-                onPressed: () async {
-                  final messenger = ScaffoldMessenger.of(context);
-                  await ref.read(evaFollowedProvider.notifier).setFollowed(false);
-                  messenger.showSnackBar(
-                    SnackBar(content: Text(t.evaUnfollowedMsg)),
-                  );
-                },
-                child: Text(t.feedUnfollow),
-              ),
-            ),
-          if (connected.isEmpty && incoming.isEmpty && outgoing.isEmpty)
-            Padding(
-              padding: const EdgeInsets.only(top: 28),
-              child: Text(
-                t.circleEmpty,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ),
-          if (incoming.isNotEmpty) ...[
-            _SectionHeader(t.sectionRequests, count: incoming.length),
-            for (final f in incoming)
-              _FriendTile(
-                friend: f,
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextButton(
-                      onPressed: () =>
-                          ref.read(circleProvider.notifier).remove(f.id),
-                      child: Text(t.decline),
-                    ),
-                    FilledButton(
-                      onPressed: () {
-                        ref.read(circleProvider.notifier).accept(f.id);
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text(t.friendAccepted(f.name))),
-                        );
-                      },
-                      child: Text(t.accept),
-                    ),
-                  ],
-                ),
-              ),
+          const SizedBox(height: 16),
+          if (myHandle != null) ...[
+            InviteShareCard(handle: myHandle),
+            const SizedBox(height: 8),
           ],
-          if (connected.isNotEmpty) ...[
-            _SectionHeader(t.sectionConnected, count: connected.length),
-            for (final f in connected)
-              _FriendTile(
-                friend: f,
+
+          // ── 1) Official account — Eva (coach) + the creator @roro if followed ──
+          if (evaFollowed || roroFriends.isNotEmpty) ...[
+            _SectionHeader(
+              t.sectionOfficial,
+              count: (evaFollowed ? 1 : 0) + roroFriends.length,
+            ),
+            if (evaFollowed)
+              _OfficialTile(
+                name: 'Eva',
+                role: t.evaRole,
+                seed: 'eva'.hashCode,
+                trailing: TextButton(
+                  onPressed: () async {
+                    final messenger = ScaffoldMessenger.of(context);
+                    await ref
+                        .read(evaFollowedProvider.notifier)
+                        .setFollowed(false);
+                    messenger.showSnackBar(
+                      SnackBar(content: Text(t.evaUnfollowedMsg)),
+                    );
+                  },
+                  child: Text(t.feedUnfollow),
+                ),
+              ),
+            for (final f in roroFriends)
+              _OfficialTile(
+                name: f.name,
+                role: t.roroRole,
+                seed: f.id.hashCode,
+                subtitle: f.handle,
                 trailing: IconButton(
                   tooltip: t.removeFriend,
                   icon: Icon(
@@ -117,19 +99,8 @@ class ManageCircleScreen extends ConsumerWidget {
                 ),
               ),
           ],
-          if (outgoing.isNotEmpty) ...[
-            _SectionHeader(t.sectionInvited, count: outgoing.length),
-            for (final f in outgoing)
-              _FriendTile(
-                friend: f,
-                trailing: TextButton(
-                  onPressed: () =>
-                      ref.read(circleProvider.notifier).remove(f.id),
-                  child: Text(t.cancelInvite),
-                ),
-              ),
-          ],
-          // Suggested to follow — first-party official accounts not yet followed.
+
+          // ── 2) Suggested to follow — officials you're not following yet ──
           if (!followsRoro || !evaFollowed) ...[
             _SectionHeader(
               t.sectionSuggested,
@@ -140,7 +111,7 @@ class ManageCircleScreen extends ConsumerWidget {
                 name: t.roroName,
                 role: t.roroRole,
                 seed: kRoroHandle.hashCode,
-                subtitle: '@$kRoroHandle',
+                subtitle: roroTag,
                 trailing: FilledButton(
                   onPressed: () => _followRoro(context, ref),
                   child: Text(t.followAction),
@@ -158,6 +129,68 @@ class ManageCircleScreen extends ConsumerWidget {
                 ),
               ),
           ],
+
+          // ── 3) Your circle — your real friends + requests. The empty-state
+          //       lives ONLY in this section. ──
+          _SectionHeader(
+            t.yourCircle,
+            count: peers.length + incoming.length + outgoing.length,
+          ),
+          for (final f in incoming)
+            _FriendTile(
+              friend: f,
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextButton(
+                    onPressed: () =>
+                        ref.read(circleProvider.notifier).remove(f.id),
+                    child: Text(t.decline),
+                  ),
+                  FilledButton(
+                    onPressed: () {
+                      ref.read(circleProvider.notifier).accept(f.id);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(t.friendAccepted(f.name))),
+                      );
+                    },
+                    child: Text(t.accept),
+                  ),
+                ],
+              ),
+            ),
+          for (final f in peers)
+            _FriendTile(
+              friend: f,
+              trailing: IconButton(
+                tooltip: t.removeFriend,
+                icon: Icon(
+                  Icons.person_remove_outlined,
+                  color: Theme.of(context).colorScheme.error,
+                ),
+                onPressed: () => _confirmRemove(context, ref, t, f),
+              ),
+            ),
+          for (final f in outgoing)
+            _FriendTile(
+              friend: f,
+              trailing: TextButton(
+                onPressed: () =>
+                    ref.read(circleProvider.notifier).remove(f.id),
+                child: Text(t.cancelInvite),
+              ),
+            ),
+          if (peers.isEmpty && incoming.isEmpty && outgoing.isEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 20),
+              child: Text(
+                t.circleEmpty,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
         ],
       ),
     );

@@ -1082,6 +1082,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sectionSuggested => 'Suggested to follow';
 
   @override
+  String get sectionOfficial => 'Official account';
+
+  @override
   String get officialBadge => 'Official';
 
   @override

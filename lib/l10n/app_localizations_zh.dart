@@ -1050,6 +1050,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sectionSuggested => '推荐关注';
 
   @override
+  String get sectionOfficial => '官方账号';
+
+  @override
   String get officialBadge => '官方';
 
   @override

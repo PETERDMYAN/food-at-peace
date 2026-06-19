@@ -2000,6 +2000,12 @@ abstract class AppLocalizations {
   /// **'Suggested to follow'**
   String get sectionSuggested;
 
+  /// No description provided for @sectionOfficial.
+  ///
+  /// In en, this message translates to:
+  /// **'Official account'**
+  String get sectionOfficial;
+
   /// No description provided for @officialBadge.
   ///
   /// In en, this message translates to:

@@ -103,7 +103,10 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
   Roro = the creator's **real** @handle ([`kRoroHandle`](lib/src/providers/providers.dart)),
   **recommended only** (opt-in one-tap `connect('roro')` — never auto-followed, so no mutual
   data-sharing without consent; `followsRoroProvider` hides the card once connected). Both wear an
-  **Official** badge — first-party, NOT fabricated peers (consistent with the no-dummy-data skill:
+  **Official** badge. **Manage circle is now 3 sections (build 32):** *Official account* (Eva +
+  @roro once followed), *Suggested to follow* (the rest), *Your circle* (real peers) — and the
+  "circle is empty" message lives only under *Your circle*. First-party, NOT fabricated peers
+  (consistent with the no-dummy-data skill:
   Eva/Roro are real product entities). Tests: `circle_official_test.dart` (6). ⚠️ **@roro must be a
   claimed account** for the Follow to connect (otherwise it shows "couldn't follow" and the card
   stays). Build 31 also ships the profile-photo S3 durability.
