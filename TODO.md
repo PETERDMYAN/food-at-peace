@@ -404,9 +404,13 @@ is now a single plated dish so the AI estimate reads cleanly (~420 kcal, not a 2
    recomputed from `productId`, never trusted from client metadata). Hand-rolled
    Stripe (urllib + `hmac`) so nothing is added to the shared `src/requirements.txt`.
    Page [`store/website/recharge/index.html`](store/website/recharge/index.html) is
-   bilingual EN/中文, takes the account's session token (via `?t=` or a paste field —
-   **no app change**, so the App Store app is untouched), shows the live balance + the
-   6 packs, redirects to Stripe Checkout, and polls `/beans` on return. Tests:
+   bilingual EN/中文, identifies the account via **Sign in with Apple on the web** (reusing
+   `POST /auth/apple` — Apple's `sub` matches the native app, so the web login hits the
+   same ledger; a paste-token field stays under *Advanced* for testing), so there's
+   **no app change** and the App Store app is untouched. It shows the live balance + the
+   6 packs, redirects to Stripe Checkout, and polls `/beans` on return. Needs a one-time
+   Apple **Services ID** (`com.foodatpeace.web`, already in v2's `APPLE_CLIENT_ID`) + a
+   domain-association file. Tests:
    [`backend/tests/test_recharge.py`](backend/tests/test_recharge.py) (12, incl.
    signature verify, idempotency, unpaid / other-event ignored). Setup + deploy steps
    in [`store/RECHARGE.md`](store/RECHARGE.md). ⚠️ **App Store 3.1.1:** keep this a

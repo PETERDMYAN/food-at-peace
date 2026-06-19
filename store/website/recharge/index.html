@@ -1,0 +1,468 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="robots" content="noindex, nofollow" />
+<title>Food at Peace — Recharge beans</title>
+<meta name="theme-color" content="#639922" />
+<style>
+  :root{
+    color-scheme:light;
+    --bg:#FBFAF6; --card:#FFFFFF; --ink:#1f2a1c; --muted:#6b7568; --faint:#9aa394;
+    --line:#e6e8e0; --green:#639922; --green-d:#27500A; --green-soft:#EAF3DE;
+    --best:#97C459; --danger:#a32d2d; --danger-soft:#fceaea;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100vh;color:var(--ink);background:var(--bg);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+    padding:22px 16px 48px;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:560px;margin:0 auto}
+  header{display:flex;align-items:center;gap:10px;margin:2px 2px 22px}
+  header .logo{width:30px;height:30px;display:grid;place-items:center;color:var(--green)}
+  header .name{font-size:16px;font-weight:700;letter-spacing:.2px}
+  .spacer{flex:1}
+  .lang{display:flex;gap:2px;font-size:13px;border:1px solid var(--line);border-radius:999px;overflow:hidden;background:#fff}
+  .lang button{border:0;background:transparent;padding:6px 12px;font:inherit;color:var(--muted);cursor:pointer}
+  .lang button.on{background:var(--green);color:#fff;font-weight:600}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:22px}
+  h1{font-size:22px;margin:0 0 4px;font-weight:700}
+  .sub{margin:0 0 18px;color:var(--muted);font-size:14px;line-height:1.5}
+  .bal{display:inline-flex;align-items:center;gap:8px;background:var(--green-soft);
+    color:var(--green-d);border-radius:999px;padding:7px 15px;font-size:14px;margin-bottom:20px}
+  .bal b{font-weight:700}
+  .bal.loading{opacity:.55}
+  .packs{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px}
+  .pk{position:relative;background:#fff;border:1.5px solid var(--line);border-radius:15px;
+    padding:15px 8px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s}
+  .pk:hover{border-color:var(--best)}
+  .pk.sel{border-color:var(--green);background:var(--green-soft)}
+  .pk .n{font-size:23px;font-weight:700;line-height:1.05}
+  .pk .u{font-size:12px;color:var(--muted);margin:2px 0 7px}
+  .pk .p{font-size:13px;font-weight:600}
+  .pk.sel .u{color:var(--green-d)}
+  .pk .tick{position:absolute;top:7px;right:7px;color:var(--green);font-size:16px;display:none}
+  .pk.sel .tick{display:block}
+  .pk .best{position:absolute;top:-9px;left:50%;transform:translateX(-50%);white-space:nowrap;
+    background:var(--green);color:#fff;font-size:11px;font-weight:600;padding:2px 9px;border-radius:999px}
+  button.pay{width:100%;border:0;border-radius:13px;background:var(--green);color:#fff;
+    padding:15px;font:inherit;font-size:16px;font-weight:700;cursor:pointer}
+  button.pay:hover{background:#577f1f}
+  button.pay:disabled{opacity:.6;cursor:default}
+  .secure{display:flex;align-items:center;justify-content:center;gap:7px;margin-top:13px;
+    color:var(--faint);font-size:12px}
+  .foot{margin:22px 2px 0;text-align:center;color:var(--faint);font-size:12px;line-height:1.6}
+  /* gate + status panels */
+  label{display:block;font-size:13px;color:var(--muted);margin:0 0 7px;font-weight:600}
+  input{width:100%;padding:13px 14px;border-radius:12px;border:1px solid var(--line);
+    background:#fff;color:var(--ink);font-size:14px;font-family:inherit}
+  input:focus{outline:none;border-color:var(--green)}
+  .err{color:var(--danger);font-size:13px;margin:12px 0 0;min-height:18px}
+  .panel-icon{width:54px;height:54px;border-radius:50%;display:grid;place-items:center;
+    margin:4px auto 14px;font-size:27px}
+  .panel-icon.ok{background:var(--green-soft);color:var(--green)}
+  .panel-icon.spin{background:var(--green-soft);color:var(--green)}
+  .panel-icon.warn{background:#fff6e6;color:#854f0b}
+  .panel-icon.bad{background:var(--danger-soft);color:var(--danger)}
+  .center{text-align:center}
+  .center h2{font-size:20px;margin:0 0 6px;font-weight:700}
+  .center p{margin:0 auto;color:var(--muted);font-size:14px;line-height:1.55;max-width:34ch}
+  .center .big{font-size:30px;font-weight:800;color:var(--green-d);margin:14px 0 2px}
+  .ghostbtn{margin-top:18px;background:#fff;border:1px solid var(--line);border-radius:12px;
+    padding:11px 18px;font:inherit;font-size:14px;font-weight:600;color:var(--ink);cursor:pointer}
+  .ghostbtn:hover{border-color:var(--green)}
+  .spinner{width:26px;height:26px;border-radius:50%;border:3px solid var(--green-soft);
+    border-top-color:var(--green);animation:sp 0.8s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  .apple-btn{width:100%;display:flex;align-items:center;justify-content:center;gap:9px;
+    background:#000;color:#fff;border:0;border-radius:13px;padding:14px;font:inherit;
+    font-size:16px;font-weight:600;cursor:pointer}
+  .apple-btn:hover{background:#1a1a1a}
+  .apple-btn svg{width:16px;height:16px;margin-top:-2px}
+  details.adv{margin-top:18px;border-top:1px solid var(--line);padding-top:12px}
+  details.adv summary{cursor:pointer;color:var(--faint);font-size:13px;list-style:none}
+  details.adv summary::-webkit-details-marker{display:none}
+  .hide{display:none!important}
+</style>
+<script type="text/javascript" src="https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js" async></script>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <span class="logo" aria-hidden="true">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 21c.5-4.5 2.5-8 6-10"/><path d="M20 4S9 3 5.5 9.5C3 14 5 19 5 19s5 2 9.5-.5C21 15 20 4 20 4Z"/></svg>
+    </span>
+    <span class="name">Food at Peace</span>
+    <span class="spacer"></span>
+    <div class="lang" role="group" aria-label="Language">
+      <button id="lang-en" type="button">EN</button>
+      <button id="lang-zh" type="button">中文</button>
+    </div>
+  </header>
+
+  <!-- ============ SHOP ============ -->
+  <main id="shop" class="card hide">
+    <h1 id="s-title">Recharge beans</h1>
+    <p class="sub" id="s-sub">Top up your account to keep scanning meals.</p>
+    <div class="bal loading" id="bal">
+      <span aria-hidden="true">🫘</span>
+      <span><span id="bal-label">Balance</span> <b id="bal-val">—</b></span>
+    </div>
+    <div class="packs" id="packs"></div>
+    <button class="pay" id="pay" type="button">Pay</button>
+    <div class="secure" id="secure">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      <span id="secure-txt">Secure checkout by Stripe · cards &amp; Apple Pay</span>
+    </div>
+  </main>
+
+  <!-- ============ GATE — sign in to identify the account ============ -->
+  <section id="gate" class="card hide">
+    <h1 id="g-title">Sign in to top up</h1>
+    <p class="sub" id="g-sub">Sign in with the Apple ID you use in Food at Peace — your beans top up that account.</p>
+    <button class="apple-btn" id="apple-signin" type="button">
+      <svg viewBox="0 0 384 512" fill="currentColor" aria-hidden="true"><path d="M318.7 268.7c-.2-36.7 16.4-64.4 50-84.8-18.8-26.9-47.2-41.7-84.7-44.6-35.5-2.8-74.3 20.7-88.5 20.7-15 0-49.4-19.7-76.4-19.7C63.3 141.2 4 184.8 4 273.5q0 39.3 14.4 81.2c12.8 36.7 59 126.7 107.2 125.2 25.2-.6 43-17.9 75.8-17.9 31.8 0 48.3 17.9 76.4 17.9 48.6-.7 90.4-82.5 102.6-119.3-65.2-30.7-61.7-90-61.7-91.9zm-56.6-164.2c27.3-32.4 24.8-61.9 24-72.5-24.1 1.4-52 16.4-67.9 34.9-17.5 19.8-27.8 44.3-25.6 71.9 26.1 2 49.9-11.4 69.5-34.3z"/></svg>
+      <span id="g-si-btn">Sign in with Apple</span>
+    </button>
+    <p class="err" id="g-err"></p>
+    <details class="adv">
+      <summary id="g-adv">Advanced (testing)</summary>
+      <label for="code" id="g-label">Recharge code</label>
+      <input id="code" type="password" autocomplete="off" spellcheck="false" />
+      <button class="pay" id="g-go" type="button" style="margin-top:6px">Continue</button>
+    </details>
+  </section>
+
+  <!-- ============ STATUS (processing / success / canceled / error) ============ -->
+  <section id="status" class="card hide">
+    <div class="center">
+      <div class="panel-icon" id="st-icon"><div class="spinner" id="st-spin"></div><span id="st-emoji" class="hide"></span></div>
+      <h2 id="st-title"></h2>
+      <div class="big hide" id="st-big"></div>
+      <p id="st-body"></p>
+      <button class="ghostbtn hide" id="st-btn" type="button"></button>
+    </div>
+  </section>
+
+  <p class="foot" id="foot">1 bean = 1 photo scan · beans never expire</p>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  // --- backends. Default to the v2 (dev) stack; ?base= overrides (and is saved). ---
+  var V2   = "https://p21hoawoi5.execute-api.ap-southeast-1.amazonaws.com";
+  var PROD = "https://6m19l2b025.execute-api.ap-southeast-1.amazonaws.com";
+  var DEFAULT_BASE = V2;
+  void PROD; // PROD is the go-live target — flip DEFAULT_BASE to it after deploy.
+
+  var SS_TOKEN = "fap_recharge_token";   // session token (sessionStorage, per-tab)
+  var SS_PRE   = "fap_recharge_pre";     // balance before redirecting to Stripe
+  var SS_PROD  = "fap_recharge_pid";     // pending product id
+  var LS_LANG  = "fap_recharge_lang";
+  var LS_BASE  = "fap_recharge_base";
+
+  var PACKS = [
+    {id:"beans_25",  beans:25,  price:"S$0.48"},
+    {id:"beans_100", beans:100, price:"S$1.99"},
+    {id:"beans_200", beans:200, price:"S$3.99"},
+    {id:"beans_300", beans:300, price:"S$5.99"},
+    {id:"beans_500", beans:500, price:"S$9.48"},
+    {id:"beans_800", beans:800, price:"S$13.98", best:true}
+  ];
+  var DEFAULT_PID = "beans_200";
+
+  // Sign in with Apple (web). Create a Services ID with EXACTLY this identifier and
+  // register https://foodatpeace.app/recharge as a Return URL — see store/RECHARGE.md.
+  var APPLE_SERVICES_ID = "com.foodatpeace.web";
+  var APPLE_REDIRECT = "https://foodatpeace.app/recharge";
+
+  var STR = {
+    en:{
+      title:"Recharge beans", sub:"Top up your account to keep scanning meals.",
+      balance:"Balance", best:"Best value", pay:"Pay",
+      secure:"Secure checkout by Stripe · cards & Apple Pay",
+      foot:"1 bean = 1 photo scan · beans never expire",
+      gTitle:"Sign in to top up",
+      gSub:"Sign in with the Apple ID you use in Food at Peace — your beans top up that account.",
+      siBtn:"Sign in with Apple", adv:"Advanced (testing)",
+      gLabel:"Recharge code", gGo:"Continue", gErr:"Enter your recharge code.",
+      processing:"Adding your beans…", processingSub:"Confirming your payment with Stripe.",
+      okTitle:"All set!", okAdded:"+{n} beans",
+      okBody:"Your new balance is {bal} beans. You can close this page and head back to the app.",
+      okBodyUnknown:"Your balance is now {bal} beans. You can close this page and head back to the app.",
+      canceled:"Payment canceled", canceledSub:"Nothing was charged. You can try again any time.",
+      tryAgain:"Back to packs",
+      notEnabledTitle:"Card payments aren’t on yet",
+      notEnabledSub:"Web recharge isn’t switched on for this account yet. Please use in-app purchase for now.",
+      rejectedTitle:"Code not accepted",
+      rejected:"That recharge code was rejected or has expired. Get a fresh one from the app and try again.",
+      errTitle:"Something went wrong",
+      err:"Couldn’t reach the server. Check your connection and try again.",
+      pendingTitle:"Almost there", pending:"This is taking a little longer than usual — your beans will appear shortly.",
+      refresh:"Refresh balance", retry:"Try again"
+    },
+    zh:{
+      title:"充值豆子", sub:"为账户充值，继续扫描你的餐食。",
+      balance:"余额", best:"最划算", pay:"支付",
+      secure:"由 Stripe 提供安全结账 · 支持银行卡与 Apple Pay",
+      foot:"1 豆 = 1 次拍照识别 · 豆子永不过期",
+      gTitle:"登录以充值",
+      gSub:"使用你在 Food at Peace 中的 Apple ID 登录——豆子会充值到该账户。",
+      siBtn:"通过 Apple 登录", adv:"高级（测试）",
+      gLabel:"充值码", gGo:"继续", gErr:"请输入充值码。",
+      processing:"正在为你充值豆子……", processingSub:"正在向 Stripe 确认你的付款。",
+      okTitle:"完成！", okAdded:"+{n} 豆",
+      okBody:"你的新余额为 {bal} 豆。可以关闭此页面并返回应用。",
+      okBodyUnknown:"你的余额现在是 {bal} 豆。可以关闭此页面并返回应用。",
+      canceled:"付款已取消", canceledSub:"未扣款。你可以随时再试。",
+      tryAgain:"返回选择",
+      notEnabledTitle:"网页支付尚未开启",
+      notEnabledSub:"此账户的网页充值尚未开启，请暂时使用应用内购买。",
+      rejectedTitle:"充值码未通过",
+      rejected:"该充值码无效或已过期。请在应用内获取新的充值码后重试。",
+      errTitle:"出错了",
+      err:"无法连接服务器。请检查网络后重试。",
+      pendingTitle:"马上就好", pending:"这次比平常稍慢一些——豆子马上就到。",
+      refresh:"刷新余额", retry:"重试"
+    }
+  };
+
+  var $ = function(id){ return document.getElementById(id); };
+  var lang = (localStorage.getItem(LS_LANG) ||
+    ((navigator.language||"").toLowerCase().indexOf("zh")===0 ? "zh" : "en"));
+  function t(k){ return (STR[lang]||STR.en)[k]; }
+  function fmt(s, vars){ return s.replace(/\{(\w+)\}/g, function(_,k){ return vars[k]; }); }
+  function num(x){ return (x==null?0:x).toLocaleString(lang==="zh"?"zh-CN":"en-US"); }
+
+  function getBase(){
+    var u = new URLSearchParams(location.search).get("base");
+    return (u || localStorage.getItem(LS_BASE) || DEFAULT_BASE).replace(/\/+$/,"");
+  }
+  function getToken(){ return sessionStorage.getItem(SS_TOKEN) || ""; }
+  var selectedPid = DEFAULT_PID;
+
+  // ---------- networking ----------
+  function api(path, opts){
+    opts = opts || {};
+    var headers = opts.headers || {};
+    var tok = getToken();
+    if(tok) headers["authorization"] = "Bearer " + tok;
+    return fetch(getBase()+path, {method:opts.method||"GET", headers:headers, body:opts.body})
+      .then(function(r){
+        if(r.status===401){ var e=new Error("auth"); e.auth=true; throw e; }
+        if(!r.ok){ throw new Error("HTTP "+r.status); }
+        return r.json();
+      });
+  }
+  function fetchBalance(){
+    return api("/beans").then(function(d){
+      return (d.ledger||[]).reduce(function(s,t){ return s + (t.amount||0); }, 0);
+    });
+  }
+
+  // ---------- view switching ----------
+  function show(id){ ["shop","gate","status"].forEach(function(s){ $(s).classList.toggle("hide", s!==id); }); }
+
+  function applyStaticStrings(){
+    document.documentElement.lang = (lang==="zh"?"zh":"en");
+    $("lang-en").classList.toggle("on", lang==="en");
+    $("lang-zh").classList.toggle("on", lang==="zh");
+    $("s-title").textContent = t("title"); $("s-sub").textContent = t("sub");
+    $("bal-label").textContent = t("balance"); $("secure-txt").textContent = t("secure");
+    $("foot").textContent = t("foot");
+    $("g-title").textContent = t("gTitle"); $("g-sub").textContent = t("gSub");
+    $("g-si-btn").textContent = t("siBtn"); $("g-adv").textContent = t("adv");
+    $("g-label").textContent = t("gLabel"); $("g-go").textContent = t("gGo");
+    renderPacks(); updatePayLabel();
+  }
+
+  function renderPacks(){
+    $("packs").innerHTML = PACKS.map(function(p){
+      var sel = p.id===selectedPid ? " sel" : "";
+      var best = p.best ? '<span class="best">'+t("best")+'</span>' : '';
+      return '<div class="pk'+sel+'" data-id="'+p.id+'" role="button" tabindex="0">'+best+
+        '<span class="tick" aria-hidden="true">✓</span>'+
+        '<div class="n">'+num(p.beans)+'</div>'+
+        '<div class="u">'+(lang==="zh"?"豆":"beans")+'</div>'+
+        '<div class="p">'+p.price+'</div></div>';
+    }).join("");
+    Array.prototype.forEach.call(document.querySelectorAll(".pk"), function(el){
+      el.addEventListener("click", function(){ selectPack(el.getAttribute("data-id")); });
+      el.addEventListener("keydown", function(e){ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); selectPack(el.getAttribute("data-id")); } });
+    });
+  }
+  function selectPack(id){
+    selectedPid = id;
+    Array.prototype.forEach.call(document.querySelectorAll(".pk"), function(el){
+      el.classList.toggle("sel", el.getAttribute("data-id")===id);
+    });
+    updatePayLabel();
+  }
+  function packById(id){ for(var i=0;i<PACKS.length;i++){ if(PACKS[i].id===id) return PACKS[i]; } return null; }
+  function updatePayLabel(){
+    var p = packById(selectedPid);
+    $("pay").textContent = t("pay") + (p ? " · " + p.price : "");
+  }
+
+  // ---------- status panel ----------
+  function panel(kind, title, body, opts){
+    opts = opts || {};
+    show("status");
+    var icon=$("st-icon"), spin=$("st-spin"), emoji=$("st-emoji");
+    var cls = {processing:"spin",ok:"ok",warn:"warn",bad:"bad"}[kind] || "ok";
+    icon.className = "panel-icon " + cls;
+    if(kind==="processing"){ spin.classList.remove("hide"); emoji.classList.add("hide"); }
+    else { spin.classList.add("hide"); emoji.classList.remove("hide");
+           emoji.textContent = {ok:"✓",warn:"⏳",bad:"!"}[kind] || "✓"; }
+    $("st-title").textContent = title || "";
+    $("st-body").textContent = body || "";
+    var big=$("st-big");
+    if(opts.big){ big.textContent=opts.big; big.classList.remove("hide"); } else big.classList.add("hide");
+    var btn=$("st-btn");
+    if(opts.btn){ btn.textContent=opts.btn; btn.classList.remove("hide"); btn.onclick=opts.onClick||function(){}; }
+    else btn.classList.add("hide");
+  }
+
+  // ---------- flows ----------
+  function openShop(){
+    show("shop");
+    $("bal").classList.add("loading"); $("bal-val").textContent = "—";
+    fetchBalance().then(function(bal){
+      $("bal").classList.remove("loading"); $("bal-val").textContent = num(bal);
+    }).catch(function(err){
+      if(err.auth){ clearTokenToGate(t("rejected")); return; }
+      $("bal").classList.remove("loading"); $("bal-val").textContent = "—";
+    });
+  }
+
+  function clearTokenToGate(msg){
+    sessionStorage.removeItem(SS_TOKEN);
+    show("gate"); $("g-err").textContent = msg || ""; $("code").value="";
+  }
+
+  function pay(){
+    var p = packById(selectedPid); if(!p) return;
+    $("pay").disabled = true; $("pay").textContent = t("processing");
+    // remember the pre-payment balance so the success view can show the delta.
+    fetchBalance().then(function(pre){ sessionStorage.setItem(SS_PRE, String(pre)); })
+      .catch(function(){ sessionStorage.removeItem(SS_PRE); })
+      .then(function(){
+        sessionStorage.setItem(SS_PROD, p.id);
+        return api("/recharge/checkout", {method:"POST",
+          headers:{"content-type":"application/json"}, body: JSON.stringify({productId:p.id})});
+      })
+      .then(function(d){
+        if(d && d.url){ window.location.href = d.url; return; }
+        if(d && d.configured===false){ panel("warn", t("notEnabledTitle"), t("notEnabledSub"),
+          {btn:t("tryAgain"), onClick:openShop}); resetPay(); return; }
+        panel("bad", t("errTitle"), t("err"), {btn:t("retry"), onClick:openShop}); resetPay();
+      })
+      .catch(function(err){
+        resetPay();
+        if(err.auth){ clearTokenToGate(t("rejected")); return; }
+        panel("bad", t("errTitle"), t("err"), {btn:t("retry"), onClick:openShop});
+      });
+  }
+  function resetPay(){ $("pay").disabled = false; updatePayLabel(); }
+
+  function pollForCredit(){
+    panel("processing", t("processing"), t("processingSub"));
+    if(!getToken()){ panel("ok", t("okTitle"), "", {btn:t("refresh"), onClick:function(){ location.href="/recharge"; }}); return; }
+    var preRaw = sessionStorage.getItem(SS_PRE);
+    var pre = preRaw==null ? null : parseInt(preRaw,10);
+    var tries = 0, max = 15;
+    (function tick(){
+      fetchBalance().then(function(bal){
+        if(pre==null){
+          finishSuccess(null, bal); return;       // no baseline — just show balance
+        }
+        if(bal > pre){ finishSuccess(bal - pre, bal); return; }
+        if(++tries >= max){ pending(); return; }
+        setTimeout(tick, 2000);
+      }).catch(function(err){
+        if(err.auth){ panel("warn", t("rejectedTitle"), t("rejected")); return; }
+        if(++tries >= max){ pending(); } else setTimeout(tick, 2000);
+      });
+    })();
+    function finishSuccess(added, bal){
+      sessionStorage.removeItem(SS_PRE); sessionStorage.removeItem(SS_PROD);
+      var opts = added!=null ? {big: fmt(t("okAdded"),{n:num(added)})} : {};
+      var body = fmt(added!=null ? t("okBody") : t("okBodyUnknown"), {bal:num(bal)});
+      panel("ok", t("okTitle"), body, opts);
+    }
+    function pending(){
+      panel("warn", t("pendingTitle"), t("pending"),
+        {btn:t("refresh"), onClick:function(){ pollForCredit(); }});
+    }
+  }
+
+  // ---------- boot ----------
+  function captureTokenFromUrl(){
+    var q = new URLSearchParams(location.search);
+    var tok = q.get("t");
+    if(tok){ sessionStorage.setItem(SS_TOKEN, tok); }
+    var base = q.get("base");
+    if(base){ localStorage.setItem(LS_BASE, base.replace(/\/+$/,"")); }
+    return q.get("status");
+  }
+  function cleanUrl(){
+    if(history.replaceState){ history.replaceState(null, "", location.pathname); }
+  }
+
+  // language toggle
+  $("lang-en").addEventListener("click", function(){ lang="en"; localStorage.setItem(LS_LANG,"en"); applyStaticStrings(); });
+  $("lang-zh").addEventListener("click", function(){ lang="zh"; localStorage.setItem(LS_LANG,"zh"); applyStaticStrings(); });
+  // shop
+  $("pay").addEventListener("click", pay);
+  // gate
+  $("g-go").addEventListener("click", function(){
+    var v = $("code").value.trim();
+    if(!v){ $("g-err").textContent = t("gErr"); return; }
+    sessionStorage.setItem(SS_TOKEN, v); openShop();
+  });
+  $("code").addEventListener("keydown", function(e){ if(e.key==="Enter") $("g-go").click(); });
+  // Sign in with Apple (web) — verifies via the existing /auth/apple, which mints the
+  // same account's session token (Apple's `sub` is identical to the native app's).
+  var appleInited = false;
+  function ensureAppleInit(){
+    if(appleInited || !window.AppleID) return;
+    AppleID.auth.init({clientId:APPLE_SERVICES_ID, scope:"name email", redirectURI:APPLE_REDIRECT, usePopup:true});
+    appleInited = true;
+  }
+  function appleSignIn(){
+    if(!window.AppleID){ $("g-err").textContent = t("err"); return; }
+    ensureAppleInit();
+    $("g-err").textContent = "";
+    AppleID.auth.signIn().then(function(data){
+      var idt = data && data.authorization && data.authorization.id_token;
+      if(!idt){ $("g-err").textContent = t("err"); return; }
+      return fetch(getBase()+"/auth/apple", {method:"POST",
+        headers:{"content-type":"application/json"}, body: JSON.stringify({identityToken: idt})})
+        .then(function(r){ return r.json(); })
+        .then(function(j){
+          if(j && j.sessionToken){ sessionStorage.setItem(SS_TOKEN, j.sessionToken); openShop(); }
+          else { $("g-err").textContent = (j && j.error && j.error.message) || t("err"); }
+        });
+    }).catch(function(e){
+      var code = e && (e.error || (e.detail && e.detail.error));
+      if(code==="popup_closed_by_user" || code==="user_cancelled_authorize" || code==="user_trigger_new_signin_flow") return;
+      $("g-err").textContent = t("err");
+    });
+  }
+  $("apple-signin").addEventListener("click", appleSignIn);
+
+  var status = captureTokenFromUrl();
+  applyStaticStrings();
+  cleanUrl();
+
+  if(status==="success"){ pollForCredit(); }
+  else if(status==="cancel"){ panel("warn", t("canceled"), t("canceledSub"), {btn:t("tryAgain"), onClick:openShop}); }
+  else if(getToken()){ openShop(); }
+  else { show("gate"); }
+})();
+</script>
+</body>
+</html>

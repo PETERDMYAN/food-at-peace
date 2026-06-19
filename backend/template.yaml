@@ -44,6 +44,14 @@ Parameters:
     Type: String
     Default: /food-at-peace/iap-shared-secret
     Description: SSM SecureString parameter holding the App Store shared secret (IAP receipt validation).
+  StripeSecretParam:
+    Type: String
+    Default: /food-at-peace/stripe-secret-key
+    Description: SSM SecureString holding the Stripe secret API key (web Beans recharge — create Checkout sessions).
+  StripeWebhookSecretParam:
+    Type: String
+    Default: /food-at-peace/stripe-webhook-secret
+    Description: SSM SecureString holding the Stripe webhook signing secret (verifies /recharge/webhook).
   ApnsKeyParam:
     Type: String
     Default: /food-at-peace/apns-key
@@ -367,6 +375,66 @@ Resources:
           Properties:
             ApiId: !Ref VisionApi
             Path: /iap/validate
+            Method: POST
+
+  # Web Beans recharge via Stripe (no Apple IAP, no app needed). POST
+  # /recharge/checkout creates a Stripe Checkout session; POST /recharge/webhook
+  # verifies Stripe's HMAC signature and credits the Beans server-side
+  # (idempotent by session id) into the same BeansTable ledger. Inert until the
+  # Stripe SSM secrets are provisioned (graceful "configured: false" fallback).
+  RechargeFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/
+      Handler: recharge.handler
+      Environment:
+        Variables:
+          BEANS_TABLE: !Ref BeansTable
+          SESSION_KEY_PARAM: !Ref SessionKeyParam
+          STRIPE_SECRET_PARAM: !Ref StripeSecretParam
+          STRIPE_WEBHOOK_SECRET_PARAM: !Ref StripeWebhookSecretParam
+          METRICS_TABLE: !Ref MetricsTable
+      Policies:
+        - Statement:
+            - Sid: ReadWriteBeans
+              Effect: Allow
+              Action:
+                - dynamodb:GetItem
+                - dynamodb:PutItem
+                - dynamodb:Query
+              Resource:
+                - !GetAtt BeansTable.Arn
+            - Sid: RecordRevenueMetric
+              Effect: Allow
+              Action: dynamodb:UpdateItem
+              Resource:
+                - !GetAtt MetricsTable.Arn
+            - Sid: ReadSecrets
+              Effect: Allow
+              Action: ssm:GetParameter
+              Resource:
+                - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter${SessionKeyParam}
+                - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter${StripeSecretParam}
+                - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter${StripeWebhookSecretParam}
+            - Sid: DecryptSecureStrings
+              Effect: Allow
+              Action: kms:Decrypt
+              Resource: "*"
+              Condition:
+                StringEquals:
+                  kms:ViaService: !Sub ssm.${AWS::Region}.amazonaws.com
+      Events:
+        Checkout:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref VisionApi
+            Path: /recharge/checkout
+            Method: POST
+        Webhook:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref VisionApi
+            Path: /recharge/webhook
             Method: POST
 
   # In-app account deletion (App Store Guideline 5.1.1(v)). Verifies the app
@@ -826,3 +894,9 @@ Outputs:
   AccountDeleteUrl:
     Description: In-app account deletion endpoint (Authorization Bearer session token).
     Value: !Sub https://${VisionApi}.execute-api.${AWS::Region}.amazonaws.com/account/delete
+  RechargeCheckoutUrl:
+    Description: Web Beans recharge — create a Stripe Checkout session (Authorization Bearer session token).
+    Value: !Sub https://${VisionApi}.execute-api.${AWS::Region}.amazonaws.com/recharge/checkout
+  RechargeWebhookUrl:
+    Description: Register THIS url as the Stripe webhook endpoint (event checkout.session.completed).
+    Value: !Sub https://${VisionApi}.execute-api.${AWS::Region}.amazonaws.com/recharge/webhook
