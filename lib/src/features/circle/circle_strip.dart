@@ -813,17 +813,12 @@ class _FoodStoryPage extends ConsumerWidget {
       ),
     );
 
-    // Prefer the full-resolution original kept on THIS device; fall back to the
-    // small thumbnail that syncs on the entry (so the photo still shows on other
-    // devices / after a reinstall). Manual entries have neither → caption card.
-    final thumbBytes = File(photoPath).existsSync()
-        ? null
-        : _decodeThumb(entry.photoThumb);
-    final ImageProvider? hero = File(photoPath).existsSync()
-        ? FileImage(File(photoPath))
-        : (thumbBytes != null ? MemoryImage(thumbBytes) : null);
+    // A meal has a photo if the full-res original is on THIS device OR a synced
+    // thumbnail rides on the entry. Manual entries have neither → caption card.
+    final thumbBytes = _decodeThumb(entry.photoThumb);
+    final hasPhoto = File(photoPath).existsSync() || thumbBytes != null;
 
-    if (hero == null) {
+    if (!hasPhoto) {
       return _StoryScaffold(
         colors: const [Color(0xFF241A40), Color(0xFF0E0B14)],
         header: header,
@@ -832,15 +827,16 @@ class _FoodStoryPage extends ConsumerWidget {
     }
 
     // Photo is the hero: full-bleed image, dark scrim, header up top, the
-    // calories/macros as a caption at the bottom.
+    // calories/macros as a caption at the bottom. [_HeroPhoto] shows the synced
+    // thumbnail instantly and upgrades to the full-res original (pulling it from
+    // the durable S3 store into the cache if this device doesn't have it yet).
     return Stack(
       fit: StackFit.expand,
       children: [
-        Image(
-          image: hero,
-          fit: BoxFit.cover,
-          filterQuality: FilterQuality.medium,
-          errorBuilder: (_, _, _) => const ColoredBox(color: Color(0xFF0E0B14)),
+        _HeroPhoto(
+          entryId: entry.id,
+          photoPath: photoPath,
+          thumbBytes: thumbBytes,
         ),
         const DecoratedBox(
           decoration: BoxDecoration(
@@ -906,6 +902,60 @@ class _FoodStoryPage extends ConsumerWidget {
     await ref.read(foodEntriesProvider.notifier).hideFromStory(entry.id);
     nav.pop(); // close the whole story viewer
     messenger.showSnackBar(SnackBar(content: Text(t.storyDeleted)));
+  }
+}
+
+/// The full-bleed Food-story hero image. Shows the synced 1080px thumbnail
+/// instantly, and upgrades to the full-resolution original — pulling it from the
+/// durable S3 store into the local cache when this device doesn't have it yet
+/// (e.g. a new device / after a reinstall). All best-effort: no account, no
+/// network, or no remote copy just leaves the thumbnail showing.
+class _HeroPhoto extends ConsumerStatefulWidget {
+  const _HeroPhoto({
+    required this.entryId,
+    required this.photoPath,
+    required this.thumbBytes,
+  });
+
+  final String entryId;
+  final String photoPath;
+  final Uint8List? thumbBytes;
+
+  @override
+  ConsumerState<_HeroPhoto> createState() => _HeroPhotoState();
+}
+
+class _HeroPhotoState extends ConsumerState<_HeroPhoto> {
+  bool _localReady = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _localReady = File(widget.photoPath).existsSync();
+    if (!_localReady) _hydrate();
+  }
+
+  Future<void> _hydrate() async {
+    final token = ref.read(authProvider)?.token;
+    if (token == null || token.isEmpty) return;
+    final ok = await ref
+        .read(mealPhotoStoreProvider)
+        .ensureLocal(widget.entryId, token);
+    if (ok && mounted) setState(() => _localReady = true);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final ImageProvider? img = _localReady
+        ? FileImage(File(widget.photoPath))
+        : (widget.thumbBytes != null ? MemoryImage(widget.thumbBytes!) : null);
+    if (img == null) return const ColoredBox(color: Color(0xFF0E0B14));
+    return Image(
+      image: img,
+      fit: BoxFit.cover,
+      filterQuality: FilterQuality.medium,
+      errorBuilder: (_, _, _) => const ColoredBox(color: Color(0xFF0E0B14)),
+    );
   }
 }
 

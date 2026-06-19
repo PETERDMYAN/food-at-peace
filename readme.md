@@ -7,10 +7,14 @@ for real calories burned, and speaks **English and 中文**. Built with Flutter.
 
 > **Status:** **v1.0.1 (14) is approved & live on the App Store** (the CN name is **食之安**).
 > Repo is now a single `main` branch; the live build is tagged **`v1.0.1`** (commit `1c6ca03`).
-> **1.0.2 (28)** is **in App Review**. Next build (**29**) carries a **meal-photo durability
+> **1.0.2 (28)** is **in App Review**. **Build 29** carries the **meal-photo durability
 > fix**: the synced photo copy now adaptively shrinks so its base64 always stays under
 > DynamoDB's 400 KB row limit — a detailed 1080px photo could previously exceed it and silently
-> fail to sync (then vanish after a reinstall). An **Android port** is also in progress.
+> fail to sync (then vanish after a reinstall); the prod sync endpoint was also hardened so one
+> oversized row can't fail the whole push. **Build 30** adds the **proper fix — a durable per-user
+> S3 photo store**: the full-resolution original is uploaded to S3 (presigned URLs, no size limit)
+> and restored to the Food story on any device, with the synced thumbnail as the instant/offline
+> preview. An **Android port** is also in progress.
 > **Submitting next: `1.0.2 (28)`** (prod backend) — the full v3 feature wave (Circle stories:
 > photo-hero food story, Calm Eva scenes, story tray + swipe, 7-day archive + delete; profile
 > photo; synced meal photos; "Take daily" recurring foods; Data Sources energy priority;

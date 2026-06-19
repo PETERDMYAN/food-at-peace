@@ -98,8 +98,13 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
   ✅ **Backend built + on v2:** new [`mealphotos.py`](backend/src/mealphotos.py) Lambda +
   no-TTL `MealPhotosBucket` + routes `/photo/put-url|get-urls|delete` (presigned PUT/GET so
   full-res bypasses Lambda's 6 MB + DynamoDB's 400 KB limits; session-gated, per-user
-  `meal/<uid>/<entryId>.jpg`). Tests: `test_mealphotos.py` (7). 🔜 **Client next:** upload full-res
-  on save, hydrate the local cache from S3 for the food story; then build 30 + prod deploy.
+  `meal/<uid>/<entryId>.jpg`). Tests: `test_mealphotos.py` (7). ✅ **Client done (build 30):**
+  [`meal_photo_store.dart`](lib/src/data/meal_photo_store.dart) uploads the full-res on save
+  ([`add_entry_screen`](lib/src/features/add/add_entry_screen.dart)); the Food story
+  ([`_HeroPhoto`](lib/src/features/circle/circle_strip.dart)) shows the synced thumb instantly and
+  upgrades to the S3 full-res, hydrating the local cache on a new device / after a reinstall. All
+  best-effort → falls back to the thumb. Smoke-tested on v2 (routes return 401 unauth). Prod
+  deploy + build 30 next.
 - **TestFlight / App Store** — **`main` build `1.0.2 (28)` → submitting to App Store** (2026-06-18,
   prod backend, `/tmp/fap_rec/build28.sh`). (28) **Circle post moderation — Apple Guideline 1.2
   (UGC safety)**: every Circle feed post (others', not your own) now has a **⋯ menu** with

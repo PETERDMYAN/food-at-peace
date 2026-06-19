@@ -115,9 +115,19 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
     );
     ref.read(foodEntriesProvider.notifier).add(entry);
     // Persist the full-resolution original locally, keyed by entry id, for the
-    // crispest Food story on this device.
+    // crispest Food story on this device — and upload it to the durable per-user
+    // S3 store so it survives a reinstall / shows on other devices (best-effort;
+    // the synced thumbnail is the fallback).
     if (_photoBytes != null) {
       unawaited(ref.read(mealPhotosProvider).save(entry.id, _photoBytes!));
+      final token = ref.read(authProvider)?.token;
+      if (token != null && token.isNotEmpty) {
+        unawaited(
+          ref
+              .read(mealPhotoStoreProvider)
+              .uploadFullRes(entry.id, _photoBytes!, token),
+        );
+      }
     }
     _maybeShareToCircle(entry);
     // "Take daily" is set later from the Today list (tap an item) — no post-save

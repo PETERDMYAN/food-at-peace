@@ -14,6 +14,7 @@ import '../data/analytics_service.dart';
 import '../data/circle_client.dart';
 import '../data/food_photo_analyzer.dart';
 import '../data/meal_photos.dart';
+import '../data/meal_photo_store.dart';
 import '../data/food_repository.dart';
 import '../data/health_service.dart';
 import '../data/iap_service.dart';
@@ -1230,6 +1231,16 @@ const List<String> circleReactionEmojis = ['👍', '❤️', '😋', '🔥', '�
 
 final postsClientProvider = Provider<PostsClient>(
   (ref) => PostsClient(baseUrl: proxyBaseUrl),
+);
+
+/// Durable full-res meal-photo store (S3 via presigned URLs). Uploads the
+/// original on save; hydrates the local cache for the Food story on a new
+/// device / after a reinstall. Best-effort; falls back to the synced thumbnail.
+final mealPhotoStoreProvider = Provider<MealPhotoStore>(
+  (ref) => MealPhotoStore(
+    baseUrl: proxyBaseUrl,
+    photos: ref.read(mealPhotosProvider),
+  ),
 );
 
 /// The viewer's circle feed (their friends' + own active posts). Empty when
