@@ -428,6 +428,12 @@ abstract class AppLocalizations {
   /// **'Profile'**
   String get navSettings;
 
+  /// No description provided for @navCircle.
+  ///
+  /// In en, this message translates to:
+  /// **'Circle'**
+  String get navCircle;
+
   /// No description provided for @addFood.
   ///
   /// In en, this message translates to:
@@ -2030,6 +2036,42 @@ abstract class AppLocalizations {
   /// **'Official account'**
   String get sectionOfficial;
 
+  /// No description provided for @sectionOfficials.
+  ///
+  /// In en, this message translates to:
+  /// **'Officials'**
+  String get sectionOfficials;
+
+  /// No description provided for @sectionFriends.
+  ///
+  /// In en, this message translates to:
+  /// **'Friends'**
+  String get sectionFriends;
+
+  /// No description provided for @sectionInvited.
+  ///
+  /// In en, this message translates to:
+  /// **'Invited'**
+  String get sectionInvited;
+
+  /// No description provided for @badgeCoach.
+  ///
+  /// In en, this message translates to:
+  /// **'Coach'**
+  String get badgeCoach;
+
+  /// No description provided for @showInviteQr.
+  ///
+  /// In en, this message translates to:
+  /// **'Show QR'**
+  String get showInviteQr;
+
+  /// No description provided for @hideInviteQr.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide QR'**
+  String get hideInviteQr;
+
   /// No description provided for @officialBadge.
   ///
   /// In en, this message translates to:
@@ -2257,12 +2299,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Requests'**
   String get sectionRequests;
-
-  /// No description provided for @sectionInvited.
-  ///
-  /// In en, this message translates to:
-  /// **'Invited'**
-  String get sectionInvited;
 
   /// No description provided for @cancelInvite.
   ///

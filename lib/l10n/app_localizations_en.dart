@@ -199,6 +199,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get navSettings => 'Profile';
 
   @override
+  String get navCircle => 'Circle';
+
+  @override
   String get addFood => 'Add food';
 
   @override
@@ -1100,6 +1103,24 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sectionOfficial => 'Official account';
 
   @override
+  String get sectionOfficials => 'Officials';
+
+  @override
+  String get sectionFriends => 'Friends';
+
+  @override
+  String get sectionInvited => 'Invited';
+
+  @override
+  String get badgeCoach => 'Coach';
+
+  @override
+  String get showInviteQr => 'Show QR';
+
+  @override
+  String get hideInviteQr => 'Hide QR';
+
+  @override
   String get officialBadge => 'Official';
 
   @override
@@ -1227,9 +1248,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sectionRequests => 'Requests';
-
-  @override
-  String get sectionInvited => 'Invited';
 
   @override
   String get cancelInvite => 'Cancel';

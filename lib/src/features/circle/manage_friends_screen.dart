@@ -58,20 +58,21 @@ class ManageCircleScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
           if (myHandle != null) ...[
-            InviteShareCard(handle: myHandle),
+            _InviteToggle(handle: myHandle),
             const SizedBox(height: 8),
           ],
 
-          // ── 1) Official account — Eva (coach) + the creator @roro if followed ──
+          // ── 1) Officials — Eva (coach) + the creator @roro if followed ──
           if (evaFollowed || roroFriends.isNotEmpty) ...[
             _SectionHeader(
-              t.sectionOfficial,
+              t.sectionOfficials,
               count: (evaFollowed ? 1 : 0) + roroFriends.length,
             ),
             if (evaFollowed)
               _OfficialTile(
                 name: 'Eva',
                 role: t.evaRole,
+                badge: t.badgeCoach,
                 seed: 'eva'.hashCode,
                 trailing: TextButton(
                   onPressed: () async {
@@ -89,9 +90,9 @@ class ManageCircleScreen extends ConsumerWidget {
             for (final f in roroFriends)
               _OfficialTile(
                 name: f.name,
-                role: t.roroRole,
+                role: f.handle,
+                badge: t.roroRole,
                 seed: f.id.hashCode,
-                subtitle: f.handle,
                 // Official accounts use "Unfollow" (same as Eva) — not the
                 // peer-style "remove from circle" — so the verb is consistent.
                 trailing: TextButton(
@@ -110,9 +111,9 @@ class ManageCircleScreen extends ConsumerWidget {
             if (!followsRoro)
               _OfficialTile(
                 name: t.roroName,
-                role: t.roroRole,
+                role: roroTag,
+                badge: t.roroRole,
                 seed: kRoroHandle.hashCode,
-                subtitle: roroTag,
                 trailing: FilledButton(
                   onPressed: () => _followRoro(context, ref),
                   child: Text(t.followAction),
@@ -122,6 +123,7 @@ class ManageCircleScreen extends ConsumerWidget {
               _OfficialTile(
                 name: 'Eva',
                 role: t.evaRole,
+                badge: t.badgeCoach,
                 seed: 'eva'.hashCode,
                 trailing: FilledButton(
                   onPressed: () =>
@@ -131,59 +133,65 @@ class ManageCircleScreen extends ConsumerWidget {
               ),
           ],
 
-          // ── 3) Your circle — your real friends + requests. The empty-state
-          //       lives ONLY in this section. ──
-          _SectionHeader(
-            t.yourCircle,
-            count: peers.length + incoming.length + outgoing.length,
-          ),
-          for (final f in incoming)
-            _FriendTile(
-              friend: f,
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  TextButton(
-                    onPressed: () =>
-                        ref.read(circleProvider.notifier).remove(f.id),
-                    child: Text(t.decline),
-                  ),
-                  FilledButton(
-                    onPressed: () {
-                      ref.read(circleProvider.notifier).accept(f.id);
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(t.friendAccepted(f.name))),
-                      );
-                    },
-                    child: Text(t.accept),
-                  ),
-                ],
-              ),
-            ),
-          for (final f in peers)
-            _FriendTile(
-              friend: f,
-              trailing: IconButton(
-                tooltip: t.feedUnfollow,
-                icon: Icon(
-                  Icons.person_remove_outlined,
-                  color: Theme.of(context).colorScheme.error,
+          // ── 3) Your circle — split into requests / friends / invited so each
+          //       relationship is clearly labelled, not lumped under one count.
+          if (incoming.isNotEmpty) ...[
+            _SectionHeader(t.circleRequests, count: incoming.length),
+            for (final f in incoming)
+              _FriendTile(
+                friend: f,
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextButton(
+                      onPressed: () =>
+                          ref.read(circleProvider.notifier).remove(f.id),
+                      child: Text(t.decline),
+                    ),
+                    FilledButton(
+                      onPressed: () {
+                        ref.read(circleProvider.notifier).accept(f.id);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(t.friendAccepted(f.name))),
+                        );
+                      },
+                      child: Text(t.accept),
+                    ),
+                  ],
                 ),
-                onPressed: () => _confirmRemove(context, ref, t, f),
               ),
-            ),
-          for (final f in outgoing)
-            _FriendTile(
-              friend: f,
-              trailing: TextButton(
-                onPressed: () =>
-                    ref.read(circleProvider.notifier).remove(f.id),
-                child: Text(t.cancelInvite),
+          ],
+          if (peers.isNotEmpty) ...[
+            _SectionHeader(t.sectionFriends, count: peers.length),
+            for (final f in peers)
+              _FriendTile(
+                friend: f,
+                trailing: IconButton(
+                  tooltip: t.feedUnfollow,
+                  icon: Icon(
+                    Icons.person_remove_outlined,
+                    color: Theme.of(context).colorScheme.error,
+                  ),
+                  onPressed: () => _confirmRemove(context, ref, t, f),
+                ),
               ),
-            ),
-          if (peers.isEmpty && incoming.isEmpty && outgoing.isEmpty)
+          ],
+          if (outgoing.isNotEmpty) ...[
+            _SectionHeader(t.sectionInvited, count: outgoing.length),
+            for (final f in outgoing)
+              _FriendTile(
+                friend: f,
+                trailing: TextButton(
+                  onPressed: () =>
+                      ref.read(circleProvider.notifier).remove(f.id),
+                  child: Text(t.cancelInvite),
+                ),
+              ),
+          ],
+          if (peers.isEmpty && incoming.isEmpty && outgoing.isEmpty) ...[
+            _SectionHeader(t.yourCircle, count: 0),
             Padding(
-              padding: const EdgeInsets.only(top: 20),
+              padding: const EdgeInsets.only(top: 8),
               child: Text(
                 t.circleEmpty,
                 textAlign: TextAlign.center,
@@ -192,6 +200,7 @@ class ManageCircleScreen extends ConsumerWidget {
                 ),
               ),
             ),
+          ],
         ],
       ),
     );
@@ -376,20 +385,21 @@ class _OfficialTile extends StatelessWidget {
   const _OfficialTile({
     required this.name,
     required this.role,
+    required this.badge,
     required this.seed,
     required this.trailing,
-    this.subtitle,
   });
 
   final String name;
   final String role;
+
+  /// Short badge shown next to the name (e.g. "Coach", "Creator").
+  final String badge;
   final int seed;
-  final String? subtitle;
   final Widget trailing;
 
   @override
   Widget build(BuildContext context) {
-    final t = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
@@ -412,7 +422,7 @@ class _OfficialTile extends StatelessWidget {
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Text(
-                t.officialBadge,
+                badge,
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
                   color: scheme.onPrimaryContainer,
                 ),
@@ -420,9 +430,44 @@ class _OfficialTile extends StatelessWidget {
             ),
           ],
         ),
-        subtitle: Text(subtitle == null ? role : '$role · $subtitle'),
+        subtitle: Text(role),
         trailing: trailing,
       ),
+    );
+  }
+}
+
+/// The shareable invite, collapsed by default so your own friends sit higher on
+/// the screen. Tapping reveals the QR + link + Share (the existing
+/// [InviteShareCard]) — the QR no longer dominates the top of Manage circle.
+class _InviteToggle extends StatefulWidget {
+  const _InviteToggle({required this.handle});
+
+  final String handle;
+
+  @override
+  State<_InviteToggle> createState() => _InviteToggleState();
+}
+
+class _InviteToggleState extends State<_InviteToggle> {
+  bool _show = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        OutlinedButton.icon(
+          onPressed: () => setState(() => _show = !_show),
+          icon: Icon(_show ? Icons.expand_less : Icons.qr_code_2),
+          label: Text(_show ? t.hideInviteQr : t.showInviteQr),
+        ),
+        if (_show) ...[
+          const SizedBox(height: 12),
+          InviteShareCard(handle: widget.handle),
+        ],
+      ],
     );
   }
 }

@@ -95,6 +95,14 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
   Console products mirroring `beans_*`, Play Console listing/screenshots. Health Connect runtime
   reads need the HC app on the device. (Optional: deep-verify App Links via assetlinks.json once the
   release signing key exists.)
+- **Manage-circle restructure + Circle gets its own tab (build 41)** — UX-review follow-ups #1 + #3.
+  Manage circle: header reads **Officials · N** (was the singular "Official account · N") with distinct
+  **Coach** / **Creator** badges; the friend list is split into **Requests / Friends / Invited** (was
+  one ambiguous "Your circle · N" lump); the always-on QR is **collapsed behind a "Show QR" button** so
+  friends surface sooner. Circle now has its **own bottom-nav tab** (Today / Trends / Circle / Profile)
+  with the strip + photo feed together — removed from the Trends screen. Pure client UI, no
+  backend/shared-model change; new l10n (`navCircle`, `sectionOfficials`, `sectionFriends`,
+  `sectionInvited`, `badgeCoach`, `showInviteQr`/`hideInviteQr`). ✅ build 41.
 - **Manage-circle avatar alignment (build 40)** — the handle-card avatar was size 46 while the
   section-tile avatars are 40, so it sat larger and ~2px further left (the "name icon starts from a
   different position" report). Matched it to **size 40 + a 12px left inset** so the You/Official/peer

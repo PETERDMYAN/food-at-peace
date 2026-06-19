@@ -12,7 +12,11 @@ for real calories burned, and speaks **English and 中文**. Built with Flutter.
 > path that also covers Android/web users with no StoreKit. Built + unit-tested on the **v2** stack;
 > it's a *standalone* page (no in-app link, so the App Store app is untouched), and awaits Stripe keys
 > + a deliberate prod cutover before it's user-facing.
-> **1.0.2 (28)** is **in App Review**. **Build 40** aligns the Manage-circle handle avatar with the
+> **1.0.2 (28)** is **in App Review**. **Build 41** restructures **Manage circle** (header now reads
+> "Officials · N" with distinct Coach/Creator badges; the friend list is split into Requests / Friends
+> / Invited; the always-on QR is collapsed behind a "Show QR" button) and gives **Circle its own
+> bottom-nav tab** (Today / Trends / Circle / Profile), moving the strip + photo feed off the Trends
+> screen. **Build 40** aligns the Manage-circle handle avatar with the
 > rows below it (was larger + offset). **Build 39** makes the food story show **S3-backed meal photos
 > even when no thumbnail synced** (so durable photos reappear after a reinstall, not just a caption);
 > older meals logged before durable backup remain unrecoverable. **Build 38** hardens profile restore — the client now never

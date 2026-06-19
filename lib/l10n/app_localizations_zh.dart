@@ -191,6 +191,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get navSettings => '我的';
 
   @override
+  String get navCircle => '圈子';
+
+  @override
   String get addFood => '添加食物';
 
   @override
@@ -1067,6 +1070,24 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sectionOfficial => '官方账号';
 
   @override
+  String get sectionOfficials => '官方账号';
+
+  @override
+  String get sectionFriends => '好友';
+
+  @override
+  String get sectionInvited => '已邀请';
+
+  @override
+  String get badgeCoach => '教练';
+
+  @override
+  String get showInviteQr => '显示二维码';
+
+  @override
+  String get hideInviteQr => '隐藏二维码';
+
+  @override
   String get officialBadge => '官方';
 
   @override
@@ -1191,9 +1212,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get sectionRequests => '请求';
-
-  @override
-  String get sectionInvited => '已邀请';
 
   @override
   String get cancelInvite => '取消';

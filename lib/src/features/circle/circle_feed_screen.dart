@@ -14,56 +14,66 @@ Future<void> showCircleFeed(BuildContext context) {
 
 /// The circle photo feed: friends' (and your own) shared meals, with emoji
 /// reactions. Posts expire after 3 days (server-side TTL).
-class CircleFeedScreen extends ConsumerWidget {
+class CircleFeedScreen extends StatelessWidget {
   const CircleFeedScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    return Scaffold(
+      appBar: AppBar(title: Text(t.feedTitle)),
+      body: const CircleFeedBody(),
+    );
+  }
+}
+
+/// The circle feed list (pull-to-refresh + posts) without its own Scaffold, so it
+/// can sit under the strip on the Circle tab as well as be pushed full-screen.
+class CircleFeedBody extends ConsumerWidget {
+  const CircleFeedBody({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final t = AppLocalizations.of(context);
     final feed = ref.watch(circleFeedProvider);
-    return Scaffold(
-      appBar: AppBar(title: Text(t.feedTitle)),
-      body: RefreshIndicator(
-        onRefresh: () => ref.refresh(circleFeedProvider.future),
-        child: feed.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, _) => ListView(
-            children: [
-              Padding(padding: const EdgeInsets.all(24), child: Text('$e')),
-            ],
-          ),
-          data: (posts) {
-            // Drop locally hidden posts (reported, or authored by someone the
-            // viewer unfollowed) so flagged content disappears immediately.
-            final hidden = ref.watch(hiddenPostsProvider);
-            final visible = [
-              for (final p in posts)
-                if (!hidden.contains(p.postId)) p,
-            ];
-            return visible.isEmpty
-                ? ListView(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(28, 96, 28, 24),
-                        child: Text(
-                          t.feedEmpty,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.onSurfaceVariant,
-                          ),
+    return RefreshIndicator(
+      onRefresh: () => ref.refresh(circleFeedProvider.future),
+      child: feed.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (e, _) => ListView(
+          children: [
+            Padding(padding: const EdgeInsets.all(24), child: Text('$e')),
+          ],
+        ),
+        data: (posts) {
+          // Drop locally hidden posts (reported, or authored by someone the
+          // viewer unfollowed) so flagged content disappears immediately.
+          final hidden = ref.watch(hiddenPostsProvider);
+          final visible = [
+            for (final p in posts)
+              if (!hidden.contains(p.postId)) p,
+          ];
+          return visible.isEmpty
+              ? ListView(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(28, 96, 28, 24),
+                      child: Text(
+                        t.feedEmpty,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                       ),
-                    ],
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(12, 10, 12, 32),
-                    itemCount: visible.length,
-                    itemBuilder: (_, i) => _PostCard(post: visible[i]),
-                  );
-          },
-        ),
+                    ),
+                  ],
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.fromLTRB(12, 10, 12, 32),
+                  itemCount: visible.length,
+                  itemBuilder: (_, i) => _PostCard(post: visible[i]),
+                );
+        },
       ),
     );
   }

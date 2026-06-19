@@ -8,6 +8,7 @@ import '../../data/notification_service.dart';
 import '../../data/sync_engine.dart';
 import '../../providers/providers.dart';
 import '../add/add_entry_screen.dart';
+import '../circle/circle_screen.dart';
 import '../settings/settings_screen.dart';
 import '../today/today_screen.dart';
 import '../trends/trends_screen.dart';
@@ -24,7 +25,12 @@ class _HomeShellState extends ConsumerState<HomeShell>
     with WidgetsBindingObserver {
   int _index = 0;
 
-  static const _screens = [TodayScreen(), TrendsScreen(), SettingsScreen()];
+  static const _screens = [
+    TodayScreen(),
+    TrendsScreen(),
+    CircleScreen(),
+    SettingsScreen(),
+  ];
 
   @override
   void initState() {
@@ -175,6 +181,11 @@ class _HomeShellState extends ConsumerState<HomeShell>
             icon: const Icon(Icons.insights_outlined),
             selectedIcon: const Icon(Icons.insights),
             label: t.navTrends,
+          ),
+          NavigationDestination(
+            icon: const Icon(Icons.groups_outlined),
+            selectedIcon: const Icon(Icons.groups),
+            label: t.navCircle,
           ),
           NavigationDestination(
             icon: const Icon(Icons.settings_outlined),
