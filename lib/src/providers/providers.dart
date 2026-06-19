@@ -1224,6 +1224,44 @@ final circleProvider = NotifierProvider<CircleNotifier, List<Friend>>(
   CircleNotifier.new,
 );
 
+// ---- Official Circle accounts (first-party, not peer friends) ----
+// Eva is the built-in AI coach, shown as a followable member (her daily lesson +
+// a tip card). Roro is the creator's REAL @handle, only ever *recommended* to
+// follow (opt-in via the normal one-tap connect — never auto-followed, so no
+// data-sharing happens without the user choosing it).
+
+/// The creator's real Circle @handle, surfaced under "Suggested to follow".
+const String kRoroHandle = 'roro';
+
+/// Whether the user follows Eva (the built-in AI coach). Default **true** — she's
+/// part of a new circle. Unfollowing hides her story; she then appears under
+/// "Suggested" to re-follow. Persisted.
+class EvaFollowedNotifier extends Notifier<bool> {
+  static const _key = 'eva_followed';
+
+  @override
+  bool build() => ref.read(sharedPreferencesProvider).getBool(_key) ?? true;
+
+  Future<void> setFollowed(bool value) async {
+    state = value;
+    await ref.read(sharedPreferencesProvider).setBool(_key, value);
+  }
+}
+
+final evaFollowedProvider = NotifierProvider<EvaFollowedNotifier, bool>(
+  EvaFollowedNotifier.new,
+);
+
+/// True once the user is mutually connected to the creator's account (@roro), so
+/// the "Suggested: Roro" recommendation can hide itself.
+final followsRoroProvider = Provider<bool>((ref) {
+  final target = '@$kRoroHandle';
+  return ref.watch(circleProvider).any(
+    (f) => f.status == FriendStatus.connected &&
+        f.handle.toLowerCase() == target,
+  );
+});
+
 // ---- Circle photo feed (share a scanned meal; friends react) ----
 
 /// Emoji reactions offered in the circle feed.

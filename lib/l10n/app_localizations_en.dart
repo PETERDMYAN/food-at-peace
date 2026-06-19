@@ -1079,6 +1079,40 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get sectionSuggested => 'Suggested to follow';
+
+  @override
+  String get officialBadge => 'Official';
+
+  @override
+  String get evaRole => 'AI coach';
+
+  @override
+  String get roroName => 'Roro';
+
+  @override
+  String get roroRole => 'Creator';
+
+  @override
+  String get followAction => 'Follow';
+
+  @override
+  String get followingLabel => 'Following';
+
+  @override
+  String get evaTipOfDay => 'Eva\'s tip of the day';
+
+  @override
+  String get evaUnfollowedMsg =>
+      'Unfollowed Eva — find her under Suggested anytime.';
+
+  @override
+  String get roroFollowedMsg => 'Following Roro 🎉';
+
+  @override
+  String get followFailed => 'Couldn\'t follow. Please try again.';
+
+  @override
   String get todayLabel => 'Today';
 
   @override

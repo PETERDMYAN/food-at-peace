@@ -1994,6 +1994,72 @@ abstract class AppLocalizations {
   /// **'Unfollowed {name}.'**
   String feedUnfollowed(String name);
 
+  /// No description provided for @sectionSuggested.
+  ///
+  /// In en, this message translates to:
+  /// **'Suggested to follow'**
+  String get sectionSuggested;
+
+  /// No description provided for @officialBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Official'**
+  String get officialBadge;
+
+  /// No description provided for @evaRole.
+  ///
+  /// In en, this message translates to:
+  /// **'AI coach'**
+  String get evaRole;
+
+  /// No description provided for @roroName.
+  ///
+  /// In en, this message translates to:
+  /// **'Roro'**
+  String get roroName;
+
+  /// No description provided for @roroRole.
+  ///
+  /// In en, this message translates to:
+  /// **'Creator'**
+  String get roroRole;
+
+  /// No description provided for @followAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow'**
+  String get followAction;
+
+  /// No description provided for @followingLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Following'**
+  String get followingLabel;
+
+  /// No description provided for @evaTipOfDay.
+  ///
+  /// In en, this message translates to:
+  /// **'Eva\'s tip of the day'**
+  String get evaTipOfDay;
+
+  /// No description provided for @evaUnfollowedMsg.
+  ///
+  /// In en, this message translates to:
+  /// **'Unfollowed Eva — find her under Suggested anytime.'**
+  String get evaUnfollowedMsg;
+
+  /// No description provided for @roroFollowedMsg.
+  ///
+  /// In en, this message translates to:
+  /// **'Following Roro 🎉'**
+  String get roroFollowedMsg;
+
+  /// No description provided for @followFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t follow. Please try again.'**
+  String get followFailed;
+
   /// No description provided for @todayLabel.
   ///
   /// In en, this message translates to:

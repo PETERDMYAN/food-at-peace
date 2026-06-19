@@ -505,6 +505,17 @@
   "@feedUnfollowed": {
     "placeholders": { "name": { "type": "String" } }
   },
+  "sectionSuggested": "Suggested to follow",
+  "officialBadge": "Official",
+  "evaRole": "AI coach",
+  "roroName": "Roro",
+  "roroRole": "Creator",
+  "followAction": "Follow",
+  "followingLabel": "Following",
+  "evaTipOfDay": "Eva's tip of the day",
+  "evaUnfollowedMsg": "Unfollowed Eva — find her under Suggested anytime.",
+  "roroFollowedMsg": "Following Roro 🎉",
+  "followFailed": "Couldn't follow. Please try again.",
   "todayLabel": "Today",
   "streakLabel": "Streak",
   "streakDays": "{count} days",

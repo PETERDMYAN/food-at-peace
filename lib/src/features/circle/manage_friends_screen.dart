@@ -19,6 +19,8 @@ class ManageCircleScreen extends ConsumerWidget {
     final t = AppLocalizations.of(context);
     final friends = ref.watch(circleProvider);
     final myHandle = ref.watch(myCircleHandleProvider);
+    final evaFollowed = ref.watch(evaFollowedProvider);
+    final followsRoro = ref.watch(followsRoroProvider);
     final connected =
         friends.where((f) => f.status == FriendStatus.connected).toList();
     final incoming =
@@ -46,6 +48,23 @@ class ManageCircleScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 20),
           if (myHandle != null) InviteShareCard(handle: myHandle),
+          // Eva — the built-in AI coach — is a followable Official member.
+          if (evaFollowed)
+            _OfficialTile(
+              name: 'Eva',
+              role: t.evaRole,
+              seed: 'eva'.hashCode,
+              trailing: TextButton(
+                onPressed: () async {
+                  final messenger = ScaffoldMessenger.of(context);
+                  await ref.read(evaFollowedProvider.notifier).setFollowed(false);
+                  messenger.showSnackBar(
+                    SnackBar(content: Text(t.evaUnfollowedMsg)),
+                  );
+                },
+                child: Text(t.feedUnfollow),
+              ),
+            ),
           if (connected.isEmpty && incoming.isEmpty && outgoing.isEmpty)
             Padding(
               padding: const EdgeInsets.only(top: 28),
@@ -110,9 +129,57 @@ class ManageCircleScreen extends ConsumerWidget {
                 ),
               ),
           ],
+          // Suggested to follow — first-party official accounts not yet followed.
+          if (!followsRoro || !evaFollowed) ...[
+            _SectionHeader(
+              t.sectionSuggested,
+              count: (followsRoro ? 0 : 1) + (evaFollowed ? 0 : 1),
+            ),
+            if (!followsRoro)
+              _OfficialTile(
+                name: t.roroName,
+                role: t.roroRole,
+                seed: kRoroHandle.hashCode,
+                subtitle: '@$kRoroHandle',
+                trailing: FilledButton(
+                  onPressed: () => _followRoro(context, ref),
+                  child: Text(t.followAction),
+                ),
+              ),
+            if (!evaFollowed)
+              _OfficialTile(
+                name: 'Eva',
+                role: t.evaRole,
+                seed: 'eva'.hashCode,
+                trailing: FilledButton(
+                  onPressed: () =>
+                      ref.read(evaFollowedProvider.notifier).setFollowed(true),
+                  child: Text(t.followAction),
+                ),
+              ),
+          ],
         ],
       ),
     );
+  }
+
+  /// Opt-in follow of the creator's real account (@roro) via the normal one-tap
+  /// connect. Self-corrects: if it didn't actually connect, the card stays.
+  Future<void> _followRoro(BuildContext context, WidgetRef ref) async {
+    final t = AppLocalizations.of(context);
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      await ref.read(circleProvider.notifier).connect(kRoroHandle);
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text(
+            ref.read(followsRoroProvider) ? t.roroFollowedMsg : t.followFailed,
+          ),
+        ),
+      );
+    } catch (_) {
+      messenger.showSnackBar(SnackBar(content: Text(t.followFailed)));
+    }
   }
 
   Future<void> _confirmRemove(
@@ -262,6 +329,64 @@ class _FriendTile extends StatelessWidget {
         ),
         title: Text(friend.name),
         subtitle: Text(friend.handle),
+        trailing: trailing,
+      ),
+    );
+  }
+}
+
+/// A first-party "Official" account row (Eva the AI coach, Roro the creator) —
+/// visually distinct from peer friends via an Official badge, so it's never
+/// mistaken for fabricated user data.
+class _OfficialTile extends StatelessWidget {
+  const _OfficialTile({
+    required this.name,
+    required this.role,
+    required this.seed,
+    required this.trailing,
+    this.subtitle,
+  });
+
+  final String name;
+  final String role;
+  final int seed;
+  final String? subtitle;
+  final Widget trailing;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    final scheme = Theme.of(context).colorScheme;
+    return Card(
+      margin: const EdgeInsets.only(bottom: 8),
+      child: ListTile(
+        contentPadding: const EdgeInsets.fromLTRB(12, 4, 8, 4),
+        leading: StoryAvatar(
+          initials: name.isNotEmpty ? name[0].toUpperCase() : '?',
+          colorSeed: seed,
+          size: 40,
+        ),
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Flexible(child: Text(name, overflow: TextOverflow.ellipsis)),
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: scheme.primaryContainer,
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(
+                t.officialBadge,
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: scheme.onPrimaryContainer,
+                ),
+              ),
+            ),
+          ],
+        ),
+        subtitle: Text(subtitle == null ? role : '$role · $subtitle'),
         trailing: trailing,
       ),
     );

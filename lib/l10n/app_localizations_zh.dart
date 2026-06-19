@@ -1047,6 +1047,39 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get sectionSuggested => '推荐关注';
+
+  @override
+  String get officialBadge => '官方';
+
+  @override
+  String get evaRole => 'AI 教练';
+
+  @override
+  String get roroName => 'Roro';
+
+  @override
+  String get roroRole => '作者';
+
+  @override
+  String get followAction => '关注';
+
+  @override
+  String get followingLabel => '已关注';
+
+  @override
+  String get evaTipOfDay => 'Eva 今日小贴士';
+
+  @override
+  String get evaUnfollowedMsg => '已取消关注 Eva——随时可在“推荐关注”中找回。';
+
+  @override
+  String get roroFollowedMsg => '已关注 Roro 🎉';
+
+  @override
+  String get followFailed => '关注失败，请重试。';
+
+  @override
   String get todayLabel => '今天';
 
   @override

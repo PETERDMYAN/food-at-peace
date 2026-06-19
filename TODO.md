@@ -95,6 +95,18 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
   Console products mirroring `beans_*`, Play Console listing/screenshots. Health Connect runtime
   reads need the HC app on the device. (Optional: deep-verify App Links via assetlinks.json once the
   release signing key exists.)
+- **Official Circle accounts — Eva + Roro (build 31)** — Eva (built-in AI coach) is now a
+  followable Official member ([`evaFollowedProvider`](lib/src/providers/providers.dart), default
+  **followed**): her daily-lesson story **+ a "tip of the day" card** in the strip
+  ([`circle_strip.dart`](lib/src/features/circle/circle_strip.dart)); unfollow → she moves to a new
+  **"Suggested to follow"** section in [`manage_friends_screen.dart`](lib/src/features/circle/manage_friends_screen.dart).
+  Roro = the creator's **real** @handle ([`kRoroHandle`](lib/src/providers/providers.dart)),
+  **recommended only** (opt-in one-tap `connect('roro')` — never auto-followed, so no mutual
+  data-sharing without consent; `followsRoroProvider` hides the card once connected). Both wear an
+  **Official** badge — first-party, NOT fabricated peers (consistent with the no-dummy-data skill:
+  Eva/Roro are real product entities). Tests: `circle_official_test.dart` (6). ⚠️ **@roro must be a
+  claimed account** for the Follow to connect (otherwise it shows "couldn't follow" and the card
+  stays). Build 31 also ships the profile-photo S3 durability.
 - **Meal-photo durability fix (next build, 29)** — the synced photo copy
   ([`encodeMealThumb`](lib/src/data/meal_photos.dart)) now **adaptively shrinks** (size + quality
   ladder) so its **base64 string** always stays under DynamoDB's 400 KB row limit. Root cause: a

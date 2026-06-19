@@ -42,6 +42,9 @@ class CircleStrip extends ConsumerWidget {
         ? 0
         : evaLessonIndex(DateTime.now(), lessons.length);
     final evaLesson = lessons.isEmpty ? null : lessons[evaIndex];
+    // Eva is followed by default; unfollowing hides her story + tip (she moves to
+    // Manage ▸ Suggested to re-follow).
+    final evaFollowed = ref.watch(evaFollowedProvider);
 
     // Your profile photo (used for the "You" avatar + your story header).
     final myPhoto = ref.watch(profilePhotoProvider);
@@ -121,8 +124,9 @@ class CircleStrip extends ConsumerWidget {
                 onTap: () => openStories(0),
               ),
               // Eva — a companion you follow; opens the same tray on her story,
-              // so swiping back/forward moves between You and Eva.
-              if (evaLesson != null)
+              // so swiping back/forward moves between You and Eva. Hidden once
+              // unfollowed (she reappears under Manage ▸ Suggested).
+              if (evaFollowed && evaLesson != null)
                 _AvatarColumn(
                   label: 'Eva',
                   avatar: StoryAvatar(
@@ -163,7 +167,71 @@ class CircleStrip extends ConsumerWidget {
             ],
           ),
         ),
+        // Eva's tip of the day — a coach card under the strip (her daily lesson).
+        if (evaFollowed && evaLesson != null) ...[
+          const SizedBox(height: 12),
+          _EvaTipCard(text: evaLesson.text(lang), onTap: () => openStories(1)),
+        ],
       ],
+    );
+  }
+}
+
+/// A compact "tip of the day" card surfacing Eva's daily lesson; tap opens her
+/// full story.
+class _EvaTipCard extends StatelessWidget {
+  const _EvaTipCard({required this.text, required this.onTap});
+
+  final String text;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    final scheme = Theme.of(context).colorScheme;
+    return Card(
+      margin: EdgeInsets.zero,
+      color: scheme.surfaceContainerHighest.withValues(alpha: 0.5),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              StoryAvatar(
+                initials: 'E',
+                colorSeed: 7,
+                size: 36,
+                ring: false,
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      t.evaTipOfDay,
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        color: scheme.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      text,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodyMedium,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
