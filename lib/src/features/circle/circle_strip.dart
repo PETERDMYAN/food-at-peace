@@ -962,7 +962,7 @@ class _EvaStoryPage extends StatelessWidget {
   }
 }
 
-class _FoodStoryPage extends ConsumerWidget {
+class _FoodStoryPage extends ConsumerStatefulWidget {
   const _FoodStoryPage({
     required this.entry,
     required this.photoPath,
@@ -974,9 +974,52 @@ class _FoodStoryPage extends ConsumerWidget {
   final Uint8List? photo;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_FoodStoryPage> createState() => _FoodStoryPageState();
+}
+
+class _FoodStoryPageState extends ConsumerState<_FoodStoryPage> {
+  late final Uint8List? _thumb = _decodeThumb(widget.entry.photoThumb);
+  late bool _localReady = File(widget.photoPath).existsSync();
+
+  /// True while we check S3 for a photo meal that has neither a local file nor a
+  /// synced thumbnail — so we show a loader, not a premature caption.
+  bool _resolvingS3 = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // A photo meal with no local file AND no synced thumbnail can still have its
+    // full-res backed up in S3 (after a reinstall, or when the thumbnail was too
+    // large to sync). Pull it so the real photo shows instead of a bare caption.
+    if (!_localReady &&
+        _thumb == null &&
+        widget.entry.source == FoodSource.photo) {
+      _resolvingS3 = true;
+      _hydrateFromS3();
+    }
+  }
+
+  Future<void> _hydrateFromS3() async {
+    final token = ref.read(authProvider)?.token;
+    var ok = false;
+    if (token != null && token.isNotEmpty) {
+      ok = await ref
+          .read(mealPhotoStoreProvider)
+          .ensureLocal(widget.entry.id, token);
+    }
+    if (mounted) {
+      setState(() {
+        _localReady = ok;
+        _resolvingS3 = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
     final ml = MaterialLocalizations.of(context);
+    final entry = widget.entry;
     final when =
         '${ml.formatMediumDate(entry.timestamp)} · '
         '${ml.formatTimeOfDay(TimeOfDay.fromDateTime(entry.timestamp))}';
@@ -984,8 +1027,8 @@ class _FoodStoryPage extends ConsumerWidget {
       t.foodStory,
       when,
       StoryAvatar(
-        imageBytes: photo,
-        icon: photo == null ? Icons.person : null,
+        imageBytes: widget.photo,
+        icon: widget.photo == null ? Icons.person : null,
         colorSeed: 3,
         size: 40,
       ),
@@ -994,16 +1037,18 @@ class _FoodStoryPage extends ConsumerWidget {
       ),
     );
 
-    // A meal has a photo if the full-res original is on THIS device OR a synced
-    // thumbnail rides on the entry. Manual entries have neither → caption card.
-    final thumbBytes = _decodeThumb(entry.photoThumb);
-    final hasPhoto = File(photoPath).existsSync() || thumbBytes != null;
+    // A meal has a photo if the full-res original is on THIS device, a synced
+    // thumbnail rides on the entry, OR we just pulled it from S3. Manual entries
+    // (and photo meals whose image is truly gone) fall back to a caption card.
+    final hasPhoto = _localReady || _thumb != null;
 
     if (!hasPhoto) {
       return _StoryScaffold(
         colors: const [Color(0xFF241A40), Color(0xFF0E0B14)],
         header: header,
-        body: _foodCaption(t, entry, centered: true),
+        body: _resolvingS3
+            ? const CircularProgressIndicator(color: Colors.white70)
+            : _foodCaption(t, entry, centered: true),
       );
     }
 
@@ -1016,8 +1061,8 @@ class _FoodStoryPage extends ConsumerWidget {
       children: [
         _HeroPhoto(
           entryId: entry.id,
-          photoPath: photoPath,
-          thumbBytes: thumbBytes,
+          photoPath: widget.photoPath,
+          thumbBytes: _thumb,
         ),
         const DecoratedBox(
           decoration: BoxDecoration(
@@ -1080,7 +1125,7 @@ class _FoodStoryPage extends ConsumerWidget {
     );
     if (confirmed != true) return;
     // Hide from the story only — keep the food-log entry (Today/Trends).
-    await ref.read(foodEntriesProvider.notifier).hideFromStory(entry.id);
+    await ref.read(foodEntriesProvider.notifier).hideFromStory(widget.entry.id);
     nav.pop(); // close the whole story viewer
     messenger.showSnackBar(SnackBar(content: Text(t.storyDeleted)));
   }

@@ -95,6 +95,16 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
   Console products mirroring `beans_*`, Play Console listing/screenshots. Health Connect runtime
   reads need the HC app on the device. (Optional: deep-verify App Links via assetlinks.json once the
   release signing key exists.)
+- **Food-story photos: hydrate S3 without a thumbnail + recovered roro's shared photos (build 39)** —
+  the food story only showed a photo when a local file or synced thumbnail existed, so a meal whose
+  full-res is backed up in **S3 but has no thumbnail** (after a reinstall, or when the thumb was too
+  big to sync) wrongly showed a caption. [`_FoodStoryPage`](lib/src/features/circle/circle_strip.dart)
+  is now stateful: a photo-source meal with no local/thumb **pulls from S3** and shows the real photo
+  (caption only if S3 has nothing either). **Data recovery:** matched 9 of roro's expiring
+  circle-share photos (PostsTable name+calories → entry) and copied them into the durable meal store,
+  so those 9 meals show again. ⚠️ **Honest gap:** the other ~11 photo-meals were logged before
+  durable backup existed — phone-only originals, wiped on reinstall → unrecoverable. Forward: every
+  new photo (build 30+) is S3-backed + thumbnailed, so it survives reinstall. ✅ build 39.
 - **Profile-restore hardening — never push an unconfigured profile (build 38)** — belt-and-braces
   for the restore bug: [`sync_engine`](lib/src/data/sync_engine.dart) now **only pushes the profile
   once it's `isConfigured`**. A fresh-install default (even with launch-time health stats) is never
