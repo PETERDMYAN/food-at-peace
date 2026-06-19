@@ -75,6 +75,23 @@ def test_verify_rejects_wrong_audience(rsa_key):
     assert exc.value.status == 401
 
 
+def test_verify_accepts_any_of_multiple_client_ids(rsa_key, monkeypatch):
+    # The v2 stack accepts both the prod bundle id and the ".dev" build's id.
+    monkeypatch.setattr(
+        auth,
+        "APPLE_CLIENT_ID",
+        "com.foodatpeace.foodAtPeace,com.foodatpeace.foodAtPeace.dev",
+    )
+    dev = auth.verify_apple_identity_token(
+        _apple_token(rsa_key, aud="com.foodatpeace.foodAtPeace.dev")
+    )
+    assert dev["sub"] == "000123.abc.def"
+    prod = auth.verify_apple_identity_token(_apple_token(rsa_key, aud=CLIENT_ID))
+    assert prod["sub"] == "000123.abc.def"
+    with pytest.raises(common.ProxyError):
+        auth.verify_apple_identity_token(_apple_token(rsa_key, aud="com.evil.app"))
+
+
 def test_verify_rejects_wrong_issuer(rsa_key):
     with pytest.raises(common.ProxyError) as exc:
         auth.verify_apple_identity_token(

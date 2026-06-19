@@ -92,9 +92,13 @@ def verify_apple_identity_token(identity_token, raw_nonce=None):
 
     if payload.get("iss") != APPLE_ISSUER:
         raise ProxyError(401, bad)
+    # APPLE_CLIENT_ID may be a comma-separated list — e.g. the prod bundle id
+    # plus the ".dev" build's id on the v2 stack — so accept a token issued for
+    # any of them. (Single value behaves exactly as before.)
+    accepted = {c.strip() for c in APPLE_CLIENT_ID.split(",") if c.strip()}
     aud = payload.get("aud")
-    auds = aud if isinstance(aud, list) else [aud]
-    if APPLE_CLIENT_ID not in auds:
+    auds = {a for a in (aud if isinstance(aud, list) else [aud]) if a}
+    if accepted.isdisjoint(auds):
         raise ProxyError(401, bad)
     exp = payload.get("exp")
     if not isinstance(exp, (int, float)) or int(time.time()) >= int(exp):
