@@ -37,7 +37,6 @@ class CircleStrip extends ConsumerWidget {
 
     // Eva is a story you follow: her daily lesson, keyed to the local date.
     final lessons = ref.watch(evaWisdomProvider).asData?.value ?? const [];
-    final lang = Localizations.localeOf(context).languageCode;
     final evaIndex = lessons.isEmpty
         ? 0
         : evaLessonIndex(DateTime.now(), lessons.length);
@@ -88,18 +87,8 @@ class CircleStrip extends ConsumerWidget {
     // Open the chained story tray (You → Eva). [initialStory] 0 = your food
     // story, 1 = Eva — advancing past the end of one rolls into the next. Each
     // story is marked "seen" as the viewer shows it.
-    void openStories(int initialStory) => openCircleStories(
-      context,
-      food: recentFood,
-      lang: lang,
-      photos: ref.read(mealPhotosProvider),
-      photo: myPhoto,
-      evaLesson: evaLesson,
-      evaIndex: evaIndex,
-      initialStory: initialStory,
-      onStorySeen: (key) =>
-          ref.read(seenStoriesProvider.notifier).markSeen(key),
-    );
+    void openStories(int initialStory) =>
+        openMyStory(context, ref, initialStory: initialStory);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -676,6 +665,47 @@ Future<void> openCircleStories(
     onStoryViewed:
         onStorySeen == null ? null : (i) => onStorySeen(items[i].$2),
   );
+}
+
+/// Open the current user's story tray (their food story → Eva), reading
+/// everything it needs from [ref]. Shared by the strip's You/Eva avatars and the
+/// Manage-circle handle-card avatar, so tapping any of them opens the story and
+/// marks it seen.
+void openMyStory(BuildContext context, WidgetRef ref, {int initialStory = 0}) {
+  final lang = Localizations.localeOf(context).languageCode;
+  final lessons = ref.read(evaWisdomProvider).asData?.value ?? const [];
+  final evaIndex =
+      lessons.isEmpty ? 0 : evaLessonIndex(DateTime.now(), lessons.length);
+  final evaLesson = lessons.isEmpty ? null : lessons[evaIndex];
+  openCircleStories(
+    context,
+    food: _recentFoodFor(ref),
+    lang: lang,
+    photos: ref.read(mealPhotosProvider),
+    photo: ref.read(profilePhotoProvider),
+    evaLesson: evaLesson,
+    evaIndex: evaIndex,
+    initialStory: initialStory,
+    onStorySeen: (key) => ref.read(seenStoriesProvider.notifier).markSeen(key),
+  );
+}
+
+/// The user's own story key — used to show a "seen" ring on their avatar outside
+/// the strip (e.g. the Manage-circle handle card).
+String myStorySeenKey(WidgetRef ref) => youStoryKey(_recentFoodFor(ref));
+
+/// The last 7 days of the user's food log (newest first), excluding deleted /
+/// story-hidden entries — the basis for both the food story and its seen key.
+List<FoodEntry> _recentFoodFor(WidgetRef ref) {
+  final now = DateTime.now();
+  final weekStart =
+      DateTime(now.year, now.month, now.day).subtract(const Duration(days: 6));
+  return ref
+      .read(foodEntriesProvider)
+      .where((e) =>
+          !e.deleted && !e.hiddenFromStory && !e.timestamp.isBefore(weekStart))
+      .toList()
+    ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
 }
 
 /// Your food story pages = one per food logged in the last 7 days (a nudge if

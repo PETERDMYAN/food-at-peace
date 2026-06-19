@@ -92,5 +92,45 @@ void main() {
     test('a null server profile keeps local', () {
       expect(mergeProfile(prof(100), null).weightKg, 70);
     });
+
+    // Reinstall restore: the fresh local profile is unconfigured but launch-time
+    // health refresh bumped its timestamp newer than the server. The user's real
+    // configured server profile must still win (else their name/targets vanish).
+    test('configured server restores over a fresh unconfigured local, even when '
+        'the local timestamp is newer', () {
+      final localFreshNewer = UserProfile.defaultProfile.copyWith(
+        weightKg: 74, // launch-time health stat
+        updatedAt: DateTime.fromMillisecondsSinceEpoch(9000), // "now"
+      ); // isConfigured stays false
+      final serverConfigured = SyncRecord(
+        id: 'profile',
+        updatedAtMs: 5000, // earlier than local
+        deleted: false,
+        data: UserProfile.defaultProfile
+            .copyWith(name: 'roro', isConfigured: true, weightKg: 80)
+            .toJson(),
+      );
+      final merged = mergeProfile(localFreshNewer, serverConfigured);
+      expect(merged.isConfigured, isTrue);
+      expect(merged.name, 'roro');
+      expect(merged.weightKg, 80);
+    });
+
+    test('a configured local profile is NOT clobbered by an older server', () {
+      final localConfiguredNewer = UserProfile.defaultProfile.copyWith(
+        isConfigured: true,
+        weightKg: 70,
+        updatedAt: DateTime.fromMillisecondsSinceEpoch(9000),
+      );
+      final serverOlder = SyncRecord(
+        id: 'profile',
+        updatedAtMs: 5000,
+        deleted: false,
+        data: UserProfile.defaultProfile
+            .copyWith(isConfigured: true, weightKg: 88)
+            .toJson(),
+      );
+      expect(mergeProfile(localConfiguredNewer, serverOlder).weightKg, 70);
+    });
   });
 }

@@ -95,6 +95,20 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
   Console products mirroring `beans_*`, Play Console listing/screenshots. Health Connect runtime
   reads need the HC app on the device. (Optional: deep-verify App Links via assetlinks.json once the
   release signing key exists.)
+- **Profile-restore fix + Manage-circle avatar (build 36)** — two things:
+  1. **Profile still didn't restore on reinstall even on prod.** Meals/weight came back but the
+     profile (name, targets) stayed blank. Root cause: a fresh device's local profile is
+     *unconfigured*, but launch-time [`refreshFromHealth()`](lib/src/providers/providers.dart)
+     fills HealthKit stats and `save()` stamps `updatedAt = now` — which beat the user's real
+     (configured) **server** profile (earlier timestamp) under plain last-write-wins, discarding it.
+     Meals restored fine because there's no local default to out-timestamp them. Fix:
+     [`mergeProfile`](lib/src/data/sync_engine.dart) now has a **restore guard** — a *configured*
+     server profile always wins over an *unconfigured* local one (then normal LWW). Tests:
+     `sync_merge_test.dart` (+2: restore-over-fresh, and don't-clobber-configured-local).
+  2. **Manage circle → your own avatar** now appears on the handle card and is **tappable to open
+     your story** (grey "seen" ring once viewed) — [`MyHandleCard`](lib/src/features/circle/invite_card.dart)
+     + a reusable [`openMyStory`](lib/src/features/circle/circle_strip.dart) (also DRYs the strip's
+     You/Eva taps). ✅ build 36 (prod). Capture: `integration_test/circle_strip_shots.dart`.
 - **Data-restore fix — main app now points at PROD (build 35)** — a returning user (deleted +
   reinstalled, signed back in with Apple) saw all their info **blank**. Root cause: this session's
   TestFlight builds 33/34 were built with `dart_defines.json` (**v2** `p21hoawoi5`, near-empty)

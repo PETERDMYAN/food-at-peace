@@ -63,11 +63,19 @@ List<T> mergeById<T>({
   return byId.values.toList();
 }
 
-/// LWW for the profile singleton.
+/// LWW for the profile singleton — with a restore guard.
 UserProfile mergeProfile(UserProfile local, SyncRecord? server) {
   if (server == null) return local;
+  final serverProfile = _profileFromRecord(server);
+  // Restore guard: on a fresh install the local profile is *unconfigured* (the
+  // default, possibly filled with launch-time HealthKit stats). That health
+  // refresh stamps the local profile with `updatedAt = now`, which would beat
+  // the user's real (configured) server profile under plain last-write-wins —
+  // silently discarding their name/targets after a reinstall. So a configured
+  // server profile ALWAYS wins over an unconfigured local one.
+  if (serverProfile.isConfigured && !local.isConfigured) return serverProfile;
   if (server.updatedAtMs > local.syncUpdatedAt.millisecondsSinceEpoch) {
-    return _profileFromRecord(server);
+    return serverProfile;
   }
   return local;
 }

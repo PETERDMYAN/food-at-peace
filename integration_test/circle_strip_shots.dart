@@ -15,6 +15,7 @@ import 'package:food_at_peace/l10n/app_localizations.dart';
 import 'package:food_at_peace/src/data/meal_photos.dart';
 import 'package:food_at_peace/src/data/profile_photo.dart';
 import 'package:food_at_peace/src/features/circle/circle_strip.dart';
+import 'package:food_at_peace/src/features/circle/manage_friends_screen.dart';
 import 'package:food_at_peace/src/models/session.dart';
 import 'package:food_at_peace/src/models/friend.dart';
 import 'package:food_at_peace/src/providers/providers.dart';
@@ -137,5 +138,38 @@ void main() {
     await t.pumpWidget(_host(notifAllowed: true, prefs: prefs));
     await beat(t, 1400);
     await shot(t, 'circle-before-nocta'); // baseline: no CTA card
+  });
+
+  testWidgets('manage circle — user avatar (tappable to view story)', (t) async {
+    SharedPreferences.setMockInitialValues(<String, Object>{
+      'circle_notify_enabled': true,
+      'circle_my_handle': 'roro',
+    });
+    final prefs = await SharedPreferences.getInstance();
+    final mealDir = Directory.systemTemp.createTempSync('fap_mng_meal');
+    final profileFile = File(
+      '${Directory.systemTemp.createTempSync('fap_mng_prof').path}/p.jpg',
+    );
+    await t.pumpWidget(
+      ProviderScope(
+        overrides: [
+          sharedPreferencesProvider.overrideWithValue(prefs),
+          mealPhotosProvider.overrideWithValue(MealPhotos(mealDir)),
+          profilePhotoFileProvider.overrideWithValue(profileFile),
+          authProvider.overrideWith(_DemoAuth.new),
+          circleProvider.overrideWith(_DemoCircle.new),
+        ],
+        child: MaterialApp(
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.dark(),
+          locale: const Locale('en'),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: const ManageCircleScreen(),
+        ),
+      ),
+    );
+    await beat(t, 1600);
+    await shot(t, 'manage-avatar');
   });
 }

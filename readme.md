@@ -7,7 +7,11 @@ for real calories burned, and speaks **English and 中文**. Built with Flutter.
 
 > **Status:** **v1.0.1 (14) is approved & live on the App Store** (the CN name is **食之安**).
 > Repo is now a single `main` branch; the live build is tagged **`v1.0.1`** (commit `1c6ca03`).
-> **1.0.2 (28)** is **in App Review**. **Build 35** rebuilds the app against the **production
+> **1.0.2 (28)** is **in App Review**. **Build 36** fixes **profile restore on reinstall** (the
+> profile stayed blank even on prod: launch-time HealthKit refresh stamped the fresh local profile
+> newer than the server, so last-write-wins discarded the real one — now a *configured* server
+> profile always wins over an *unconfigured* local one) and adds a **tappable avatar on the Manage
+> Circle handle card** (opens your story). **Build 35** rebuilds the app against the **production
 > backend** (`6m19l2b025`): a returning user who reinstalled saw blank data because this session's
 > builds 33/34 were accidentally pointed at the empty **v2/dev** stack — their real data (profile +
 > 24 meals + weight) was safe on prod the whole time. Reinstalling build 35 restores everything;

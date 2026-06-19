@@ -52,6 +52,9 @@ class ManageCircleScreen extends ConsumerWidget {
           MyHandleCard(
             handle: myHandle,
             onEdit: () => editCircleHandle(context, ref),
+            // Tap your own avatar to view your story (grey ring once seen).
+            onAvatarTap: () => openMyStory(context, ref),
+            seen: ref.watch(seenStoriesProvider).contains(myStorySeenKey(ref)),
           ),
           const SizedBox(height: 16),
           if (myHandle != null) ...[

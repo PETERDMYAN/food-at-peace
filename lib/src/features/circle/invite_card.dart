@@ -6,7 +6,9 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:share_plus/share_plus.dart';
 
 import '../../data/invite_link.dart';
+import '../../data/profile_photo.dart';
 import '../../providers/providers.dart';
+import '../../widgets/story_avatar.dart';
 
 /// The shareable invite block: the viewer's @handle, a QR of their universal
 /// invite link, and Share / Copy actions. The link opens the app to a
@@ -106,14 +108,28 @@ class InviteShareCard extends ConsumerWidget {
 
 /// Shows the viewer's own @handle (with copy + edit), or a "set your handle"
 /// button when they haven't picked one yet. Friends connect using this handle.
-class MyHandleCard extends StatelessWidget {
-  const MyHandleCard({super.key, required this.handle, required this.onEdit});
+/// When [onAvatarTap] is set, the user's own avatar is shown on the left and
+/// tapping it opens their story (used on the Manage-circle screen).
+class MyHandleCard extends ConsumerWidget {
+  const MyHandleCard({
+    super.key,
+    required this.handle,
+    required this.onEdit,
+    this.onAvatarTap,
+    this.seen = false,
+  });
 
   final String? handle;
   final VoidCallback onEdit;
 
+  /// Tapping the user's avatar opens their story; null hides the avatar.
+  final VoidCallback? onAvatarTap;
+
+  /// Show a grey "seen" ring on the avatar (story already viewed).
+  final bool seen;
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final t = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
     if (handle == null) {
@@ -124,6 +140,7 @@ class MyHandleCard extends StatelessWidget {
       );
     }
     final at = '@$handle';
+    final photo = ref.watch(profilePhotoProvider);
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 8, 4, 8),
       decoration: BoxDecoration(
@@ -132,6 +149,17 @@ class MyHandleCard extends StatelessWidget {
       ),
       child: Row(
         children: [
+          if (onAvatarTap != null) ...[
+            StoryAvatar(
+              imageBytes: photo,
+              icon: photo == null ? Icons.person : null,
+              colorSeed: 3,
+              size: 46,
+              seen: seen,
+              onTap: onAvatarTap,
+            ),
+            const SizedBox(width: 12),
+          ],
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
