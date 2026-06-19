@@ -30,6 +30,7 @@ import 'package:food_at_peace/src/data/profile_photo.dart';
 import 'package:food_at_peace/src/data/sync_engine.dart';
 import 'package:food_at_peace/src/features/add/add_entry_screen.dart';
 import 'package:food_at_peace/src/features/circle/circle_feed_screen.dart';
+import 'package:food_at_peace/src/features/circle/manage_friends_screen.dart';
 import 'package:food_at_peace/src/features/home/home_shell.dart';
 import 'package:food_at_peace/src/features/settings/data_sources_screen.dart';
 import 'package:food_at_peace/src/features/settings/reminders_screen.dart';
@@ -462,6 +463,10 @@ void main() {
         }
       }
     }
+
+    // ── 4c) Manage circle — Eva (Official, followed) + Suggested: Roro ──
+    await mount(const ManageCircleScreen());
+    await shot(t, '20-manage-official', settle: 1800);
 
     // ── 5) Beans wallet (balance + history) ────────────────────────────
     await mount(const BeansScreen());
