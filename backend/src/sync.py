@@ -89,25 +89,54 @@ def _bearer(event):
     raise ProxyError(401, "Not authenticated.")
 
 
+def _is_item_too_large(exc):
+    """True if [exc] is DynamoDB rejecting an item over its 400 KB limit."""
+    err = getattr(exc, "response", None)
+    msg = ""
+    if isinstance(err, dict):
+        msg = str(err.get("Error", {}).get("Message", ""))
+    return "Item size" in (msg or str(exc))
+
+
 def _apply_one(store, user_id, rtype, rid, record):
     """Last-write-wins: write only if the incoming record is newer-or-equal than
     what's stored. (Read-then-write — fine for a single user's occasional sync;
-    a conditional write could harden against concurrent same-record writes.)"""
+    a conditional write could harden against concurrent same-record writes.)
+
+    Resilient to an oversized row: if the item exceeds DynamoDB's 400 KB limit
+    (almost always a too-big photo thumbnail from an older client), drop the
+    photo and save the rest so the meal — and the WHOLE push — still goes
+    through, instead of 500-ing every record. If it still won't fit, skip just
+    that one row."""
     incoming = int(record.get("updatedAt") or 0)
     sk = _sk(rtype, rid)
     existing = store.get(user_id, sk)
     if existing is not None and int(existing["updatedAt"]) >= incoming:
         return
-    store.put(
-        {
-            "userId": user_id,
-            "sk": sk,
-            "type": rtype,
-            "data": json.dumps(record.get("data") or {}),
-            "updatedAt": incoming,
-            "deleted": bool(record.get("deleted", False)),
-        }
-    )
+    data = record.get("data") or {}
+    item = {
+        "userId": user_id,
+        "sk": sk,
+        "type": rtype,
+        "data": json.dumps(data),
+        "updatedAt": incoming,
+        "deleted": bool(record.get("deleted", False)),
+    }
+    try:
+        store.put(item)
+    except Exception as exc:  # noqa: BLE001
+        if not _is_item_too_large(exc):
+            raise
+        if isinstance(data, dict) and "photoThumb" in data:
+            slim = {k: v for k, v in data.items() if k != "photoThumb"}
+            item["data"] = json.dumps(slim)
+            try:
+                store.put(item)
+                return
+            except Exception:  # noqa: BLE001
+                pass
+        # Couldn't shrink it — skip this single row rather than fail the sync.
+        return
 
 
 def _to_record(item):

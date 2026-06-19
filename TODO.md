@@ -89,9 +89,13 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
   nothing), so it never caught it. Worse, [`sync.py`](backend/src/sync.py) put each record in one
   top-level try/except, so a single oversized row **500'd the entire push** (blocking ALL sync) →
   after a reinstall (device-local original gone) the photo vanished. Tests now assert the **base64
-  length** under cap on a **detailed** image. ⏳ **Still TODO (needs prod deploy + user OK):**
-  harden `sync.py` to skip/limit an oversized row instead of failing the whole push (unblocks
-  already-stuck users; the shipped 1.0.1 can't be patched).
+  length** under cap on a **detailed** image. ✅ **Server guard (deploying v2→prod):**
+  [`sync.py` `_apply_one`](backend/src/sync.py) now catches an oversized-row write, **drops the
+  un-storable `photoThumb` and saves the meal** (or skips just that one row) instead of 500-ing
+  the whole push — unblocks already-stuck users the client fix can't reach. Tests:
+  `test_oversized_photo_saves_meal_without_photo_not_500` + `_skipped_not_500`. ⏭️ **Proper fix
+  next (approved):** S3 full-res per-user photo store (reuse the circle bucket pattern, no TTL) so
+  large photos keep full quality — row holds an S3 key + tiny preview; full image via presigned URL.
 - **TestFlight / App Store** — **`main` build `1.0.2 (28)` → submitting to App Store** (2026-06-18,
   prod backend, `/tmp/fap_rec/build28.sh`). (28) **Circle post moderation — Apple Guideline 1.2
   (UGC safety)**: every Circle feed post (others', not your own) now has a **⋯ menu** with

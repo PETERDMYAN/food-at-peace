@@ -154,3 +154,56 @@ def test_weight_and_food_separate(store):
     assert [r["id"] for r in out["changes"]["food"]] == ["f1"]
     assert [r["id"] for r in out["changes"]["weight"]] == ["w1"]
     assert out["changes"]["weight"][0]["data"]["kg"] == 75
+
+
+# --- oversized-row resilience (DynamoDB 400 KB cap) ---------------------------
+
+
+class _OversizeStore(FakeStore):
+    """Rejects items whose serialized size exceeds [limit], like DynamoDB's
+    400 KB per-item cap, so we can exercise the oversized-row guard."""
+
+    def __init__(self, limit):
+        super().__init__()
+        self.limit = limit
+
+    def put(self, item):
+        if len(json.dumps(item)) > self.limit:
+            raise Exception("Item size has exceeded the maximum allowed size")
+        super().put(item)
+
+
+def test_oversized_photo_saves_meal_without_photo_not_500(monkeypatch):
+    fake = _OversizeStore(limit=2000)
+    monkeypatch.setattr(sync, "_store", lambda: fake)
+    rec = {
+        "id": "m1",
+        "updatedAt": 100,
+        "deleted": False,
+        # an oversized photoThumb pushes the row past the cap
+        "data": {"id": "m1", "name": "Ramen", "calories": 600, "photoThumb": "x" * 5000},
+    }
+    status, _ = _sync({"since": 0, "changes": {"food": [rec]}})
+    assert status == 200, "one oversized row must NOT 500 the whole push"
+    _, out = _sync({"since": 0, "changes": {}})
+    saved = out["changes"]["food"][0]["data"]
+    assert saved["name"] == "Ramen"  # the meal still persisted…
+    assert "photoThumb" not in saved  # …minus the un-storable photo
+
+
+def test_oversized_row_without_photo_is_skipped_not_500(monkeypatch):
+    fake = _OversizeStore(limit=2000)
+    monkeypatch.setattr(sync, "_store", lambda: fake)
+    huge = {
+        "id": "big",
+        "updatedAt": 100,
+        "deleted": False,
+        "data": {"id": "big", "name": "x" * 5000, "calories": 1},  # no photoThumb to drop
+    }
+    status, _ = _sync(
+        {"since": 0, "changes": {"food": [huge, _food("ok", 100, name="Salad")]}}
+    )
+    assert status == 200, "an unstorable row is skipped, not fatal"
+    _, out = _sync({"since": 0, "changes": {}})
+    # the sibling row still saved; only the unstorable one was dropped
+    assert [r["id"] for r in out["changes"]["food"]] == ["ok"]
