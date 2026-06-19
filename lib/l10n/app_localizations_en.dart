@@ -844,6 +844,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get iapFailed => 'Purchase failed. Please try again.';
 
   @override
+  String get iapProcessingTitle => 'Processing your payment…';
+
+  @override
+  String get iapProcessingBody =>
+      'This takes a few seconds. Please keep this screen open — your Beans will appear here.';
+
+  @override
+  String get iapSuccessBody => 'Your Beans are ready to use.';
+
+  @override
+  String iapNewBalance(int count) {
+    return 'New balance: $count';
+  }
+
+  @override
   String get beansChoosePack => 'Top up Beans';
 
   @override

@@ -1568,6 +1568,30 @@ abstract class AppLocalizations {
   /// **'Purchase failed. Please try again.'**
   String get iapFailed;
 
+  /// No description provided for @iapProcessingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Processing your payment…'**
+  String get iapProcessingTitle;
+
+  /// No description provided for @iapProcessingBody.
+  ///
+  /// In en, this message translates to:
+  /// **'This takes a few seconds. Please keep this screen open — your Beans will appear here.'**
+  String get iapProcessingBody;
+
+  /// No description provided for @iapSuccessBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your Beans are ready to use.'**
+  String get iapSuccessBody;
+
+  /// No description provided for @iapNewBalance.
+  ///
+  /// In en, this message translates to:
+  /// **'New balance: {count}'**
+  String iapNewBalance(int count);
+
   /// No description provided for @beansChoosePack.
   ///
   /// In en, this message translates to:

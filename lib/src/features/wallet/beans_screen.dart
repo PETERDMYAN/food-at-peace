@@ -182,16 +182,30 @@ class _PaywallSheet extends ConsumerStatefulWidget {
 
 class _PaywallSheetState extends ConsumerState<_PaywallSheet> {
   /// Beans amount of the pack currently being purchased (null = idle). Drives the
-  /// per-tile spinner and blocks a second tap from opening the sheet twice.
+  /// full-sheet processing view and blocks a second tap from buying twice.
   int? _buying;
+
+  /// Beans just credited — non-null switches the sheet to the success view
+  /// (balance already updated), which lingers briefly then auto-closes.
+  int? _credited;
+
+  /// Auto-dismiss timer for the success view; cancelled if the sheet goes away
+  /// first (so no Timer leaks in tests / on manual close).
+  Timer? _doneTimer;
+
   // Tap the title 10× to reveal the hidden pack (a dev top-up shortcut).
   int _titleTaps = 0;
   bool _revealed = false;
   Timer? _tapReset;
 
+  /// True only while a payment is in flight (not during the success view) — used
+  /// to block dismissal so the user can't lose the "processing" feedback.
+  bool get _processing => _buying != null && _credited == null;
+
   @override
   void dispose() {
     _tapReset?.cancel();
+    _doneTimer?.cancel();
     super.dispose();
   }
 
@@ -216,11 +230,16 @@ class _PaywallSheetState extends ConsumerState<_PaywallSheet> {
 
   Future<void> _buy(int beans) async {
     if (_buying != null) return; // already purchasing — ignore extra taps
-    setState(() => _buying = beans);
+    setState(() => _buying = beans); // -> full-sheet "Processing…" view
     final messenger = ScaffoldMessenger.of(context);
     final t = AppLocalizations.of(context);
-    void toast(String msg) =>
-        messenger.showSnackBar(SnackBar(content: Text(msg)));
+    // A non-success outcome returns to the pack list with a brief explanation.
+    void backToList(String? msg) {
+      if (!mounted) return;
+      setState(() => _buying = null);
+      if (msg != null) messenger.showSnackBar(SnackBar(content: Text(msg)));
+    }
+
     try {
       // Hidden packs are below Apple's minimum IAP price tier, so they can't be a
       // StoreKit product — credit them locally via the dev path instead.
@@ -228,89 +247,247 @@ class _PaywallSheetState extends ConsumerState<_PaywallSheet> {
         await ref
             .read(beansProvider.notifier)
             .purchasePack(beans, BeanPricing.sgdForBeans(beans) ?? 0);
-        if (!mounted) return;
-        Navigator.pop(context);
-        toast(t.beansBought(beans));
+        _succeed(beans);
         return;
       }
       final productId = beanProductId(beans);
-      if (productId == null) return;
+      if (productId == null) {
+        backToList(t.iapUnavailable);
+        return;
+      }
+      // buy() resolves only AFTER the Beans are credited (the IAP service awaits
+      // onCredited), so on success the balance shown below is already up to date.
       final result = await ref.read(iapServiceProvider).buy(productId);
       if (!mounted) return;
       switch (result.outcome) {
         case IapOutcome.purchased:
-          Navigator.pop(context);
-          toast(t.beansBought(result.beans ?? beans));
+          _succeed(result.beans ?? beans);
         case IapOutcome.canceled:
-          break;
+          backToList(null); // user backed out — quietly return to the packs
         case IapOutcome.pending:
-          toast(t.iapPending);
+          backToList(t.iapPending);
         case IapOutcome.unavailable:
-          toast(t.iapUnavailable);
+          backToList(t.iapUnavailable);
         case IapOutcome.error:
-          toast(result.message ?? t.iapFailed);
+          backToList(result.message ?? t.iapFailed);
       }
-    } finally {
-      if (mounted) setState(() => _buying = null);
+    } catch (_) {
+      backToList(t.iapFailed);
     }
+  }
+
+  /// Switch to the success view — the Beans are already credited — then let it
+  /// linger a beat (so the user clearly sees it worked) before auto-closing.
+  void _succeed(int beans) {
+    if (!mounted) return;
+    HapticFeedback.mediumImpact();
+    setState(() => _credited = beans);
+    _doneTimer?.cancel();
+    _doneTimer = Timer(const Duration(milliseconds: 1500), () {
+      if (mounted) Navigator.pop(context);
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    final balance = ref.watch(beansProvider).balance;
+    final Widget body;
+    if (_credited != null) {
+      body = _SuccessView(beans: _credited!, balance: balance);
+    } else if (_buying != null) {
+      body = const _ProcessingView();
+    } else {
+      body = _buildPacks(context);
+    }
+    return PopScope(
+      // While a payment is in flight, block back / swipe-to-dismiss so the user
+      // can't accidentally lose the "Processing…" feedback. (The charge still
+      // completes regardless — crediting lives in the IAP service, not here.)
+      canPop: !_processing,
+      child: SafeArea(
+        child: AnimatedSize(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOut,
+          alignment: Alignment.topCenter,
+          child: body,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPacks(BuildContext context) {
     final t = AppLocalizations.of(context);
     final text = Theme.of(context).textTheme;
     // StoreKit's localized price strings, keyed by product ID; empty before they
     // load (or on the simulator) — we fall back to the indicative SGD price.
     final prices = ref.watch(beanProductsProvider).asData?.value ?? const {};
     final balance = ref.watch(beansProvider).balance;
-    final busy = _buying != null;
     final packs = [
       ...BeanPricing.packs,
       if (_revealed) ...BeanPricing.hiddenPacks,
     ];
 
-    return SafeArea(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Center(child: BeanIcon(size: 44)),
-            const SizedBox(height: 12),
-            GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: _onTitleTap,
-              child: Text(
-                // Only a zero balance means they ran out — otherwise it's a plain
-                // top-up, so don't claim "out of Beans" when some remain.
-                balance > 0 ? t.beansChoosePack : t.paywallTitle,
-                textAlign: TextAlign.center,
-                style: text.titleLarge,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              t.paywallBody,
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(20, 4, 20, 24),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Center(child: BeanIcon(size: 44)),
+          const SizedBox(height: 12),
+          GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: _onTitleTap,
+            child: Text(
+              // Only a zero balance means they ran out — otherwise it's a plain
+              // top-up, so don't claim "out of Beans" when some remain.
+              balance > 0 ? t.beansChoosePack : t.paywallTitle,
               textAlign: TextAlign.center,
-              style: text.bodyMedium?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
-              ),
+              style: text.titleLarge,
             ),
-            const SizedBox(height: 18),
-            for (final p in packs)
-              _PackTile(
-                label: t.beansCount(p.beans),
-                trailing:
-                    prices[beanProductId(p.beans)]?.price ??
-                    t.priceSgd(p.sgd.toStringAsFixed(2)),
-                badge: p.beans == 800 ? t.beansBestValue : null,
-                loading: _buying == p.beans,
-                enabled: !busy,
-                onTap: () => _buy(p.beans),
-              ),
-          ],
-        ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            t.paywallBody,
+            textAlign: TextAlign.center,
+            style: text.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 18),
+          for (final p in packs)
+            _PackTile(
+              label: t.beansCount(p.beans),
+              trailing:
+                  prices[beanProductId(p.beans)]?.price ??
+                  t.priceSgd(p.sgd.toStringAsFixed(2)),
+              badge: p.beans == 800 ? t.beansBestValue : null,
+              onTap: () => _buy(p.beans),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Full-sheet "your payment is going through" state — the unmissable feedback
+/// that replaces a tiny per-tile spinner. Shown from the moment a pack is tapped
+/// through the post-payment receipt-validation window.
+class _ProcessingView extends StatelessWidget {
+  const _ProcessingView();
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    final text = Theme.of(context).textTheme;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(28, 28, 28, 48),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            height: 76,
+            width: 76,
+            child: Stack(
+              alignment: Alignment.center,
+              children: const [
+                SizedBox(
+                  height: 76,
+                  width: 76,
+                  child: CircularProgressIndicator(strokeWidth: 3),
+                ),
+                BeanIcon(size: 32),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            t.iapProcessingTitle,
+            textAlign: TextAlign.center,
+            style: text.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            t.iapProcessingBody,
+            textAlign: TextAlign.center,
+            style: text.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Success state — the Beans are already in the balance. A green check plus the
+/// new balance is concrete proof the payment landed, so it never feels like
+/// "nothing happened". Lingers briefly, then the sheet auto-closes.
+class _SuccessView extends StatelessWidget {
+  const _SuccessView({required this.beans, required this.balance});
+
+  final int beans;
+  final int balance;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    final text = Theme.of(context).textTheme;
+    const green = Color(0xFF34B36A);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(28, 28, 28, 48),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            height: 76,
+            width: 76,
+            decoration: const BoxDecoration(
+              color: green,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.check_rounded,
+              color: Colors.white,
+              size: 46,
+            ),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            t.beansBought(beans),
+            textAlign: TextAlign.center,
+            style: text.titleLarge?.copyWith(fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            t.iapSuccessBody,
+            textAlign: TextAlign.center,
+            style: text.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 20),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const BeanIcon(size: 22),
+                const SizedBox(width: 8),
+                Text(
+                  t.iapNewBalance(balance),
+                  style: text.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -324,8 +501,6 @@ class _PackTile extends StatelessWidget {
     required this.trailing,
     required this.onTap,
     this.badge,
-    this.loading = false,
-    this.enabled = true,
   });
 
   final String label;
@@ -333,23 +508,14 @@ class _PackTile extends StatelessWidget {
   final VoidCallback onTap;
   final String? badge;
 
-  /// This pack's purchase is in flight — show a spinner where the price was.
-  final bool loading;
-
-  /// False while another pack is being purchased — dim + ignore taps.
-  final bool enabled;
-
   @override
   Widget build(BuildContext context) {
     final text = Theme.of(context).textTheme;
     final scheme = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
-      child: AnimatedOpacity(
-        duration: const Duration(milliseconds: 150),
-        opacity: (enabled || loading) ? 1 : 0.4,
-        child: InkWell(
-          onTap: (enabled && !loading) ? onTap : null,
+      child: InkWell(
+          onTap: onTap,
           borderRadius: BorderRadius.circular(18),
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -395,24 +561,17 @@ class _PackTile extends StatelessWidget {
                     ],
                   ),
                 ),
-                loading
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : Text(
-                        trailing,
-                        style: text.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w800,
-                          color: AppTheme.beanAccent,
-                        ),
-                      ),
+                Text(
+                  trailing,
+                  style: text.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: AppTheme.beanAccent,
+                  ),
+                ),
               ],
             ),
           ),
         ),
-      ),
     );
   }
 }

@@ -63,7 +63,12 @@ class StoreKitIapService implements IapService {
   }
 
   final InAppPurchase _iap = InAppPurchase.instance;
-  final void Function(int beans, String productId, String receipt)? onCredited;
+
+  /// Credits the wallet for a confirmed purchase. Awaited before [buy] resolves,
+  /// so the paywall only shows "success" once the Beans are actually in the
+  /// balance (server-validated or locally credited) — never before.
+  final Future<void> Function(int beans, String productId, String receipt)?
+  onCredited;
   StreamSubscription<List<PurchaseDetails>>? _sub;
   final Map<String, Completer<IapResult>> _pending = {};
   List<ProductDetails> _cache = const [];
@@ -108,25 +113,30 @@ class StoreKitIapService implements IapService {
     return completer.future;
   }
 
-  void _onUpdates(List<PurchaseDetails> purchases) {
+  Future<void> _onUpdates(List<PurchaseDetails> purchases) async {
     for (final p in purchases) {
       switch (p.status) {
         case PurchaseStatus.pending:
-          break; // wait for a terminal status before resolving buy()
+          break; // transient on a normal purchase — wait for a terminal status
         case PurchaseStatus.purchased:
         case PurchaseStatus.restored:
           final beans = beansForProduct(p.productID);
           if (beans != null) {
-            // The receipt lets the wallet validate the purchase server-side
-            // before crediting (fraud-hardening); empty when unavailable.
-            onCredited?.call(
-              beans,
-              p.productID,
-              p.verificationData.serverVerificationData,
-            );
+            // Credit BEFORE resolving buy() so the balance is already updated
+            // when the paywall shows success. The receipt lets the wallet
+            // validate server-side first (fraud-hardening); empty when
+            // unavailable. Guarded: a credit hiccup must never wedge the flow —
+            // Apple already charged, so we still resolve as purchased.
+            try {
+              await onCredited?.call(
+                beans,
+                p.productID,
+                p.verificationData.serverVerificationData,
+              );
+            } catch (_) {}
           }
           _resolve(p.productID, IapResult(IapOutcome.purchased, beans: beans));
-          if (p.pendingCompletePurchase) _iap.completePurchase(p);
+          if (p.pendingCompletePurchase) await _iap.completePurchase(p);
         case PurchaseStatus.error:
           _resolve(
             p.productID,

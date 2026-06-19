@@ -817,6 +817,20 @@ class AppLocalizationsZh extends AppLocalizations {
   String get iapFailed => '购买失败，请重试。';
 
   @override
+  String get iapProcessingTitle => '正在处理你的付款…';
+
+  @override
+  String get iapProcessingBody => '需要几秒钟，请勿关闭此页面——豆子会显示在这里。';
+
+  @override
+  String get iapSuccessBody => '你的豆子已到账，可以使用啦。';
+
+  @override
+  String iapNewBalance(int count) {
+    return '当前余额：$count';
+  }
+
+  @override
   String get beansChoosePack => '充值豆子';
 
   @override

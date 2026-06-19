@@ -404,6 +404,13 @@
   "iapUnavailable": "Purchases aren't available right now.",
   "iapPending": "Your purchase is processing…",
   "iapFailed": "Purchase failed. Please try again.",
+  "iapProcessingTitle": "Processing your payment…",
+  "iapProcessingBody": "This takes a few seconds. Please keep this screen open — your Beans will appear here.",
+  "iapSuccessBody": "Your Beans are ready to use.",
+  "iapNewBalance": "New balance: {count}",
+  "@iapNewBalance": {
+    "placeholders": { "count": { "type": "int" } }
+  },
   "beansChoosePack": "Top up Beans",
   "beansSecretUnlocked": "Secret pack unlocked 🫘",
   "beansCustom": "Custom",

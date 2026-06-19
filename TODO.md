@@ -95,6 +95,18 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
   Console products mirroring `beans_*`, Play Console listing/screenshots. Health Connect runtime
   reads need the HC app on the device. (Optional: deep-verify App Links via assetlinks.json once the
   release signing key exists.)
+- **IAP purchase feedback fix (build 33)** — after Apple's payment sheet closed, the only
+  feedback was a tiny per-tile spinner while the receipt validated server-side (1–5s), so a paid
+  purchase felt like *"I paid but nothing happened"*. The Beans paywall
+  ([`beans_screen.dart`](lib/src/features/wallet/beans_screen.dart)) now shows a **full-sheet
+  "Processing your payment…"** state (back-dismiss blocked while in flight) and, once the Beans are
+  actually credited, a **success view** (green check + "Added N Beans" + new balance) that lingers
+  ~1.5 s before auto-closing. [`iap_service.dart`](lib/src/data/iap_service.dart) now **awaits the
+  credit before resolving `buy()`** (guarded — Apple already charged, so a credit hiccup still
+  resolves), so success only shows once the balance is up to date. l10n EN+中文
+  (`iapProcessingTitle`/`iapProcessingBody`/`iapSuccessBody`/`iapNewBalance`). Tests:
+  `beans_paywall_test.dart` (3, incl. processing→success). Capture harness:
+  `integration_test/iap_shots_test.dart`. ✅ **Uploaded to TestFlight (build 33).**
 - **Official Circle accounts — Eva + Roro (build 31)** — Eva (built-in AI coach) is now a
   followable Official member ([`evaFollowedProvider`](lib/src/providers/providers.dart), default
   **followed**): her daily-lesson story in the strip
