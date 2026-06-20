@@ -15,7 +15,10 @@ for real calories burned, and speaks **English and 中文**. Built with Flutter.
 > prod. It identifies the account with **Sign in with Apple on the web** (reuses `/auth/apple`). It's
 > a *standalone* page (no in-app link, so the App Store app is untouched). Remaining before it can
 > charge: Stripe keys + an Apple **Services ID** (`com.foodatpeace.web`) and its domain-association file.
-> **1.0.2 (28)** is **in App Review**. **Build 48** makes the social loop work: **tapping a friend
+> **1.0.2 (28)** is **in App Review**. **Build 49** fixes **your own story**: tapping **You** now shows
+> **what your friends see** — the meals you've *shared* to the circle (your photo posts) — instead of a
+> duplicate of your whole food log. Your full food log stays one tap away under the **Archive** (history)
+> icon. **Build 48** makes the social loop work: **tapping a friend
 > opens their story** (their recent shared meals, swipeable — was only a trend before), and
 > **following someone now refreshes your feed immediately** so their posts show up without a manual
 > pull-to-refresh. **Build 47** turns **daily meal reminders AND circle activity on

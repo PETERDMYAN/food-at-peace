@@ -103,6 +103,13 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
   with the strip + photo feed together — removed from the Trends screen. Pure client UI, no
   backend/shared-model change; new l10n (`navCircle`, `sectionOfficials`, `sectionFriends`,
   `sectionInvited`, `badgeCoach`, `showInviteQr`/`hideInviteQr`). ✅ build 41.
+- **Your own story = what friends see, not your food log (build 49)** — tapping **You** in the strip
+  (and the Manage handle-card avatar) opened your **whole 7-day food log** — a duplicate of your feed.
+  It now opens your **shared posts** (your photo posts in the circle feed), the same full-bleed pages a
+  friend sees when they tap you; nothing shared yet → a "share your first meal" nudge. The full food-log
+  archive moved to its own opener (`openMyArchive`) behind the **Archive** (history) icon. Generalised
+  `_FriendStoryPage` → `_PostStoryPage` (reused for self + friends); the seen-ring key now tracks your
+  newest shared post. Client-only, no backend change. ✅ build 49.
 - **Friend stories + feed refreshes on follow (build 48)** — two Circle fixes so the
   follow→see-their-content loop actually works: (1) **tapping a connected friend's avatar now opens
   their story** — their recent shared meals as swipeable full-screen pages (built from the circle

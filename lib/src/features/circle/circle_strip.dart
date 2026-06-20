@@ -51,22 +51,21 @@ class CircleStrip extends ConsumerWidget {
     final myPhoto = ref.watch(profilePhotoProvider);
 
 
-    // Your food story = the last 7 days of food log (the archive), newest first
-    // — all of it, not just meals shared to the circle.
-    final now = DateTime.now();
-    final weekStart =
-        DateTime(now.year, now.month, now.day).subtract(const Duration(days: 6));
-    final recentFood = ref
-        .watch(foodEntriesProvider)
-        .where((e) =>
-            !e.deleted && !e.hiddenFromStory && !e.timestamp.isBefore(weekStart))
-        .toList()
-      ..sort((a, b) => b.timestamp.compareTo(a.timestamp));
+    // Your story = what your friends see: the meals you've SHARED to the circle
+    // (your own photo posts), NOT your whole food log. The full food log is
+    // behind the Archive (history) icon.
+    final myPosts = ref
+            .watch(circleFeedProvider)
+            .asData
+            ?.value
+            .where((p) => p.mine && (p.photoUrl ?? '').isNotEmpty)
+            .toList() ??
+        const <CirclePost>[];
 
-    // Story "seen" rings: the key embeds the content (newest meal + count / the
-    // day's Eva lesson) so fresh content resets the ring back to unseen.
+    // Story "seen" rings: the key embeds the content (newest shared post + count
+    // / the day's Eva lesson) so fresh content resets the ring back to unseen.
     final seen = ref.watch(seenStoriesProvider);
-    final youKey = youStoryKey(recentFood);
+    final youKey = myPublicStoryKey(myPosts);
     final evaKey = evaStoryKey(evaIndex);
 
     // Roro (the creator's official account) belongs with the official accounts —
@@ -94,8 +93,7 @@ class CircleStrip extends ConsumerWidget {
               tooltip: t.archive,
               visualDensity: VisualDensity.compact,
               icon: const Icon(Icons.history),
-              onPressed: () =>
-                  openMyStory(context, ref, includeEva: false),
+              onPressed: () => openMyArchive(context, ref),
             ),
             IconButton(
               tooltip: t.manageCircle,
@@ -604,33 +602,91 @@ List<Widget> _evaLast3DaysPages(List<EvaLesson> lessons, String lang) {
   return pages;
 }
 
-/// Open the current user's story tray (their food story → Eva), reading
-/// everything it needs from [ref]. Shared by the strip's You/Eva avatars and the
-/// Manage-circle handle-card avatar, so tapping any of them opens the story and
-/// marks it seen.
+/// Open the current user's story tray — **what your friends see**: the meals
+/// you've shared to the circle (your own photo posts), then Eva's lesson. Shared
+/// by the strip's You/Eva avatars, the Manage-circle handle-card avatar, and the
+/// Eva feed card. The full food-log archive is a separate view — [openMyArchive].
 void openMyStory(
   BuildContext context,
   WidgetRef ref, {
   int initialStory = 0,
   bool includeEva = true,
 }) {
+  final t = AppLocalizations.of(context);
   final lang = Localizations.localeOf(context).languageCode;
   final lessons = ref.read(evaWisdomProvider).asData?.value ?? const [];
   final evaIndex =
       lessons.isEmpty ? 0 : evaLessonIndex(DateTime.now(), lessons.length);
+  final posts = _myPosts(ref);
+  final photo = ref.read(profilePhotoProvider);
+  final name = ref.read(profileProvider).name ?? '';
+  // Your story shows exactly your shared posts — the same full-bleed pages a
+  // friend gets when they tap you. Nothing shared yet → a nudge to share (which
+  // is what friends would see: nothing), never your private food log.
+  final selfPages = posts.isEmpty
+      ? <Widget>[_FoodNudgePage(photo: photo)]
+      : [
+          for (final p in posts)
+            _PostStoryPage(
+              post: p,
+              title: t.feedYou,
+              initials: _initialsFor(name),
+              colorSeed: 3,
+              photoBytes: photo,
+            ),
+        ];
+  final evaPages =
+      includeEva ? _evaLast3DaysPages(lessons, lang) : const <Widget>[];
+  final items = <(Story, String)>[
+    (Story(pages: selfPages), myPublicStoryKey(posts)),
+    if (evaPages.isNotEmpty) (Story(pages: evaPages), evaStoryKey(evaIndex)),
+  ];
+  showStories(
+    context,
+    stories: [for (final it in items) it.$1],
+    initialStory: initialStory.clamp(0, items.length - 1),
+    onStoryViewed: (i) =>
+        ref.read(seenStoriesProvider.notifier).markSeen(items[i].$2),
+  );
+}
+
+/// Open the user's full food-log **archive** (last 7 days — every logged meal,
+/// not just shared ones), as a story. Reached from the Archive (history) icon:
+/// the private "everything I ate" view, distinct from [openMyStory].
+void openMyArchive(BuildContext context, WidgetRef ref) {
+  final lang = Localizations.localeOf(context).languageCode;
   openCircleStories(
     context,
     food: _recentFoodFor(ref),
     lang: lang,
     photos: ref.read(mealPhotosProvider),
     photo: ref.read(profilePhotoProvider),
-    // The "Archive" entry opens only the user's own food story (no Eva chain).
-    evaLessons: includeEva ? lessons : const [],
-    evaIndex: evaIndex,
-    initialStory: initialStory,
+    evaLessons: const [], // archive is just your food log — no Eva chain
+    evaIndex: 0,
+    initialStory: 0,
     onStorySeen: (key) => ref.read(seenStoriesProvider.notifier).markSeen(key),
   );
 }
+
+/// Your shared posts (photo posts you authored) — what friends see as your story.
+List<CirclePost> _myPosts(WidgetRef ref) =>
+    (ref.read(circleFeedProvider).asData?.value ?? const <CirclePost>[])
+        .where((p) => p.mine && (p.photoUrl ?? '').isNotEmpty)
+        .toList();
+
+/// Up to two initials from a display name (falls back to "?").
+String _initialsFor(String name) {
+  final parts = name.trim().split(RegExp(r'\s+'));
+  if (parts.isEmpty || parts.first.isEmpty) return '?';
+  final first = parts.first[0];
+  final last = parts.length > 1 ? parts.last[0] : '';
+  return (first + last).toUpperCase();
+}
+
+/// Seen-ring key for your own story (your shared posts): newest post id + count,
+/// so a freshly shared meal flips the ring back to unseen.
+String myPublicStoryKey(List<CirclePost> posts) =>
+    posts.isEmpty ? 'you:noposts' : 'you:${posts.first.postId}:${posts.length}';
 
 /// Open a connected friend's story: their recent shared meals (from the circle
 /// feed) as swipeable full-screen pages. Falls back to their trend sheet when
@@ -646,14 +702,24 @@ void openFriendStory(BuildContext context, WidgetRef ref, Friend friend) {
   showStories(
     context,
     stories: [
-      Story(pages: [for (final p in posts) _FriendStoryPage(post: p, friend: friend)]),
+      Story(
+        pages: [
+          for (final p in posts)
+            _PostStoryPage(
+              post: p,
+              title: friend.name,
+              initials: friend.initials,
+              colorSeed: friend.id.hashCode,
+            ),
+        ],
+      ),
     ],
   );
 }
 
 /// The user's own story key — used to show a "seen" ring on their avatar outside
 /// the strip (e.g. the Manage-circle handle card).
-String myStorySeenKey(WidgetRef ref) => youStoryKey(_recentFoodFor(ref));
+String myStorySeenKey(WidgetRef ref) => myPublicStoryKey(_myPosts(ref));
 
 /// The last 7 days of the user's food log (newest first), excluding deleted /
 /// story-hidden entries — the basis for both the food story and its seen key.
@@ -1208,11 +1274,20 @@ Widget _foodCaption(AppLocalizations t, FoodEntry entry, {required bool centered
 /// A connected friend's shared meal as a full-bleed story page: their photo
 /// (from the circle feed's presigned URL, disk-cached) with the dish + calories
 /// as a caption. Used by [openFriendStory].
-class _FriendStoryPage extends StatelessWidget {
-  const _FriendStoryPage({required this.post, required this.friend});
+class _PostStoryPage extends StatelessWidget {
+  const _PostStoryPage({
+    required this.post,
+    required this.title,
+    required this.initials,
+    required this.colorSeed,
+    this.photoBytes,
+  });
 
   final CirclePost post;
-  final Friend friend;
+  final String title;
+  final String initials;
+  final int colorSeed;
+  final Uint8List? photoBytes;
 
   @override
   Widget build(BuildContext context) {
@@ -1245,11 +1320,12 @@ class _FriendStoryPage extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 _storyHeader(
-                  friend.name,
+                  title,
                   '',
                   StoryAvatar(
-                    initials: friend.initials,
-                    colorSeed: friend.id.hashCode,
+                    imageBytes: photoBytes,
+                    initials: initials,
+                    colorSeed: colorSeed,
                     size: 40,
                   ),
                 ),
