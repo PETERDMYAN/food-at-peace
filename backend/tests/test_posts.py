@@ -83,6 +83,67 @@ def test_feed_uses_current_author_name_not_stale(monkeypatch):
     assert out[0]["authorHandle"] == "currenthandle"
 
 
+def test_feed_includes_author_profile_photo_url(monkeypatch):
+    """Each post carries the author's presigned profile-photo URL (one presign per
+    author) so the feed card avatar matches the friend strip; null when unset."""
+
+    class _Q:
+        def query(self, **kw):
+            return {
+                "Items": [
+                    {
+                        "postId": "p1",
+                        "name": "Soup",
+                        "calories": 100,
+                        "createdAt": 1,
+                        "expiresAt": 10**12,
+                        "photoKey": "posts/a/p1.jpg",
+                    }
+                ]
+            }
+
+    class _S3:
+        def generate_presigned_url(self, *a, **k):
+            return "https://signed-meal-photo"
+
+    monkeypatch.setattr(posts, "_posts", lambda: _Q())
+    monkeypatch.setattr(posts, "_user_card", lambda uid: {"handle": "h", "name": "Roro"})
+    monkeypatch.setattr(posts, "_reactions_for", lambda *a: ({}, None, []))
+    monkeypatch.setattr(posts, "_s3c", lambda: _S3())
+    monkeypatch.setattr(posts, "MEAL_PHOTOS_BUCKET", "meal-bucket")
+
+    out = posts._user_posts("author1", "viewer1")
+    assert out[0]["authorPhotoUrl"] == "https://signed-meal-photo"
+
+
+def test_feed_author_photo_null_when_store_unconfigured(monkeypatch):
+    class _Q:
+        def query(self, **kw):
+            return {
+                "Items": [
+                    {
+                        "postId": "p1",
+                        "createdAt": 1,
+                        "expiresAt": 10**12,
+                        "photoKey": "posts/a/p1.jpg",
+                    }
+                ]
+            }
+
+    class _S3:
+        def generate_presigned_url(self, *a, **k):
+            return "https://signed"
+
+    monkeypatch.setattr(posts, "_posts", lambda: _Q())
+    monkeypatch.setattr(posts, "_user_card", lambda uid: {"handle": "h", "name": "X"})
+    monkeypatch.setattr(posts, "_reactions_for", lambda *a: ({}, None, []))
+    monkeypatch.setattr(posts, "_s3c", lambda: _S3())
+    monkeypatch.setattr(posts, "MEAL_PHOTOS_BUCKET", "")  # unconfigured
+
+    out = posts._user_posts("author1", "viewer1")
+    assert out[0]["authorPhotoUrl"] is None
+
+
 def test_create_post_rejects_missing_and_oversized_image(monkeypatch):
     monkeypatch.setattr(posts, "_user_card", lambda uid: {"handle": None, "name": "X"})
     with pytest.raises(posts.ProxyError):

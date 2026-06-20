@@ -33,6 +33,10 @@ from session import verify_session_token
 
 CIRCLE_TABLE = os.environ.get("CIRCLE_TABLE", "")
 SYNC_TABLE = os.environ.get("SYNC_TABLE", "")
+# The durable meal-photo bucket (shared with mealphotos.py). We presign a GET for
+# a friend's profile photo so connected friends can see each other's avatar.
+MEAL_PHOTOS_BUCKET = os.environ.get("MEAL_PHOTOS_BUCKET", "")
+_PROFILE_PHOTO_TTL = 6 * 60 * 60
 SESSION_KEY_PARAM = os.environ.get(
     "SESSION_KEY_PARAM", "/food-at-peace/session-signing-key"
 )
@@ -68,6 +72,36 @@ def _circle():
 
 def _sync():
     return _resource().Table(SYNC_TABLE)
+
+
+_s3 = None
+
+
+def _s3c():
+    global _s3
+    if _s3 is None:
+        import boto3
+
+        _s3 = boto3.client("s3")
+    return _s3
+
+
+def _profile_photo_url(uid):
+    """A presigned GET URL for [uid]'s profile photo (the reserved
+    `meal/<uid>/__profile__.jpg` object in the durable meal-photo store), or None
+    when the store isn't configured. The object may not exist (no photo set) — the
+    client simply falls back to initials when the URL 403s, so we never need a
+    (costly) existence check here."""
+    if not MEAL_PHOTOS_BUCKET:
+        return None
+    try:
+        return _s3c().generate_presigned_url(
+            "get_object",
+            Params={"Bucket": MEAL_PHOTOS_BUCKET, "Key": f"meal/{uid}/__profile__.jpg"},
+            ExpiresIn=_PROFILE_PHOTO_TTL,
+        )
+    except Exception:  # noqa: BLE001 — never let avatar presigning break the list
+        return None
 
 
 def _now_ms():
@@ -377,7 +411,13 @@ def list_circle(uid):
         & Key("sk").begins_with("friend#")
     )
     out = {
-        "me": {"handle": "@" + mine["handle"], "name": mine.get("name")} if mine else None,
+        "me": {
+            "handle": "@" + mine["handle"],
+            "name": mine.get("name"),
+            "photoUrl": _profile_photo_url(uid),
+        }
+        if mine
+        else None,
         "connected": [],
         "incoming": [],
         "outgoing": [],
@@ -390,6 +430,7 @@ def list_circle(uid):
             "name": edge.get("name"),
             "handle": edge.get("handle"),
             "status": status,
+            "photoUrl": _profile_photo_url(other),
         }
         if status == "connected":
             friend.update(build_trend(_friend_profile(other), _friend_food(other)))

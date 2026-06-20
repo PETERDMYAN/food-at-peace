@@ -158,6 +158,8 @@ class CircleStrip extends ConsumerWidget {
                   avatar: StoryAvatar(
                     initials: roroFriend.initials,
                     colorSeed: roroFriend.id.hashCode,
+                    imageUrl: roroFriend.photoUrl,
+                    imageCacheKey: roroFriend.id,
                     onTap: () => openFriendStory(context, ref, roroFriend),
                   ),
                   onTap: () => openFriendStory(context, ref, roroFriend),
@@ -168,6 +170,8 @@ class CircleStrip extends ConsumerWidget {
                   avatar: StoryAvatar(
                     initials: f.initials,
                     colorSeed: f.id.hashCode,
+                    imageUrl: f.photoUrl,
+                    imageCacheKey: f.id,
                     onTap: () => openFriendStory(context, ref, f),
                   ),
                   onTap: () => openFriendStory(context, ref, f),
@@ -178,6 +182,8 @@ class CircleStrip extends ConsumerWidget {
                   avatar: StoryAvatar(
                     initials: f.initials,
                     colorSeed: f.id.hashCode,
+                    imageUrl: f.photoUrl,
+                    imageCacheKey: f.id,
                     muted: true,
                   ),
                 ),
@@ -323,6 +329,8 @@ class _FriendTrendSheet extends ConsumerWidget {
                 StoryAvatar(
                   initials: friend.initials,
                   colorSeed: friend.id.hashCode,
+                  imageUrl: friend.photoUrl,
+                  imageCacheKey: friend.id,
                   size: 52,
                 ),
                 const SizedBox(width: 14),
@@ -502,6 +510,8 @@ class CircleRequestsScreen extends ConsumerWidget {
                       leading: StoryAvatar(
                         initials: f.initials,
                         colorSeed: f.id.hashCode,
+                        imageUrl: f.photoUrl,
+                        imageCacheKey: f.id,
                         size: 40,
                       ),
                       title: Text(f.name),

@@ -27,6 +27,7 @@ class Friend {
     this.adherence7d = const [],
     this.todayKcal = 0,
     this.targetKcal = 0,
+    this.photoUrl,
   });
 
   final String id;
@@ -39,6 +40,10 @@ class Friend {
   final List<int> adherence7d; // 0–100 per day, oldest → newest
   final int todayKcal;
   final int targetKcal;
+
+  /// Presigned URL for the friend's profile-photo avatar (from the circle list),
+  /// or null → fall back to initials.
+  final String? photoUrl;
 
   /// Up to two initials for the avatar.
   String get initials {
@@ -58,6 +63,7 @@ class Friend {
     adherence7d: adherence7d,
     todayKcal: todayKcal,
     targetKcal: targetKcal,
+    photoUrl: photoUrl,
   );
 
   Map<String, dynamic> toJson() => {
@@ -69,6 +75,7 @@ class Friend {
     'adh': adherence7d,
     'kcal': todayKcal,
     'target': targetKcal,
+    if (photoUrl != null) 'photoUrl': photoUrl,
   };
 
   factory Friend.fromJson(Map<String, dynamic> j) => Friend(
@@ -83,6 +90,7 @@ class Friend {
     adherence7d: [for (final v in (j['adh'] as List? ?? [])) (v as num).toInt()],
     todayKcal: (j['kcal'] as num?)?.toInt() ?? 0,
     targetKcal: (j['target'] as num?)?.toInt() ?? 0,
+    photoUrl: j['photoUrl'] as String?,
   );
 
   /// Builds a plausible mock trend snapshot (client MVP only).

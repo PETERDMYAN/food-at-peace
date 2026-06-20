@@ -28,6 +28,11 @@ from session import verify_session_token
 POSTS_TABLE = os.environ.get("POSTS_TABLE", "")
 CIRCLE_TABLE = os.environ.get("CIRCLE_TABLE", "")
 PHOTOS_BUCKET = os.environ.get("PHOTOS_BUCKET", "")
+# The durable meal-photo bucket (shared with circle.py / mealphotos.py). We
+# presign a GET for the post author's profile photo so their avatar shows on the
+# feed card — matching the friend strip.
+MEAL_PHOTOS_BUCKET = os.environ.get("MEAL_PHOTOS_BUCKET", "")
+PROFILE_PHOTO_TTL = 6 * 60 * 60
 SESSION_KEY_PARAM = os.environ.get(
     "SESSION_KEY_PARAM", "/food-at-peace/session-signing-key"
 )
@@ -105,6 +110,24 @@ def _user_card(uid):
     """The poster/reactor's circle {handle, name}, or a generic fallback."""
     item = _circle().get_item(Key={"pk": f"user#{uid}", "sk": "me"}).get("Item") or {}
     return {"handle": item.get("handle"), "name": item.get("name") or "Someone"}
+
+
+def _profile_photo_url(uid):
+    """A presigned GET URL for [uid]'s profile photo (the reserved
+    `meal/<uid>/__profile__.jpg` object in the durable meal-photo store), or None
+    when the store isn't configured. The object may not exist (no photo set) — the
+    client falls back to initials when the URL 403s, so no existence check here.
+    Mirrors circle.py so the feed avatar matches the friend strip."""
+    if not MEAL_PHOTOS_BUCKET:
+        return None
+    try:
+        return _s3c().generate_presigned_url(
+            "get_object",
+            Params={"Bucket": MEAL_PHOTOS_BUCKET, "Key": f"meal/{uid}/__profile__.jpg"},
+            ExpiresIn=PROFILE_PHOTO_TTL,
+        )
+    except Exception:  # noqa: BLE001 — never let avatar presigning break the feed
+        return None
 
 
 def _connected_ids(uid):
@@ -206,6 +229,7 @@ def _user_posts(author_id, viewer_id):
     # value denormalized onto each post at creation — so a later rename shows
     # everywhere and old posts never read as a stale name / "Someone".
     author = _user_card(author_id)
+    author_photo = _profile_photo_url(author_id)  # one presign per author, not per post
     resp = _posts().query(
         KeyConditionExpression=Key("pk").eq(f"feed#{author_id}")
         & Key("sk").begins_with("post#"),
@@ -229,6 +253,7 @@ def _user_posts(author_id, viewer_id):
                 "authorId": author_id,
                 "authorName": author["name"],
                 "authorHandle": author["handle"],
+                "authorPhotoUrl": author_photo,
                 "name": item.get("name"),
                 "calories": int(item.get("calories", 0)),
                 "createdAt": int(item.get("createdAt", 0)),

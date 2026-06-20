@@ -15,7 +15,14 @@ for real calories burned, and speaks **English and 中文**. Built with Flutter.
 > prod. It identifies the account with **Sign in with Apple on the web** (reuses `/auth/apple`). It's
 > a *standalone* page (no in-app link, so the App Store app is untouched). Remaining before it can
 > charge: Stripe keys + an Apple **Services ID** (`com.foodatpeace.web`) and its domain-association file.
-> **1.0.2 (28)** is **in App Review**. **Build 52** lets **signed-out users see the creator's feed**:
+> **1.0.2 (28)** is **in App Review**. **Build 53** shows **friends' real profile photos as their
+> avatars** across the Circle — a friend's photo now appears on their story ring in the strip, on
+> their **feed posts**, and in trends / requests / manage, instead of coloured initials (graceful
+> fall-back to initials when no photo is set). It works **signed-out** too: the official **@roro**
+> account already has a photo, so brand-new users see Roro's face on his posts and in the strip.
+> Backend (additive, deployed **isolated to the prod circle + posts functions only**): `/circle/list`
+> and `/circle/feed` now return each person's presigned profile-photo URL from the durable
+> photo store (a new optional field → the shipped app simply ignores it). **Build 52** lets **signed-out users see the creator's feed**:
 > the Circle feed now shows the official **@roro** account's real meal photos **without logging in** (via
 > the app token), so a brand-new user sees real content before any account. (Root cause: the feed was
 > session-gated, so logged-out users got an empty feed no matter what.) Backend: `/circle/feed` accepts

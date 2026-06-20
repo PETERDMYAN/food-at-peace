@@ -103,6 +103,24 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
   with the strip + photo feed together — removed from the Trends screen. Pure client UI, no
   backend/shared-model change; new l10n (`navCircle`, `sectionOfficials`, `sectionFriends`,
   `sectionInvited`, `badgeCoach`, `showInviteQr`/`hideInviteQr`). ✅ build 41.
+- **Friends' profile photos as avatars across the Circle (build 53 + prod backend)** — a friend's
+  (and your own) real profile photo now renders on the story ring everywhere the Circle shows an
+  avatar: the **friend strip**, each **feed post card**, the **trend sheet**, the **requests** screen,
+  and **Manage**. Falls back to coloured initials when no photo is set, and falls back again if the
+  presigned URL 403s ([`StoryAvatar.imageUrl`/`imageCacheKey`](lib/src/widgets/story_avatar.dart) via
+  `CachedNetworkImage`). Backend (additive): `circle.py` `/circle/list` returns each card's presigned
+  `photoUrl` and `posts.py` `/circle/feed` returns each post's `authorPhotoUrl`, both presigned (6h)
+  from the durable **meal-photo store** (`meal/<uid>/__profile__.jpg`, where the in-app profile-photo
+  uploader already writes — [`profile_photo.dart`](lib/src/data/profile_photo.dart)). New **optional**
+  response fields → the shipped 1.0.x app ignores them, so the contract holds. Models gained an
+  optional `photoUrl` ([`Friend`](lib/src/models/friend.dart)) / `authorPhotoUrl`
+  ([`CirclePost`](lib/src/models/circle_post.dart)). Deployed **isolated to the prod circle + posts
+  functions only** (`update-function-code` + merged `MEAL_PHOTOS_BUCKET` env + a scoped `s3:GetObject`
+  IAM policy on each role — no full `sam deploy`, 1.0.0 contract functions untouched). **Verified
+  live**: signed-out `/circle/feed` returns Roro's posts with `authorPhotoUrl`, the presigned URL
+  serves Roro's 512×512 avatar JPEG (HTTP 200). Tests: `test_feed_includes_author_profile_photo_url`,
+  `test_feed_author_photo_null_when_store_unconfigured`. Note: avatars show a real face only once a
+  user sets a profile photo — **@roro already has one**, so every (incl. signed-out) user sees it. ✅ build 53.
 - **Signed-out users see the creator's public feed (build 52 + prod backend)** — the Circle feed was
   session-gated (`circleFeedProvider` returned `[]` with no token), so a logged-out / no-handle user
   saw an empty feed and **never Roro's photos**, no matter what (the "follow" was only a local

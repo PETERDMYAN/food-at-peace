@@ -5,6 +5,7 @@ class CirclePost {
     required this.authorId,
     this.authorName,
     this.authorHandle,
+    this.authorPhotoUrl,
     this.name,
     this.calories = 0,
     this.createdAt = 0,
@@ -19,6 +20,7 @@ class CirclePost {
   final String authorId;
   final String? authorName;
   final String? authorHandle;
+  final String? authorPhotoUrl; // presigned profile-photo URL for the avatar
   final String? name; // dish name
   final int calories;
   final int createdAt; // epoch ms
@@ -33,6 +35,7 @@ class CirclePost {
     authorId: j['authorId'] as String? ?? '',
     authorName: j['authorName'] as String?,
     authorHandle: j['authorHandle'] as String?,
+    authorPhotoUrl: j['authorPhotoUrl'] as String?,
     name: j['name'] as String?,
     calories: (j['calories'] as num?)?.toInt() ?? 0,
     createdAt: (j['createdAt'] as num?)?.toInt() ?? 0,

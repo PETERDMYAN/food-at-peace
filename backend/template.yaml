@@ -614,6 +614,7 @@ Resources:
         Variables:
           CIRCLE_TABLE: !Ref CircleTable
           SYNC_TABLE: !Ref SyncTable
+          MEAL_PHOTOS_BUCKET: !Ref MealPhotosBucket
           SESSION_KEY_PARAM: !Ref SessionKeyParam
           APNS_KEY_PARAM: !Ref ApnsKeyParam
           APNS_KEY_ID_PARAM: !Ref ApnsKeyIdParam
@@ -621,6 +622,11 @@ Resources:
           APNS_BUNDLE_ID: !Ref ApnsBundleId
       Policies:
         - Statement:
+            - Sid: ReadProfilePhotos
+              Effect: Allow
+              Action: s3:GetObject
+              Resource:
+                - !Sub ${MealPhotosBucket.Arn}/*
             - Sid: ReadWriteCircle
               Effect: Allow
               Action:
@@ -742,6 +748,7 @@ Resources:
           POSTS_TABLE: !Ref PostsTable
           CIRCLE_TABLE: !Ref CircleTable
           PHOTOS_BUCKET: !Ref CirclePhotosBucket
+          MEAL_PHOTOS_BUCKET: !Ref MealPhotosBucket
           SESSION_KEY_PARAM: !Ref SessionKeyParam
           APP_TOKEN_PARAM: !Ref AppTokenParam
           APNS_KEY_PARAM: !Ref ApnsKeyParam
@@ -773,6 +780,11 @@ Resources:
                 - s3:GetObject
               Resource:
                 - !Sub ${CirclePhotosBucket.Arn}/*
+            - Sid: ReadProfilePhotos
+              Effect: Allow
+              Action: s3:GetObject
+              Resource:
+                - !Sub ${MealPhotosBucket.Arn}/*
             - Sid: ReadSecrets
               Effect: Allow
               Action: ssm:GetParameter

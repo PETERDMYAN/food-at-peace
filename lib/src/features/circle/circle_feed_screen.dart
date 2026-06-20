@@ -189,6 +189,8 @@ class _PostCard extends ConsumerWidget {
           ListTile(
             leading: StoryAvatar(
               initials: _initials(title),
+              imageUrl: post.authorPhotoUrl,
+              imageCacheKey: post.authorId,
               colorSeed: post.authorId.hashCode,
               size: 40,
             ),

@@ -368,6 +368,8 @@ class _FriendTile extends StatelessWidget {
         leading: StoryAvatar(
           initials: friend.initials,
           colorSeed: friend.id.hashCode,
+          imageUrl: friend.photoUrl,
+          imageCacheKey: friend.id,
           size: 40,
           muted: friend.status == FriendStatus.outgoing,
         ),

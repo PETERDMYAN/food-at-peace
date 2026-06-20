@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 /// An Instagram-story-style circular avatar: a sweep-gradient ring around a
@@ -11,6 +12,8 @@ class StoryAvatar extends StatelessWidget {
     this.initials,
     this.icon,
     this.imageBytes,
+    this.imageUrl,
+    this.imageCacheKey,
     this.size = 60,
     this.ring = true,
     this.muted = false,
@@ -25,6 +28,14 @@ class StoryAvatar extends StatelessWidget {
 
   /// JPEG/PNG bytes of a photo to show in the bubble (e.g. the profile photo).
   final Uint8List? imageBytes;
+
+  /// A network URL for the avatar (e.g. a friend's presigned profile photo).
+  /// Used when [imageBytes] is null; falls back to initials on error/while loading.
+  final String? imageUrl;
+
+  /// Stable cache key for [imageUrl] (presigned URLs rotate, so cache by a stable
+  /// id like the friend id).
+  final String? imageCacheKey;
   final double size;
 
   /// Whether to draw the gradient story ring (false = plain bubble, e.g. "Add").
@@ -68,7 +79,23 @@ class StoryAvatar extends StatelessWidget {
     final bubbleColor = ring
         ? _palette[(colorSeed ?? 0).abs() % _palette.length]
         : scheme.surfaceContainerHighest;
-    final inner = imageBytes != null
+    final bubble = Container(
+      width: size,
+      height: size,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(shape: BoxShape.circle, color: bubbleColor),
+      child: icon != null
+          ? Icon(icon, color: ring ? Colors.white : scheme.onSurfaceVariant, size: size * 0.42)
+          : Text(
+              initials ?? '?',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w800,
+                fontSize: size * 0.34,
+              ),
+            ),
+    );
+    final Widget inner = imageBytes != null
         ? ClipOval(
             child: Image.memory(
               imageBytes!,
@@ -78,22 +105,19 @@ class StoryAvatar extends StatelessWidget {
               gaplessPlayback: true,
             ),
           )
-        : Container(
-            width: size,
-            height: size,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(shape: BoxShape.circle, color: bubbleColor),
-            child: icon != null
-                ? Icon(icon, color: ring ? Colors.white : scheme.onSurfaceVariant, size: size * 0.42)
-                : Text(
-                    initials ?? '?',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w800,
-                      fontSize: size * 0.34,
-                    ),
-                  ),
-          );
+        : (imageUrl != null && imageUrl!.isNotEmpty
+            ? ClipOval(
+                child: CachedNetworkImage(
+                  imageUrl: imageUrl!,
+                  cacheKey: imageCacheKey,
+                  width: size,
+                  height: size,
+                  fit: BoxFit.cover,
+                  placeholder: (_, _) => bubble,
+                  errorWidget: (_, _, _) => bubble,
+                ),
+              )
+            : bubble);
 
     Widget avatar = ring
         ? Container(
