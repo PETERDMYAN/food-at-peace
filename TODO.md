@@ -103,6 +103,21 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
   with the strip + photo feed together — removed from the Trends screen. Pure client UI, no
   backend/shared-model change; new l10n (`navCircle`, `sectionOfficials`, `sectionFriends`,
   `sectionInvited`, `badgeCoach`, `showInviteQr`/`hideInviteQr`). ✅ build 41.
+- **Lighter + cached Circle feed photos, and Eva's story spans 3 days (build 46)** — the feed felt
+  empty/slow because each shared post served the **full-res 3–4 MB original** with **no caching**, so
+  on cellular the images loaded slowly or timed out (looked like "no photos"). Three fixes: (1) the
+  client now shares the **downscaled ~1024px copy** to `/circle/post` (the durable full-res still
+  lives in the meal-photo store, keyed by entryId, for the owner's own Food story)
+  ([`add_entry_screen.dart`](lib/src/features/add/add_entry_screen.dart)); (2) feed cards render with
+  [`cached_network_image`](lib/src/features/circle/circle_feed_screen.dart) **keyed by `postId`** (the
+  presigned S3 URL's signature rotates each fetch, so caching by URL would always miss) → instant on
+  relaunch + proper placeholder/error; (3) **backfilled** the existing 10 circle-post images in S3
+  (28 MB → 1 MB, 27× lighter) so the current feed is light immediately. Plus **Eva's story now spans
+  the last 3 days** (one calm lesson page per day, older days dated), mirroring the 3-day feed window
+  ([`openCircleStories`/`_evaLast3DaysPages`](lib/src/features/circle/circle_strip.dart)). Client +
+  S3-data change, additive to prod (no Lambda code change; the `/circle/feed` + `/photo` contract is
+  unchanged). New dep `cached_network_image`. Capture:
+  [`integration_test/eva_3day_shots.dart`](integration_test/eva_3day_shots.dart). ✅ build 46.
 - **@handle survives reinstall — recover from the server, don't re-derive (build 45)** — the handle
   defaults to a sanitised nickname ([`_deriveHandle`](lib/src/providers/providers.dart)) and is
   unique app-wide (server `register` → 409 on clash, [`circle.py`](backend/src/circle.py)), but on a

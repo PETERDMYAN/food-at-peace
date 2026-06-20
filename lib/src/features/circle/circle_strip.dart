@@ -648,22 +648,20 @@ Future<void> openCircleStories(
   required String lang,
   required MealPhotos photos,
   required Uint8List? photo,
-  required EvaLesson? evaLesson,
+  required List<EvaLesson> evaLessons, // empty = no Eva story
   required int evaIndex,
   required int initialStory,
   void Function(String key)? onStorySeen,
 }) {
+  // Eva's story now spans the last 3 days (newest first), mirroring the 3-day
+  // circle feed window — one calm lesson page per day, so swiping her story shows
+  // the recent days, not just today.
+  final evaPages = _evaLast3DaysPages(evaLessons, lang);
   // Stories paired with their seen-keys (same order) so the viewer's
   // onStoryViewed(index) maps straight back to the right key.
   final items = <(Story, String)>[
     (Story(pages: _foodStoryPages(food, photos, photo)), youStoryKey(food)),
-    if (evaLesson != null)
-      (
-        Story(
-          pages: [_EvaStoryPage(lesson: evaLesson, lang: lang, index: evaIndex)],
-        ),
-        evaStoryKey(evaIndex),
-      ),
+    if (evaPages.isNotEmpty) (Story(pages: evaPages), evaStoryKey(evaIndex)),
   ];
   return showStories(
     context,
@@ -672,6 +670,24 @@ Future<void> openCircleStories(
     onStoryViewed:
         onStorySeen == null ? null : (i) => onStorySeen(items[i].$2),
   );
+}
+
+/// Eva's lesson pages for the last 3 days (today first), keyed to each day's
+/// deterministic lesson — same 3-day window as the circle photo feed. Empty when
+/// she isn't followed (no lessons passed).
+List<Widget> _evaLast3DaysPages(List<EvaLesson> lessons, String lang) {
+  if (lessons.isEmpty) return const [];
+  final now = DateTime.now();
+  final today = DateTime(now.year, now.month, now.day);
+  final pages = <Widget>[];
+  for (var d = 0; d < 3; d++) {
+    final day = today.subtract(Duration(days: d));
+    final idx = evaLessonIndex(day, lessons.length);
+    pages.add(
+      _EvaStoryPage(lesson: lessons[idx], lang: lang, index: idx, date: day),
+    );
+  }
+  return pages;
 }
 
 /// Open the current user's story tray (their food story → Eva), reading
@@ -688,16 +704,14 @@ void openMyStory(
   final lessons = ref.read(evaWisdomProvider).asData?.value ?? const [];
   final evaIndex =
       lessons.isEmpty ? 0 : evaLessonIndex(DateTime.now(), lessons.length);
-  // The "Archive" entry opens only the user's own food story (no Eva chain).
-  final evaLesson =
-      includeEva && lessons.isNotEmpty ? lessons[evaIndex] : null;
   openCircleStories(
     context,
     food: _recentFoodFor(ref),
     lang: lang,
     photos: ref.read(mealPhotosProvider),
     photo: ref.read(profilePhotoProvider),
-    evaLesson: evaLesson,
+    // The "Archive" entry opens only the user's own food story (no Eva chain).
+    evaLessons: includeEva ? lessons : const [],
     evaIndex: evaIndex,
     initialStory: initialStory,
     onStorySeen: (key) => ref.read(seenStoriesProvider.notifier).markSeen(key),
@@ -861,16 +875,30 @@ class _EvaStoryPage extends StatelessWidget {
     required this.lesson,
     required this.lang,
     required this.index,
+    this.date,
   });
 
   final EvaLesson lesson;
   final String lang;
   final int index;
 
+  /// The day this lesson is for — shown in the header so the 3-day story's pages
+  /// are distinguishable ("Today" for the newest, the date for older days).
+  final DateTime? date;
+
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
     final scene = _calmSceneFor(index);
+    // Newest page → "Daily lesson"; older days in the 3-day story show their date.
+    final ml = MaterialLocalizations.of(context);
+    final d = date;
+    final now = DateTime.now();
+    final subtitle =
+        (d != null &&
+            !(d.year == now.year && d.month == now.month && d.day == now.day))
+        ? ml.formatMediumDate(d)
+        : t.evaDailyLesson;
     return Stack(
       fit: StackFit.expand,
       children: [
@@ -913,7 +941,7 @@ class _EvaStoryPage extends StatelessWidget {
               children: [
                 _storyHeader(
                   'Eva',
-                  t.evaDailyLesson,
+                  subtitle,
                   const StoryAvatar(initials: 'E', colorSeed: 7, size: 40),
                 ),
                 Expanded(

@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.0.2+45
+version: 1.0.2+46
 
 environment:
   sdk: ^3.12.1
@@ -58,6 +58,9 @@ dependencies:
   app_links: ^6.3.2
   qr_flutter: ^4.1.0
   share_plus: ^10.1.4
+  # Circle feed photos: on-disk image cache (instant on relaunch, robust on flaky
+  # networks). Cached by a stable postId key since the presigned URL rotates.
+  cached_network_image: ^3.4.1
   # Native "rate this app" prompt (SKStoreReviewController on iOS).
   in_app_review: ^2.0.10
 

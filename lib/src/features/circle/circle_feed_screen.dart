@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:food_at_peace/l10n/app_localizations.dart';
@@ -204,16 +205,18 @@ class _PostCard extends ConsumerWidget {
           if (post.photoUrl != null)
             AspectRatio(
               aspectRatio: 1,
-              child: Image.network(
-                post.photoUrl!,
+              child: CachedNetworkImage(
+                imageUrl: post.photoUrl!,
+                // The presigned S3 URL's signature rotates on every feed fetch,
+                // so cache by the stable postId — otherwise the disk cache would
+                // miss every launch and re-download each photo.
+                cacheKey: post.postId,
                 fit: BoxFit.cover,
-                loadingBuilder: (c, child, progress) => progress == null
-                    ? child
-                    : Container(
-                        color: scheme.surfaceContainerHighest,
-                        child: const Center(child: CircularProgressIndicator()),
-                      ),
-                errorBuilder: (_, _, _) => Container(
+                placeholder: (_, _) => Container(
+                  color: scheme.surfaceContainerHighest,
+                  child: const Center(child: CircularProgressIndicator()),
+                ),
+                errorWidget: (_, _, _) => Container(
                   color: scheme.surfaceContainerHighest,
                   child: const Icon(Icons.broken_image_outlined),
                 ),

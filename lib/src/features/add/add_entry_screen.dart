@@ -59,7 +59,6 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
   // The downscaled (~1024px) copy made for the AI estimate — reused as a fast,
   // cheap source for the synced thumbnail (no second decode of the full original).
   Uint8List? _analysisBytes;
-  String _photoMediaType = 'image/jpeg';
   bool _shareToCircle = true;
 
   static MealType _defaultMeal() {
@@ -143,11 +142,15 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
     }
     final token = ref.read(authProvider)?.token;
     if (token == null || token.isEmpty) return; // sharing needs an account
+    // Share the downscaled (~1024px) copy, not the multi-MB original: a feed card
+    // is shown ~screen-width, so the full-res just made the feed slow to load on
+    // cellular. The durable full-res still lives in the meal-photo store, keyed by
+    // entryId, for the owner's own Food story.
     ref
         .read(postsClientProvider)
         .post(
-          imageBytes: _photoBytes!,
-          mediaType: _photoMediaType,
+          imageBytes: _analysisBytes ?? _photoBytes!,
+          mediaType: 'image/jpeg',
           name: entry.name,
           calories: entry.calories.round(),
           token: token,
@@ -206,7 +209,6 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
         _source = FoodSource.photo;
         _photoBytes = original;
         _analysisBytes = analysisBytes;
-        _photoMediaType = 'image/jpeg';
         _name.text = analysis.name;
         _calories.text = analysis.calories.round().toString();
         _protein.text = analysis.proteinG.round().toString();
