@@ -103,6 +103,13 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
   with the strip + photo feed together — removed from the Trends screen. Pure client UI, no
   backend/shared-model change; new l10n (`navCircle`, `sectionOfficials`, `sectionFriends`,
   `sectionInvited`, `badgeCoach`, `showInviteQr`/`hideInviteQr`). ✅ build 41.
+- **Feed shows each author's CURRENT name (backend, prod-deployed)** — post `authorName`/`authorHandle`
+  were denormalized at post-time, so when an account renamed (e.g. roro: `foodie`→`roro`, early ones
+  blank) old posts read as a stale name / "Someone". `posts.py _user_posts` now resolves the author's
+  current name/handle from their circle "me" card (`_user_card`) instead of the stored value. Response
+  shape unchanged (backward-compatible). Deployed to **prod PostsFunction only** (via
+  `update-function-code` — the circle function / uncommitted WIP untouched) and verified live: renaming
+  an account flipped all its feed posts to the new name. Test: `test_feed_uses_current_author_name_not_stale`.
 - **New accounts auto-follow @roro → real photos in the feed; Eva 3-day cards (build 50)** — a brand-new
   account started with an **empty Circle feed and never saw Roro's photos**. Roro was opt-in "Suggested
   to follow", so a fresh user had **zero friend edges**, and the privacy-gated feed (`[me] + connected`)

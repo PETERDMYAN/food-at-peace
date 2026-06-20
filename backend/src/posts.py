@@ -186,6 +186,10 @@ def _user_posts(author_id, viewer_id):
     from boto3.dynamodb.conditions import Key
 
     now = _now_s()
+    # The author's CURRENT name/handle (from their circle "me" card), not the
+    # value denormalized onto each post at creation — so a later rename shows
+    # everywhere and old posts never read as a stale name / "Someone".
+    author = _user_card(author_id)
     resp = _posts().query(
         KeyConditionExpression=Key("pk").eq(f"feed#{author_id}")
         & Key("sk").begins_with("post#"),
@@ -207,8 +211,8 @@ def _user_posts(author_id, viewer_id):
             {
                 "postId": item["postId"],
                 "authorId": author_id,
-                "authorName": item.get("authorName"),
-                "authorHandle": item.get("authorHandle"),
+                "authorName": author["name"],
+                "authorHandle": author["handle"],
                 "name": item.get("name"),
                 "calories": int(item.get("calories", 0)),
                 "createdAt": int(item.get("createdAt", 0)),
