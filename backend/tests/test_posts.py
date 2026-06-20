@@ -90,3 +90,33 @@ def test_create_post_rejects_missing_and_oversized_image(monkeypatch):
     big = base64.b64encode(b"x" * (posts.MAX_IMAGE_BYTES + 10)).decode()
     with pytest.raises(posts.ProxyError):
         posts.create_post("u1", {"image": big})  # too large
+
+
+def test_official_feed_returns_official_account_posts(monkeypatch):
+    """A signed-out viewer's official feed = the official @handle's own posts
+    (looked up by handle), with no viewer (None) so it's the public view."""
+
+    class _Circle:
+        def get_item(self, Key):
+            assert Key["pk"] == f"handle#{posts.OFFICIAL_HANDLE}"
+            return {"Item": {"userId": "roro-uid"}}
+
+    monkeypatch.setattr(posts, "_circle", lambda: _Circle())
+    monkeypatch.setattr(
+        posts,
+        "_user_posts",
+        lambda uid, viewer: [{"postId": "p1", "authorId": uid}]
+        if (uid == "roro-uid" and viewer is None)
+        else [],
+    )
+    out = posts.official_feed()
+    assert out["posts"] == [{"postId": "p1", "authorId": "roro-uid"}]
+
+
+def test_official_feed_empty_when_no_official_account(monkeypatch):
+    class _Circle:
+        def get_item(self, Key):
+            return {}
+
+    monkeypatch.setattr(posts, "_circle", lambda: _Circle())
+    assert posts.official_feed() == {"posts": []}

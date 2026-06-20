@@ -31,6 +31,9 @@ PHOTOS_BUCKET = os.environ.get("PHOTOS_BUCKET", "")
 SESSION_KEY_PARAM = os.environ.get(
     "SESSION_KEY_PARAM", "/food-at-peace/session-signing-key"
 )
+APP_TOKEN_PARAM = os.environ.get("APP_TOKEN_PARAM", "/food-at-peace/app-token")
+# The creator's official @handle, whose posts a signed-out app may read publicly.
+OFFICIAL_HANDLE = os.environ.get("OFFICIAL_HANDLE", "roro")
 
 TTL_SECONDS = 3 * 24 * 60 * 60  # posts live 3 days
 MAX_IMAGE_BYTES = 6 * 1024 * 1024
@@ -74,9 +77,22 @@ def _now_s():
     return int(time.time())
 
 
-def _me(event):
+def _bearer_token(event):
     raw = _header(event, "authorization") or ""
-    token = raw[7:].strip() if raw.lower().startswith("bearer ") else ""
+    return raw[7:].strip() if raw.lower().startswith("bearer ") else ""
+
+
+def _app_token_ok(event):
+    """True when the request carries the shared app token (a signed-out app)."""
+    tok = _header(event, "x-app-token") or ""
+    try:
+        return bool(tok) and tok == _get_secret(APP_TOKEN_PARAM)
+    except Exception:  # noqa: BLE001 — treat any secret-fetch failure as no-auth
+        return False
+
+
+def _me(event):
+    token = _bearer_token(event)
     if not token:
         raise ProxyError(401, "Not authenticated.")
     uid = verify_session_token(token, _get_secret(SESSION_KEY_PARAM)).get("sub")
@@ -236,6 +252,19 @@ def feed(uid):
     return {"posts": posts}
 
 
+def official_feed():
+    """The creator's official-account posts, readable WITHOUT an account (app
+    token only) — so a signed-out / brand-new user still sees real photos in the
+    feed before logging in. Public content: only the official account's own posts."""
+    item = (
+        _circle()
+        .get_item(Key={"pk": f"handle#{OFFICIAL_HANDLE}", "sk": "handle"})
+        .get("Item")
+    )
+    uid = (item or {}).get("userId")
+    return {"posts": _user_posts(uid, None) if uid else []}
+
+
 def react(uid, body):
     post_id = body.get("postId")
     emoji = (body.get("emoji") or "").strip()
@@ -268,10 +297,14 @@ def react(uid, body):
 
 def handler(event, context):
     try:
-        uid = _me(event)
         http = event.get("requestContext", {}).get("http", {})
         method = (http.get("method") or "").upper()
         path = (http.get("path") or "").rsplit("/", 1)[-1]
+        # Signed-out app (no Bearer session but a valid app token) → the public
+        # official-creator feed, so new users see real photos before logging in.
+        if method == "GET" and not _bearer_token(event) and _app_token_ok(event):
+            return _response(200, official_feed())
+        uid = _me(event)
         if method == "GET":
             return _response(200, feed(uid))
         body = _parse_body(event)

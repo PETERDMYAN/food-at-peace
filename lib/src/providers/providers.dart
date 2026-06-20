@@ -1351,9 +1351,15 @@ final mealPhotoStoreProvider = Provider<MealPhotoStore>(
 /// The viewer's circle feed (their friends' + own active posts). Empty when
 /// signed out or no proxy is configured.
 final circleFeedProvider = FutureProvider<List<CirclePost>>((ref) async {
+  if (proxyBaseUrl.isEmpty) return const [];
   final token = ref.watch(authProvider)?.token;
-  if (token == null || token.isEmpty || proxyBaseUrl.isEmpty) return const [];
-  return ref.read(postsClientProvider).feed(token);
+  final client = ref.read(postsClientProvider);
+  // Signed in → your personal feed (friends' + your own posts). Signed out → the
+  // public official-creator feed (shared app token) so a brand-new user still
+  // sees real photos in the circle before logging in.
+  if (token != null && token.isNotEmpty) return client.feed(token);
+  if (proxyAppToken.isEmpty) return const [];
+  return client.officialFeed(proxyAppToken);
 });
 
 /// Posts the viewer has locally hidden via Report or Unfollow. Persisted so a

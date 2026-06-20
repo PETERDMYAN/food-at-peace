@@ -57,6 +57,22 @@ class PostsClient {
       headers: _headers(token, json: false),
     );
     if (resp.statusCode != 200) throw PostsException(_messageFrom(resp));
+    return _parseFeed(resp);
+  }
+
+  /// The public official-creator feed — no account needed (the shared app token
+  /// only), used when signed out so a new user still sees real photos in the
+  /// circle before logging in. Same `/circle/feed` route, app-token auth.
+  Future<List<CirclePost>> officialFeed(String appToken) async {
+    final resp = await _http.get(
+      Uri.parse('$_base/circle/feed'),
+      headers: {'x-app-token': appToken},
+    );
+    if (resp.statusCode != 200) throw PostsException(_messageFrom(resp));
+    return _parseFeed(resp);
+  }
+
+  List<CirclePost> _parseFeed(http.Response resp) {
     final j = jsonDecode(utf8.decode(resp.bodyBytes)) as Map<String, dynamic>;
     return [
       for (final p in (j['posts'] as List? ?? const []))

@@ -743,6 +743,7 @@ Resources:
           CIRCLE_TABLE: !Ref CircleTable
           PHOTOS_BUCKET: !Ref CirclePhotosBucket
           SESSION_KEY_PARAM: !Ref SessionKeyParam
+          APP_TOKEN_PARAM: !Ref AppTokenParam
           APNS_KEY_PARAM: !Ref ApnsKeyParam
           APNS_KEY_ID_PARAM: !Ref ApnsKeyIdParam
           APNS_TEAM_ID: !Ref ApnsTeamId
@@ -777,6 +778,7 @@ Resources:
               Action: ssm:GetParameter
               Resource:
                 - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter${SessionKeyParam}
+                - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter${AppTokenParam}
                 - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter${ApnsKeyParam}
                 - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter${ApnsKeyIdParam}
             - Sid: DecryptSecureStrings

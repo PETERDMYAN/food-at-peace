@@ -103,6 +103,16 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
   with the strip + photo feed together — removed from the Trends screen. Pure client UI, no
   backend/shared-model change; new l10n (`navCircle`, `sectionOfficials`, `sectionFriends`,
   `sectionInvited`, `badgeCoach`, `showInviteQr`/`hideInviteQr`). ✅ build 41.
+- **Signed-out users see the creator's public feed (build 52 + prod backend)** — the Circle feed was
+  session-gated (`circleFeedProvider` returned `[]` with no token), so a logged-out / no-handle user
+  saw an empty feed and **never Roro's photos**, no matter what (the "follow" was only a local
+  placeholder). Now: `posts.py` `/circle/feed` accepts the shared **app token** (no session) and returns
+  the official **@roro** account's public posts (`official_feed`, viewer=None); `circleFeedProvider`
+  calls `officialFeed(proxyAppToken)` when signed out. Additive + backward-compatible (session path
+  unchanged; `/circle/feed` isn't a 1.0.0 endpoint). Deployed to the **prod posts function only**
+  (code + `APP_TOKEN_PARAM` env + ssm-read IAM, via `update-function-code`/`update-function-configuration`
+  — other functions / the 1.0.0 contract untouched) and **verified live**: app-token GET → 11 Roro posts
+  with photos; no-token GET → 401. Tests: `test_official_feed_*`. ✅ build 52.
 - **Circle polish: "Add" at the end of the strip + reverse-chronological feed (build 51)** — the "Add"
   bubble was wedged mid-strip (after the official accounts, before your friends); it now sits at the
   **end** of the row. The feed was 3 Eva cards pinned on top + posts; it's now **one reverse-chron
