@@ -63,11 +63,15 @@ class ManageCircleScreen extends ConsumerWidget {
             const SizedBox(height: 8),
           ],
 
-          // ── 1) Officials — Eva (coach) + the creator @roro if followed ──
-          if (evaFollowed || roroFriends.isNotEmpty) ...[
+          // ── 1) Officials — Eva (coach) + the creator @roro when followed
+          //       (incl. the official feed shown to signed-out users) ──
+          if (evaFollowed || followsRoro) ...[
             _SectionHeader(
               t.sectionOfficials,
-              count: (evaFollowed ? 1 : 0) + roroFriends.length,
+              count: (evaFollowed ? 1 : 0) +
+                  (roroFriends.isNotEmpty
+                      ? roroFriends.length
+                      : (followsRoro ? 1 : 0)),
             ),
             if (evaFollowed)
               _OfficialTile(
@@ -99,6 +103,22 @@ class ManageCircleScreen extends ConsumerWidget {
                 trailing: TextButton(
                   onPressed: () => _confirmRemove(context, ref, t, f),
                   child: Text(t.feedUnfollow),
+                ),
+              ),
+            // Followed via the official feed (e.g. signed out) — there's no friend
+            // edge to unfollow, so show a "Following" status instead of a button.
+            if (roroFriends.isEmpty && followsRoro)
+              _OfficialTile(
+                name: t.roroName,
+                role: roroTag,
+                badge: t.roroRole,
+                seed: kRoroHandle.hashCode,
+                trailing: Text(
+                  t.followingLabel,
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
           ],

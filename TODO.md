@@ -103,6 +103,23 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
   with the strip + photo feed together — removed from the Trends screen. Pure client UI, no
   backend/shared-model change; new l10n (`navCircle`, `sectionOfficials`, `sectionFriends`,
   `sectionInvited`, `badgeCoach`, `showInviteQr`/`hideInviteQr`). ✅ build 41.
+- **@handle in Settings + follow-state consistency + Circle divider (build 55)** — three things:
+  1. **Manage your @handle as part of the profile** — the Settings profile card now shows your
+     **@handle** (auto-assigned on sign-in by deriving from your nickname server-side; tap to edit, or
+     copy). Watching `circleProvider` in the row triggers the assignment even if you never open the
+     Circle tab, so every signed-in user has a unique, findable handle.
+     ([`settings_screen.dart`](lib/src/features/settings/settings_screen.dart) `_HandleRow`; new l10n
+     `handleFindHint`/`handleAssigning`/`handleSignInHint`.)
+  2. **Follow-state consistency** — after build 54 the strip surfaces @roro from the feed (so signed-out
+     users see him), but `followsRoroProvider` + Manage read only the friend graph, so Manage wrongly
+     showed "Suggested: follow Roro" while his story + feed were on screen. `followsRoroProvider` is now
+     **feed-aware** (his official posts present ⇒ effectively followed), and Manage lists him under
+     **Officials → "Following"** (no graph edge to unfollow when signed out) instead of Suggested.
+     ([`providers.dart`](lib/src/providers/providers.dart), [`manage_friends_screen.dart`](lib/src/features/circle/manage_friends_screen.dart)).
+     Verified on-sim (empty graph + Roro feed → Officials · 2, no Suggested).
+  3. **Circle tab divider margin** — the strip/feed rule sat flush against the first post; gave it
+     breathing room ([`circle_screen.dart`](lib/src/features/circle/circle_screen.dart)).
+  Client-only; `flutter analyze` clean, 164 flutter + 40 backend tests pass. ✅ build 55.
 - **Roro's story shows his real meals, not fake metrics (build 54)** — signed-out users who followed
   @roro saw his story open a **fabricated trend** (mock streak / adherence / today-kcal) with an
   **initials** avatar, while the feed correctly showed his real meal photos. Root cause: the offline

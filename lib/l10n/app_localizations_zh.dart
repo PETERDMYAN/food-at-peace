@@ -973,6 +973,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get handleError => '保存用户名失败，请重试';
 
   @override
+  String get handleFindHint => '好友凭它找到并添加你，也可用它充值豆子';
+
+  @override
+  String get handleAssigning => '正在分配你的用户名…';
+
+  @override
+  String get handleSignInHint => '登录后即可获得可被他人找到的用户名';
+
+  @override
   String get shareToCircle => '分享到圈子';
 
   @override

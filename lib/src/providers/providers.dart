@@ -1335,10 +1335,18 @@ final followsRoroProvider = Provider<bool>((ref) {
   final mine = ref.watch(myCircleHandleProvider)?.toLowerCase();
   if (mine == kRoroHandle) return true;
   final target = '@$kRoroHandle';
-  return ref.watch(circleProvider).any(
+  final inGraph = ref.watch(circleProvider).any(
     (f) => f.status == FriendStatus.connected &&
         f.handle.toLowerCase() == target,
   );
+  if (inGraph) return true;
+  // The official @roro feed is shown to everyone — including signed-out users —
+  // and the strip surfaces him from it (see circle_strip `_officialRoro`). If his
+  // posts are present the user effectively follows him, so keep the follow-state
+  // consistent with what's actually on screen (no "you don't follow Roro" while
+  // his story + feed are right there).
+  final feed = ref.watch(circleFeedProvider).asData?.value ?? const <CirclePost>[];
+  return feed.any((p) => (p.authorHandle ?? '').toLowerCase() == kRoroHandle);
 });
 
 // ---- Circle photo feed (share a scanned meal; friends react) ----

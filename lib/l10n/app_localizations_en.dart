@@ -1003,6 +1003,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get handleError => 'Couldn\'t save your handle — try again';
 
   @override
+  String get handleFindHint =>
+      'Friends find & add you — and recharge Beans — with this';
+
+  @override
+  String get handleAssigning => 'Assigning your handle…';
+
+  @override
+  String get handleSignInHint => 'Sign in to claim a handle others can find';
+
+  @override
   String get shareToCircle => 'Share to circle';
 
   @override

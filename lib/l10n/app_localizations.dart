@@ -1856,6 +1856,24 @@ abstract class AppLocalizations {
   /// **'Couldn\'t save your handle — try again'**
   String get handleError;
 
+  /// No description provided for @handleFindHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Friends find & add you — and recharge Beans — with this'**
+  String get handleFindHint;
+
+  /// No description provided for @handleAssigning.
+  ///
+  /// In en, this message translates to:
+  /// **'Assigning your handle…'**
+  String get handleAssigning;
+
+  /// No description provided for @handleSignInHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to claim a handle others can find'**
+  String get handleSignInHint;
+
   /// No description provided for @shareToCircle.
   ///
   /// In en, this message translates to:

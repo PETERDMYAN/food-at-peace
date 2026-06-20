@@ -20,10 +20,12 @@ class CircleScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: const [
             Padding(
-              padding: EdgeInsets.fromLTRB(16, 8, 16, 4),
+              padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
               child: CircleStrip(),
             ),
-            Divider(height: 1),
+            // The rule needs vertical breathing room (height = total space, line
+            // centred) so it doesn't sit flush against the first feed post.
+            Divider(height: 20),
             Expanded(child: CircleFeedBody()),
           ],
         ),

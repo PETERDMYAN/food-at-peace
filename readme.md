@@ -15,7 +15,13 @@ for real calories burned, and speaks **English and 中文**. Built with Flutter.
 > prod. It identifies the account with **Sign in with Apple on the web** (reuses `/auth/apple`). It's
 > a *standalone* page (no in-app link, so the App Store app is untouched). Remaining before it can
 > charge: Stripe keys + an Apple **Services ID** (`com.foodatpeace.web`) and its domain-association file.
-> **1.0.2 (28)** is **in App Review**. **Build 54** fixes **Roro's story** for signed-out users: tapping
+> **1.0.2 (28)** is **in App Review**. **Build 55** adds **@handle management in Settings** and fixes a
+> **follow-state inconsistency**. (1) Your **@handle** now appears in the Settings profile — auto-assigned
+> on sign-in, with edit + copy; it's the unique id others find/add you by (and recharge Beans into). (2)
+> The Circle no longer says **"Suggested: follow Roro"** while his story + feed are on screen: `followsRoro`
+> is now feed-aware (if his official posts show, you effectively follow him), so Manage lists him under
+> **Officials → Following** instead of Suggested. (3) The Circle tab's strip/feed **divider** got proper
+> margin so it no longer crowds the first post. (Client-only.) **Build 54** fixes **Roro's story** for signed-out users: tapping
 > the creator's story now opens his **real shared meals** (with his profile photo on the avatar), instead
 > of a **fabricated trend** (mock streak / adherence / kcal) and an initials avatar. Root cause: following
 > @roro while signed out created a *placeholder* friend (synthetic id + `Friend.sample` mock trend, no
