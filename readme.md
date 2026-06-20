@@ -15,7 +15,10 @@ for real calories burned, and speaks **English and 中文**. Built with Flutter.
 > prod. It identifies the account with **Sign in with Apple on the web** (reuses `/auth/apple`). It's
 > a *standalone* page (no in-app link, so the App Store app is untouched). Remaining before it can
 > charge: Stripe keys + an Apple **Services ID** (`com.foodatpeace.web`) and its domain-association file.
-> **1.0.2 (28)** is **in App Review**. **Build 50** makes **new accounts see real photos**: every
+> **1.0.2 (28)** is **in App Review**. **Build 51** polishes the Circle: the **"Add" bubble moved to the
+> end** of the strip (after your friends, not wedged in the middle), and the **feed is now one
+> reverse-chronological stream** (newest first) — meal posts and Eva's daily lessons interleaved by time,
+> instead of Eva's 3 cards pinned to the top. **Build 50** makes **new accounts see real photos**: every
 > account now **auto-follows the creator's official @roro account** on first sign-in (one-time, still
 > removable), so a brand-new user's Circle feed isn't empty — they immediately see Roro's shared meals.
 > (Root cause: a fresh account had **no connection to Roro**, so the privacy-gated feed `[me] +

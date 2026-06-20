@@ -75,15 +75,24 @@ class CircleFeedBody extends ConsumerWidget {
               ],
             );
           }
+          // One reverse-chronological stream (newest first): meal posts keyed by
+          // createdAt + Eva's lesson for each of the last 3 days keyed to that day,
+          // interleaved — not 3 Eva cards pinned to the top.
+          final now = DateTime.now();
+          final today = DateTime(now.year, now.month, now.day);
+          final entries = <(int, Widget)>[
+            for (final p in visible) (p.createdAt, _PostCard(post: p)),
+            if (showEva)
+              for (var d = 0; d < 3; d++)
+                (
+                  today.subtract(Duration(days: d)).millisecondsSinceEpoch,
+                  _EvaFeedCard(dayOffset: d),
+                ),
+          ];
+          entries.sort((a, b) => b.$1.compareTo(a.$1));
           return ListView(
             padding: const EdgeInsets.fromLTRB(12, 10, 12, 32),
-            children: [
-              // Eva's lesson for each of the last 3 days (newest first) — matches
-              // her 3-day story + the 3-day feed window.
-              if (showEva)
-                for (var d = 0; d < 3; d++) _EvaFeedCard(dayOffset: d),
-              for (final p in visible) _PostCard(post: p),
-            ],
+            children: [for (final e in entries) e.$2],
           );
         },
       ),

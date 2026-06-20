@@ -103,6 +103,11 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
   with the strip + photo feed together — removed from the Trends screen. Pure client UI, no
   backend/shared-model change; new l10n (`navCircle`, `sectionOfficials`, `sectionFriends`,
   `sectionInvited`, `badgeCoach`, `showInviteQr`/`hideInviteQr`). ✅ build 41.
+- **Circle polish: "Add" at the end of the strip + reverse-chronological feed (build 51)** — the "Add"
+  bubble was wedged mid-strip (after the official accounts, before your friends); it now sits at the
+  **end** of the row. The feed was 3 Eva cards pinned on top + posts; it's now **one reverse-chron
+  stream** — meal posts (by `createdAt`) and Eva's 3 daily lessons (keyed to each day) interleaved and
+  sorted newest-first (`circle_feed_screen.dart`, `circle_strip.dart`). ✅ build 51.
 - **Feed shows each author's CURRENT name (backend, prod-deployed)** — post `authorName`/`authorHandle`
   were denormalized at post-time, so when an account renamed (e.g. roro: `foodie`→`roro`, early ones
   blank) old posts read as a stale name / "Someone". `posts.py _user_posts` now resolves the author's

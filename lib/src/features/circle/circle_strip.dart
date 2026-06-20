@@ -162,15 +162,6 @@ class CircleStrip extends ConsumerWidget {
                   ),
                   onTap: () => openFriendStory(context, ref, roroFriend),
                 ),
-              _AvatarColumn(
-                label: t.addFriend,
-                avatar: StoryAvatar(
-                  icon: Icons.add,
-                  ring: false,
-                  onTap: () => showInviteSheet(context),
-                ),
-                onTap: () => showInviteSheet(context),
-              ),
               for (final f in peers)
                 _AvatarColumn(
                   label: f.name,
@@ -190,6 +181,16 @@ class CircleStrip extends ConsumerWidget {
                     muted: true,
                   ),
                 ),
+              // "Add" sits at the END of the strip, after your friends.
+              _AvatarColumn(
+                label: t.addFriend,
+                avatar: StoryAvatar(
+                  icon: Icons.add,
+                  ring: false,
+                  onTap: () => showInviteSheet(context),
+                ),
+                onTap: () => showInviteSheet(context),
+              ),
             ],
           ),
         ),
