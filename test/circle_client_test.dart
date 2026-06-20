@@ -46,6 +46,37 @@ void main() {
           FriendStatus.incoming);
     });
 
+    test('myHandle recovers the account handle from `me` (reinstall path)',
+        () async {
+      late http.Request captured;
+      final mock = MockClient((req) async {
+        captured = req;
+        return http.Response(
+          jsonEncode({
+            'me': {'handle': '@roro', 'name': 'roro'},
+            'connected': [],
+            'incoming': [],
+            'outgoing': [],
+          }),
+          200,
+        );
+      });
+      final c = CircleClient(baseUrl: 'https://x.test/', httpClient: mock);
+      // Bare handle, leading '@' stripped — exactly what we re-persist locally.
+      expect(await c.myHandle('tok'), 'roro');
+      expect(captured.url.toString(), 'https://x.test/circle/list');
+      expect(captured.headers['authorization'], 'Bearer tok');
+    });
+
+    test('myHandle is null when the account has not claimed one yet', () async {
+      final mock = MockClient((req) async => http.Response(
+            jsonEncode({'me': null, 'connected': [], 'incoming': [], 'outgoing': []}),
+            200,
+          ));
+      final c = CircleClient(baseUrl: 'https://x.test/', httpClient: mock);
+      expect(await c.myHandle('tok'), isNull);
+    });
+
     test('invite posts the handle with the bearer token', () async {
       late http.Request captured;
       final mock = MockClient((req) async {

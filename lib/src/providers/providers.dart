@@ -1024,15 +1024,38 @@ class CircleNotifier extends Notifier<List<Friend>> {
     return h;
   }
 
-  /// Ensure a handle is claimed on the backend. Uses the handle the user chose
-  /// (if any); otherwise derives one from the profile name, adding a numeric
-  /// suffix on a clash. Idempotent via [_handleSetKey].
+  /// Ensure a handle is claimed on the backend, and that the **same** handle is
+  /// recovered across reinstalls / new devices.
+  ///
+  /// Order matters: the server is the source of truth. After a reinstall the
+  /// local prefs are wiped, so we first ask the backend what handle this Apple
+  /// account already owns and adopt it verbatim — that's how `@yourhandle`
+  /// survives "delete app → sign back in" so friends keep finding you. Only a
+  /// genuinely new account (the server has no handle) derives one from the
+  /// nickname and claims it (numeric suffix on a clash). Idempotent via
+  /// [_handleSetKey].
   Future<void> _ensureHandle(CircleClient client, String token) async {
+    // Steady state: already known locally → just publish it, no network.
     if (_prefs.getBool(_handleSetKey) ?? false) {
       final saved = _prefs.getString(_myHandleKey);
       if (saved != null) ref.read(myCircleHandleProvider.notifier).set(saved);
       return;
     }
+    // Fresh install / new device: recover the handle the account already owns.
+    String? serverHandle;
+    try {
+      serverHandle = await client.myHandle(token);
+    } catch (_) {
+      // Transient network error — do NOT claim a fresh handle blindly (that
+      // could change a returning user's handle). Retry on the next refresh.
+      return;
+    }
+    if (serverHandle != null && serverHandle.isNotEmpty) {
+      await _claimLocally(serverHandle);
+      return;
+    }
+    // New account: derive from the nickname (or honour an offline-chosen handle)
+    // and claim it; numeric suffix on a clash so it stays unique app-wide.
     final name = ref.read(profileProvider).name;
     final chosen = _prefs.getString(_myHandleKey);
     var handle = chosen ?? _deriveHandle();
@@ -1041,11 +1064,14 @@ class CircleNotifier extends Notifier<List<Friend>> {
       handle = '$handle${DateTime.now().microsecondsSinceEpoch % 9000 + 1000}';
       code = await client.register(token, handle, name: name);
     }
-    if (code == 200) {
-      await _prefs.setString(_myHandleKey, handle);
-      await _prefs.setBool(_handleSetKey, true);
-      ref.read(myCircleHandleProvider.notifier).set(handle);
-    }
+    if (code == 200) await _claimLocally(handle);
+  }
+
+  /// Persist + publish the viewer's own handle (prefs + reactive provider).
+  Future<void> _claimLocally(String handle) async {
+    await _prefs.setString(_myHandleKey, handle);
+    await _prefs.setBool(_handleSetKey, true);
+    ref.read(myCircleHandleProvider.notifier).set(handle);
   }
 
   /// Set (or change) the user's own @handle so friends can add them. Validated

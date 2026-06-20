@@ -15,7 +15,12 @@ for real calories burned, and speaks **English and 中文**. Built with Flutter.
 > prod. It identifies the account with **Sign in with Apple on the web** (reuses `/auth/apple`). It's
 > a *standalone* page (no in-app link, so the App Store app is untouched). Remaining before it can
 > charge: Stripe keys + an Apple **Services ID** (`com.foodatpeace.web`) and its domain-association file.
-> **1.0.2 (28)** is **in App Review**. **Build 44 (on TestFlight)** adds **Eva's daily lesson as the
+> **1.0.2 (28)** is **in App Review**. **Build 45** makes your **@handle survive a reinstall**: after
+> delete-app → Sign in with Apple, the app now **recovers the exact handle the account already owns**
+> from the server (it used to re-derive one from your name and could change it, breaking friends'
+> links). The handle still **defaults to your nickname** and stays **unique app-wide** — that part was
+> already true; build 45 just stops it drifting on reinstall (client-only, no backend change).
+> **Build 44 (on TestFlight)** adds **Eva's daily lesson as the
 > first card in the scrollable Circle feed** (above every food story), shows your **nickname (display
 > name) distinct from your @handle** in Manage circle (the name is what friends see; the handle is the
 > unique id they add you by), and stops the creator (`@roro`) from being **"Suggested to follow"

@@ -103,6 +103,19 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
   with the strip + photo feed together — removed from the Trends screen. Pure client UI, no
   backend/shared-model change; new l10n (`navCircle`, `sectionOfficials`, `sectionFriends`,
   `sectionInvited`, `badgeCoach`, `showInviteQr`/`hideInviteQr`). ✅ build 41.
+- **@handle survives reinstall — recover from the server, don't re-derive (build 45)** — the handle
+  defaults to a sanitised nickname ([`_deriveHandle`](lib/src/providers/providers.dart)) and is
+  unique app-wide (server `register` → 409 on clash, [`circle.py`](backend/src/circle.py)), but on a
+  **delete-app → sign back in** the wiped prefs made [`_ensureHandle`](lib/src/providers/providers.dart)
+  **re-derive and re-register**, which could *change* a returning user's handle (drop their claimed one
+  for a name-derived or random-suffixed one) — so friends' links broke. Fix: the **server is now the
+  source of truth** — `_ensureHandle` first calls the new
+  [`CircleClient.myHandle`](lib/src/data/circle_client.dart) (parses `me.handle` from `/circle/list`)
+  and **adopts the exact handle the account already owns**; only a genuinely new account (no server
+  handle) derives + claims one. Transient network error → no blind re-claim (retries next refresh).
+  **Client-only, no backend change** (the server already returned `me` + enforced uniqueness), so the
+  live 1.0.0/1.0.1 contract is untouched. Tests: `myHandle` parse (present/absent) in
+  [`circle_client_test.dart`](test/circle_client_test.dart). ✅ build 45.
 - **Eva-in-feed + nickname/handle + self-follow fix (build 44)** — three things from the Circle
   pass: (1) **Eva's daily lesson now rides at the top of the scrollable Circle feed** above every
   food-story post (new [`_EvaFeedCard`](lib/src/features/circle/circle_feed_screen.dart), shown when

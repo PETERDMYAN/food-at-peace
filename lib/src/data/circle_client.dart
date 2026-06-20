@@ -51,6 +51,31 @@ class CircleClient {
     ];
   }
 
+  /// The viewer's own claimed handle (bare, no leading `@`) as the **server**
+  /// knows it, or null if this account hasn't claimed one yet. The server is the
+  /// source of truth, so a fresh install / new device can recover the *exact*
+  /// handle the account already owns instead of re-deriving (and possibly
+  /// changing) it. Parsed from the `me` field of the same `/circle/list` payload.
+  Future<String?> myHandle(String token) async {
+    final http.Response resp;
+    try {
+      resp = await _http.get(
+        Uri.parse('$_base/circle/list'),
+        headers: _headers(token),
+      );
+    } catch (_) {
+      throw CircleException('Network error — check your connection.');
+    }
+    if (resp.statusCode != 200) throw CircleException(_messageFrom(resp));
+    final j = jsonDecode(utf8.decode(resp.bodyBytes)) as Map<String, dynamic>;
+    final me = j['me'];
+    if (me is Map) {
+      final h = (me['handle'] as String?)?.replaceFirst('@', '').trim();
+      if (h != null && h.isNotEmpty) return h;
+    }
+    return null;
+  }
+
   /// Claims (or updates) the viewer's unique @handle. Returns the server's
   /// status code so the caller can retry on a 409 (handle taken).
   Future<int> register(String token, String handle, {String? name}) => _post(
