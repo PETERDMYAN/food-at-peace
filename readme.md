@@ -15,7 +15,14 @@ for real calories burned, and speaks **English and 中文**. Built with Flutter.
 > prod. It identifies the account with **Sign in with Apple on the web** (reuses `/auth/apple`). It's
 > a *standalone* page (no in-app link, so the App Store app is untouched). Remaining before it can
 > charge: Stripe keys + an Apple **Services ID** (`com.foodatpeace.web`) and its domain-association file.
-> **1.0.2 (28)** is **in App Review**. **Build 53** shows **friends' real profile photos as their
+> **1.0.2 (28)** is **in App Review**. **Build 54** fixes **Roro's story** for signed-out users: tapping
+> the creator's story now opens his **real shared meals** (with his profile photo on the avatar), instead
+> of a **fabricated trend** (mock streak / adherence / kcal) and an initials avatar. Root cause: following
+> @roro while signed out created a *placeholder* friend (synthetic id + `Friend.sample` mock trend, no
+> photo) disconnected from his real account, so the strip avatar fell back to initials and tapping fell
+> back to the trend sheet. Now the strip sources the official account from the **feed** (real id + photo +
+> posts), and a friend's story matches their posts by **@handle as well as id** — so Roro's avatar shows
+> his face and his story shows his meals. (Client-only; no backend change.) **Build 53** shows **friends' real profile photos as their
 > avatars** across the Circle — a friend's photo now appears on their story ring in the strip, on
 > their **feed posts**, and in trends / requests / manage, instead of coloured initials (graceful
 > fall-back to initials when no photo is set). It works **signed-out** too: the official **@roro**

@@ -1193,18 +1193,30 @@ class CircleNotifier extends Notifier<List<Friend>> {
       ref.invalidate(circleFeedProvider);
       return name ?? '@$h';
     }
-    // Offline: optimistic local connected friend so the flow still demos.
+    // Offline: optimistic local connected friend so the flow still demos. The
+    // official @roro is a REAL account whose meals come from the feed, so never
+    // fabricate a mock trend for him (that's the "fake metrics" users saw when
+    // tapping his story) — add a plain entry; the strip sources his real photo +
+    // posts from the feed.
     if (!state.any((f) => f.handle == '@$h')) {
       final display = h[0].toUpperCase() + (h.length > 1 ? h.substring(1) : '');
+      final id = 'f_${DateTime.now().microsecondsSinceEpoch}';
       state = [
         ...state,
-        Friend.sample(
-          id: 'f_${DateTime.now().microsecondsSinceEpoch}',
-          name: display,
-          handle: '@$h',
-          status: FriendStatus.connected,
-          seed: h.hashCode,
-        ),
+        h == kRoroHandle
+            ? Friend(
+                id: id,
+                name: display,
+                handle: '@$h',
+                status: FriendStatus.connected,
+              )
+            : Friend.sample(
+                id: id,
+                name: display,
+                handle: '@$h',
+                status: FriendStatus.connected,
+                seed: h.hashCode,
+              ),
       ];
       await _save();
     }

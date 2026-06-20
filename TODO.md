@@ -103,6 +103,20 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
   with the strip + photo feed together — removed from the Trends screen. Pure client UI, no
   backend/shared-model change; new l10n (`navCircle`, `sectionOfficials`, `sectionFriends`,
   `sectionInvited`, `badgeCoach`, `showInviteQr`/`hideInviteQr`). ✅ build 41.
+- **Roro's story shows his real meals, not fake metrics (build 54)** — signed-out users who followed
+  @roro saw his story open a **fabricated trend** (mock streak / adherence / today-kcal) with an
+  **initials** avatar, while the feed correctly showed his real meal photos. Root cause: the offline
+  "follow roro" path created a *placeholder* friend — `Friend.sample(id: 'f_<ts>', …)` with a synthetic id
+  + mock trend + no photo — disconnected from his real account (real id `apple:001667…`, real profile
+  photo). So the strip avatar (`roroFriend.photoUrl` = null) showed initials, and `openFriendStory`
+  (matching `post.authorId == friend.id`) found no posts → fell back to `showFriendTrend`. Fix
+  ([`circle_strip.dart`](lib/src/features/circle/circle_strip.dart)): `_officialRoro` now sources the
+  official account from the **feed** (real id + name + `authorPhotoUrl`), winning over any placeholder;
+  `openFriendStory` matches a friend's posts by **@handle as well as id**; the story-page header avatar
+  gained a `photoUrl`. Also stopped fabricating a mock trend for @roro in the offline `connect()`
+  ([`providers.dart`](lib/src/providers/providers.dart)). Verified on-sim: with a placeholder Roro +
+  real feed, the strip shows his photo and tapping opens his real meal photos (was: initials + fake
+  metrics). Client-only — no backend/contract change. `flutter analyze` clean, 164 tests pass. ✅ build 54.
 - **Friends' profile photos as avatars across the Circle (build 53 + prod backend)** — a friend's
   (and your own) real profile photo now renders on the story ring everywhere the Circle shows an
   avatar: the **friend strip**, each **feed post card**, the **trend sheet**, the **requests** screen,

@@ -69,10 +69,12 @@ class CircleStrip extends ConsumerWidget {
     final evaKey = evaStoryKey(evaIndex);
 
     // Roro (the creator's official account) belongs with the official accounts —
-    // left of the Add icon, next to Eva — not mixed in among your peers.
-    final roroMatches =
-        connected.where((f) => f.handle == '@$kRoroHandle').toList();
-    final roroFriend = roroMatches.isEmpty ? null : roroMatches.first;
+    // left of the Add icon, next to Eva — not mixed in among your peers. Source
+    // him from the FEED (his real account: real id + profile photo), NOT any
+    // offline-follow placeholder — so his avatar shows his photo and tapping
+    // opens his real shared meals, never a fabricated trend. Works signed out
+    // too, since the official feed carries @roro's posts without an account.
+    final roroFriend = _officialRoro(ref, connected);
     final peers =
         connected.where((f) => f.handle != '@$kRoroHandle').toList();
 
@@ -699,12 +701,57 @@ String _initialsFor(String name) {
 String myPublicStoryKey(List<CirclePost> posts) =>
     posts.isEmpty ? 'you:noposts' : 'you:${posts.first.postId}:${posts.length}';
 
+/// The official @roro account as the **feed** knows him — real authorId, name,
+/// and profile photo — so the strip avatar shows his photo and [openFriendStory]
+/// finds his real posts instead of a fabricated trend. This deliberately wins
+/// over any local/offline-follow placeholder (which carries a synthetic id +
+/// mock trend and no photo). Falls back to the friend-graph entry until the feed
+/// loads, then null when there's nothing to show.
+Friend? _officialRoro(WidgetRef ref, List<Friend> connected) {
+  final graph =
+      connected.where((f) => f.handle == '@$kRoroHandle').toList();
+  final fromGraph = graph.isEmpty ? null : graph.first;
+  final posts =
+      ref.watch(circleFeedProvider).asData?.value ?? const <CirclePost>[];
+  CirclePost? roroPost;
+  for (final p in posts) {
+    if ((p.authorHandle ?? '').toLowerCase() == kRoroHandle) {
+      roroPost = p;
+      break;
+    }
+  }
+  if (roroPost == null) return fromGraph; // feed not loaded yet → graph (or null)
+  // Authoritative: real id + photo from the feed; keep any graph trend so a
+  // connected viewer's trend sheet still works if Roro ever has no posts.
+  return Friend(
+    id: roroPost.authorId,
+    name: (roroPost.authorName?.isNotEmpty ?? false)
+        ? roroPost.authorName!
+        : (fromGraph?.name ?? 'Roro'),
+    handle: '@$kRoroHandle',
+    status: FriendStatus.connected,
+    streakDays: fromGraph?.streakDays ?? 0,
+    adherence7d: fromGraph?.adherence7d ?? const [],
+    todayKcal: fromGraph?.todayKcal ?? 0,
+    targetKcal: fromGraph?.targetKcal ?? 0,
+    photoUrl: roroPost.authorPhotoUrl ?? fromGraph?.photoUrl,
+  );
+}
+
 /// Open a connected friend's story: their recent shared meals (from the circle
 /// feed) as swipeable full-screen pages. Falls back to their trend sheet when
 /// they haven't shared anything yet (so the tap is never a dead end).
 void openFriendStory(BuildContext context, WidgetRef ref, Friend friend) {
+  // Match the friend's posts by real id OR @handle: an offline-follow placeholder
+  // has a synthetic id that won't match the feed's real authorId, so without the
+  // handle fallback an official account like @roro would wrongly show a trend.
+  final handle = friend.handle.replaceFirst('@', '').toLowerCase();
   final posts = (ref.read(circleFeedProvider).asData?.value ?? const <CirclePost>[])
-      .where((p) => p.authorId == friend.id && (p.photoUrl ?? '').isNotEmpty)
+      .where((p) =>
+          (p.photoUrl ?? '').isNotEmpty &&
+          (p.authorId == friend.id ||
+              (handle.isNotEmpty &&
+                  (p.authorHandle ?? '').toLowerCase() == handle)))
       .toList();
   if (posts.isEmpty) {
     showFriendTrend(context, friend);
@@ -721,6 +768,7 @@ void openFriendStory(BuildContext context, WidgetRef ref, Friend friend) {
               title: friend.name,
               initials: friend.initials,
               colorSeed: friend.id.hashCode,
+              photoUrl: friend.photoUrl,
             ),
         ],
       ),
@@ -1292,13 +1340,18 @@ class _PostStoryPage extends StatelessWidget {
     required this.initials,
     required this.colorSeed,
     this.photoBytes,
+    this.photoUrl,
   });
 
   final CirclePost post;
   final String title;
   final String initials;
   final int colorSeed;
+
+  /// Profile photo for the story header avatar: bytes (self) or a presigned URL
+  /// (a friend, e.g. @roro) — falls back to initials when neither is set.
   final Uint8List? photoBytes;
+  final String? photoUrl;
 
   @override
   Widget build(BuildContext context) {
@@ -1335,6 +1388,8 @@ class _PostStoryPage extends StatelessWidget {
                   '',
                   StoryAvatar(
                     imageBytes: photoBytes,
+                    imageUrl: photoUrl,
+                    imageCacheKey: post.authorId,
                     initials: initials,
                     colorSeed: colorSeed,
                     size: 40,
