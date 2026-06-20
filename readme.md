@@ -15,7 +15,12 @@ for real calories burned, and speaks **English and 中文**. Built with Flutter.
 > prod. It identifies the account with **Sign in with Apple on the web** (reuses `/auth/apple`). It's
 > a *standalone* page (no in-app link, so the App Store app is untouched). Remaining before it can
 > charge: Stripe keys + an Apple **Services ID** (`com.foodatpeace.web`) and its domain-association file.
-> **1.0.2 (28)** is **in App Review**. **Build 55** adds **@handle management in Settings** and fixes a
+> **1.0.2 (28)** is **in App Review**. **Build 56** fixes the **Story archive's "black/blank" pages**: a
+> meal with no available image (a manual entry, or a photo whose image isn't on this device) used to
+> render as a near-black blank screen with only a caption. It now shows a clean, intentional card — an
+> "image unavailable" / meal icon above the dish + nutrition — so it reads as designed, not broken. (The
+> render paths were verified correct: meals with a local photo or a synced thumbnail show full-bleed as
+> before.) **Build 55** adds **@handle management in Settings** and fixes a
 > **follow-state inconsistency**. (1) Your **@handle** now appears in the Settings profile — auto-assigned
 > on sign-in, with edit + copy; it's the unique id others find/add you by (and recharge Beans into). (2)
 > The Circle no longer says **"Suggested: follow Roro"** while his story + feed are on screen: `followsRoro`

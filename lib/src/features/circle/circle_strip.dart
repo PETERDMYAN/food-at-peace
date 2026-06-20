@@ -1136,12 +1136,29 @@ class _FoodStoryPageState extends ConsumerState<_FoodStoryPage> {
     final hasPhoto = _localReady || _thumb != null;
 
     if (!hasPhoto) {
+      // No image on this device, no synced thumbnail, and nothing to pull from
+      // S3 (a manual meal, or a photo whose image is gone). Show a clean,
+      // intentional placeholder — an icon above the meal caption — instead of a
+      // near-black blank screen that reads as broken.
       return _StoryScaffold(
         colors: const [Color(0xFF241A40), Color(0xFF0E0B14)],
         header: header,
         body: _resolvingS3
             ? const CircularProgressIndicator(color: Colors.white70)
-            : _foodCaption(t, entry, centered: true),
+            : Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    entry.source == FoodSource.photo
+                        ? Icons.image_not_supported_outlined
+                        : Icons.restaurant_menu_outlined,
+                    color: Colors.white38,
+                    size: 56,
+                  ),
+                  const SizedBox(height: 20),
+                  _foodCaption(t, entry, centered: true),
+                ],
+              ),
       );
     }
 

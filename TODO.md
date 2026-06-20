@@ -103,6 +103,16 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
   with the strip + photo feed together — removed from the Trends screen. Pure client UI, no
   backend/shared-model change; new l10n (`navCircle`, `sectionOfficials`, `sectionFriends`,
   `sectionInvited`, `badgeCoach`, `showInviteQr`/`hideInviteQr`). ✅ build 41.
+- **Story archive "black/blank" pages → clean no-photo card (build 56)** — a meal with no available
+  image (a **manual** entry, or a **photo** whose image isn't on this device — no local file, no synced
+  `photoThumb`, nothing to pull from S3) rendered as a near-black blank `_StoryScaffold` with only the
+  centered caption, which reads as broken. Now the no-image branch shows an icon
+  (`image_not_supported_outlined` for a photo meal, `restaurant_menu_outlined` for a manual one) above
+  the caption ([`circle_strip.dart`](lib/src/features/circle/circle_strip.dart) `_FoodStoryPage`).
+  Verified on-sim that the **thumb** path and **local-file** path both render the photo full-bleed (so
+  this is purely the no-image fallback, not a render regression); the sync path keeps `photoThumb`
+  (`toJson`), so synced meals retain their photo after a reinstall. Client-only; 164 flutter + 40
+  backend tests pass. ✅ build 56.
 - **@handle in Settings + follow-state consistency + Circle divider (build 55)** — three things:
   1. **Manage your @handle as part of the profile** — the Settings profile card now shows your
      **@handle** (auto-assigned on sign-in by deriving from your nickname server-side; tap to edit, or
