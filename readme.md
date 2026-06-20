@@ -15,7 +15,11 @@ for real calories burned, and speaks **English and 中文**. Built with Flutter.
 > prod. It identifies the account with **Sign in with Apple on the web** (reuses `/auth/apple`). It's
 > a *standalone* page (no in-app link, so the App Store app is untouched). Remaining before it can
 > charge: Stripe keys + an Apple **Services ID** (`com.foodatpeace.web`) and its domain-association file.
-> **1.0.2 (28)** is **in App Review**. **Build 46** makes Circle feed photos **load fast and reliably**
+> **1.0.2 (28)** is **in App Review**. **Build 47** turns **daily meal reminders AND circle activity on
+> by default**, and adds a clear **"turn on iOS notifications" prompt (with the why)** wherever they're
+> wanted but iOS hasn't granted permission — the onboarding reminders step, the Reminders settings
+> screen, and the Circle tab. The toggles are now intent (they stay on even if you deny iOS, so the CTA
+> can keep prompting). **Build 46** makes Circle feed photos **load fast and reliably**
 > — shared meals now upload a downscaled ~1024px copy instead of the 3–4 MB original, feed cards are
 > **disk-cached** (keyed by post id, since the S3 URL rotates), and the 10 existing posts were
 > backfilled in S3 (28 MB → 1 MB). Also **Eva's story now spans the last 3 days** (one lesson per day,

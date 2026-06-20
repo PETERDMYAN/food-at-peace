@@ -134,6 +134,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
     try {
       final granted = await ref.read(remindersEnabledProvider.notifier).enable();
       if (!mounted) return;
+      // Refresh the permission status so the page flips to "✓ on" when granted.
+      ref.invalidate(notificationsAllowedProvider);
       if (granted) {
         await rescheduleReminders(
           service: ref.read(notificationServiceProvider),
@@ -645,14 +647,18 @@ class _RemindersPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final t = AppLocalizations.of(context);
-    final enabled = ref.watch(remindersEnabledProvider);
+    // Reminders + circle activity default ON, so what onboarding actually needs
+    // here is the OS *permission* — key the confirmation off that, not the intent
+    // (otherwise the page would say "on" without ever asking iOS).
+    final allowed =
+        ref.watch(notificationsAllowedProvider).asData?.value ?? false;
     return _PageBody(
       title: t.onboardingRemindersTitle,
       body: t.onboardingRemindersBody,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (enabled)
+          if (allowed)
             Row(
               children: [
                 const Icon(Icons.check_circle, color: Colors.white),

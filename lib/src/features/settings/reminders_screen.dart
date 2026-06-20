@@ -8,6 +8,7 @@ import '../../models/reminder.dart';
 import '../../providers/providers.dart';
 import '../../util/l10n_labels.dart';
 import '../../widgets/icon_tile.dart';
+import '../../widgets/notify_permission_cta.dart';
 
 /// Manage the daily meal reminders: a master on/off, then a list of reminders
 /// each of which can be retimed, toggled or deleted, plus "Add reminder".
@@ -33,20 +34,15 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen> {
   }
 
   Future<void> _toggleMaster(bool value) async {
-    final t = AppLocalizations.of(context);
     setState(() => _busy = true);
     try {
       if (value) {
+        // Intent goes on regardless; if iOS denies, the CTA banner prompts.
         final granted = await ref
             .read(remindersEnabledProvider.notifier)
             .enable();
-        if (granted) {
-          await _apply();
-        } else if (mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text(t.remindersDenied)));
-        }
+        ref.invalidate(notificationsAllowedProvider);
+        if (granted) await _apply();
       } else {
         await ref.read(remindersEnabledProvider.notifier).disable();
       }
@@ -56,16 +52,11 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen> {
   }
 
   Future<void> _toggleCircle(bool value) async {
-    final t = AppLocalizations.of(context);
     setState(() => _busy = true);
     try {
       if (value) {
-        final granted = await ref.read(circleNotifyProvider.notifier).enable();
-        if (!granted && mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text(t.remindersDenied)));
-        }
+        await ref.read(circleNotifyProvider.notifier).enable();
+        ref.invalidate(notificationsAllowedProvider);
       } else {
         await ref.read(circleNotifyProvider.notifier).disable();
       }
@@ -119,6 +110,10 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen> {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
         children: [
+          // If notifications are wanted (either toggle on) but iOS hasn't granted
+          // permission, prompt to enable — with the why — so the toggles aren't
+          // silent.
+          NotifyPermissionCta.maybeShow(ref),
           Card(
             child: SwitchListTile(
               contentPadding: const EdgeInsets.fromLTRB(16, 4, 12, 4),

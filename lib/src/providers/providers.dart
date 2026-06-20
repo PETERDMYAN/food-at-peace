@@ -629,19 +629,21 @@ final notificationServiceProvider = Provider<NotificationService>(
 class RemindersEnabledNotifier extends Notifier<bool> {
   static const _prefsKey = 'reminders_enabled';
 
+  // Default ON — a new user gets daily meal reminders out of the box. The intent
+  // is independent of the OS notification permission: if iOS hasn't granted it,
+  // the "turn on notifications" CTA prompts (see [NotifyPermissionCta]).
   @override
   bool build() =>
-      ref.read(sharedPreferencesProvider).getBool(_prefsKey) ?? false;
+      ref.read(sharedPreferencesProvider).getBool(_prefsKey) ?? true;
 
-  /// Requests OS permission; persists + flips on only if granted. Returns the
-  /// new enabled state so the UI can explain a denial.
+  /// Turn the meal-reminders **intent** on (persisted) and ask the OS for
+  /// notification permission. The intent stays on even if permission is denied,
+  /// so the CTA can prompt later; returns whether the OS granted it so the caller
+  /// can (re)schedule.
   Future<bool> enable() async {
-    final granted = await ref
-        .read(notificationServiceProvider)
-        .requestPermission();
-    state = granted;
-    await ref.read(sharedPreferencesProvider).setBool(_prefsKey, granted);
-    return granted;
+    state = true;
+    await ref.read(sharedPreferencesProvider).setBool(_prefsKey, true);
+    return ref.read(notificationServiceProvider).requestPermission();
   }
 
   Future<void> disable() async {
@@ -1381,14 +1383,14 @@ class CircleNotifyNotifier extends Notifier<bool> {
   bool build() =>
       ref.read(sharedPreferencesProvider).getBool(_prefsKey) ?? true;
 
-  /// Requests OS notification permission; flips on only if granted.
+  /// Turn the circle-activity **intent** on (persisted) and ask the OS for
+  /// notification permission. Like meal reminders, the intent is independent of
+  /// the grant — it stays on even if denied so the CTA can prompt later; returns
+  /// whether the OS granted it.
   Future<bool> enable() async {
-    final granted = await ref
-        .read(notificationServiceProvider)
-        .requestPermission();
-    state = granted;
-    await ref.read(sharedPreferencesProvider).setBool(_prefsKey, granted);
-    return granted;
+    state = true;
+    await ref.read(sharedPreferencesProvider).setBool(_prefsKey, true);
+    return ref.read(notificationServiceProvider).requestPermission();
   }
 
   Future<void> disable() async {

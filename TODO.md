@@ -103,6 +103,16 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
   with the strip + photo feed together — removed from the Trends screen. Pure client UI, no
   backend/shared-model change; new l10n (`navCircle`, `sectionOfficials`, `sectionFriends`,
   `sectionInvited`, `badgeCoach`, `showInviteQr`/`hideInviteQr`). ✅ build 41.
+- **Notifications: both default ON + a real "enable iOS push" prompt with the why (build 47)** — per
+  feedback, **daily meal reminders now default ON** ([`remindersEnabledProvider`](lib/src/providers/providers.dart)
+  was `?? false` → `?? true`; circle activity already defaulted on). Both toggles are now **intent,
+  decoupled from the OS grant** — `enable()` keeps the intent on even if iOS denies, so the toggle never
+  silently flips off. A shared [`NotifyPermissionCta`](lib/src/widgets/notify_permission_cta.dart)
+  (title + **why** + "Turn on" / "Open Settings") now appears wherever notifications are wanted but iOS
+  hasn't granted permission — the **onboarding reminders page** (keyed off the OS permission, not the
+  intent, so it still asks), the **Reminders settings screen**, and the **Circle strip** (gate broadened
+  to `remindersEnabled || circleNotify`, and no longer requires being signed in). Tests:
+  `circle_notify_default_test.dart` (+reminders default). ✅ build 47.
 - **Lighter + cached Circle feed photos, and Eva's story spans 3 days (build 46)** — the feed felt
   empty/slow because each shared post served the **full-res 3–4 MB original** with **no caching**, so
   on cellular the images loaded slowly or timed out (looked like "no photos"). Three fixes: (1) the

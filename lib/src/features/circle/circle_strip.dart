@@ -5,7 +5,6 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:food_at_peace/l10n/app_localizations.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../data/eva_wisdom.dart';
 import '../../data/meal_photos.dart';
@@ -13,6 +12,7 @@ import '../../data/profile_photo.dart';
 import '../../models/food_entry.dart';
 import '../../models/friend.dart';
 import '../../providers/providers.dart';
+import '../../widgets/notify_permission_cta.dart';
 import '../../widgets/story_avatar.dart';
 import 'invite_card.dart';
 import 'manage_friends_screen.dart';
@@ -48,15 +48,6 @@ class CircleStrip extends ConsumerWidget {
     // Your profile photo (used for the "You" avatar + your story header).
     final myPhoto = ref.watch(profilePhotoProvider);
 
-    // Strong CTA to actually grant OS notification permission: defaulting the
-    // circle-notify toggle on is meaningless if iOS notifications are off, so we
-    // prompt for it right here where Circle lives. (Defaults to "allowed" while
-    // the status is still loading, so the card never flashes in.)
-    final signedIn = ref.watch(authProvider) != null;
-    final notifyWanted = ref.watch(circleNotifyProvider);
-    final notifAllowed =
-        ref.watch(notificationsAllowedProvider).asData?.value ?? true;
-    final showNotifyCta = signedIn && notifyWanted && !notifAllowed;
 
     // Your food story = the last 7 days of food log (the archive), newest first
     // — all of it, not just meals shared to the circle.
@@ -122,7 +113,9 @@ class CircleStrip extends ConsumerWidget {
           ],
         ),
         const SizedBox(height: 10),
-        if (showNotifyCta) const _NotifyCta(),
+        // Prompt to grant OS notification permission when either reminders or
+        // circle activity is on (both default on) but iOS hasn't allowed them.
+        NotifyPermissionCta.maybeShow(ref),
         SizedBox(
           height: 96,
           child: ListView(
@@ -233,88 +226,6 @@ class _AvatarColumn extends StatelessWidget {
         ),
       ),
     );
-  }
-}
-
-/// A prominent "turn on notifications" call-to-action, shown in the Circle strip
-/// when the circle-notify toggle is on but the OS hasn't granted notification
-/// permission — so the default-on toggle actually means something. Tapping
-/// requests permission (the iOS prompt the first time; a Settings hint after).
-class _NotifyCta extends ConsumerWidget {
-  const _NotifyCta();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final t = AppLocalizations.of(context);
-    final scheme = Theme.of(context).colorScheme;
-    final text = Theme.of(context).textTheme;
-    // After the first ask, iOS won't prompt again — so switch to a one-tap
-    // "Open Settings" route. The in-app toggle and OS permission are independent;
-    // this is purely about granting the OS permission.
-    final asked = ref.watch(notificationAskedProvider);
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.fromLTRB(14, 12, 12, 12),
-      decoration: BoxDecoration(
-        color: scheme.primaryContainer,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            Icons.notifications_active_outlined,
-            color: scheme.onPrimaryContainer,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  t.notifyCtaTitle,
-                  style: text.titleSmall?.copyWith(
-                    color: scheme.onPrimaryContainer,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  asked ? t.notifyDeniedHint : t.notifyCtaBody,
-                  style: text.bodySmall?.copyWith(
-                    color: scheme.onPrimaryContainer.withValues(alpha: 0.85),
-                    height: 1.3,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          FilledButton(
-            onPressed: () => _enable(context, ref, asked),
-            child: Text(asked ? t.notifyOpenSettings : t.notifyCtaAction),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _enable(BuildContext context, WidgetRef ref, bool asked) async {
-    if (!asked) {
-      // First time: show the native iOS permission prompt.
-      await ref.read(notificationServiceProvider).requestPermission();
-      await ref.read(notificationAskedProvider.notifier).markAsked();
-      ref.invalidate(notificationsAllowedProvider);
-      return;
-    }
-    // iOS won't prompt again — take them straight to the app's iOS Settings page,
-    // where Notifications can be turned on in one tap.
-    try {
-      await launchUrl(
-        Uri.parse('app-settings:'),
-        mode: LaunchMode.externalApplication,
-      );
-    } catch (_) {}
-    ref.invalidate(notificationsAllowedProvider);
   }
 }
 

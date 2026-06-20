@@ -28,4 +28,24 @@ void main() {
     await c.read(circleNotifyProvider.notifier).disable();
     expect(prefs.getBool('circle_notify_enabled'), isFalse);
   });
+
+  test('Daily meal reminders default ON when nothing is stored', () async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = await SharedPreferences.getInstance();
+    final c = ProviderContainer(
+      overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+    );
+    addTearDown(c.dispose);
+    expect(c.read(remindersEnabledProvider), isTrue);
+  });
+
+  test('an explicit reminders off is respected (persisted false wins)', () async {
+    SharedPreferences.setMockInitialValues({'reminders_enabled': false});
+    final prefs = await SharedPreferences.getInstance();
+    final c = ProviderContainer(
+      overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+    );
+    addTearDown(c.dispose);
+    expect(c.read(remindersEnabledProvider), isFalse);
+  });
 }
