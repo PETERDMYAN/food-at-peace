@@ -955,6 +955,7 @@ class CircleNotifier extends Notifier<List<Friend>> {
   static const _seededKey = 'circle_seeded';
   static const _handleSetKey = 'circle_handle_set';
   static const _myHandleKey = 'circle_my_handle';
+  static const _roroFollowedKey = 'circle_roro_autofollowed';
 
   SharedPreferences get _prefs => ref.read(sharedPreferencesProvider);
   String? get _token => ref.read(authProvider)?.token;
@@ -1111,8 +1112,38 @@ class CircleNotifier extends Notifier<List<Friend>> {
       await _ensureHandle(client, token);
       state = await client.list(token);
       await _save(); // cache for the next cold start
+      // Auto-follow the creator's official account (@roro) once, so a brand-new
+      // account's feed isn't empty — they immediately see Roro's shared meals.
+      if (await _ensureRoroFollowed(client, token)) {
+        state = await client.list(token);
+        await _save();
+        ref.invalidate(circleFeedProvider); // re-fetch so Roro's posts show now
+      }
     } catch (_) {
       // Keep showing the cached list on a transient failure.
+    }
+  }
+
+  /// One-time, best-effort auto-follow of the creator's official @roro account so
+  /// a new user's circle + feed has real content from day one (they immediately
+  /// see Roro's shared meals). A later deliberate unfollow sticks (the flag stays
+  /// set). Skips Roro's own account and no-ops if already connected. Returns true
+  /// if it newly connected, so the caller re-lists.
+  Future<bool> _ensureRoroFollowed(CircleClient client, String token) async {
+    if (_prefs.getBool(_roroFollowedKey) ?? false) return false;
+    final tag = '@$kRoroHandle';
+    final already = state.any((f) =>
+        f.status == FriendStatus.connected && f.handle.toLowerCase() == tag);
+    if (already || _prefs.getString(_myHandleKey) == kRoroHandle) {
+      await _prefs.setBool(_roroFollowedKey, true);
+      return false;
+    }
+    try {
+      await client.connect(token, kRoroHandle);
+      await _prefs.setBool(_roroFollowedKey, true);
+      return true;
+    } catch (_) {
+      return false; // transient — retry on the next launch/refresh
     }
   }
 

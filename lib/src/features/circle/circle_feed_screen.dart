@@ -78,7 +78,10 @@ class CircleFeedBody extends ConsumerWidget {
           return ListView(
             padding: const EdgeInsets.fromLTRB(12, 10, 12, 32),
             children: [
-              if (showEva) const _EvaFeedCard(),
+              // Eva's lesson for each of the last 3 days (newest first) — matches
+              // her 3-day story + the 3-day feed window.
+              if (showEva)
+                for (var d = 0; d < 3; d++) _EvaFeedCard(dayOffset: d),
               for (final p in visible) _PostCard(post: p),
             ],
           );
@@ -88,10 +91,13 @@ class CircleFeedBody extends ConsumerWidget {
   }
 }
 
-/// Eva's daily lesson as the first card in the feed (when she's followed).
-/// Tapping opens her story.
+/// Eva's lesson for one day as a feed card (when she's followed). The feed shows
+/// one per day for the last 3 days, matching her 3-day story. Tapping opens her
+/// story. [dayOffset]: 0 = today, 1 = yesterday, 2 = two days ago.
 class _EvaFeedCard extends ConsumerWidget {
-  const _EvaFeedCard();
+  const _EvaFeedCard({this.dayOffset = 0});
+
+  final int dayOffset;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -101,7 +107,14 @@ class _EvaFeedCard extends ConsumerWidget {
     final lessons = ref.watch(evaWisdomProvider).asData?.value ?? const [];
     if (lessons.isEmpty) return const SizedBox.shrink();
     final lang = Localizations.localeOf(context).languageCode;
-    final lesson = lessons[evaLessonIndex(DateTime.now(), lessons.length)];
+    final ml = MaterialLocalizations.of(context);
+    final now = DateTime.now();
+    final day = DateTime(now.year, now.month, now.day)
+        .subtract(Duration(days: dayOffset));
+    final lesson = lessons[evaLessonIndex(day, lessons.length)];
+    // Newest card → "Daily lesson"; older days show their date (like the story).
+    final subtitle =
+        dayOffset == 0 ? t.evaDailyLesson : ml.formatMediumDate(day);
     return Card(
       margin: const EdgeInsets.only(bottom: 14),
       clipBehavior: Clip.antiAlias,
@@ -121,7 +134,7 @@ class _EvaFeedCard extends ConsumerWidget {
                     children: [
                       Text('Eva', style: text.titleSmall),
                       Text(
-                        t.evaDailyLesson,
+                        subtitle,
                         style: text.bodySmall?.copyWith(
                           color: scheme.onSurfaceVariant,
                         ),

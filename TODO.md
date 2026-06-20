@@ -103,6 +103,15 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
   with the strip + photo feed together — removed from the Trends screen. Pure client UI, no
   backend/shared-model change; new l10n (`navCircle`, `sectionOfficials`, `sectionFriends`,
   `sectionInvited`, `badgeCoach`, `showInviteQr`/`hideInviteQr`). ✅ build 41.
+- **New accounts auto-follow @roro → real photos in the feed; Eva 3-day cards (build 50)** — a brand-new
+  account started with an **empty Circle feed and never saw Roro's photos**. Roro was opt-in "Suggested
+  to follow", so a fresh user had **zero friend edges**, and the privacy-gated feed (`[me] + connected`)
+  returned nothing. Verified in prod: the new account had 0 edges; Roro has **11 live photo posts** that
+  load fine (S3 200) — so it was purely a missing connection, not content/photos. Fix: `CircleNotifier`
+  now **auto-follows @roro once on first online refresh** (`_ensureRoroFollowed` — one-time flag so a
+  later unfollow sticks; skips Roro's own account / already-connected), then re-lists + invalidates the
+  feed. Also `circle_feed_screen.dart` renders **one Eva lesson card per day for the last 3 days** (was
+  today only), matching her 3-day story. ✅ build 50.
 - **Your own story = what friends see, not your food log (build 49)** — tapping **You** in the strip
   (and the Manage handle-card avatar) opened your **whole 7-day food log** — a duplicate of your feed.
   It now opens your **shared posts** (your photo posts in the circle feed), the same full-bleed pages a
