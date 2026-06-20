@@ -1157,6 +1157,9 @@ class CircleNotifier extends Notifier<List<Friend>> {
       await _ensureHandle(client, token);
       final name = await client.connect(token, h);
       await _refresh();
+      // A new connection changes who's in the feed → refresh it so the friend's
+      // shared meals appear right away (not only after a manual pull-to-refresh).
+      ref.invalidate(circleFeedProvider);
       return name ?? '@$h';
     }
     // Offline: optimistic local connected friend so the flow still demos.
@@ -1183,6 +1186,7 @@ class CircleNotifier extends Notifier<List<Friend>> {
       try {
         await ref.read(circleClientProvider).respond(_token!, id, 'accept');
         await _refresh();
+        ref.invalidate(circleFeedProvider); // new connection → refresh the feed
       } catch (_) {}
       return;
     }

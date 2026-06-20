@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:food_at_peace/l10n/app_localizations.dart';
@@ -9,6 +10,7 @@ import 'package:food_at_peace/l10n/app_localizations.dart';
 import '../../data/eva_wisdom.dart';
 import '../../data/meal_photos.dart';
 import '../../data/profile_photo.dart';
+import '../../models/circle_post.dart';
 import '../../models/food_entry.dart';
 import '../../models/friend.dart';
 import '../../providers/providers.dart';
@@ -150,16 +152,17 @@ class CircleStrip extends ConsumerWidget {
                   onTap: () => openStories(1),
                 ),
               // Roro — the creator's official account, grouped with Eva (left of
-              // the Add icon). Tapping shows their trend, like any friend.
+              // the Add icon). Tapping opens their story (their recent shared
+              // meals), falling back to their trend if they've shared nothing.
               if (roroFriend != null)
                 _AvatarColumn(
                   label: roroFriend.name,
                   avatar: StoryAvatar(
                     initials: roroFriend.initials,
                     colorSeed: roroFriend.id.hashCode,
-                    onTap: () => showFriendTrend(context, roroFriend),
+                    onTap: () => openFriendStory(context, ref, roroFriend),
                   ),
-                  onTap: () => showFriendTrend(context, roroFriend),
+                  onTap: () => openFriendStory(context, ref, roroFriend),
                 ),
               _AvatarColumn(
                 label: t.addFriend,
@@ -176,9 +179,9 @@ class CircleStrip extends ConsumerWidget {
                   avatar: StoryAvatar(
                     initials: f.initials,
                     colorSeed: f.id.hashCode,
-                    onTap: () => showFriendTrend(context, f),
+                    onTap: () => openFriendStory(context, ref, f),
                   ),
-                  onTap: () => showFriendTrend(context, f),
+                  onTap: () => openFriendStory(context, ref, f),
                 ),
               for (final f in outgoing)
                 _AvatarColumn(
@@ -626,6 +629,25 @@ void openMyStory(
     evaIndex: evaIndex,
     initialStory: initialStory,
     onStorySeen: (key) => ref.read(seenStoriesProvider.notifier).markSeen(key),
+  );
+}
+
+/// Open a connected friend's story: their recent shared meals (from the circle
+/// feed) as swipeable full-screen pages. Falls back to their trend sheet when
+/// they haven't shared anything yet (so the tap is never a dead end).
+void openFriendStory(BuildContext context, WidgetRef ref, Friend friend) {
+  final posts = (ref.read(circleFeedProvider).asData?.value ?? const <CirclePost>[])
+      .where((p) => p.authorId == friend.id && (p.photoUrl ?? '').isNotEmpty)
+      .toList();
+  if (posts.isEmpty) {
+    showFriendTrend(context, friend);
+    return;
+  }
+  showStories(
+    context,
+    stories: [
+      Story(pages: [for (final p in posts) _FriendStoryPage(post: p, friend: friend)]),
+    ],
   );
 }
 
@@ -1181,6 +1203,91 @@ Widget _foodCaption(AppLocalizations t, FoodEntry entry, {required bool centered
       ),
     ],
   );
+}
+
+/// A connected friend's shared meal as a full-bleed story page: their photo
+/// (from the circle feed's presigned URL, disk-cached) with the dish + calories
+/// as a caption. Used by [openFriendStory].
+class _FriendStoryPage extends StatelessWidget {
+  const _FriendStoryPage({required this.post, required this.friend});
+
+  final CirclePost post;
+  final Friend friend;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = AppLocalizations.of(context);
+    final kcal = t.kcalValue('${post.calories}');
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        CachedNetworkImage(
+          imageUrl: post.photoUrl!,
+          cacheKey: post.postId, // presigned URL rotates; cache by stable id
+          fit: BoxFit.cover,
+          placeholder: (_, _) => const ColoredBox(color: Color(0xFF0E0B14)),
+          errorWidget: (_, _, _) => const ColoredBox(color: Color(0xFF0E0B14)),
+        ),
+        const DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Colors.black54, Colors.transparent, Colors.black87, Colors.black],
+              stops: [0.0, 0.4, 0.85, 1.0],
+            ),
+          ),
+        ),
+        SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(26, _storyTopPad, 26, 44),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _storyHeader(
+                  friend.name,
+                  '',
+                  StoryAvatar(
+                    initials: friend.initials,
+                    colorSeed: friend.id.hashCode,
+                    size: 40,
+                  ),
+                ),
+                const Spacer(),
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (post.name != null && post.name!.isNotEmpty)
+                      Text(
+                        post.name!,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 26,
+                          fontWeight: FontWeight.w800,
+                          height: 1.15,
+                          shadows: [Shadow(blurRadius: 12, color: Colors.black54)],
+                        ),
+                      ),
+                    const SizedBox(height: 8),
+                    Text(
+                      kcal,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.92),
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                        shadows: const [Shadow(blurRadius: 10, color: Colors.black54)],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 }
 
 class _FoodNudgePage extends StatelessWidget {

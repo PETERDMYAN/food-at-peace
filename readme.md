@@ -15,7 +15,10 @@ for real calories burned, and speaks **English and 中文**. Built with Flutter.
 > prod. It identifies the account with **Sign in with Apple on the web** (reuses `/auth/apple`). It's
 > a *standalone* page (no in-app link, so the App Store app is untouched). Remaining before it can
 > charge: Stripe keys + an Apple **Services ID** (`com.foodatpeace.web`) and its domain-association file.
-> **1.0.2 (28)** is **in App Review**. **Build 47** turns **daily meal reminders AND circle activity on
+> **1.0.2 (28)** is **in App Review**. **Build 48** makes the social loop work: **tapping a friend
+> opens their story** (their recent shared meals, swipeable — was only a trend before), and
+> **following someone now refreshes your feed immediately** so their posts show up without a manual
+> pull-to-refresh. **Build 47** turns **daily meal reminders AND circle activity on
 > by default**, and adds a clear **"turn on iOS notifications" prompt (with the why)** wherever they're
 > wanted but iOS hasn't granted permission — the onboarding reminders step, the Reminders settings
 > screen, and the Circle tab. The toggles are now intent (they stay on even if you deny iOS, so the CTA

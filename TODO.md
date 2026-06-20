@@ -103,6 +103,17 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
   with the strip + photo feed together — removed from the Trends screen. Pure client UI, no
   backend/shared-model change; new l10n (`navCircle`, `sectionOfficials`, `sectionFriends`,
   `sectionInvited`, `badgeCoach`, `showInviteQr`/`hideInviteQr`). ✅ build 41.
+- **Friend stories + feed refreshes on follow (build 48)** — two Circle fixes so the
+  follow→see-their-content loop actually works: (1) **tapping a connected friend's avatar now opens
+  their story** — their recent shared meals as swipeable full-screen pages (built from the circle
+  feed's posts, disk-cached photos), falling back to their trend sheet only if they've shared nothing
+  ([`openFriendStory`/`_FriendStoryPage`](lib/src/features/circle/circle_strip.dart)); before, a
+  friend's avatar only showed their trend. (2) **Following someone now refreshes the feed** —
+  [`CircleNotifier.connect`/`accept`](lib/src/providers/providers.dart) invalidate `circleFeedProvider`,
+  so a newly-followed friend's posts appear immediately instead of only after a manual pull-to-refresh.
+  Client-only. Verified end-to-end on the isolated v2 stack (new user → follow Roro → his feed → like →
+  his story); capture: [`integration_test/follow_roro_tour.dart`](integration_test/follow_roro_tour.dart),
+  demo [`store/demo/follow_roro_tour.mp4`](store/demo/follow_roro_tour.mp4). ✅ build 48.
 - **Notifications: both default ON + a real "enable iOS push" prompt with the why (build 47)** — per
   feedback, **daily meal reminders now default ON** ([`remindersEnabledProvider`](lib/src/providers/providers.dart)
   was `?? false` → `?? true`; circle activity already defaulted on). Both toggles are now **intent,
