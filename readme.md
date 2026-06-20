@@ -15,7 +15,11 @@ for real calories burned, and speaks **English and 中文**. Built with Flutter.
 > prod. It identifies the account with **Sign in with Apple on the web** (reuses `/auth/apple`). It's
 > a *standalone* page (no in-app link, so the App Store app is untouched). Remaining before it can
 > charge: Stripe keys + an Apple **Services ID** (`com.foodatpeace.web`) and its domain-association file.
-> **1.0.2 (28)** is **in App Review**. **Build 42** trims the Circle tab: **removes the redundant
+> **1.0.2 (28)** is **in App Review**. **Build 44 (on TestFlight)** adds **Eva's daily lesson as the
+> first card in the scrollable Circle feed** (above every food story), shows your **nickname (display
+> name) distinct from your @handle** in Manage circle (the name is what friends see; the handle is the
+> unique id they add you by), and stops the creator (`@roro`) from being **"Suggested to follow"
+> themselves**. **Build 42** trims the Circle tab: **removes the redundant
 > "Circle" title bar** (the nav tab already labels it), shows the **invite QR by default** in Manage
 > circle again (the build-41 collapse was reverted per feedback), and swaps the redundant feed icon
 > for an **"Archive" (history) icon** that opens your own food story. (The Circle feed already shows

@@ -1253,8 +1253,12 @@ final evaFollowedProvider = NotifierProvider<EvaFollowedNotifier, bool>(
 );
 
 /// True once the user is mutually connected to the creator's account (@roro), so
-/// the "Suggested: Roro" recommendation can hide itself.
+/// the "Suggested: Roro" recommendation can hide itself. Also true when the
+/// viewer **is** the creator (their own handle is @roro) — never suggest someone
+/// follow themselves.
 final followsRoroProvider = Provider<bool>((ref) {
+  final mine = ref.watch(myCircleHandleProvider)?.toLowerCase();
+  if (mine == kRoroHandle) return true;
   final target = '@$kRoroHandle';
   return ref.watch(circleProvider).any(
     (f) => f.status == FriendStatus.connected &&

@@ -141,6 +141,11 @@ class MyHandleCard extends ConsumerWidget {
     }
     final at = '@$handle';
     final photo = ref.watch(profilePhotoProvider);
+    // Nickname (display name) is a DIFFERENT thing from the @handle: the name is
+    // what people see, the handle is the unique id they find/add you by. Show
+    // both, distinctly.
+    final nick = ref.watch(profileProvider).name?.trim();
+    final displayName = (nick == null || nick.isEmpty) ? t.feedYou : nick;
     return Container(
       // Left inset matches the section tiles' ListTile contentPadding (12) so the
       // avatar lines up vertically with the official/peer rows below.
@@ -167,16 +172,20 @@ class MyHandleCard extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Nickname / display name — what others see, prominent.
                 Text(
-                  t.yourHandle,
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: scheme.onSurfaceVariant,
-                  ),
-                ),
-                Text(
-                  at,
+                  displayName,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w700,
+                  ),
+                ),
+                // @handle — the unique id friends add you by (find-me).
+                Text(
+                  at,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: scheme.onSurfaceVariant,
                   ),
                 ),
               ],

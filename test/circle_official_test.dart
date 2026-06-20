@@ -70,4 +70,12 @@ void main() {
     );
     expect(c.read(followsRoroProvider), isFalse);
   });
+
+  test('the creator (own handle @roro) is never suggested to follow self',
+      () async {
+    // The real creator's own handle IS roro; without this guard they'd see a
+    // "Suggested: Roro / Follow" tile prompting them to follow themselves.
+    final c = await _container(const {'circle_my_handle': 'roro'});
+    expect(c.read(followsRoroProvider), isTrue);
+  });
 }

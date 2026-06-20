@@ -10,7 +10,9 @@ import 'package:food_at_peace/src/providers/providers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 Future<void> _pump(WidgetTester t) async {
-  SharedPreferences.setMockInitialValues(const {});
+  // Suppress the Eva feed card here (eva_followed:false) — this test exercises
+  // the per-post ⋯ menu, and an Eva card would collide with the seeded Eva post.
+  SharedPreferences.setMockInitialValues(const {'eva_followed': false});
   final prefs = await SharedPreferences.getInstance();
   await t.pumpWidget(
     ProviderScope(

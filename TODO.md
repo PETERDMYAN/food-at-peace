@@ -103,6 +103,20 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
   with the strip + photo feed together — removed from the Trends screen. Pure client UI, no
   backend/shared-model change; new l10n (`navCircle`, `sectionOfficials`, `sectionFriends`,
   `sectionInvited`, `badgeCoach`, `showInviteQr`/`hideInviteQr`). ✅ build 41.
+- **Eva-in-feed + nickname/handle + self-follow fix (build 44)** — three things from the Circle
+  pass: (1) **Eva's daily lesson now rides at the top of the scrollable Circle feed** above every
+  food-story post (new [`_EvaFeedCard`](lib/src/features/circle/circle_feed_screen.dart), shown when
+  she's followed and her wisdom asset loaded; tapping opens her story) — answers "this scrollable
+  feed, Eva should appear as well as all the food stories." (2) **Manage-circle handle card shows the
+  nickname (display name) distinct from the @handle** — the name is what people see, the handle is the
+  unique id they add you by ([`MyHandleCard`](lib/src/features/circle/invite_card.dart) now a
+  `ConsumerWidget` reading `profileProvider.name`). (3) **Creator never sees "Suggested: Roro / Follow"**
+  — [`followsRoroProvider`](lib/src/providers/providers.dart) now returns true when the viewer's own
+  handle **is** `@roro`, so the real creator isn't prompted to follow themselves (regression test in
+  [`circle_official_test.dart`](test/circle_official_test.dart)). Pure client UI, no backend/shared-model
+  change. (Build 43 was an interim TestFlight upload with (1)+(2) only; build 44 supersedes it by adding
+  the self-follow fix.) Capture: [`integration_test/build43_shots.dart`](integration_test/build43_shots.dart).
+  ✅ build 44.
 - **Circle tab polish (build 42)** — three asks: (1) **removed the "Circle" AppBar** on the Circle
   tab ([`circle_screen.dart`](lib/src/features/circle/circle_screen.dart)) — the bottom-nav tab
   already labels it, so the title bar just wasted space (SafeArea keeps content off the status bar).

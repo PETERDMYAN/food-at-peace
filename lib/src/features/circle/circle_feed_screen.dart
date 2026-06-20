@@ -2,9 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:food_at_peace/l10n/app_localizations.dart';
 
+import '../../data/eva_wisdom.dart';
 import '../../models/circle_post.dart';
 import '../../providers/providers.dart';
 import '../../widgets/story_avatar.dart';
+import 'circle_strip.dart';
 
 Future<void> showCircleFeed(BuildContext context) {
   return Navigator.of(
@@ -53,27 +55,88 @@ class CircleFeedBody extends ConsumerWidget {
             for (final p in posts)
               if (!hidden.contains(p.postId)) p,
           ];
-          return visible.isEmpty
-              ? ListView(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(28, 96, 28, 24),
-                      child: Text(
-                        t.feedEmpty,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.onSurfaceVariant,
+          // Eva's daily lesson rides at the top of the feed (when followed).
+          final showEva = ref.watch(evaFollowedProvider) &&
+              (ref.watch(evaWisdomProvider).asData?.value.isNotEmpty ?? false);
+          if (visible.isEmpty && !showEva) {
+            return ListView(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(28, 96, 28, 24),
+                  child: Text(
+                    t.feedEmpty,
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+              ],
+            );
+          }
+          return ListView(
+            padding: const EdgeInsets.fromLTRB(12, 10, 12, 32),
+            children: [
+              if (showEva) const _EvaFeedCard(),
+              for (final p in visible) _PostCard(post: p),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+/// Eva's daily lesson as the first card in the feed (when she's followed).
+/// Tapping opens her story.
+class _EvaFeedCard extends ConsumerWidget {
+  const _EvaFeedCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final t = AppLocalizations.of(context);
+    final text = Theme.of(context).textTheme;
+    final scheme = Theme.of(context).colorScheme;
+    final lessons = ref.watch(evaWisdomProvider).asData?.value ?? const [];
+    if (lessons.isEmpty) return const SizedBox.shrink();
+    final lang = Localizations.localeOf(context).languageCode;
+    final lesson = lessons[evaLessonIndex(DateTime.now(), lessons.length)];
+    return Card(
+      margin: const EdgeInsets.only(bottom: 14),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => openMyStory(context, ref, initialStory: 1),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(14, 12, 14, 14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const StoryAvatar(initials: 'E', colorSeed: 7, size: 40),
+                  const SizedBox(width: 12),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Eva', style: text.titleSmall),
+                      Text(
+                        t.evaDailyLesson,
+                        style: text.bodySmall?.copyWith(
+                          color: scheme.onSurfaceVariant,
                         ),
                       ),
-                    ),
-                  ],
-                )
-              : ListView.builder(
-                  padding: const EdgeInsets.fromLTRB(12, 10, 12, 32),
-                  itemCount: visible.length,
-                  itemBuilder: (_, i) => _PostCard(post: visible[i]),
-                );
-        },
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Text(
+                lesson.text(lang),
+                style: text.bodyMedium?.copyWith(height: 1.4),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
