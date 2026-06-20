@@ -103,6 +103,15 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
   with the strip + photo feed together — removed from the Trends screen. Pure client UI, no
   backend/shared-model change; new l10n (`navCircle`, `sectionOfficials`, `sectionFriends`,
   `sectionInvited`, `badgeCoach`, `showInviteQr`/`hideInviteQr`). ✅ build 41.
+- **Circle tab polish (build 42)** — three asks: (1) **removed the "Circle" AppBar** on the Circle
+  tab ([`circle_screen.dart`](lib/src/features/circle/circle_screen.dart)) — the bottom-nav tab
+  already labels it, so the title bar just wasted space (SafeArea keeps content off the status bar).
+  (2) **Circle feed already shows everyone's** — the server returns `[uid] + connected` authors
+  ([`posts.py` `feed`](backend/src/posts.py)); a user with no connected friends just sees only their
+  own, so no code change. (3) **Manage circle shows the QR by default** — replaced the collapsed
+  `_InviteToggle` with the [`InviteShareCard`](lib/src/features/circle/invite_card.dart) shown
+  inline. Also added an **"Archive" (history icon)** to the strip — opens *your own* food story only
+  (no Eva chain), replacing the redundant feed icon ([`openMyStory(includeEva: false)`](lib/src/features/circle/circle_strip.dart)). ✅ build 42.
 - **Manage-circle avatar alignment (build 40)** — the handle-card avatar was size 46 while the
   section-tile avatars are 40, so it sat larger and ~2px further left (the "name icon starts from a
   different position" report). Matched it to **size 40 + a 12px left inset** so the You/Official/peer

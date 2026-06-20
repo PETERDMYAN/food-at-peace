@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:food_at_peace/l10n/app_localizations.dart';
 
 import 'circle_feed_screen.dart';
 import 'circle_strip.dart';
@@ -12,9 +11,9 @@ class CircleScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final t = AppLocalizations.of(context);
+    // No AppBar — the bottom-nav tab already says "Circle", so a title bar just
+    // wastes vertical space. SafeArea keeps the content clear of the status bar.
     return Scaffold(
-      appBar: AppBar(title: Text(t.navCircle)),
       body: SafeArea(
         bottom: false,
         child: Column(

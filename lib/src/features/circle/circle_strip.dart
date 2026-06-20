@@ -14,7 +14,6 @@ import '../../models/food_entry.dart';
 import '../../models/friend.dart';
 import '../../providers/providers.dart';
 import '../../widgets/story_avatar.dart';
-import 'circle_feed_screen.dart';
 import 'invite_card.dart';
 import 'manage_friends_screen.dart';
 import 'story_viewer.dart';
@@ -99,10 +98,11 @@ class CircleStrip extends ConsumerWidget {
             Text(t.yourCircle, style: Theme.of(context).textTheme.titleSmall),
             const Spacer(),
             IconButton(
-              tooltip: t.feedTitle,
+              tooltip: t.archive,
               visualDensity: VisualDensity.compact,
-              icon: const Icon(Icons.dynamic_feed_outlined),
-              onPressed: () => showCircleFeed(context),
+              icon: const Icon(Icons.history),
+              onPressed: () =>
+                  openMyStory(context, ref, includeEva: false),
             ),
             IconButton(
               tooltip: t.manageCircle,
@@ -678,12 +678,19 @@ Future<void> openCircleStories(
 /// everything it needs from [ref]. Shared by the strip's You/Eva avatars and the
 /// Manage-circle handle-card avatar, so tapping any of them opens the story and
 /// marks it seen.
-void openMyStory(BuildContext context, WidgetRef ref, {int initialStory = 0}) {
+void openMyStory(
+  BuildContext context,
+  WidgetRef ref, {
+  int initialStory = 0,
+  bool includeEva = true,
+}) {
   final lang = Localizations.localeOf(context).languageCode;
   final lessons = ref.read(evaWisdomProvider).asData?.value ?? const [];
   final evaIndex =
       lessons.isEmpty ? 0 : evaLessonIndex(DateTime.now(), lessons.length);
-  final evaLesson = lessons.isEmpty ? null : lessons[evaIndex];
+  // The "Archive" entry opens only the user's own food story (no Eva chain).
+  final evaLesson =
+      includeEva && lessons.isNotEmpty ? lessons[evaIndex] : null;
   openCircleStories(
     context,
     food: _recentFoodFor(ref),

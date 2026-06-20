@@ -1012,6 +1012,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get feedTitle => 'Circle feed';
 
   @override
+  String get archive => 'Archive';
+
+  @override
   String get feedYou => 'You';
 
   @override

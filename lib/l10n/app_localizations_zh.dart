@@ -982,6 +982,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get feedTitle => '圈子动态';
 
   @override
+  String get archive => '美食存档';
+
+  @override
   String get feedYou => '你';
 
   @override

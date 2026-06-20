@@ -1874,6 +1874,12 @@ abstract class AppLocalizations {
   /// **'Circle feed'**
   String get feedTitle;
 
+  /// No description provided for @archive.
+  ///
+  /// In en, this message translates to:
+  /// **'Archive'**
+  String get archive;
+
   /// No description provided for @feedYou.
   ///
   /// In en, this message translates to:

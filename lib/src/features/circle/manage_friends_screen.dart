@@ -58,7 +58,8 @@ class ManageCircleScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 16),
           if (myHandle != null) ...[
-            _InviteToggle(handle: myHandle),
+            // QR shown by default — it's the primary way friends add you.
+            InviteShareCard(handle: myHandle),
             const SizedBox(height: 8),
           ],
 
@@ -433,41 +434,6 @@ class _OfficialTile extends StatelessWidget {
         subtitle: Text(role),
         trailing: trailing,
       ),
-    );
-  }
-}
-
-/// The shareable invite, collapsed by default so your own friends sit higher on
-/// the screen. Tapping reveals the QR + link + Share (the existing
-/// [InviteShareCard]) — the QR no longer dominates the top of Manage circle.
-class _InviteToggle extends StatefulWidget {
-  const _InviteToggle({required this.handle});
-
-  final String handle;
-
-  @override
-  State<_InviteToggle> createState() => _InviteToggleState();
-}
-
-class _InviteToggleState extends State<_InviteToggle> {
-  bool _show = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final t = AppLocalizations.of(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        OutlinedButton.icon(
-          onPressed: () => setState(() => _show = !_show),
-          icon: Icon(_show ? Icons.expand_less : Icons.qr_code_2),
-          label: Text(_show ? t.hideInviteQr : t.showInviteQr),
-        ),
-        if (_show) ...[
-          const SizedBox(height: 12),
-          InviteShareCard(handle: widget.handle),
-        ],
-      ],
     );
   }
 }
