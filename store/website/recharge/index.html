@@ -82,6 +82,9 @@
   details.adv{margin-top:18px;border-top:1px solid var(--line);padding-top:12px}
   details.adv summary{cursor:pointer;color:var(--faint);font-size:13px;list-style:none}
   details.adv summary::-webkit-details-marker{display:none}
+  .orsep{display:flex;align-items:center;gap:10px;margin:18px 0 14px;color:var(--faint);font-size:12px}
+  .orsep::before,.orsep::after{content:"";flex:1;height:1px;background:var(--line)}
+  .handlebox .hint{margin:9px 0 0;color:var(--faint);font-size:12px;line-height:1.5}
   .hide{display:none!important}
 </style>
 <script type="text/javascript" src="https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js" async></script>
@@ -126,6 +129,13 @@
       <span id="g-si-btn">Sign in with Apple</span>
     </button>
     <p class="err" id="g-err"></p>
+    <div class="orsep"><span id="g-orword">or</span></div>
+    <div class="handlebox">
+      <label for="g-handle" id="g-handle-label">Recharge by @handle</label>
+      <input id="g-handle" type="text" autocomplete="off" spellcheck="false" placeholder="@handle" />
+      <button class="pay" id="g-handle-go" type="button" style="margin-top:8px">Find account</button>
+      <p class="hint" id="g-handle-hint">Top up any account by its handle — no sign-in needed.</p>
+    </div>
     <details class="adv">
       <summary id="g-adv">Advanced (testing)</summary>
       <label for="code" id="g-label">Recharge code</label>
@@ -161,6 +171,7 @@
   var SS_TOKEN = "fap_recharge_token";   // session token (sessionStorage, per-tab)
   var SS_PRE   = "fap_recharge_pre";     // balance before redirecting to Stripe
   var SS_PROD  = "fap_recharge_pid";     // pending product id
+  var SS_HANDLE= "fap_recharge_handle";  // recharge-by-@handle target (no sign-in)
   var LS_LANG  = "fap_recharge_lang";
   var LS_BASE  = "fap_recharge_base";
 
@@ -202,7 +213,12 @@
       errTitle:"Something went wrong",
       err:"Couldn’t reach the server. Check your connection and try again.",
       pendingTitle:"Almost there", pending:"This is taking a little longer than usual — your beans will appear shortly.",
-      refresh:"Refresh balance", retry:"Try again"
+      refresh:"Refresh balance", retry:"Try again",
+      handleRecharge:"Recharge by @handle", handleFind:"Find account",
+      handleHint:"Top up any account by its handle — no sign-in needed.",
+      handleEnter:"Enter a handle.", handleNotFound:"No account with that handle.",
+      rechargingInto:"Recharging", orWord:"or",
+      okHandle:"Beans added to {h}. You can close this page."
     },
     zh:{
       title:"充值豆子", sub:"为账户充值，继续扫描你的餐食。",
@@ -226,7 +242,12 @@
       errTitle:"出错了",
       err:"无法连接服务器。请检查网络后重试。",
       pendingTitle:"马上就好", pending:"这次比平常稍慢一些——豆子马上就到。",
-      refresh:"刷新余额", retry:"重试"
+      refresh:"刷新余额", retry:"重试",
+      handleRecharge:"用 @用户名 充值", handleFind:"查找账户",
+      handleHint:"凭用户名为任意账户充值——无需登录。",
+      handleEnter:"请输入用户名。", handleNotFound:"未找到该用户名的账户。",
+      rechargingInto:"正在充值给", orWord:"或",
+      okHandle:"已为 {h} 充值豆子。可以关闭此页面。"
     }
   };
 
@@ -243,6 +264,9 @@
   }
   function getToken(){ return sessionStorage.getItem(SS_TOKEN) || ""; }
   var selectedPid = DEFAULT_PID;
+  // When set, top up THIS @handle (server resolves it; account id never exposed)
+  // instead of the signed-in account. The "public deposit address" path.
+  var rechargeHandle = null, rechargeName = null;
 
   // ---------- networking ----------
   function api(path, opts){
@@ -276,6 +300,10 @@
     $("g-title").textContent = t("gTitle"); $("g-sub").textContent = t("gSub");
     $("g-si-btn").textContent = t("siBtn"); $("g-adv").textContent = t("adv");
     $("g-label").textContent = t("gLabel"); $("g-go").textContent = t("gGo");
+    $("g-orword").textContent = t("orWord");
+    $("g-handle-label").textContent = t("handleRecharge");
+    $("g-handle-go").textContent = t("handleFind");
+    $("g-handle-hint").textContent = t("handleHint");
     renderPacks(); updatePayLabel();
   }
 
@@ -329,6 +357,15 @@
   // ---------- flows ----------
   function openShop(){
     show("shop");
+    // Recharge-by-handle: no token to read a balance — show the recipient instead.
+    if(rechargeHandle){
+      $("bal").classList.remove("loading");
+      $("bal-label").textContent = t("rechargingInto");
+      $("bal-val").textContent = "@"+rechargeHandle +
+        (rechargeName && rechargeName!==rechargeHandle ? " · "+rechargeName : "");
+      return;
+    }
+    $("bal-label").textContent = t("balance");
     $("bal").classList.add("loading"); $("bal-val").textContent = "—";
     fetchBalance().then(function(bal){
       $("bal").classList.remove("loading"); $("bal-val").textContent = num(bal);
@@ -336,6 +373,22 @@
       if(err.auth){ clearTokenToGate(t("rejected")); return; }
       $("bal").classList.remove("loading"); $("bal-val").textContent = "—";
     });
+  }
+
+  // Resolve a public @handle to a recharge target (server returns {handle,name}
+  // only — never the account id) and enter the shop in handle mode.
+  function gotoHandle(){
+    var h = ($("g-handle").value||"").trim().replace(/^@/,"").toLowerCase();
+    if(!h){ $("g-err").textContent = t("handleEnter"); return; }
+    $("g-err").textContent = ""; $("g-handle-go").disabled = true;
+    fetch(getBase()+"/recharge/handle?handle="+encodeURIComponent(h))
+      .then(function(r){ if(!r.ok) throw new Error("HTTP "+r.status); return r.json(); })
+      .then(function(j){
+        rechargeHandle = j.handle; rechargeName = j.name || j.handle;
+        sessionStorage.setItem(SS_HANDLE, j.handle);
+        $("g-handle-go").disabled = false; openShop();
+      })
+      .catch(function(){ $("g-handle-go").disabled = false; $("g-err").textContent = t("handleNotFound"); });
   }
 
   function clearTokenToGate(msg){
@@ -346,13 +399,17 @@
   function pay(){
     var p = packById(selectedPid); if(!p) return;
     $("pay").disabled = true; $("pay").textContent = t("processing");
-    // remember the pre-payment balance so the success view can show the delta.
-    fetchBalance().then(function(pre){ sessionStorage.setItem(SS_PRE, String(pre)); })
-      .catch(function(){ sessionStorage.removeItem(SS_PRE); })
-      .then(function(){
-        sessionStorage.setItem(SS_PROD, p.id);
+    sessionStorage.setItem(SS_PROD, p.id);
+    var body = rechargeHandle ? {productId:p.id, handle:rechargeHandle} : {productId:p.id};
+    // Signed-in path remembers the pre-balance for the success delta; the handle
+    // path has no token/balance, so skip it.
+    var pre = rechargeHandle
+      ? Promise.resolve()
+      : fetchBalance().then(function(b){ sessionStorage.setItem(SS_PRE, String(b)); })
+                      .catch(function(){ sessionStorage.removeItem(SS_PRE); });
+    pre.then(function(){
         return api("/recharge/checkout", {method:"POST",
-          headers:{"content-type":"application/json"}, body: JSON.stringify({productId:p.id})});
+          headers:{"content-type":"application/json"}, body: JSON.stringify(body)});
       })
       .then(function(d){
         if(d && d.url){ window.location.href = d.url; return; }
@@ -370,7 +427,15 @@
 
   function pollForCredit(){
     panel("processing", t("processing"), t("processingSub"));
-    if(!getToken()){ panel("ok", t("okTitle"), "", {btn:t("refresh"), onClick:function(){ location.href="/recharge"; }}); return; }
+    if(!getToken()){
+      // Handle-recharge (no token): we can't read a balance, so confirm against
+      // the @handle we topped up.
+      var hh = sessionStorage.getItem(SS_HANDLE);
+      sessionStorage.removeItem(SS_HANDLE); sessionStorage.removeItem(SS_PROD);
+      panel("ok", t("okTitle"), hh ? fmt(t("okHandle"), {h:"@"+hh}) : "",
+        {btn:t("refresh"), onClick:function(){ location.href="/recharge"; }});
+      return;
+    }
     var preRaw = sessionStorage.getItem(SS_PRE);
     var pre = preRaw==null ? null : parseInt(preRaw,10);
     var tries = 0, max = 15;
@@ -424,6 +489,9 @@
     sessionStorage.setItem(SS_TOKEN, v); openShop();
   });
   $("code").addEventListener("keydown", function(e){ if(e.key==="Enter") $("g-go").click(); });
+  // Recharge by @handle (the public deposit-address path).
+  $("g-handle-go").addEventListener("click", gotoHandle);
+  $("g-handle").addEventListener("keydown", function(e){ if(e.key==="Enter") gotoHandle(); });
   // Sign in with Apple (web) — verifies via the existing /auth/apple, which mints the
   // same account's session token (Apple's `sub` is identical to the native app's).
   var appleInited = false;

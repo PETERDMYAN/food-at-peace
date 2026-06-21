@@ -103,6 +103,23 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
   with the strip + photo feed together — removed from the Trends screen. Pure client UI, no
   backend/shared-model change; new l10n (`navCircle`, `sectionOfficials`, `sectionFriends`,
   `sectionInvited`, `badgeCoach`, `showInviteQr`/`hideInviteQr`). ✅ build 41.
+- **Recharge Beans by @handle — "public deposit address" (built; prod deploy gated)** — the web recharge
+  page lets anyone top up an account by its **@handle** (self top-up from any browser, or gifting), in
+  addition to Sign in with Apple. The account id is resolved **server-side and never exposed**.
+  - Backend ([`recharge.py`](backend/src/recharge.py), additive): `GET /recharge/handle?handle=<h>`
+    returns `{handle, name}` only (404 if unknown); `/recharge/checkout` accepts an optional `handle`
+    (no Bearer) → resolves it via the circle directory → sets the Stripe metadata `userId` to the
+    resolved account; the webhook credits it unchanged. New `CIRCLE_TABLE` env + `dynamodb:GetItem` on
+    `CircleTable` + a `GET /recharge/handle` route in [`template.yaml`](backend/template.yaml).
+  - Web ([`store/website/recharge/index.html`](store/website/recharge/index.html)): an "or — Recharge by
+    @handle" block on the gate; resolving a handle enters a "Recharging @handle · Name" shop (no balance,
+    no token); pay posts `{productId, handle}`; success confirms against the handle. EN + 中文.
+  - Tests: `test_resolve_handle_returns_name_never_account_id`, `test_resolve_unknown_handle_404`,
+    `test_checkout_by_handle_targets_resolved_account`, `test_checkout_unknown_handle_404` (16 recharge
+    tests pass). Web UI verified in a local preview (gate + handle-mode shop render; no JS errors).
+  - **Not deployed:** the prod payment backend (`food-at-peace-vision-proxy` RechargeFunction) deploy is
+    **awaiting explicit confirmation** — recharge isn't a 1.0.0-contract handler, but it's the live
+    payment path, so per `production-safety` it deploys only on a deliberate go-ahead.
 - **Story archive "black/blank" pages → clean no-photo card (build 56)** — a meal with no available
   image (a **manual** entry, or a **photo** whose image isn't on this device — no local file, no synced
   `photoThumb`, nothing to pull from S3) rendered as a near-black blank `_StoryScaffold` with only the

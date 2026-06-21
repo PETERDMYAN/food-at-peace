@@ -15,7 +15,13 @@ for real calories burned, and speaks **English and 中文**. Built with Flutter.
 > prod. It identifies the account with **Sign in with Apple on the web** (reuses `/auth/apple`). It's
 > a *standalone* page (no in-app link, so the App Store app is untouched). Remaining before it can
 > charge: Stripe keys + an Apple **Services ID** (`com.foodatpeace.web`) and its domain-association file.
-> **1.0.2 (28)** is **in App Review**. **Build 56** fixes the **Story archive's "black/blank" pages**: a
+> **Recharge Beans by @handle (built, NOT yet deployed to prod):** the web recharge page
+> (`foodatpeace.app/recharge`) now also lets anyone enter a **@handle** to top up that account — a
+> "public deposit address" for Beans (works for your own top-up from any browser, and for gifting). The
+> server resolves the handle → account **server-side** (the account id is never exposed); Apple sign-in
+> stays as the alternative. Backend is additive (`GET /recharge/handle` resolve + an optional `handle`
+> on `/recharge/checkout`) with 16 passing tests; the web UI is built and verified. **Deploy to the prod
+> payment backend is awaiting an explicit go-ahead.** **Build 56** fixes the **Story archive's "black/blank" pages**: a
 > meal with no available image (a manual entry, or a photo whose image isn't on this device) used to
 > render as a near-black blank screen with only a caption. It now shows a clean, intentional card — an
 > "image unavailable" / meal icon above the dish + nutrition — so it reads as designed, not broken. (The

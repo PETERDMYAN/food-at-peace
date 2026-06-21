@@ -157,6 +157,76 @@ def test_checkout_returns_stripe_url(store, monkeypatch):
     assert seen == {"product_id": "beans_200", "beans": 200, "sgd": 3.99, "user": "apple:u1"}
 
 
+# -------------------------- recharge by @handle --------------------------- #
+@pytest.fixture
+def circle(monkeypatch):
+    """Fake circle handle directory: handle -> (userId, name)."""
+
+    class FakeCircle:
+        mapping = {"roro": ("apple:roro-uid", "Roro")}
+
+        def get_item(self, Key):
+            h = Key["pk"].split("#", 1)[1]
+            if Key.get("sk") == "handle" and h in self.mapping:
+                uid, name = self.mapping[h]
+                return {"Item": {"userId": uid, "name": name}}
+            return {}
+
+    fake = FakeCircle()
+    monkeypatch.setattr(recharge, "CIRCLE_TABLE", "circle")
+    monkeypatch.setattr(recharge, "_circle_table", lambda: fake)
+    return fake
+
+
+def _resolve(handle):
+    event = {
+        "headers": {},
+        "requestContext": {"http": {"method": "GET", "path": "/recharge/handle"}},
+        "queryStringParameters": {"handle": handle},
+    }
+    resp = recharge.handler(event, None)
+    return resp["statusCode"], json.loads(resp["body"])
+
+
+def test_resolve_handle_returns_name_never_account_id(store, circle):
+    status, body = _resolve("@Roro")  # tolerant of a leading @ / caps
+    assert status == 200
+    assert body == {"handle": "roro", "name": "Roro"}
+    # The account id must never leak to a public caller.
+    assert "apple:roro-uid" not in json.dumps(body)
+
+
+def test_resolve_unknown_handle_404(store, circle):
+    status, _ = _resolve("ghost")
+    assert status == 404
+
+
+def test_checkout_by_handle_targets_resolved_account(store, circle, monkeypatch):
+    seen = {}
+
+    def fake_session(secret, product_id, beans_amount, sgd, user_id):
+        seen.update(product_id=product_id, user=user_id)
+        return {"id": "cs_h", "url": "https://checkout.stripe.com/c/pay/cs_h"}
+
+    monkeypatch.setattr(recharge, "_create_checkout_session", fake_session)
+    # No bearer token — identify the recharge target purely by @handle.
+    status, body = _checkout(
+        body={"productId": "beans_200", "handle": "roro"}, token=False
+    )
+    assert status == 200
+    assert body["url"].startswith("https://checkout.stripe.com/")
+    # Resolved server-side to the handle's real account; never exposed in the body.
+    assert seen["user"] == "apple:roro-uid"
+    assert "apple:roro-uid" not in json.dumps(body)
+
+
+def test_checkout_unknown_handle_404(store, circle):
+    status, _ = _checkout(
+        body={"productId": "beans_200", "handle": "ghost"}, token=False
+    )
+    assert status == 404
+
+
 # ----------------------------- /recharge/webhook -------------------------- #
 def test_webhook_rejects_bad_signature(store):
     status, _ = _webhook(_completed_event(), sig="t=1,v1=deadbeef")

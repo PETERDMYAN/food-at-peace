@@ -52,6 +52,12 @@ STRIPE_WEBHOOK_SECRET_PARAM = os.environ.get(
 # Where Stripe sends the customer back. The web recharge page lives here.
 SITE_URL = os.environ.get("RECHARGE_SITE_URL", "https://foodatpeace.app/recharge")
 
+# The circle handle directory (shared with circle.py) lets the web page top up an
+# account by its public @handle — a "deposit address". We only ever resolve the
+# handle to an account id SERVER-SIDE (for the Stripe metadata); the id is never
+# returned to the caller.
+CIRCLE_TABLE = os.environ.get("CIRCLE_TABLE", "")
+
 # product id -> (Beans granted, SGD price). MUST match the app's kBeanProductIds /
 # BeanPricing.packs and iap.PRODUCTS. The web flow only sells the public packs.
 PRODUCTS = {
@@ -86,6 +92,56 @@ def _raw_body(event):
 
         return base64.b64decode(raw)
     return raw.encode("utf-8")
+
+
+def _query(event):
+    return event.get("queryStringParameters") or {}
+
+
+def _bearer(event):
+    """The Bearer session token, or "" when absent (no raise — the handle path is
+    a valid alternative to being signed in)."""
+    raw = _header(event, "authorization") or ""
+    return raw[7:].strip() if raw.lower().startswith("bearer ") else ""
+
+
+# --------------------------------------------------------------------------- #
+# Handle → account resolution (the public "deposit address")                  #
+# --------------------------------------------------------------------------- #
+_ddb = None
+
+
+def _circle_table():
+    global _ddb
+    if _ddb is None:
+        import boto3
+
+        _ddb = boto3.resource("dynamodb")
+    return _ddb.Table(CIRCLE_TABLE)
+
+
+def _normalize_handle(raw):
+    return (raw or "").strip().lstrip("@").lower()
+
+
+def _resolve_handle(raw):
+    """Map a public @handle to (user_id, display_name) via the circle directory
+    (pk="handle#<h>", sk="handle"), or (None, None) if unknown. The user_id is for
+    SERVER-SIDE use only (Stripe metadata) and must never be returned to a caller."""
+    h = _normalize_handle(raw)
+    if not h or not CIRCLE_TABLE:
+        return None, None
+    try:
+        item = (
+            _circle_table()
+            .get_item(Key={"pk": f"handle#{h}", "sk": "handle"})
+            .get("Item")
+        )
+    except Exception:  # noqa: BLE001 — a directory hiccup is just "not found"
+        return None, None
+    if not item:
+        return None, None
+    return item.get("userId"), item.get("name")
 
 
 # --------------------------------------------------------------------------- #
@@ -191,14 +247,35 @@ def _credit(user_id, product_id, sk):
 # --------------------------------------------------------------------------- #
 # Route handlers                                                              #
 # --------------------------------------------------------------------------- #
-def _handle_checkout(event):
-    token = beans._bearer(event)
-    claims = verify_session_token(token, _get_secret(SESSION_KEY_PARAM))
-    user_id = claims.get("sub")
+def _handle_resolve(event):
+    """GET /recharge/handle?handle=<h> — confirm a recharge target exists before
+    paying. Returns the public {handle, name} only; NEVER the account id."""
+    user_id, name = _resolve_handle(_query(event).get("handle"))
     if not user_id:
-        raise ProxyError(401, "Not authenticated.")
+        raise ProxyError(404, "No account with that handle.")
+    h = _normalize_handle(_query(event).get("handle"))
+    return _response(200, {"handle": h, "name": name or h})
 
+
+def _handle_checkout(event):
+    # Two ways to identify the account to top up:
+    #   • signed in (Bearer session)      -> your own account (self top-up); or
+    #   • a public @handle in the body    -> that account (deposit address / gift).
+    # The resolved account id is used ONLY server-side (Stripe metadata) and is
+    # never returned to the caller.
     body = _parse_body(event)
+    token = _bearer(event)
+    user_id = None
+    if token:
+        claims = verify_session_token(token, _get_secret(SESSION_KEY_PARAM))
+        user_id = claims.get("sub")
+    elif body.get("handle"):
+        user_id, _name = _resolve_handle(body.get("handle"))
+        if not user_id:
+            raise ProxyError(404, "No account with that handle.")
+    if not user_id:
+        raise ProxyError(401, "Sign in or enter a handle to recharge.")
+
     product_id = (body.get("productId") or "").strip()
     if product_id not in PRODUCTS:
         raise ProxyError(400, "Unknown product.")
@@ -251,9 +328,13 @@ def _handle_webhook(event):
 
 def handler(event, context):
     try:
-        if _method(event) != "POST":
+        method, path = _method(event), _path(event)
+        # Public handle lookup so the page can confirm the recipient before paying.
+        if method == "GET" and path.endswith("/handle"):
+            return _handle_resolve(event)
+        if method != "POST":
             raise ProxyError(405, "Method not allowed.")
-        if _path(event).endswith("/webhook"):
+        if path.endswith("/webhook"):
             return _handle_webhook(event)
         return _handle_checkout(event)
     except ProxyError as exc:

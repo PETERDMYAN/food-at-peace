@@ -390,6 +390,7 @@ Resources:
       Environment:
         Variables:
           BEANS_TABLE: !Ref BeansTable
+          CIRCLE_TABLE: !Ref CircleTable
           SESSION_KEY_PARAM: !Ref SessionKeyParam
           STRIPE_SECRET_PARAM: !Ref StripeSecretParam
           STRIPE_WEBHOOK_SECRET_PARAM: !Ref StripeWebhookSecretParam
@@ -404,6 +405,11 @@ Resources:
                 - dynamodb:Query
               Resource:
                 - !GetAtt BeansTable.Arn
+            - Sid: ResolveHandle
+              Effect: Allow
+              Action: dynamodb:GetItem
+              Resource:
+                - !GetAtt CircleTable.Arn
             - Sid: RecordRevenueMetric
               Effect: Allow
               Action: dynamodb:UpdateItem
@@ -436,6 +442,12 @@ Resources:
             ApiId: !Ref VisionApi
             Path: /recharge/webhook
             Method: POST
+        ResolveHandle:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref VisionApi
+            Path: /recharge/handle
+            Method: GET
 
   # In-app account deletion (App Store Guideline 5.1.1(v)). Verifies the app
   # session token, then removes every row the user owns in the sync table —
