@@ -103,6 +103,12 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
   with the strip + photo feed together — removed from the Trends screen. Pure client UI, no
   backend/shared-model change; new l10n (`navCircle`, `sectionOfficials`, `sectionFriends`,
   `sectionInvited`, `badgeCoach`, `showInviteQr`/`hideInviteQr`). ✅ build 41.
+- **Full QA pass + QA harness refreshed (2026-06-21)** — ran `integration_test/qa_test.dart` on the sim
+  per the `verify-in-simulator` skill: **8/8 green** (onboarding · all four tabs · manual food log · Beans
+  top-up · reminders · Circle invite + friend trend · EN↔中文 · owner account-ID). Three pre-existing
+  **stale** assertions were fixed (not app bugs): the circle strip moved to its own tab (was tapping
+  Trends), the auto mock-seed friend was removed (now seeded explicitly via `circle_v1`), and the version
+  footer is 1.0.2 not 1.0.1. App verified healthy before the next App Store push.
 - **Circle tab scrolls as one page, Instagram-style (build 62)** — the stories strip was a fixed header
   over a separately-scrolling feed (wasting permanent vertical space). Now `CircleFeedBody` takes an
   optional scrolling `header`, and `CircleScreen` passes the strip there, so the whole tab is a single

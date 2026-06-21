@@ -4,6 +4,8 @@
 // weatherProvider is stubbed to null so the Today screen never triggers the
 // native location prompt (which a UI test can't dismiss). Reminders are seeded
 // "on" so the list is exercised without the OS notification-permission prompt.
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -14,6 +16,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:food_at_peace/app.dart';
 import 'package:food_at_peace/l10n/app_localizations.dart';
 import 'package:food_at_peace/src/data/iap_service.dart';
+import 'package:food_at_peace/src/features/circle/circle_screen.dart';
 import 'package:food_at_peace/src/features/settings/reminders_screen.dart';
 import 'package:food_at_peace/src/features/trends/trends_screen.dart';
 import 'package:food_at_peace/src/features/wallet/beans_screen.dart';
@@ -115,7 +118,7 @@ void main() {
     expect(find.text('Add food'), findsNothing);
   });
 
-  testWidgets('returning user boots to Today and all three tabs render', (t) async {
+  testWidgets('returning user boots to Today and all four tabs render', (t) async {
     final prefs = await seed({'onboarding_complete': true});
     await pumpApp(t, prefs);
 
@@ -123,8 +126,12 @@ void main() {
     expect(find.textContaining('Good '), findsWidgets);
     expect(find.text('Add food'), findsOneWidget);
 
-    // Trends tab
+    // Trends tab (charts render)
     await t.tap(find.byIcon(Icons.insights_outlined).hitTestable());
+    await beat(t);
+
+    // Circle tab — its own tab since build 41; shows the stories strip header.
+    await t.tap(find.byIcon(Icons.groups_outlined).hitTestable());
     await beat(t);
     expect(find.text('Your circle'), findsOneWidget);
 
@@ -205,8 +212,23 @@ void main() {
     final prefs = await seed({
       'circle_my_handle': 'mypal',
       'circle_handle_set': true,
+      // Seed a local circle (the auto mock-seed was removed) so there's a
+      // connected friend + an incoming request to exercise. Non-`f_*` ids so the
+      // legacy-seed cleanup never strips them.
+      'circle_v1': jsonEncode([
+        {
+          'id': 'qa_mia', 'name': 'Mia Tan', 'handle': '@miatan',
+          'status': 'connected', 'streak': 5,
+          'adh': [60, 72, 81, 76, 90, 85, 88], 'kcal': 1400, 'target': 1800,
+        },
+        {
+          'id': 'qa_ben', 'name': 'Ben Koh', 'handle': '@benkoh',
+          'status': 'incoming', 'streak': 0, 'adh': <int>[], 'kcal': 0,
+          'target': 0,
+        },
+      ]),
     });
-    await pumpScreen(t, prefs, const TrendsScreen());
+    await pumpScreen(t, prefs, const CircleScreen());
     expect(find.text('Your circle'), findsOneWidget);
     expect(find.text('Requests (1)'), findsOneWidget); // seeded incoming invite
 
@@ -260,8 +282,8 @@ void main() {
     await t.tap(find.byIcon(Icons.settings_outlined).hitTestable());
     await beat(t);
 
-    // The version footer sits at the very bottom of Profile.
-    final version = find.textContaining('Food at Peace 1.0.1');
+    // The version footer sits at the very bottom of Profile (version-tolerant).
+    final version = find.textContaining('Food at Peace 1.0');
     await t.scrollUntilVisible(
       version,
       300,
