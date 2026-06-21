@@ -103,6 +103,12 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
   with the strip + photo feed together — removed from the Trends screen. Pure client UI, no
   backend/shared-model change; new l10n (`navCircle`, `sectionOfficials`, `sectionFriends`,
   `sectionInvited`, `badgeCoach`, `showInviteQr`/`hideInviteQr`). ✅ build 41.
+- **Circle feed auto-refreshes after logging a photo meal (build 60)** — sharing a scanned meal was
+  fire-and-forget and `_save` popped the add screen immediately, so the feed only updated on a manual
+  pull. Now `_maybeShareToCircle` captures the root `ProviderContainer` (before the pop disposes the
+  widget ref) and `invalidate(circleFeedProvider)` once `post()` resolves, so the new meal appears on its
+  own ([`add_entry_screen.dart`](lib/src/features/add/add_entry_screen.dart)). Self-corrects on the
+  switch-tabs race. Client-only; 168 flutter + 40 backend tests pass. ✅ build 60.
 - **Random 8-char default @handle for new accounts (build 59)** — a new account is assigned a random
   **8-character** handle (lowercase letters + digits, guaranteed to mix both; `generateRandomHandle` in
   [`providers.dart`](lib/src/providers/providers.dart)) instead of one derived from the nickname.

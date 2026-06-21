@@ -142,6 +142,10 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
     }
     final token = ref.read(authProvider)?.token;
     if (token == null || token.isEmpty) return; // sharing needs an account
+    // Capture the ROOT container before _save pops this screen (which disposes
+    // the widget's ref) so we can refresh the Circle feed once the post lands —
+    // the new meal then shows up on its own, no manual pull-to-refresh.
+    final container = ProviderScope.containerOf(context, listen: false);
     // Share the downscaled (~1024px) copy, not the multi-MB original: a feed card
     // is shown ~screen-width, so the full-res just made the feed slow to load on
     // cellular. The durable full-res still lives in the meal-photo store, keyed by
@@ -155,6 +159,7 @@ class _AddEntryScreenState extends ConsumerState<AddEntryScreen> {
           calories: entry.calories.round(),
           token: token,
         )
+        .then((_) => container.invalidate(circleFeedProvider))
         .catchError((_) {});
   }
 
