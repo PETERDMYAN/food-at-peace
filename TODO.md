@@ -103,6 +103,13 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
   with the strip + photo feed together — removed from the Trends screen. Pure client UI, no
   backend/shared-model change; new l10n (`navCircle`, `sectionOfficials`, `sectionFriends`,
   `sectionInvited`, `badgeCoach`, `showInviteQr`/`hideInviteQr`). ✅ build 41.
+- **Random 8-char default @handle for new accounts (build 59)** — a new account is assigned a random
+  **8-character** handle (lowercase letters + digits, guaranteed to mix both; `generateRandomHandle` in
+  [`providers.dart`](lib/src/providers/providers.dart)) instead of one derived from the nickname.
+  `_ensureHandle` claims it and regenerates on a 409 clash (rare). Still editable in the profile dialog;
+  existing accounts keep their handle (recovered from the server). Matches the backend rule
+  `^[a-z0-9_]{2,20}$`; no backend change. Tests: format + digit/letter mix + deterministic seed
+  ([`random_handle_test.dart`](test/random_handle_test.dart)). 168 flutter + 40 backend tests pass. ✅ build 59.
 - **Deleting a recurring entry removes the occurrence, not the series (build 58)** — a "Take daily"
   (recurring) entry is one stored row shown virtually on every day, so swipe-delete (`remove(id)`) was a
   soft-delete that wiped it from **all** days. Added a per-entry `skippedDates`

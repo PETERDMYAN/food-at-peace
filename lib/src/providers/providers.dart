@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -958,6 +959,23 @@ final beanProductsProvider = FutureProvider<Map<String, ProductDetails>>((
 
 // ---- Circles of Food (friends) ----
 
+/// A random 8-character default @handle for a new account: lowercase letters +
+/// digits, guaranteed to contain at least one of each, matching the backend rule
+/// `^[a-z0-9_]{2,20}$`. Users can change it later in the profile dialog. Pass a
+/// seeded [Random] in tests.
+String generateRandomHandle([Random? random]) {
+  final rng = random ?? Random();
+  const letters = 'abcdefghijklmnopqrstuvwxyz';
+  const digits = '0123456789';
+  const all = '$letters$digits';
+  final chars = <String>[
+    letters[rng.nextInt(letters.length)], // ≥1 letter
+    digits[rng.nextInt(digits.length)], // ≥1 digit
+    for (var i = 0; i < 6; i++) all[rng.nextInt(all.length)],
+  ]..shuffle(rng);
+  return chars.join();
+}
+
 /// The user's "Circle of Food": connected friends + pending invites (incoming /
 /// outgoing).
 ///
@@ -1036,14 +1054,6 @@ class CircleNotifier extends Notifier<List<Friend>> {
 
   // ---- backend (signed in) ----
 
-  String _deriveHandle() {
-    final name = ref.read(profileProvider).name ?? '';
-    var h = name.toLowerCase().replaceAll(RegExp('[^a-z0-9_]'), '');
-    if (h.length < 2) h = 'foodie';
-    if (h.length > 16) h = h.substring(0, 16);
-    return h;
-  }
-
   /// Ensure a handle is claimed on the backend, and that the **same** handle is
   /// recovered across reinstalls / new devices.
   ///
@@ -1051,8 +1061,8 @@ class CircleNotifier extends Notifier<List<Friend>> {
   /// local prefs are wiped, so we first ask the backend what handle this Apple
   /// account already owns and adopt it verbatim — that's how `@yourhandle`
   /// survives "delete app → sign back in" so friends keep finding you. Only a
-  /// genuinely new account (the server has no handle) derives one from the
-  /// nickname and claims it (numeric suffix on a clash). Idempotent via
+  /// genuinely new account (the server has no handle) is assigned a **random
+  /// 8-character** handle and claims it (retried on a clash). Idempotent via
   /// [_handleSetKey].
   Future<void> _ensureHandle(CircleClient client, String token) async {
     // Steady state: already known locally → just publish it, no network.
@@ -1074,15 +1084,19 @@ class CircleNotifier extends Notifier<List<Friend>> {
       await _claimLocally(serverHandle);
       return;
     }
-    // New account: derive from the nickname (or honour an offline-chosen handle)
-    // and claim it; numeric suffix on a clash so it stays unique app-wide.
+    // New account: assign a random 8-char handle (or honour an offline-chosen
+    // one) and claim it; on a clash, try fresh randoms so it stays unique.
     final name = ref.read(profileProvider).name;
     final chosen = _prefs.getString(_myHandleKey);
-    var handle = chosen ?? _deriveHandle();
+    var handle = chosen ?? generateRandomHandle();
     var code = await client.register(token, handle, name: name);
-    if (code == 409 && chosen == null) {
-      handle = '$handle${DateTime.now().microsecondsSinceEpoch % 9000 + 1000}';
+    // Only an auto-assigned (not user-chosen) handle is regenerated on a clash —
+    // exceedingly rare for an 8-char alphanumeric.
+    var tries = 0;
+    while (code == 409 && chosen == null && tries < 5) {
+      handle = generateRandomHandle();
       code = await client.register(token, handle, name: name);
+      tries++;
     }
     if (code == 200) await _claimLocally(handle);
   }

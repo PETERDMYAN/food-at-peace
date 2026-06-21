@@ -15,7 +15,9 @@ for real calories burned, and speaks **English and 中文**. Built with Flutter.
 > prod. It identifies the account with **Sign in with Apple on the web** (reuses `/auth/apple`). It's
 > a *standalone* page (no in-app link, so the App Store app is untouched). Remaining before it can
 > charge: Stripe keys + an Apple **Services ID** (`com.foodatpeace.web`) and its domain-association file.
-> **Build 58** fixes **deleting a recurring ("Take daily") entry** — swipe-deleting it on a day used to
+> **Build 59** gives every new account a **random 8-character @handle** by default (lowercase letters +
+> digits, always a mix) instead of one derived from the nickname — unique, low-collision, and still
+> editable in the profile dialog. Existing accounts keep their handle. **Build 58** fixes **deleting a recurring ("Take daily") entry** — swipe-deleting it on a day used to
 > soft-delete the single shared entry, wiping it from **every** day. It now removes just **that day's
 > occurrence** (a per-entry `skippedDates`), keeping the daily series on other days; to stop the series
 > entirely, toggle "Take daily" off. Additive + backward-compatible (older clients ignore the field).
