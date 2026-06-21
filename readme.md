@@ -162,6 +162,11 @@ for real calories burned, and speaks **English and 中文**. Built with Flutter.
 > `MainActivity` on `FlutterFragmentActivity` (so all plugins register), and a platform-aware
 > health service. **Remaining for a Play release (need Google accounts):** Sign in with Apple on
 > Android (Apple Services ID), FCM push, Google Play Billing, and the Play Console listing.
+> **In review: `1.0.2 (build 62)`** (submitted 2026-06-21, prod backend) — build 62 (the full Circle
+> social layer + recharge-by-handle + random handles + Official badges + whole-page scroll + the
+> recurring-delete fix, all QA-verified) was swapped into the pending 1.0.2 (the earlier build 28 was
+> pulled from the queue) and resubmitted via the ASC API. Its "What's New" already describes the Circle
+> features.
 > **Submitting next: `1.0.2 (28)`** (prod backend) — the full v3 feature wave (Circle stories:
 > photo-hero food story, Calm Eva scenes, story tray + swipe, 7-day archive + delete; profile
 > photo; synced meal photos; "Take daily" recurring foods; Data Sources energy priority;

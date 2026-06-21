@@ -103,6 +103,12 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
   with the strip + photo feed together — removed from the Trends screen. Pure client UI, no
   backend/shared-model change; new l10n (`navCircle`, `sectionOfficials`, `sectionFriends`,
   `sectionInvited`, `badgeCoach`, `showInviteQr`/`hideInviteQr`). ✅ build 41.
+- **1.0.2 (build 62) submitted to App Review (2026-06-21)** — the whole Circle/social wave is no longer
+  TestFlight-only. The pending 1.0.2 was holding the stale build 28; via the ASC API (`.p8` key, no web
+  login) the active reviewSubmission was canceled, **build 62** attached, and a fresh reviewSubmission
+  created + submitted → `1.0.2 / build 62 / WAITING_FOR_REVIEW`. The new `reviewSubmissions` model is what
+  this app uses (not the deprecated `appStoreVersionSubmissions`). Metadata/"What's New" already described
+  the Circle features. **Next:** await Apple's review outcome (then it ships to the public).
 - **Full QA pass + QA harness refreshed (2026-06-21)** — ran `integration_test/qa_test.dart` on the sim
   per the `verify-in-simulator` skill: **8/8 green** (onboarding · all four tabs · manual food log · Beans
   top-up · reminders · Circle invite + friend trend · EN↔中文 · owner account-ID). Three pre-existing
