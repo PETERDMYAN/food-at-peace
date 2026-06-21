@@ -75,6 +75,10 @@ class CircleStrip extends ConsumerWidget {
     final roroFriend = _officialRoro(ref, connected);
     final peers =
         connected.where((f) => f.handle != '@$kRoroHandle').toList();
+    // Official accounts (Roro, Eva) get a blue verified badge — for everyone
+    // except the creator (@roro) themselves.
+    final viewerIsRoro =
+        ref.watch(myCircleHandleProvider)?.toLowerCase() == kRoroHandle;
 
     // Open the chained story tray (You → Eva). [initialStory] 0 = your food
     // story, 1 = Eva — advancing past the end of one rolls into the next. Each
@@ -145,6 +149,7 @@ class CircleStrip extends ConsumerWidget {
                     initials: 'E',
                     colorSeed: 7,
                     seen: seen.contains(evaKey),
+                    official: !viewerIsRoro,
                     onTap: () => openStories(1),
                   ),
                   onTap: () => openStories(1),
@@ -161,6 +166,7 @@ class CircleStrip extends ConsumerWidget {
                     imageUrl: roroFriend.photoUrl,
                     imageCacheKey: roroFriend.id,
                     seen: seen.contains(friendStorySeenKey(roroFriend, feedPosts)),
+                    official: !viewerIsRoro,
                     onTap: () => openFriendStory(context, ref, roroFriend),
                   ),
                   onTap: () => openFriendStory(context, ref, roroFriend),

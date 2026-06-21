@@ -355,6 +355,7 @@
   "roroRole": "作者",
   "followAction": "关注",
   "followingLabel": "已关注",
+  "officialBadge": "官方",
   "evaUnfollowedMsg": "已取消关注 Eva——随时可在“推荐关注”中找回。",
   "roroFollowedMsg": "已关注 Roro 🎉",
   "followFailed": "关注失败，请重试。",

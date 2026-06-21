@@ -15,7 +15,10 @@ for real calories burned, and speaks **English and 中文**. Built with Flutter.
 > prod. It identifies the account with **Sign in with Apple on the web** (reuses `/auth/apple`). It's
 > a *standalone* page (no in-app link, so the App Store app is untouched). Remaining before it can
 > charge: Stripe keys + an Apple **Services ID** (`com.foodatpeace.web`) and its domain-association file.
-> **Build 60** makes the Circle feed **auto-refresh after you log a photo meal** — sharing a scanned
+> **Build 61** adds a blue **"Official" badge** to the first-party accounts (**@roro** and **Eva**) so
+> users can tell them apart from peers — a verified-check on their strip avatars and an "Official" tag by
+> their name in the feed. Shown to everyone **except the creator** (@roro) themselves, and never on your
+> own posts. **Build 60** makes the Circle feed **auto-refresh after you log a photo meal** — sharing a scanned
 > meal now invalidates the feed once the post lands (via the root provider container, captured before the
 > add screen pops), so your new post appears on its own instead of needing a manual pull-to-refresh.
 > **Build 59** gives every new account a **random 8-character @handle** by default (lowercase letters +

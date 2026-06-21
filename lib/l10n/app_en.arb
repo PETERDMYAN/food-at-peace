@@ -532,6 +532,7 @@
   "roroRole": "Creator",
   "followAction": "Follow",
   "followingLabel": "Following",
+  "officialBadge": "Official",
   "evaUnfollowedMsg": "Unfollowed Eva — find her under Suggested anytime.",
   "roroFollowedMsg": "Following Roro 🎉",
   "followFailed": "Couldn't follow. Please try again.",

@@ -21,6 +21,7 @@ class StoryAvatar extends StatelessWidget {
     this.onTap,
     this.badgeCount = 0,
     this.colorSeed,
+    this.official = false,
   });
 
   final String? initials;
@@ -52,6 +53,10 @@ class StoryAvatar extends StatelessWidget {
 
   /// Drives the bubble colour (so each friend is consistent).
   final int? colorSeed;
+
+  /// Show a blue "verified" check (an official first-party account, e.g. @roro
+  /// or Eva) at the bottom-right.
+  final bool official;
 
   static const _ring = SweepGradient(
     colors: [
@@ -165,6 +170,31 @@ class StoryAvatar extends StatelessWidget {
                   fontSize: 11,
                   fontWeight: FontWeight.w800,
                 ),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    if (official) {
+      avatar = Stack(
+        clipBehavior: Clip.none,
+        children: [
+          avatar,
+          Positioned(
+            right: -1,
+            bottom: -1,
+            child: Container(
+              decoration: BoxDecoration(
+                color: scheme.surface,
+                shape: BoxShape.circle,
+              ),
+              padding: const EdgeInsets.all(1),
+              child: Icon(
+                Icons.verified,
+                size: size * 0.34,
+                color: const Color(0xFF2E9BFF),
               ),
             ),
           ),

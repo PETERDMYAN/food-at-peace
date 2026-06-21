@@ -6,6 +6,7 @@ import 'package:food_at_peace/l10n/app_localizations.dart';
 import '../../data/eva_wisdom.dart';
 import '../../models/circle_post.dart';
 import '../../providers/providers.dart';
+import '../../widgets/official_badge.dart';
 import '../../widgets/story_avatar.dart';
 import 'circle_strip.dart';
 
@@ -146,7 +147,17 @@ class _EvaFeedCard extends ConsumerWidget {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Eva', style: text.titleSmall),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text('Eva', style: text.titleSmall),
+                          if (ref.watch(myCircleHandleProvider)?.toLowerCase() !=
+                              kRoroHandle) ...[
+                            const SizedBox(width: 6),
+                            const OfficialBadge(),
+                          ],
+                        ],
+                      ),
                       Text(
                         subtitle,
                         style: text.bodySmall?.copyWith(
@@ -199,7 +210,26 @@ class _PostCard extends ConsumerWidget {
               colorSeed: post.authorId.hashCode,
               size: 40,
             ),
-            title: Text(title, style: text.titleSmall),
+            title: Row(
+              children: [
+                Flexible(
+                  child: Text(
+                    title,
+                    style: text.titleSmall,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                // Blue "Official" tag on the creator @roro's posts — for everyone
+                // except your own posts and the creator themselves.
+                if (!post.mine &&
+                    (post.authorHandle ?? '').toLowerCase() == kRoroHandle &&
+                    ref.watch(myCircleHandleProvider)?.toLowerCase() !=
+                        kRoroHandle) ...[
+                  const SizedBox(width: 6),
+                  const OfficialBadge(),
+                ],
+              ],
+            ),
             subtitle: Text(sub),
             // No moderation actions on your own post.
             trailing: post.mine

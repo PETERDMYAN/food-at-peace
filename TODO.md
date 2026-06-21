@@ -103,6 +103,13 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
   with the strip + photo feed together — removed from the Trends screen. Pure client UI, no
   backend/shared-model change; new l10n (`navCircle`, `sectionOfficials`, `sectionFriends`,
   `sectionInvited`, `badgeCoach`, `showInviteQr`/`hideInviteQr`). ✅ build 41.
+- **Blue "Official" badge on @roro + Eva (build 61)** — first-party accounts now carry a verified-style
+  blue badge so users can distinguish them from peers: a `Icons.verified` check on the strip avatar
+  (`StoryAvatar.official`) and an "Official" tag ([`OfficialBadge`](lib/src/widgets/official_badge.dart),
+  new l10n `officialBadge`) next to their name in the feed (`_PostCard` for @roro posts, `_EvaFeedCard`
+  for Eva). Gated to **non-Roro viewers** (`viewerIsRoro` via `myCircleHandleProvider`) and never shown
+  on your own posts. Verified on-sim (Roro badged, peer Peter not). Client-only; 168 flutter + 40
+  backend tests pass. ✅ build 61.
 - **Circle feed auto-refreshes after logging a photo meal (build 60)** — sharing a scanned meal was
   fire-and-forget and `_save` popped the add screen immediately, so the feed only updated on a manual
   pull. Now `_maybeShareToCircle` captures the root `ProviderContainer` (before the pop disposes the
