@@ -570,6 +570,21 @@ is now a single plated dish so the AI estimate reads cleanly (~420 kcal, not a 2
 
 ## 🚧 Remaining
 
+**Added 2026-06-21 (requested):**
+- [ ] **Direct Garmin data integration (part of the data-sources resource)** — today Garmin reaches the
+  app only **indirectly via Apple Health** (HealthKit passthrough on iOS). Add a **first-class Garmin
+  path** (e.g. Garmin Connect / Health API: OAuth + activity/energy pull) so Garmin active-energy &
+  activity are available directly — including on **Android / no-HealthKit** — and surfaced in the **Data
+  Sources** screen alongside Apple Watch / iPhone. Feed it into the same `energyOut` pipeline used by the
+  targets engine.
+- [ ] **Stripe integration for web recharge — make it actually charge** — the recharge backend + the
+  **@handle deposit-address** path are already live, but charging is **inert** until Stripe is wired:
+  create the Stripe account + product, put the **secret key** in SSM `/food-at-peace/stripe-secret-key`
+  and the **webhook signing secret** in `/food-at-peace/stripe-webhook-secret` (register
+  `https://6m19l2b025…/recharge/webhook` in Stripe for `checkout.session.completed`). Until both exist
+  `/recharge/checkout` returns `{configured:false}` and the page shows a graceful "not on yet". Steps in
+  [`store/RECHARGE.md`](store/RECHARGE.md).
+
 1. **Beans IAP** *(in progress)* — the paywall still **dev-stubs** purchases (credits
    locally; a reinstall resets the balance). **Done:** `in_app_purchase` added +
    `IapService` ([`lib/src/data/iap_service.dart`](lib/src/data/iap_service.dart),
