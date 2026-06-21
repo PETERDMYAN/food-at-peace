@@ -55,4 +55,46 @@ void main() {
     // Before the daily started: neither.
     expect(idsOn(today.subtract(const Duration(days: 4))), <String>{});
   });
+
+  test('deleting a recurring occurrence skips only that day, not the series',
+      () async {
+    final today = dateOnly(DateTime.now());
+    final yesterday = today.subtract(const Duration(days: 1));
+    final daily =
+        _e('daily', today.subtract(const Duration(days: 3)), recurring: true);
+
+    SharedPreferences.setMockInitialValues({
+      'food_entries_v1': jsonEncode([daily.toJson()]),
+    });
+    final prefs = await SharedPreferences.getInstance();
+    final c = ProviderContainer(
+      overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
+    );
+    addTearDown(c.dispose);
+
+    Set<String> idsOn(DateTime d) {
+      c.read(selectedDateProvider.notifier).set(d);
+      return c.read(entriesForSelectedDayProvider).map((e) => e.id).toSet();
+    }
+
+    // Delete just today's occurrence (what the Today swipe-delete now does).
+    await c.read(foodEntriesProvider.notifier).skipOccurrence('daily', today);
+
+    expect(idsOn(today), <String>{}); // gone today…
+    expect(idsOn(yesterday), {'daily'}); // …but the series survives elsewhere
+    // The skip persists through a JSON round-trip (so it syncs).
+    final saved = c.read(foodEntriesProvider).first;
+    expect(FoodEntry.fromJson(saved.toJson()).skippedOn(today), isTrue);
+  });
+
+  test('skippedDates round-trips; legacy JSON without it parses empty', () {
+    final e = _e('d', DateTime(2026, 6, 18), recurring: true)
+        .copyWith(skippedDates: ['2026-06-19']);
+    expect(
+      FoodEntry.fromJson(e.toJson()).skippedOn(DateTime(2026, 6, 19)),
+      isTrue,
+    );
+    final legacy = _e('d', DateTime(2026, 6, 18)).toJson();
+    expect(FoodEntry.fromJson(legacy).skippedDates, isEmpty);
+  });
 }

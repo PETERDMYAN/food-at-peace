@@ -15,6 +15,10 @@ for real calories burned, and speaks **English and 中文**. Built with Flutter.
 > prod. It identifies the account with **Sign in with Apple on the web** (reuses `/auth/apple`). It's
 > a *standalone* page (no in-app link, so the App Store app is untouched). Remaining before it can
 > charge: Stripe keys + an Apple **Services ID** (`com.foodatpeace.web`) and its domain-association file.
+> **Build 58** fixes **deleting a recurring ("Take daily") entry** — swipe-deleting it on a day used to
+> soft-delete the single shared entry, wiping it from **every** day. It now removes just **that day's
+> occurrence** (a per-entry `skippedDates`), keeping the daily series on other days; to stop the series
+> entirely, toggle "Take daily" off. Additive + backward-compatible (older clients ignore the field).
 > **Build 57** is a Circle/profile polish pass from the live review: (a) **@handle moved into the profile
 > dialog** — shown read-only under your nickname (no separate edit button), edited via the profile pen;
 > (b) the official **@roro is now properly unfollowable** (consistent **Unfollow** on both Eva and Roro

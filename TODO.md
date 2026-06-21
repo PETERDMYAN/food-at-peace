@@ -103,6 +103,15 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
   with the strip + photo feed together — removed from the Trends screen. Pure client UI, no
   backend/shared-model change; new l10n (`navCircle`, `sectionOfficials`, `sectionFriends`,
   `sectionInvited`, `badgeCoach`, `showInviteQr`/`hideInviteQr`). ✅ build 41.
+- **Deleting a recurring entry removes the occurrence, not the series (build 58)** — a "Take daily"
+  (recurring) entry is one stored row shown virtually on every day, so swipe-delete (`remove(id)`) was a
+  soft-delete that wiped it from **all** days. Added a per-entry `skippedDates`
+  ([`food_entry.dart`](lib/src/models/food_entry.dart), additive/back-compat): `entriesForSelectedDayProvider`
+  hides a recurring entry on skipped days, and Today's swipe-delete calls `skipOccurrence(id, date)` for a
+  recurring entry (vs `remove` for a one-off) — so it drops just that day, keeping the series. Stop the
+  whole series by toggling "Take daily" off. Tests: occurrence-skip keeps other days + round-trips
+  ([`recurring_food_test.dart`](test/recurring_food_test.dart)). `flutter analyze` clean, 166 flutter +
+  40 backend tests pass. ✅ build 58.
 - **Circle/profile polish pass (build 57)** — five fixes from the live UX review:
   1. **@handle in the profile dialog** — shown **read-only under the nickname** on the Settings profile
      card (no separate edit button); edited in the **edit-profile dialog** alongside name/age/etc.

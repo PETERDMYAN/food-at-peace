@@ -21,6 +21,7 @@ class FoodEntry {
     this.photoThumb,
     this.recurring = false,
     this.hiddenFromStory = false,
+    this.skippedDates = const [],
   });
 
   final String id;
@@ -59,7 +60,22 @@ class FoodEntry {
   /// tombstone). Additive + backward-compatible.
   final bool hiddenFromStory;
 
+  /// For a [recurring] entry, the days (canonical [dayKey]) the user removed the
+  /// single occurrence from — so deleting it on one day skips just that day
+  /// instead of ending the whole series. Empty for one-off entries. Additive +
+  /// backward-compatible (older clients ignore it → no skips).
+  final List<String> skippedDates;
+
   DateTime get syncUpdatedAt => updatedAt ?? timestamp;
+
+  /// Canonical YYYY-MM-DD key for a date (used for [skippedDates]).
+  static String dayKey(DateTime d) =>
+      '${d.year.toString().padLeft(4, '0')}-'
+      '${d.month.toString().padLeft(2, '0')}-'
+      '${d.day.toString().padLeft(2, '0')}';
+
+  /// Whether this (recurring) entry's occurrence on [date] was removed.
+  bool skippedOn(DateTime date) => skippedDates.contains(dayKey(date));
 
   FoodEntry copyWith({
     String? name,
@@ -75,6 +91,7 @@ class FoodEntry {
     String? photoThumb,
     bool? recurring,
     bool? hiddenFromStory,
+    List<String>? skippedDates,
   }) {
     return FoodEntry(
       id: id,
@@ -91,6 +108,7 @@ class FoodEntry {
       photoThumb: photoThumb ?? this.photoThumb,
       recurring: recurring ?? this.recurring,
       hiddenFromStory: hiddenFromStory ?? this.hiddenFromStory,
+      skippedDates: skippedDates ?? this.skippedDates,
     );
   }
 
@@ -109,6 +127,7 @@ class FoodEntry {
         if (photoThumb != null) 'photoThumb': photoThumb,
         if (recurring) 'recurring': true,
         if (hiddenFromStory) 'hiddenFromStory': true,
+        if (skippedDates.isNotEmpty) 'skippedDates': skippedDates,
       };
 
   factory FoodEntry.fromJson(Map<String, dynamic> json) => FoodEntry(
@@ -129,5 +148,9 @@ class FoodEntry {
         photoThumb: json['photoThumb'] as String?,
         recurring: (json['recurring'] as bool?) ?? false,
         hiddenFromStory: (json['hiddenFromStory'] as bool?) ?? false,
+        skippedDates: [
+          for (final d in (json['skippedDates'] as List? ?? const []))
+            d as String,
+        ],
       );
 }

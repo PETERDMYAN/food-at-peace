@@ -183,8 +183,20 @@ class TodayScreen extends ConsumerWidget {
                   ...entries.map(
                     (e) => _EntryTile(
                       entry: e,
-                      onDelete: () =>
-                          ref.read(foodEntriesProvider.notifier).remove(e.id),
+                      onDelete: () {
+                        final notifier =
+                            ref.read(foodEntriesProvider.notifier);
+                        // A recurring (daily) entry: delete just THIS day's
+                        // occurrence, keeping the series. A one-off: remove it.
+                        if (e.recurring) {
+                          notifier.skipOccurrence(
+                            e.id,
+                            ref.read(selectedDateProvider),
+                          );
+                        } else {
+                          notifier.remove(e.id);
+                        }
+                      },
                       onTap: () => showEntryDailySheet(context, ref, e),
                     ),
                   ),

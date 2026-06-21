@@ -101,6 +101,22 @@ class FoodEntriesNotifier extends Notifier<List<FoodEntry>> {
     await ref.read(foodRepositoryProvider).saveAll(state);
   }
 
+  /// Delete a single day's occurrence of a **recurring** entry: skip it on
+  /// [date] only, keeping the daily series on every other day. (A one-off entry
+  /// uses [remove] instead.) Syncs via [FoodEntry.skippedDates].
+  Future<void> skipOccurrence(String id, DateTime date) async {
+    final key = FoodEntry.dayKey(date);
+    final now = DateTime.now();
+    state = [
+      for (final e in state)
+        if (e.id == id && !e.skippedDates.contains(key))
+          e.copyWith(skippedDates: [...e.skippedDates, key], updatedAt: now)
+        else
+          e,
+    ];
+    await ref.read(foodRepositoryProvider).saveAll(state);
+  }
+
   Future<void> update(FoodEntry entry) async {
     final stamped = entry.copyWith(updatedAt: DateTime.now());
     state = [
@@ -241,7 +257,8 @@ final entriesForSelectedDayProvider = Provider<List<FoodEntry>>((ref) {
       all.where((e) {
         if (e.deleted) return false;
         return e.recurring
-            ? !date.isBefore(dateOnly(e.timestamp)) // every day since it started
+            // every day since it started, minus any occurrences deleted for a day
+            ? !date.isBefore(dateOnly(e.timestamp)) && !e.skippedOn(date)
             : isSameDay(e.timestamp, date);
       }).toList()
         ..sort((a, b) => slot(b).compareTo(slot(a)));
