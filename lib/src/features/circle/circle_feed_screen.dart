@@ -34,42 +34,49 @@ class CircleFeedScreen extends StatelessWidget {
 /// The circle feed list (pull-to-refresh + posts) without its own Scaffold, so it
 /// can sit under the strip on the Circle tab as well as be pushed full-screen.
 class CircleFeedBody extends ConsumerWidget {
-  const CircleFeedBody({super.key});
+  const CircleFeedBody({super.key, this.header});
+
+  /// Optional first item that scrolls **with** the feed. The Circle tab passes the
+  /// stories strip here so the whole page scrolls as one (Instagram-style: the
+  /// stories scroll away as you go down the feed), instead of a fixed header over
+  /// a separately-scrolling feed. Null on the standalone full-screen feed.
+  final Widget? header;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final t = AppLocalizations.of(context);
     final feed = ref.watch(circleFeedProvider);
-    return RefreshIndicator(
-      onRefresh: () => ref.refresh(circleFeedProvider.future),
-      child: feed.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => ListView(
-          children: [
+
+    // The feed content for the current state, as flat list items (so the single
+    // ListView below virtualises them and the [header] scrolls with them).
+    List<Widget> bodyItems() => feed.when(
+          loading: () => const [
+            Padding(
+              padding: EdgeInsets.symmetric(vertical: 48),
+              child: Center(child: CircularProgressIndicator()),
+            ),
+          ],
+          error: (e, _) => [
             Padding(padding: const EdgeInsets.all(24), child: Text('$e')),
           ],
-        ),
-        data: (posts) {
-          // Drop locally hidden posts (reported, or authored by someone the
-          // viewer unfollowed) so flagged content disappears immediately. Also
-          // drop the official @roro's posts when he's been unfollowed.
-          final hidden = ref.watch(hiddenPostsProvider);
-          final roroHidden = ref.watch(roroHiddenProvider);
-          final visible = [
-            for (final p in posts)
-              if (!hidden.contains(p.postId) &&
-                  !(roroHidden &&
-                      (p.authorHandle ?? '').toLowerCase() == kRoroHandle))
-                p,
-          ];
-          // Eva's daily lesson rides at the top of the feed (when followed).
-          final showEva = ref.watch(evaFollowedProvider) &&
-              (ref.watch(evaWisdomProvider).asData?.value.isNotEmpty ?? false);
-          if (visible.isEmpty && !showEva) {
-            return ListView(
-              children: [
+          data: (posts) {
+            // Drop locally hidden posts (reported, or authored by someone the
+            // viewer unfollowed); also drop @roro's posts when he's unfollowed.
+            final hidden = ref.watch(hiddenPostsProvider);
+            final roroHidden = ref.watch(roroHiddenProvider);
+            final visible = [
+              for (final p in posts)
+                if (!hidden.contains(p.postId) &&
+                    !(roroHidden &&
+                        (p.authorHandle ?? '').toLowerCase() == kRoroHandle))
+                  p,
+            ];
+            final showEva = ref.watch(evaFollowedProvider) &&
+                (ref.watch(evaWisdomProvider).asData?.value.isNotEmpty ?? false);
+            if (visible.isEmpty && !showEva) {
+              return [
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(28, 96, 28, 24),
+                  padding: const EdgeInsets.fromLTRB(28, 40, 28, 24),
                   child: Text(
                     t.feedEmpty,
                     textAlign: TextAlign.center,
@@ -78,29 +85,43 @@ class CircleFeedBody extends ConsumerWidget {
                     ),
                   ),
                 ),
-              ],
-            );
-          }
-          // One reverse-chronological stream (newest first): meal posts keyed by
-          // createdAt + Eva's lesson for each of the last 3 days keyed to that day,
-          // interleaved — not 3 Eva cards pinned to the top.
-          final now = DateTime.now();
-          final today = DateTime(now.year, now.month, now.day);
-          final entries = <(int, Widget)>[
-            for (final p in visible) (p.createdAt, _PostCard(post: p)),
-            if (showEva)
-              for (var d = 0; d < 3; d++)
-                (
-                  today.subtract(Duration(days: d)).millisecondsSinceEpoch,
-                  _EvaFeedCard(dayOffset: d),
+              ];
+            }
+            // One reverse-chronological stream (newest first): meal posts keyed by
+            // createdAt + Eva's lesson for each of the last 3 days, interleaved.
+            final now = DateTime.now();
+            final today = DateTime(now.year, now.month, now.day);
+            final entries = <(int, Widget)>[
+              for (final p in visible) (p.createdAt, _PostCard(post: p)),
+              if (showEva)
+                for (var d = 0; d < 3; d++)
+                  (
+                    today.subtract(Duration(days: d)).millisecondsSinceEpoch,
+                    _EvaFeedCard(dayOffset: d),
+                  ),
+            ];
+            entries.sort((a, b) => b.$1.compareTo(a.$1));
+            return [
+              for (final e in entries)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: e.$2,
                 ),
-          ];
-          entries.sort((a, b) => b.$1.compareTo(a.$1));
-          return ListView(
-            padding: const EdgeInsets.fromLTRB(12, 10, 12, 32),
-            children: [for (final e in entries) e.$2],
-          );
-        },
+              const SizedBox(height: 32),
+            ];
+          },
+        );
+
+    return RefreshIndicator(
+      onRefresh: () => ref.refresh(circleFeedProvider.future),
+      child: ListView(
+        padding: EdgeInsets.zero,
+        // Always scrollable so pull-to-refresh works even when the page is short.
+        physics: const AlwaysScrollableScrollPhysics(),
+        children: [
+          ?header,
+          ...bodyItems(),
+        ],
       ),
     );
   }

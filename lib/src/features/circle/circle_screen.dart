@@ -12,22 +12,24 @@ class CircleScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // No AppBar — the bottom-nav tab already says "Circle", so a title bar just
-    // wastes vertical space. SafeArea keeps the content clear of the status bar.
+    // wastes vertical space. The stories strip is the scrolling header of the
+    // feed list (Instagram-style) so the WHOLE page scrolls as one — the strip
+    // scrolls away as you go down the feed, instead of staying pinned.
     return Scaffold(
       body: SafeArea(
         bottom: false,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: const [
-            Padding(
-              padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
-              child: CircleStrip(),
-            ),
-            // The rule needs vertical breathing room (height = total space, line
-            // centred) so it doesn't sit flush against the first feed post.
-            Divider(height: 20),
-            Expanded(child: CircleFeedBody()),
-          ],
+        child: CircleFeedBody(
+          header: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: const [
+              Padding(
+                padding: EdgeInsets.fromLTRB(16, 8, 16, 8),
+                child: CircleStrip(),
+              ),
+              Divider(height: 20),
+            ],
+          ),
         ),
       ),
     );

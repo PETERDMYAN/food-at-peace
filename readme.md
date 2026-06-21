@@ -15,7 +15,10 @@ for real calories burned, and speaks **English and 中文**. Built with Flutter.
 > prod. It identifies the account with **Sign in with Apple on the web** (reuses `/auth/apple`). It's
 > a *standalone* page (no in-app link, so the App Store app is untouched). Remaining before it can
 > charge: Stripe keys + an Apple **Services ID** (`com.foodatpeace.web`) and its domain-association file.
-> **Build 61** adds a blue **"Official" badge** to the first-party accounts (**@roro** and **Eva**) so
+> **Build 62** makes the **Circle tab scroll as one page** (Instagram-style): the stories strip is now
+> the scrolling header of the feed, so it scrolls **away** as you go down — instead of a fixed strip over
+> a separately-scrolling feed, which wasted permanent vertical space. The whole tab is one `ListView`
+> (`CircleFeedBody` takes an optional scrolling `header`); pull-to-refresh still works. **Build 61** adds a blue **"Official" badge** to the first-party accounts (**@roro** and **Eva**) so
 > users can tell them apart from peers — a verified-check on their strip avatars and an "Official" tag by
 > their name in the feed. Shown to everyone **except the creator** (@roro) themselves, and never on your
 > own posts. **Build 60** makes the Circle feed **auto-refresh after you log a photo meal** — sharing a scanned

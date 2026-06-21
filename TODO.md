@@ -103,6 +103,15 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
   with the strip + photo feed together — removed from the Trends screen. Pure client UI, no
   backend/shared-model change; new l10n (`navCircle`, `sectionOfficials`, `sectionFriends`,
   `sectionInvited`, `badgeCoach`, `showInviteQr`/`hideInviteQr`). ✅ build 41.
+- **Circle tab scrolls as one page, Instagram-style (build 62)** — the stories strip was a fixed header
+  over a separately-scrolling feed (wasting permanent vertical space). Now `CircleFeedBody` takes an
+  optional scrolling `header`, and `CircleScreen` passes the strip there, so the whole tab is a single
+  `ListView` — the strip scrolls away with the feed. Pull-to-refresh kept (`AlwaysScrollableScrollPhysics`);
+  the standalone `CircleFeedScreen` passes no header (unchanged).
+  ([`circle_screen.dart`](lib/src/features/circle/circle_screen.dart),
+  [`circle_feed_screen.dart`](lib/src/features/circle/circle_feed_screen.dart)). Verified on-sim per the
+  `verify-in-simulator` skill: at top the strip + feed show; after scrolling the strip is gone (photos
+  load, Official badge present). 168 flutter + 40 backend tests pass. ✅ build 62.
 - **Blue "Official" badge on @roro + Eva (build 61)** — first-party accounts now carry a verified-style
   blue badge so users can distinguish them from peers: a `Icons.verified` check on the strip avatar
   (`StoryAvatar.official`) and an "Official" tag ([`OfficialBadge`](lib/src/widgets/official_badge.dart),
