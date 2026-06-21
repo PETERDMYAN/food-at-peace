@@ -5,13 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <meta name="robots" content="noindex, nofollow" />
 <title>Food at Peace — Recharge beans</title>
-<meta name="theme-color" content="#639922" />
+<meta name="theme-color" content="#6D28D9" />
 <style>
   :root{
     color-scheme:light;
-    --bg:#FBFAF6; --card:#FFFFFF; --ink:#1f2a1c; --muted:#6b7568; --faint:#9aa394;
-    --line:#e6e8e0; --green:#639922; --green-d:#27500A; --green-soft:#EAF3DE;
-    --best:#97C459; --danger:#a32d2d; --danger-soft:#fceaea;
+    --bg:#FBF9FF; --card:#FFFFFF; --ink:#16121F; --muted:#5B5470; --faint:#9A92B0;
+    --line:#E4DDF1; --violet:#6D28D9; --violet-d:#4C1D95; --violet-soft:#EDE7F8;
+    --best:#A78BFA; --danger:#a32d2d; --danger-soft:#fceaea;
   }
   *{box-sizing:border-box}
   body{margin:0;min-height:100vh;color:var(--ink);background:var(--bg);
@@ -19,35 +19,35 @@
     padding:22px 16px 48px;-webkit-font-smoothing:antialiased;}
   .wrap{max-width:560px;margin:0 auto}
   header{display:flex;align-items:center;gap:10px;margin:2px 2px 22px}
-  header .logo{width:30px;height:30px;display:grid;place-items:center;color:var(--green)}
+  header .logo{width:30px;height:30px;display:grid;place-items:center;color:var(--violet)}
   header .name{font-size:16px;font-weight:700;letter-spacing:.2px}
   .spacer{flex:1}
   .lang{display:flex;gap:2px;font-size:13px;border:1px solid var(--line);border-radius:999px;overflow:hidden;background:#fff}
   .lang button{border:0;background:transparent;padding:6px 12px;font:inherit;color:var(--muted);cursor:pointer}
-  .lang button.on{background:var(--green);color:#fff;font-weight:600}
+  .lang button.on{background:var(--violet);color:#fff;font-weight:600}
   .card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:22px}
   h1{font-size:22px;margin:0 0 4px;font-weight:700}
   .sub{margin:0 0 18px;color:var(--muted);font-size:14px;line-height:1.5}
-  .bal{display:inline-flex;align-items:center;gap:8px;background:var(--green-soft);
-    color:var(--green-d);border-radius:999px;padding:7px 15px;font-size:14px;margin-bottom:20px}
+  .bal{display:inline-flex;align-items:center;gap:8px;background:var(--violet-soft);
+    color:var(--violet-d);border-radius:999px;padding:7px 15px;font-size:14px;margin-bottom:20px}
   .bal b{font-weight:700}
   .bal.loading{opacity:.55}
   .packs{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px}
   .pk{position:relative;background:#fff;border:1.5px solid var(--line);border-radius:15px;
     padding:15px 8px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s}
   .pk:hover{border-color:var(--best)}
-  .pk.sel{border-color:var(--green);background:var(--green-soft)}
+  .pk.sel{border-color:var(--violet);background:var(--violet-soft)}
   .pk .n{font-size:23px;font-weight:700;line-height:1.05}
   .pk .u{font-size:12px;color:var(--muted);margin:2px 0 7px}
   .pk .p{font-size:13px;font-weight:600}
-  .pk.sel .u{color:var(--green-d)}
-  .pk .tick{position:absolute;top:7px;right:7px;color:var(--green);font-size:16px;display:none}
+  .pk.sel .u{color:var(--violet-d)}
+  .pk .tick{position:absolute;top:7px;right:7px;color:var(--violet);font-size:16px;display:none}
   .pk.sel .tick{display:block}
   .pk .best{position:absolute;top:-9px;left:50%;transform:translateX(-50%);white-space:nowrap;
-    background:var(--green);color:#fff;font-size:11px;font-weight:600;padding:2px 9px;border-radius:999px}
-  button.pay{width:100%;border:0;border-radius:13px;background:var(--green);color:#fff;
+    background:#E85CC4;color:#fff;font-size:11px;font-weight:600;padding:2px 9px;border-radius:999px}
+  button.pay{width:100%;border:0;border-radius:13px;background:var(--violet);color:#fff;
     padding:15px;font:inherit;font-size:16px;font-weight:700;cursor:pointer}
-  button.pay:hover{background:#577f1f}
+  button.pay:hover{background:#5B21B6}
   button.pay:disabled{opacity:.6;cursor:default}
   .secure{display:flex;align-items:center;justify-content:center;gap:7px;margin-top:13px;
     color:var(--faint);font-size:12px}
@@ -56,23 +56,23 @@
   label{display:block;font-size:13px;color:var(--muted);margin:0 0 7px;font-weight:600}
   input{width:100%;padding:13px 14px;border-radius:12px;border:1px solid var(--line);
     background:#fff;color:var(--ink);font-size:14px;font-family:inherit}
-  input:focus{outline:none;border-color:var(--green)}
+  input:focus{outline:none;border-color:var(--violet)}
   .err{color:var(--danger);font-size:13px;margin:12px 0 0;min-height:18px}
   .panel-icon{width:54px;height:54px;border-radius:50%;display:grid;place-items:center;
     margin:4px auto 14px;font-size:27px}
-  .panel-icon.ok{background:var(--green-soft);color:var(--green)}
-  .panel-icon.spin{background:var(--green-soft);color:var(--green)}
+  .panel-icon.ok{background:var(--violet-soft);color:var(--violet)}
+  .panel-icon.spin{background:var(--violet-soft);color:var(--violet)}
   .panel-icon.warn{background:#fff6e6;color:#854f0b}
   .panel-icon.bad{background:var(--danger-soft);color:var(--danger)}
   .center{text-align:center}
   .center h2{font-size:20px;margin:0 0 6px;font-weight:700}
   .center p{margin:0 auto;color:var(--muted);font-size:14px;line-height:1.55;max-width:34ch}
-  .center .big{font-size:30px;font-weight:800;color:var(--green-d);margin:14px 0 2px}
+  .center .big{font-size:30px;font-weight:800;color:var(--violet-d);margin:14px 0 2px}
   .ghostbtn{margin-top:18px;background:#fff;border:1px solid var(--line);border-radius:12px;
     padding:11px 18px;font:inherit;font-size:14px;font-weight:600;color:var(--ink);cursor:pointer}
-  .ghostbtn:hover{border-color:var(--green)}
-  .spinner{width:26px;height:26px;border-radius:50%;border:3px solid var(--green-soft);
-    border-top-color:var(--green);animation:sp 0.8s linear infinite}
+  .ghostbtn:hover{border-color:var(--violet)}
+  .spinner{width:26px;height:26px;border-radius:50%;border:3px solid var(--violet-soft);
+    border-top-color:var(--violet);animation:sp 0.8s linear infinite}
   @keyframes sp{to{transform:rotate(360deg)}}
   .apple-btn{width:100%;display:flex;align-items:center;justify-content:center;gap:9px;
     background:#000;color:#fff;border:0;border-radius:13px;padding:14px;font:inherit;
