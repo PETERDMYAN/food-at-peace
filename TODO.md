@@ -103,7 +103,23 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
   with the strip + photo feed together — removed from the Trends screen. Pure client UI, no
   backend/shared-model change; new l10n (`navCircle`, `sectionOfficials`, `sectionFriends`,
   `sectionInvited`, `badgeCoach`, `showInviteQr`/`hideInviteQr`). ✅ build 41.
-- **Recharge Beans by @handle — "public deposit address" (built; prod deploy gated)** — the web recharge
+- **Circle/profile polish pass (build 57)** — five fixes from the live UX review:
+  1. **@handle in the profile dialog** — shown **read-only under the nickname** on the Settings profile
+     card (no separate edit button); edited in the **edit-profile dialog** alongside name/age/etc.
+     ([`settings_screen.dart`](lib/src/features/settings/settings_screen.dart),
+     [`edit_profile_dialog.dart`](lib/src/features/settings/edit_profile_dialog.dart); removed `_HandleRow`).
+  2. **@roro is unfollowable, consistently** — Manage showed Eva "Unfollow" (button) vs Roro "Following"
+     (label). Added a local `roroHiddenProvider` (mirrors `evaFollowed`) so both officials have a working
+     **Unfollow**; hiding removes him from the strip + feed; re-follow (Suggested) clears it.
+     ([`providers.dart`](lib/src/providers/providers.dart), strip, feed, manage).
+  3. **Friend/Roro story "seen" rings** — were always unseen; now grey out once the story is viewed
+     (`friendStorySeenKey` + `openFriendStory` marks seen), flipping back when they share something new.
+  4. **No double Roro when logged in as @roro** — `_officialRoro` returns null when the viewer *is* Roro
+     (they're already the "You" story).
+  5. **Reacting while signed out** prompts sign-in (`signInToReact`) instead of silently doing nothing —
+     reactions are attributed to an account.
+  Client-only; `flutter analyze` clean, 164 flutter + 40 backend tests pass. ✅ build 57.
+- **Recharge Beans by @handle — "public deposit address" (LIVE on prod)** — the web recharge
   page lets anyone top up an account by its **@handle** (self top-up from any browser, or gifting), in
   addition to Sign in with Apple. The account id is resolved **server-side and never exposed**.
   - Backend ([`recharge.py`](backend/src/recharge.py), additive): `GET /recharge/handle?handle=<h>`
@@ -117,9 +133,12 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
   - Tests: `test_resolve_handle_returns_name_never_account_id`, `test_resolve_unknown_handle_404`,
     `test_checkout_by_handle_targets_resolved_account`, `test_checkout_unknown_handle_404` (16 recharge
     tests pass). Web UI verified in a local preview (gate + handle-mode shop render; no JS errors).
-  - **Not deployed:** the prod payment backend (`food-at-peace-vision-proxy` RechargeFunction) deploy is
-    **awaiting explicit confirmation** — recharge isn't a 1.0.0-contract handler, but it's the live
-    payment path, so per `production-safety` it deploys only on a deliberate go-ahead.
+  - **Deployed to prod (isolated):** RechargeFunction code + `CIRCLE_TABLE` env + `dynamodb:GetItem` on
+    CircleTable + a new `GET /recharge/handle` HTTP-API route (reusing the existing integration) +
+    matching Lambda invoke permission. The page is published (S3 sync + CloudFront invalidation). Verified
+    live: resolve `roro` → 200 + correct CORS for `foodatpeace.app`; unknown → 404; checkout-by-handle
+    resolves and reaches Stripe (`configured:false` until keys are set, so no charge risk introduced); the
+    signed-in path still 401s without auth/handle (contract intact). 1.0.0-contract handlers untouched.
 - **Story archive "black/blank" pages → clean no-photo card (build 56)** — a meal with no available
   image (a **manual** entry, or a **photo** whose image isn't on this device — no local file, no synced
   `photoThumb`, nothing to pull from S3) rendered as a near-black blank `_StoryScaffold` with only the

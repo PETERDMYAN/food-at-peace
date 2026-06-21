@@ -15,13 +15,24 @@ for real calories burned, and speaks **English and 中文**. Built with Flutter.
 > prod. It identifies the account with **Sign in with Apple on the web** (reuses `/auth/apple`). It's
 > a *standalone* page (no in-app link, so the App Store app is untouched). Remaining before it can
 > charge: Stripe keys + an Apple **Services ID** (`com.foodatpeace.web`) and its domain-association file.
-> **Recharge Beans by @handle (built, NOT yet deployed to prod):** the web recharge page
-> (`foodatpeace.app/recharge`) now also lets anyone enter a **@handle** to top up that account — a
-> "public deposit address" for Beans (works for your own top-up from any browser, and for gifting). The
-> server resolves the handle → account **server-side** (the account id is never exposed); Apple sign-in
-> stays as the alternative. Backend is additive (`GET /recharge/handle` resolve + an optional `handle`
-> on `/recharge/checkout`) with 16 passing tests; the web UI is built and verified. **Deploy to the prod
-> payment backend is awaiting an explicit go-ahead.** **Build 56** fixes the **Story archive's "black/blank" pages**: a
+> **Build 57** is a Circle/profile polish pass from the live review: (a) **@handle moved into the profile
+> dialog** — shown read-only under your nickname (no separate edit button), edited via the profile pen;
+> (b) the official **@roro is now properly unfollowable** (consistent **Unfollow** on both Eva and Roro
+> in Manage — no more "Unfollow" vs "Following" mismatch — backed by a local `roroHidden` flag that hides
+> him from the strip + feed); (c) **friend/Roro story rings now grey out once viewed** (were always
+> "unseen"); (d) **logged in as @roro you no longer see two Roros** (the official avatar is suppressed
+> for yourself); (e) tapping a reaction while **signed out now prompts sign-in** instead of doing nothing.
+> **Recharge Beans by @handle is LIVE** (deployed to prod, page published): on `foodatpeace.app/recharge`
+> you can enter a **@handle** to top up that account (resolved server-side, id never exposed); charging
+> stays inert until Stripe keys are set.
+>
+> **Recharge Beans by @handle (LIVE on prod):** the web recharge page (`foodatpeace.app/recharge`) lets
+> anyone enter a **@handle** to top up that account — a "public deposit address" for Beans (your own
+> top-up from any browser, or gifting). The server resolves the handle → account **server-side** (the
+> account id is never exposed); Apple sign-in stays as the alternative. Additive backend (`GET
+> /recharge/handle` + optional `handle` on `/recharge/checkout`, 16 tests) deployed isolated to the prod
+> RechargeFunction + a new `GET /recharge/handle` route; the page is published (S3 + CloudFront). Charging
+> stays inert until Stripe keys are set. **Build 56** fixes the **Story archive's "black/blank" pages**: a
 > meal with no available image (a manual entry, or a photo whose image isn't on this device) used to
 > render as a near-black blank screen with only a caption. It now shows a clean, intentional card — an
 > "image unavailable" / meal icon above the dish + nutrition — so it reads as designed, not broken. (The

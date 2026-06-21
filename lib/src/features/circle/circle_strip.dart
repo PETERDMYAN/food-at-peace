@@ -54,13 +54,11 @@ class CircleStrip extends ConsumerWidget {
     // Your story = what your friends see: the meals you've SHARED to the circle
     // (your own photo posts), NOT your whole food log. The full food log is
     // behind the Archive (history) icon.
-    final myPosts = ref
-            .watch(circleFeedProvider)
-            .asData
-            ?.value
-            .where((p) => p.mine && (p.photoUrl ?? '').isNotEmpty)
-            .toList() ??
-        const <CirclePost>[];
+    final feedPosts =
+        ref.watch(circleFeedProvider).asData?.value ?? const <CirclePost>[];
+    final myPosts = feedPosts
+        .where((p) => p.mine && (p.photoUrl ?? '').isNotEmpty)
+        .toList();
 
     // Story "seen" rings: the key embeds the content (newest shared post + count
     // / the day's Eva lesson) so fresh content resets the ring back to unseen.
@@ -162,6 +160,7 @@ class CircleStrip extends ConsumerWidget {
                     colorSeed: roroFriend.id.hashCode,
                     imageUrl: roroFriend.photoUrl,
                     imageCacheKey: roroFriend.id,
+                    seen: seen.contains(friendStorySeenKey(roroFriend, feedPosts)),
                     onTap: () => openFriendStory(context, ref, roroFriend),
                   ),
                   onTap: () => openFriendStory(context, ref, roroFriend),
@@ -174,6 +173,7 @@ class CircleStrip extends ConsumerWidget {
                     colorSeed: f.id.hashCode,
                     imageUrl: f.photoUrl,
                     imageCacheKey: f.id,
+                    seen: seen.contains(friendStorySeenKey(f, feedPosts)),
                     onTap: () => openFriendStory(context, ref, f),
                   ),
                   onTap: () => openFriendStory(context, ref, f),
@@ -701,6 +701,22 @@ String _initialsFor(String name) {
 String myPublicStoryKey(List<CirclePost> posts) =>
     posts.isEmpty ? 'you:noposts' : 'you:${posts.first.postId}:${posts.length}';
 
+/// Seen-ring key for a friend's story: their newest shared post + count (keyed by
+/// the friend id so it's stable), so the ring greys out once viewed and flips
+/// back to unseen when they share something new. Empty = no story to mark.
+String friendStorySeenKey(Friend friend, List<CirclePost> feedPosts) {
+  final handle = friend.handle.replaceFirst('@', '').toLowerCase();
+  final mine = feedPosts
+      .where((p) =>
+          (p.photoUrl ?? '').isNotEmpty &&
+          (p.authorId == friend.id ||
+              (handle.isNotEmpty && (p.authorHandle ?? '').toLowerCase() == handle)))
+      .toList();
+  return mine.isEmpty
+      ? 'friend:${friend.id}:none'
+      : 'friend:${friend.id}:${mine.first.postId}:${mine.length}';
+}
+
 /// The official @roro account as the **feed** knows him — real authorId, name,
 /// and profile photo — so the strip avatar shows his photo and [openFriendStory]
 /// finds his real posts instead of a fabricated trend. This deliberately wins
@@ -708,6 +724,11 @@ String myPublicStoryKey(List<CirclePost> posts) =>
 /// mock trend and no photo). Falls back to the friend-graph entry until the feed
 /// loads, then null when there's nothing to show.
 Friend? _officialRoro(WidgetRef ref, List<Friend> connected) {
+  // The viewer IS @roro → they're already the "You" story; don't show a second
+  // Roro avatar for themselves.
+  if (ref.watch(myCircleHandleProvider)?.toLowerCase() == kRoroHandle) return null;
+  // Deliberately unfollowed → hide him (mirrors Eva).
+  if (ref.watch(roroHiddenProvider)) return null;
   final graph =
       connected.where((f) => f.handle == '@$kRoroHandle').toList();
   final fromGraph = graph.isEmpty ? null : graph.first;
@@ -773,6 +794,11 @@ void openFriendStory(BuildContext context, WidgetRef ref, Friend friend) {
         ],
       ),
     ],
+    // Mark the ring "seen" once their story is shown (greys out until they share
+    // something new) — same behaviour as the You / Eva stories.
+    onStoryViewed: (_) => ref
+        .read(seenStoriesProvider.notifier)
+        .markSeen(friendStorySeenKey(friend, posts)),
   );
 }
 

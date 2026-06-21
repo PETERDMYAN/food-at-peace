@@ -105,20 +105,19 @@ class ManageCircleScreen extends ConsumerWidget {
                   child: Text(t.feedUnfollow),
                 ),
               ),
-            // Followed via the official feed (e.g. signed out) — there's no friend
-            // edge to unfollow, so show a "Following" status instead of a button.
+            // Followed via the official feed (e.g. signed out) — no friend edge to
+            // remove, so "Unfollow" sets the local hidden flag (same verb as Eva,
+            // not a bare status label).
             if (roroFriends.isEmpty && followsRoro)
               _OfficialTile(
                 name: t.roroName,
                 role: roroTag,
                 badge: t.roroRole,
                 seed: kRoroHandle.hashCode,
-                trailing: Text(
-                  t.followingLabel,
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    fontWeight: FontWeight.w600,
-                  ),
+                trailing: TextButton(
+                  onPressed: () =>
+                      ref.read(roroHiddenProvider.notifier).setHidden(true),
+                  child: Text(t.feedUnfollow),
                 ),
               ),
           ],
@@ -232,6 +231,9 @@ class ManageCircleScreen extends ConsumerWidget {
   Future<void> _followRoro(BuildContext context, WidgetRef ref) async {
     final t = AppLocalizations.of(context);
     final messenger = ScaffoldMessenger.of(context);
+    // Clear a prior local "unfollow" first (covers the signed-out case where
+    // there's no graph edge), then connect the real edge when signed in.
+    await ref.read(roroHiddenProvider.notifier).setHidden(false);
     try {
       await ref.read(circleProvider.notifier).connect(kRoroHandle);
       messenger.showSnackBar(

@@ -1327,13 +1327,34 @@ final evaFollowedProvider = NotifierProvider<EvaFollowedNotifier, bool>(
   EvaFollowedNotifier.new,
 );
 
+/// Whether the user has deliberately **unfollowed** the official @roro. Mirrors
+/// [evaFollowedProvider] so the official account is unfollowable the same way Eva
+/// is — even signed out (where there's no friend-graph edge): set this and the
+/// strip, feed, and Manage all hide him; clear it to re-follow. Persisted.
+class RoroHiddenNotifier extends Notifier<bool> {
+  static const _key = 'circle_roro_hidden';
+
+  @override
+  bool build() => ref.read(sharedPreferencesProvider).getBool(_key) ?? false;
+
+  Future<void> setHidden(bool value) async {
+    state = value;
+    await ref.read(sharedPreferencesProvider).setBool(_key, value);
+  }
+}
+
+final roroHiddenProvider = NotifierProvider<RoroHiddenNotifier, bool>(
+  RoroHiddenNotifier.new,
+);
+
 /// True once the user is mutually connected to the creator's account (@roro), so
 /// the "Suggested: Roro" recommendation can hide itself. Also true when the
 /// viewer **is** the creator (their own handle is @roro) — never suggest someone
-/// follow themselves.
+/// follow themselves. False once they deliberately unfollow ([roroHiddenProvider]).
 final followsRoroProvider = Provider<bool>((ref) {
   final mine = ref.watch(myCircleHandleProvider)?.toLowerCase();
   if (mine == kRoroHandle) return true;
+  if (ref.watch(roroHiddenProvider)) return false; // deliberately unfollowed
   final target = '@$kRoroHandle';
   final inGraph = ref.watch(circleProvider).any(
     (f) => f.status == FriendStatus.connected &&

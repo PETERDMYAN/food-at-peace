@@ -476,6 +476,7 @@
   "handleTaken": "That handle is taken — try another",
   "handleInvalid": "Use 2–20 letters, numbers or _",
   "handleError": "Couldn't save your handle — try again",
+  "signInToReact": "Sign in (Settings) to react to posts",
   "handleFindHint": "Friends find & add you — and recharge Beans — with this",
   "handleAssigning": "Assigning your handle…",
   "handleSignInHint": "Sign in to claim a handle others can find",

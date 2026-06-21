@@ -1856,6 +1856,12 @@ abstract class AppLocalizations {
   /// **'Couldn\'t save your handle — try again'**
   String get handleError;
 
+  /// No description provided for @signInToReact.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in (Settings) to react to posts'**
+  String get signInToReact;
+
   /// No description provided for @handleFindHint.
   ///
   /// In en, this message translates to:

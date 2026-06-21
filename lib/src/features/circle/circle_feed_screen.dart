@@ -50,11 +50,16 @@ class CircleFeedBody extends ConsumerWidget {
         ),
         data: (posts) {
           // Drop locally hidden posts (reported, or authored by someone the
-          // viewer unfollowed) so flagged content disappears immediately.
+          // viewer unfollowed) so flagged content disappears immediately. Also
+          // drop the official @roro's posts when he's been unfollowed.
           final hidden = ref.watch(hiddenPostsProvider);
+          final roroHidden = ref.watch(roroHiddenProvider);
           final visible = [
             for (final p in posts)
-              if (!hidden.contains(p.postId)) p,
+              if (!hidden.contains(p.postId) &&
+                  !(roroHidden &&
+                      (p.authorHandle ?? '').toLowerCase() == kRoroHandle))
+                p,
           ];
           // Eva's daily lesson rides at the top of the feed (when followed).
           final showEva = ref.watch(evaFollowedProvider) &&
@@ -255,7 +260,7 @@ class _PostCard extends ConsumerWidget {
                     emoji: emoji,
                     count: post.reactions[emoji] ?? 0,
                     selected: post.myReaction == emoji,
-                    onTap: () => _react(ref, emoji),
+                    onTap: () => _react(context, ref, emoji),
                   ),
               ],
             ),
@@ -273,9 +278,16 @@ class _PostCard extends ConsumerWidget {
     );
   }
 
-  Future<void> _react(WidgetRef ref, String emoji) async {
+  Future<void> _react(BuildContext context, WidgetRef ref, String emoji) async {
     final token = ref.read(authProvider)?.token;
-    if (token == null || token.isEmpty) return;
+    if (token == null || token.isEmpty) {
+      // Reactions are attributed to an account, so they need sign-in — tell the
+      // viewer instead of silently doing nothing.
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context).signInToReact)),
+      );
+      return;
+    }
     try {
       await ref
           .read(postsClientProvider)

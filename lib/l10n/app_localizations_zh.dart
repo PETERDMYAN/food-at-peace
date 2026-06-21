@@ -973,6 +973,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get handleError => '保存用户名失败，请重试';
 
   @override
+  String get signInToReact => '登录（在设置中）后才能对帖子点赞';
+
+  @override
   String get handleFindHint => '好友凭它找到并添加你，也可用它充值豆子';
 
   @override

@@ -1003,6 +1003,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get handleError => 'Couldn\'t save your handle — try again';
 
   @override
+  String get signInToReact => 'Sign in (Settings) to react to posts';
+
+  @override
   String get handleFindHint =>
       'Friends find & add you — and recharge Beans — with this';
 

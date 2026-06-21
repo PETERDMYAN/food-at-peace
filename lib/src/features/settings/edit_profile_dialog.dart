@@ -33,6 +33,12 @@ Future<void> showEditProfileDialog(BuildContext context, WidgetRef ref) async {
         ? p.weightKg.round().toString()
         : p.weightKg.toStringAsFixed(1),
   );
+  final handle = TextEditingController(
+    text: ref.read(myCircleHandleProvider) ?? '',
+  );
+  // Captured before the dialog await so the handle-result SnackBar doesn't use
+  // `context` across an async gap.
+  final messenger = ScaffoldMessenger.of(context);
   var sex = p.sex;
   InputDecoration dec(String label, [String? suffix]) =>
       InputDecoration(labelText: label, suffixText: suffix);
@@ -51,6 +57,19 @@ Future<void> showEditProfileDialog(BuildContext context, WidgetRef ref) async {
                 textCapitalization: TextCapitalization.words,
                 textInputAction: TextInputAction.next,
                 decoration: dec(t.nickname),
+              ),
+              const SizedBox(height: 12),
+              // The @handle lives here (shown read-only under the nickname on the
+              // profile card). Friends find you — and recharge Beans — with it.
+              TextField(
+                controller: handle,
+                autocorrect: false,
+                enableSuggestions: false,
+                decoration: InputDecoration(
+                  labelText: t.yourHandle,
+                  prefixText: '@',
+                  helperText: t.handleHint,
+                ),
               ),
               const SizedBox(height: 16),
               SegmentedButton<Sex>(
@@ -120,6 +139,21 @@ Future<void> showEditProfileDialog(BuildContext context, WidgetRef ref) async {
             sexManuallySet: p2.sexManuallySet || sex != p2.sex,
           ),
         );
+    // Save the @handle too if it changed — validated, reporting taken/invalid.
+    final newHandle = handle.text.trim().replaceAll('@', '');
+    final oldHandle = ref.read(myCircleHandleProvider) ?? '';
+    if (newHandle.isNotEmpty &&
+        newHandle.toLowerCase() != oldHandle.toLowerCase()) {
+      final outcome =
+          await ref.read(circleProvider.notifier).setHandle(newHandle);
+      final msg = switch (outcome) {
+        SetHandleResult.ok => t.handleSaved('@${newHandle.toLowerCase()}'),
+        SetHandleResult.taken => t.handleTaken,
+        SetHandleResult.invalid => t.handleInvalid,
+        SetHandleResult.error => t.handleError,
+      };
+      messenger.showSnackBar(SnackBar(content: Text(msg)));
+    }
     // Write edited height/weight back to Apple Health (best-effort).
     if (ref.read(healthConnectedProvider)) {
       final svc = ref.read(healthServiceProvider);
@@ -130,6 +164,7 @@ Future<void> showEditProfileDialog(BuildContext context, WidgetRef ref) async {
     }
   }
   name.dispose();
+  handle.dispose();
   age.dispose();
   height.dispose();
   weight.dispose();

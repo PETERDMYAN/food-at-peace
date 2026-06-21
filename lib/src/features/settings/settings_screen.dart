@@ -22,7 +22,6 @@ import '../../util/l10n_labels.dart';
 import '../../widgets/bean_icon.dart';
 import '../../widgets/icon_tile.dart';
 import '../../widgets/story_avatar.dart';
-import '../circle/invite_card.dart';
 import '../feedback/feedback_screen.dart';
 import '../sources/sources_screen.dart';
 import '../wallet/beans_screen.dart';
@@ -521,6 +520,11 @@ class _ProfileStatsCardState extends ConsumerState<_ProfileStatsCard> {
     final photo = ref.watch(profilePhotoProvider);
     final connected = ref.watch(healthConnectedProvider);
     final lastSync = ref.watch(healthSyncProvider);
+    // Watching circleProvider keeps it alive so the @handle auto-assigns when
+    // signed in even if the Circle tab is never opened; it's shown read-only
+    // under the nickname (editing happens in the profile dialog).
+    ref.watch(circleProvider);
+    final handle = ref.watch(myCircleHandleProvider);
     return Card(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 12, 8, 10),
@@ -578,22 +582,37 @@ class _ProfileStatsCardState extends ConsumerState<_ProfileStatsCard> {
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: Text(
-                    (profile.name?.trim().isNotEmpty ?? false)
-                        ? profile.name!.trim()
-                        : t.todoAddName,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: (profile.name?.trim().isNotEmpty ?? false)
-                          ? null
-                          : scheme.onSurfaceVariant,
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        (profile.name?.trim().isNotEmpty ?? false)
+                            ? profile.name!.trim()
+                            : t.todoAddName,
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          color: (profile.name?.trim().isNotEmpty ?? false)
+                              ? null
+                              : scheme.onSurfaceVariant,
+                        ),
+                      ),
+                      // The @handle, read-only, right under the nickname. Friends
+                      // find you (and recharge Beans) with it; edit it in the
+                      // profile dialog (the pen above), not a separate button.
+                      if (handle != null && handle.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 2),
+                          child: Text(
+                            '@$handle',
+                            style: Theme.of(context).textTheme.bodySmall
+                                ?.copyWith(color: scheme.onSurfaceVariant),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 10),
-            const _HandleRow(),
             const SizedBox(height: 12),
             // Unconfigured values are placeholders, not facts — show dashes
             // until the user (or Apple Health) provides the real ones.
@@ -696,106 +715,6 @@ class _MiniStat extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-/// The user's **@handle** as part of their profile — the unique id others find &
-/// add them by (and recharge Beans into). Auto-assigned on sign-in (deriving from
-/// the nickname server-side); tap to change, or copy to share. Watching
-/// `circleProvider` here initialises it so the handle is assigned even for a
-/// signed-in user who never opens the Circle tab.
-class _HandleRow extends ConsumerWidget {
-  const _HandleRow();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final t = AppLocalizations.of(context);
-    final scheme = Theme.of(context).colorScheme;
-    final signedIn = ref.watch(authProvider) != null;
-    ref.watch(circleProvider); // triggers handle auto-assign when signed in
-    final handle = ref.watch(myCircleHandleProvider);
-
-    final lead = Icon(
-      Icons.alternate_email,
-      size: 18,
-      color: scheme.onSurfaceVariant,
-    );
-    final hintStyle = Theme.of(context).textTheme.labelSmall?.copyWith(
-      color: scheme.onSurfaceVariant,
-    );
-
-    Widget body;
-    if (handle != null) {
-      final at = '@$handle';
-      body = Row(
-        children: [
-          lead,
-          const SizedBox(width: 8),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  at,
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                Text(t.handleFindHint, style: hintStyle),
-              ],
-            ),
-          ),
-          IconButton(
-            visualDensity: VisualDensity.compact,
-            tooltip: t.setHandle,
-            icon: const Icon(Icons.edit_outlined, size: 18),
-            onPressed: () => editCircleHandle(context, ref),
-          ),
-          IconButton(
-            visualDensity: VisualDensity.compact,
-            tooltip: t.yourHandle,
-            icon: const Icon(Icons.copy, size: 18),
-            onPressed: () {
-              Clipboard.setData(ClipboardData(text: at));
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text(t.handleCopied(at))),
-              );
-            },
-          ),
-        ],
-      );
-    } else if (signedIn) {
-      // Signed in, but the handle hasn't derived/synced yet — offer to set one.
-      body = Row(
-        children: [
-          lead,
-          const SizedBox(width: 8),
-          Expanded(child: Text(t.handleAssigning, style: hintStyle)),
-          TextButton(
-            onPressed: () => editCircleHandle(context, ref),
-            child: Text(t.setHandle),
-          ),
-        ],
-      );
-    } else {
-      // Signed out: a handle others can find needs the backend, so prompt sign-in.
-      body = Row(
-        children: [
-          lead,
-          const SizedBox(width: 8),
-          Expanded(child: Text(t.handleSignInHint, style: hintStyle)),
-        ],
-      );
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: scheme.surfaceContainerHighest.withValues(alpha: 0.4),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: body,
     );
   }
 }

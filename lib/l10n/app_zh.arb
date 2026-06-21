@@ -308,6 +308,7 @@
   "handleTaken": "该用户名已被占用，换一个试试",
   "handleInvalid": "请使用 2–20 个字母、数字或下划线",
   "handleError": "保存用户名失败，请重试",
+  "signInToReact": "登录（在设置中）后才能对帖子点赞",
   "handleFindHint": "好友凭它找到并添加你，也可用它充值豆子",
   "handleAssigning": "正在分配你的用户名…",
   "handleSignInHint": "登录后即可获得可被他人找到的用户名",
