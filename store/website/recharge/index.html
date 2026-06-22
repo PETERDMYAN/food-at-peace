@@ -104,14 +104,36 @@
     </div>
   </header>
 
+  <!-- Gradient "bean" mark — matches the app's BeanIcon (kidney bean + iridescent
+       gold->mint->sky->lavender gradient + gloss). Referenced via <use href="#fapBean">. -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+    <linearGradient id="fapBeanGrad" x1="0" y1="12" x2="24" y2="12" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFD86B"/><stop offset=".33" stop-color="#8FE3A8"/>
+      <stop offset=".66" stop-color="#74C0FF"/><stop offset="1" stop-color="#B79CFF"/>
+    </linearGradient>
+    <mask id="fapBeanMask">
+      <rect width="24" height="24" fill="#000"/>
+      <ellipse cx="11.04" cy="12" rx="9.6" ry="11.28" fill="#fff"/>
+      <circle cx="21.6" cy="11.04" r="7.2" fill="#000"/>
+    </mask>
+    <symbol id="fapBean" viewBox="0 0 24 24">
+      <g transform="rotate(-31.5 12 12)">
+        <rect width="24" height="24" fill="url(#fapBeanGrad)" mask="url(#fapBeanMask)"/>
+        <circle cx="8.16" cy="8.16" r="2.4" fill="#fff" opacity=".55"/>
+      </g>
+    </symbol>
+  </defs></svg>
+
   <!-- ============ SHOP ============ -->
   <main id="shop" class="card hide">
     <h1 id="s-title">Recharge beans</h1>
     <p class="sub" id="s-sub">Top up your account to keep scanning meals.</p>
     <div class="bal loading" id="bal">
-      <span aria-hidden="true">🫘</span>
+      <svg aria-hidden="true" style="width:22px;height:22px;flex:none"><use href="#fapBean"/></svg>
       <span><span id="bal-label">Balance</span> <b id="bal-val">—</b></span>
     </div>
+    <button id="change-recipient" class="changebtn hide" type="button"
+      style="background:none;border:0;color:#6D28D9;font:inherit;font-size:13px;cursor:pointer;margin:-2px 0 10px;padding:2px 0">↺ <span id="change-txt">Change recipient</span></button>
     <div class="packs" id="packs"></div>
     <button class="pay" id="pay" type="button">Pay</button>
     <div class="secure" id="secure">
@@ -176,7 +198,7 @@
   var LS_BASE  = "fap_recharge_base";
 
   var PACKS = [
-    {id:"beans_25",  beans:25,  price:"S$0.48"},
+    {id:"beans_25",  beans:25,  price:"S$0.50"},
     {id:"beans_100", beans:100, price:"S$1.99"},
     {id:"beans_200", beans:200, price:"S$3.99"},
     {id:"beans_300", beans:300, price:"S$5.99"},
@@ -217,7 +239,7 @@
       handleRecharge:"Recharge by @handle", handleFind:"Find account",
       handleHint:"Top up any account by its handle — no sign-in needed.",
       handleEnter:"Enter a handle.", handleNotFound:"No account with that handle.",
-      rechargingInto:"Recharging", orWord:"or",
+      rechargingInto:"Recharging", orWord:"or", changeRecipient:"Change recipient",
       okHandle:"Beans added to {h}. You can close this page."
     },
     zh:{
@@ -246,7 +268,7 @@
       handleRecharge:"用 @用户名 充值", handleFind:"查找账户",
       handleHint:"凭用户名为任意账户充值——无需登录。",
       handleEnter:"请输入用户名。", handleNotFound:"未找到该用户名的账户。",
-      rechargingInto:"正在充值给", orWord:"或",
+      rechargingInto:"正在充值给", orWord:"或", changeRecipient:"更换账户",
       okHandle:"已为 {h} 充值豆子。可以关闭此页面。"
     }
   };
@@ -314,7 +336,7 @@
       return '<div class="pk'+sel+'" data-id="'+p.id+'" role="button" tabindex="0">'+best+
         '<span class="tick" aria-hidden="true">✓</span>'+
         '<div class="n">'+num(p.beans)+'</div>'+
-        '<div class="u">'+(lang==="zh"?"豆":"beans")+'</div>'+
+        '<div class="u"><svg aria-hidden="true" style="width:14px;height:14px;vertical-align:-2px;margin-right:3px"><use href="#fapBean"/></svg>'+(lang==="zh"?"豆":"beans")+'</div>'+
         '<div class="p">'+p.price+'</div></div>';
     }).join("");
     Array.prototype.forEach.call(document.querySelectorAll(".pk"), function(el){
@@ -363,8 +385,11 @@
       $("bal-label").textContent = t("rechargingInto");
       $("bal-val").textContent = "@"+rechargeHandle +
         (rechargeName && rechargeName!==rechargeHandle ? " · "+rechargeName : "");
+      $("change-txt").textContent = t("changeRecipient");
+      $("change-recipient").classList.remove("hide");
       return;
     }
+    $("change-recipient").classList.add("hide");
     $("bal-label").textContent = t("balance");
     $("bal").classList.add("loading"); $("bal-val").textContent = "—";
     fetchBalance().then(function(bal){
@@ -521,6 +546,12 @@
     });
   }
   $("apple-signin").addEventListener("click", appleSignIn);
+  $("change-recipient").addEventListener("click", function(){
+    rechargeHandle = null; rechargeName = null;
+    sessionStorage.removeItem(SS_HANDLE);
+    $("g-handle").value = "";
+    show("gate");
+  });
 
   var status = captureTokenFromUrl();
   applyStaticStrings();

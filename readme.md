@@ -13,8 +13,12 @@ for real calories burned, and speaks **English and 中文**. Built with Flutter.
 > via an additive changeset — every shared handler byte-identical except a backward-compatible
 > `auth.py` audience tweak, so the **1.0.0 contract was verified intact** — and the page points at
 > prod. It identifies the account with **Sign in with Apple on the web** (reuses `/auth/apple`). It's
-> a *standalone* page (no in-app link, so the App Store app is untouched). Remaining before it can
-> charge: Stripe keys + an Apple **Services ID** (`com.foodatpeace.web`) and its domain-association file.
+> a *standalone* page (no in-app link, so the App Store app is untouched). **Now LIVE on Stripe**
+> (2026-06-23): live keys are in SSM and `/recharge/checkout` creates real (`cs_live_`) sessions; the
+> 25-bean pack is **S$0.50** (Stripe's SGD minimum), and the page shows the app's **gradient bean icon**
+> + a **Change recipient** control (served `no-cache`). Remaining: a real-card smoke test to confirm the
+> webhook credits beans, and an Apple **Services ID** (`com.foodatpeace.web`) for the web
+> Sign-in-with-Apple path (the @handle path works without it; Apple no longer needs a domain file).
 > **Build 62** makes the **Circle tab scroll as one page** (Instagram-style): the stories strip is now
 > the scrolling header of the feed, so it scrolls **away** as you go down — instead of a fixed strip over
 > a separately-scrolling feed, which wasted permanent vertical space. The whole tab is one `ListView`

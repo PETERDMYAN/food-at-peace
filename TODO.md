@@ -611,13 +611,31 @@ is now a single plated dish so the AI estimate reads cleanly (~420 kcal, not a 2
   activity are available directly — including on **Android / no-HealthKit** — and surfaced in the **Data
   Sources** screen alongside Apple Watch / iPhone. Feed it into the same `energyOut` pipeline used by the
   targets engine.
-- [ ] **Stripe integration for web recharge — make it actually charge** — the recharge backend + the
-  **@handle deposit-address** path are already live, but charging is **inert** until Stripe is wired:
-  create the Stripe account + product, put the **secret key** in SSM `/food-at-peace/stripe-secret-key`
-  and the **webhook signing secret** in `/food-at-peace/stripe-webhook-secret` (register
-  `https://6m19l2b025…/recharge/webhook` in Stripe for `checkout.session.completed`). Until both exist
-  `/recharge/checkout` returns `{configured:false}` and the page shows a graceful "not on yet". Steps in
+- [x] **Stripe integration for web recharge — LIVE (2026-06-23)** — Stripe account activated and **live
+  keys in SSM** (`sk_live_` + live `whsec_`); `/recharge/checkout` now creates real **`cs_live_`** sessions
+  (no Stripe Products needed — prices are inline `price_data`). The **25-bean pack is S$0.50** (Stripe's
+  SGD minimum; the app's IAP stays S$0.48 until its next release — intentional, see the `recharge.py`
+  comment). The page also gained the app's **gradient bean icon** + a **Change recipient** control and
+  `no-cache` headers. **Remaining:** (a) a real-card smoke test to confirm the webhook credits beans;
+  (b) an Apple **Services ID** `com.foodatpeace.web` for the web Sign-in-with-Apple path (the @handle path
+  works without it; Apple no longer requires a domain-association file). Steps in
   [`store/RECHARGE.md`](store/RECHARGE.md).
+
+**Added 2026-06-23 (requested):**
+- [ ] **Renaming yourself doesn't update what friends see (Circle name drift)** — your **profile
+  nickname** (`profile.name` — what *you* see in the handle card / Settings) and your **Circle directory
+  name** (`me.name` in CircleTable — what *others* see) are decoupled. The circle name is written only by
+  `/circle/register`, which the client calls just on first handle-claim and when you **change your
+  @handle** ([`edit_profile_dialog.dart:145`](lib/src/features/settings/edit_profile_dialog.dart) gates
+  `setHandle` on a handle change; a nickname-only edit saves the profile but never re-registers). So a
+  nickname change leaves the stale name on your me-card **and** on every post's `authorName`
+  ([`posts.py create_post`](backend/src/posts.py) stamps `authorName = me["name"]`) **and** on each
+  already-connected friend's cached friendship edge that [`list_circle`](backend/src/circle.py) returns.
+  Verified live: @roro's `profile.name="Peter"` but `me.name="Roro"` + 8 posts stamped "Roro" → you see
+  "Peter", friends see "Roro". **Fix:** on nickname save, re-register the name (updates me-card → future
+  posts); have `list_circle` return each friend's **live** me-card name (not the cached edge name);
+  old posts self-heal via the 3-day TTL. (Or, if first-party accounts should stay branded, make that an
+  intentional documented exception.)
 
 1. **Beans IAP** *(in progress)* — the paywall still **dev-stubs** purchases (credits
    locally; a reinstall resets the balance). **Done:** `in_app_purchase` added +

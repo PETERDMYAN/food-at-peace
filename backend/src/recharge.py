@@ -58,10 +58,14 @@ SITE_URL = os.environ.get("RECHARGE_SITE_URL", "https://foodatpeace.app/recharge
 # returned to the caller.
 CIRCLE_TABLE = os.environ.get("CIRCLE_TABLE", "")
 
-# product id -> (Beans granted, SGD price). MUST match the app's kBeanProductIds /
-# BeanPricing.packs and iap.PRODUCTS. The web flow only sells the public packs.
+# product id -> (Beans granted, SGD price). Bean COUNTS match the app's
+# kBeanProductIds / BeanPricing.packs and iap.PRODUCTS, and prices match too —
+# EXCEPT beans_25: the web (Stripe) price is S$0.50 because Stripe's SGD minimum
+# charge is ~S$0.50, while the app's IAP stays S$0.48. Intentional divergence until
+# the app is updated to match on its next release. The web flow only sells the
+# public packs.
 PRODUCTS = {
-    "beans_25": (25, 0.48),
+    "beans_25": (25, 0.50),
     "beans_100": (100, 1.99),
     "beans_200": (200, 3.99),
     "beans_300": (300, 5.99),
