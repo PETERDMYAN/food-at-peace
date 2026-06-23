@@ -615,10 +615,12 @@ is now a single plated dish so the AI estimate reads cleanly (~420 kcal, not a 2
   keys in SSM** (`sk_live_` + live `whsec_`); `/recharge/checkout` now creates real **`cs_live_`** sessions
   (no Stripe Products needed — prices are inline `price_data`). The **25-bean pack is S$0.50** (Stripe's
   SGD minimum; the app's IAP stays S$0.48 until its next release — intentional, see the `recharge.py`
-  comment). The page also gained the app's **gradient bean icon** + a **Change recipient** control and
-  `no-cache` headers. **Remaining:** (a) a real-card smoke test to confirm the webhook credits beans;
-  (b) an Apple **Services ID** `com.foodatpeace.web` for the web Sign-in-with-Apple path (the @handle path
-  works without it; Apple no longer requires a domain-association file). Steps in
+  comment). The page also gained the app's **gradient bean icon**, a **← Back** control, and `no-cache`
+  headers. **Verified end-to-end (2026-06-23):** a real live-card purchase credited beans via the
+  signature-verified webhook (`cs_live_`), and **Sign in with Apple (web)** works — the Services ID
+  `com.foodatpeace.web` is registered + configured (Primary App ID `com.foodatpeace.foodAtPeace`, domain
+  `foodatpeace.app`, return URL `https://foodatpeace.app/recharge`), and Apple's authorize endpoint serves
+  the sign-in page (no `invalid_client`). Both the @handle path and Apple sign-in work. Steps in
   [`store/RECHARGE.md`](store/RECHARGE.md).
 
 **Added 2026-06-23 (requested):**

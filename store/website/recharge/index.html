@@ -126,14 +126,14 @@
 
   <!-- ============ SHOP ============ -->
   <main id="shop" class="card hide">
+    <button id="shop-back" type="button"
+      style="background:none;border:0;color:var(--violet);font:inherit;font-size:14px;font-weight:600;cursor:pointer;padding:2px 0;margin:0 0 12px;display:inline-flex;align-items:center;gap:5px"><span aria-hidden="true">←</span> <span id="back-txt">Back</span></button>
     <h1 id="s-title">Recharge beans</h1>
     <p class="sub" id="s-sub">Top up your account to keep scanning meals.</p>
     <div class="bal loading" id="bal">
       <svg aria-hidden="true" style="width:22px;height:22px;flex:none"><use href="#fapBean"/></svg>
       <span><span id="bal-label">Balance</span> <b id="bal-val">—</b></span>
     </div>
-    <button id="change-recipient" class="changebtn hide" type="button"
-      style="background:none;border:0;color:#6D28D9;font:inherit;font-size:13px;cursor:pointer;margin:-2px 0 10px;padding:2px 0">↺ <span id="change-txt">Change recipient</span></button>
     <div class="packs" id="packs"></div>
     <button class="pay" id="pay" type="button">Pay</button>
     <div class="secure" id="secure">
@@ -158,12 +158,6 @@
       <button class="pay" id="g-handle-go" type="button" style="margin-top:8px">Find account</button>
       <p class="hint" id="g-handle-hint">Top up any account by its handle — no sign-in needed.</p>
     </div>
-    <details class="adv">
-      <summary id="g-adv">Advanced (testing)</summary>
-      <label for="code" id="g-label">Recharge code</label>
-      <input id="code" type="password" autocomplete="off" spellcheck="false" />
-      <button class="pay" id="g-go" type="button" style="margin-top:6px">Continue</button>
-    </details>
   </section>
 
   <!-- ============ STATUS (processing / success / canceled / error) ============ -->
@@ -239,7 +233,7 @@
       handleRecharge:"Recharge by @handle", handleFind:"Find account",
       handleHint:"Top up any account by its handle — no sign-in needed.",
       handleEnter:"Enter a handle.", handleNotFound:"No account with that handle.",
-      rechargingInto:"Recharging", orWord:"or", changeRecipient:"Change recipient",
+      rechargingInto:"Recharging", orWord:"or", changeRecipient:"Change recipient", back:"Back",
       okHandle:"Beans added to {h}. You can close this page."
     },
     zh:{
@@ -268,7 +262,7 @@
       handleRecharge:"用 @用户名 充值", handleFind:"查找账户",
       handleHint:"凭用户名为任意账户充值——无需登录。",
       handleEnter:"请输入用户名。", handleNotFound:"未找到该用户名的账户。",
-      rechargingInto:"正在充值给", orWord:"或", changeRecipient:"更换账户",
+      rechargingInto:"正在充值给", orWord:"或", changeRecipient:"更换账户", back:"返回",
       okHandle:"已为 {h} 充值豆子。可以关闭此页面。"
     }
   };
@@ -320,8 +314,8 @@
     $("bal-label").textContent = t("balance"); $("secure-txt").textContent = t("secure");
     $("foot").textContent = t("foot");
     $("g-title").textContent = t("gTitle"); $("g-sub").textContent = t("gSub");
-    $("g-si-btn").textContent = t("siBtn"); $("g-adv").textContent = t("adv");
-    $("g-label").textContent = t("gLabel"); $("g-go").textContent = t("gGo");
+    $("g-si-btn").textContent = t("siBtn");
+    $("back-txt").textContent = t("back");
     $("g-orword").textContent = t("orWord");
     $("g-handle-label").textContent = t("handleRecharge");
     $("g-handle-go").textContent = t("handleFind");
@@ -385,11 +379,8 @@
       $("bal-label").textContent = t("rechargingInto");
       $("bal-val").textContent = "@"+rechargeHandle +
         (rechargeName && rechargeName!==rechargeHandle ? " · "+rechargeName : "");
-      $("change-txt").textContent = t("changeRecipient");
-      $("change-recipient").classList.remove("hide");
       return;
     }
-    $("change-recipient").classList.add("hide");
     $("bal-label").textContent = t("balance");
     $("bal").classList.add("loading"); $("bal-val").textContent = "—";
     fetchBalance().then(function(bal){
@@ -418,7 +409,7 @@
 
   function clearTokenToGate(msg){
     sessionStorage.removeItem(SS_TOKEN);
-    show("gate"); $("g-err").textContent = msg || ""; $("code").value="";
+    show("gate"); $("g-err").textContent = msg || "";
   }
 
   function pay(){
@@ -508,12 +499,6 @@
   // shop
   $("pay").addEventListener("click", pay);
   // gate
-  $("g-go").addEventListener("click", function(){
-    var v = $("code").value.trim();
-    if(!v){ $("g-err").textContent = t("gErr"); return; }
-    sessionStorage.setItem(SS_TOKEN, v); openShop();
-  });
-  $("code").addEventListener("keydown", function(e){ if(e.key==="Enter") $("g-go").click(); });
   // Recharge by @handle (the public deposit-address path).
   $("g-handle-go").addEventListener("click", gotoHandle);
   $("g-handle").addEventListener("keydown", function(e){ if(e.key==="Enter") gotoHandle(); });
@@ -546,9 +531,11 @@
     });
   }
   $("apple-signin").addEventListener("click", appleSignIn);
-  $("change-recipient").addEventListener("click", function(){
+  // Back: return to the gate to pick a different account (sign in or another @handle).
+  $("shop-back").addEventListener("click", function(){
     rechargeHandle = null; rechargeName = null;
     sessionStorage.removeItem(SS_HANDLE);
+    sessionStorage.removeItem(SS_TOKEN);
     $("g-handle").value = "";
     show("gate");
   });
