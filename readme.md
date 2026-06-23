@@ -39,7 +39,10 @@ for real calories burned, and speaks **English and 中文**. Built with Flutter.
 > for yourself); (e) tapping a reaction while **signed out now prompts sign-in** instead of doing nothing.
 > **Recharge Beans by @handle is LIVE** (deployed to prod, page published): on `foodatpeace.app/recharge`
 > you can enter a **@handle** to top up that account (resolved server-side, id never exposed); charging
-> stays inert until Stripe keys are set.
+> stays inert until Stripe keys are set. **New:** a shareable deep link **`foodatpeace.app/recharge/<handle>`**
+> (e.g. `/recharge/roro`) drops straight into that handle's top-up — the `404.html` smart-router (the same
+> one behind `/i/<handle>` invites) forwards it to the recharge page in handle mode. Static-site only, no
+> backend/app change.
 >
 > **Recharge Beans by @handle (LIVE on prod):** the web recharge page (`foodatpeace.app/recharge`) lets
 > anyone enter a **@handle** to top up that account — a "public deposit address" for Beans (your own

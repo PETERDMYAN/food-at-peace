@@ -217,6 +217,7 @@
       handleRecharge:"Recharge by @handle", handleFind:"Find account",
       handleHint:"Top up any account by its handle — no sign-in needed.",
       handleEnter:"Enter a handle.", handleNotFound:"No account with that handle.",
+      handleLoading:"Finding account…",
       rechargingInto:"Recharging", orWord:"or",
       okHandle:"Beans added to {h}. You can close this page."
     },
@@ -246,6 +247,7 @@
       handleRecharge:"用 @用户名 充值", handleFind:"查找账户",
       handleHint:"凭用户名为任意账户充值——无需登录。",
       handleEnter:"请输入用户名。", handleNotFound:"未找到该用户名的账户。",
+      handleLoading:"正在查找账户……",
       rechargingInto:"正在充值给", orWord:"或",
       okHandle:"已为 {h} 充值豆子。可以关闭此页面。"
     }
@@ -376,19 +378,38 @@
   }
 
   // Resolve a public @handle to a recharge target (server returns {handle,name}
-  // only — never the account id) and enter the shop in handle mode.
-  function gotoHandle(){
-    var h = ($("g-handle").value||"").trim().replace(/^@/,"").toLowerCase();
-    if(!h){ $("g-err").textContent = t("handleEnter"); return; }
-    $("g-err").textContent = ""; $("g-handle-go").disabled = true;
-    fetch(getBase()+"/recharge/handle?handle="+encodeURIComponent(h))
+  // only — never the account id) and enter the shop in handle mode. Shared by the
+  // manual "Find account" box and the /recharge/<handle> deep link.
+  function resolveHandle(raw, opts){
+    opts = opts || {};
+    var h = (raw||"").trim().replace(/^@/,"").toLowerCase();
+    if(!h){ if(opts.onErr) opts.onErr(t("handleEnter")); return; }
+    if(opts.onStart) opts.onStart();
+    return fetch(getBase()+"/recharge/handle?handle="+encodeURIComponent(h))
       .then(function(r){ if(!r.ok) throw new Error("HTTP "+r.status); return r.json(); })
       .then(function(j){
         rechargeHandle = j.handle; rechargeName = j.name || j.handle;
         sessionStorage.setItem(SS_HANDLE, j.handle);
-        $("g-handle-go").disabled = false; openShop();
+        openShop();
       })
-      .catch(function(){ $("g-handle-go").disabled = false; $("g-err").textContent = t("handleNotFound"); });
+      .catch(function(){ if(opts.onErr) opts.onErr(t("handleNotFound")); });
+  }
+  function gotoHandle(){
+    resolveHandle($("g-handle").value, {
+      onStart:function(){ $("g-err").textContent = ""; $("g-handle-go").disabled = true; },
+      onErr:  function(m){ $("g-handle-go").disabled = false; $("g-err").textContent = m; }
+    });
+  }
+  // Arrived via foodatpeace.app/recharge/<handle> — the 404 router forwards it here as
+  // ?h=<handle>. Show a brief spinner, then drop straight into the shop in handle mode;
+  // a failed lookup falls back to the gate with the handle pre-filled.
+  function enterHandleLink(raw){
+    var h = (raw||"").replace(/^@/,"").toLowerCase();
+    $("g-handle").value = "@" + h;
+    resolveHandle(h, {
+      onStart:function(){ panel("processing", t("handleLoading"), ""); },
+      onErr:  function(m){ show("gate"); $("g-err").textContent = m; }
+    });
   }
 
   function clearTokenToGate(msg){
@@ -523,11 +544,15 @@
   $("apple-signin").addEventListener("click", appleSignIn);
 
   var status = captureTokenFromUrl();
+  // /recharge/<handle> deep link (forwarded as ?h=<handle> by the 404 router). Read it
+  // before cleanUrl() strips the query.
+  var linkHandle = new URLSearchParams(location.search).get("h");
   applyStaticStrings();
   cleanUrl();
 
   if(status==="success"){ pollForCredit(); }
   else if(status==="cancel"){ panel("warn", t("canceled"), t("canceledSub"), {btn:t("tryAgain"), onClick:openShop}); }
+  else if(linkHandle){ enterHandleLink(linkHandle); }
   else if(getToken()){ openShop(); }
   else { show("gate"); }
 })();

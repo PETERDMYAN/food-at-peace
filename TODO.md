@@ -189,6 +189,12 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
     live: resolve `roro` → 200 + correct CORS for `foodatpeace.app`; unknown → 404; checkout-by-handle
     resolves and reaches Stripe (`configured:false` until keys are set, so no charge risk introduced); the
     signed-in path still 401s without auth/handle (contract intact). 1.0.0-contract handlers untouched.
+  - **Shareable deep link `foodatpeace.app/recharge/<handle>`** ✅ — a "deposit address" URL that drops
+    straight into the handle-mode shop. Static-site only (no backend/app change): the
+    [`404.html`](store/website/404.html) smart-router (same fall-through that powers `/i/<handle>` invite
+    links) forwards `/recharge/<handle>` → `/recharge?h=<handle>`; the page reads `?h=` on boot, resolves
+    via the existing `GET /recharge/handle`, and enters handle mode (unknown handle → gate + error). Needs
+    only a republish of `404.html` + `recharge/index.html` to S3/CloudFront. See [`store/RECHARGE.md`](store/RECHARGE.md).
 - **Story archive "black/blank" pages → clean no-photo card (build 56)** — a meal with no available
   image (a **manual** entry, or a **photo** whose image isn't on this device — no local file, no synced
   `photoThumb`, nothing to pull from S3) rendered as a near-black blank `_StoryScaffold` with only the

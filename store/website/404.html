@@ -84,6 +84,20 @@
 
 <script>
   (function () {
+    // Recharge deep link: /recharge/<handle> has no S3 object, so it 404s into this
+    // router. Hand it off to the standalone recharge page in handle mode. This MUST run
+    // before the invite logic below, which would otherwise treat <handle> as an invite.
+    var rparts = location.pathname.split('/').filter(Boolean);
+    if (rparts[0] === 'recharge' && rparts[1]) {
+      var rh = rparts[1].replace(/[^a-z0-9_]/gi, '').toLowerCase();
+      if (rh) {
+        // Preserve any existing query (e.g. ?base=<v2 url> for testing).
+        var rqs = location.search ? (location.search + '&h=' + rh) : ('?h=' + rh);
+        location.replace('/recharge' + rqs);
+        return;
+      }
+    }
+
     var APPSTORE = 'https://apps.apple.com/app/id6777715561';
     var T = {
       en: {

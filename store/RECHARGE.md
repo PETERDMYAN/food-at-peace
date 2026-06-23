@@ -41,6 +41,24 @@ Stripe (hosted Checkout) holds all card data — none touches us. Stripe is hand
 returns `{ "configured": false }` (200) and the page shows a friendly "card payments
 aren't on yet" — exactly like `iap.py`'s `unconfigured` fallback. Nothing errors.
 
+## Recharge-by-handle deep link — `foodatpeace.app/recharge/<handle>`
+
+A shareable "deposit address" URL: **`https://foodatpeace.app/recharge/roro`** drops the
+visitor straight into the shop, pre-targeted at **@roro** (no sign-in — the public
+handle path). It's the same recharge page; only the entry differs:
+
+- **Routing** is the same trick that powers invite links: `/recharge/<handle>` has no S3
+  object, so it 404s into [`store/website/404.html`](website/404.html)'s smart-router,
+  which forwards it to `/recharge?h=<handle>` (preserving any `?base=`). No new AWS infra.
+- **The page** ([`recharge/index.html`](website/recharge/index.html)) reads `?h=` on boot
+  and resolves it via the existing **`GET /recharge/handle?handle=<h>`** (which returns the
+  public `{handle, name}` only — never the account id), then enters handle mode. Checkout
+  posts `{productId, handle}` to **`POST /recharge/checkout`** exactly as the manual "Find
+  account" box does. An unknown handle falls back to the gate with a friendly error.
+
+No backend or app change — both endpoints are already live; this is a static-site edit
+(`404.html` + `recharge/index.html`) republished to S3/CloudFront like any page update.
+
 ## ⚠️ App Store 3.1.1 — keep it standalone
 
 Beans are a digital good consumed inside the iOS app, so Apple Guideline **3.1.1**
