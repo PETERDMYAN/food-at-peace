@@ -542,10 +542,19 @@
 
   var status = captureTokenFromUrl();
   applyStaticStrings();
+  // Deep-link a recipient: /recharge?h=<handle> (shareable "recharge me" link). Also reads
+  // /recharge/<handle> from the path, for when/if that route is served by the CDN.
+  var dlHandle = (function(){
+    var q = new URLSearchParams(location.search);
+    var h = q.get("h") || q.get("handle");
+    if(!h){ var m = location.pathname.match(/^\/recharge\/([^\/?#]+)\/?$/); if(m){ h = decodeURIComponent(m[1]); } }
+    return (h || "").trim().replace(/^@/, "").toLowerCase();
+  })();
   cleanUrl();
 
   if(status==="success"){ pollForCredit(); }
   else if(status==="cancel"){ panel("warn", t("canceled"), t("canceledSub"), {btn:t("tryAgain"), onClick:openShop}); }
+  else if(dlHandle){ $("g-handle").value = dlHandle; gotoHandle(); }
   else if(getToken()){ openShop(); }
   else { show("gate"); }
 })();

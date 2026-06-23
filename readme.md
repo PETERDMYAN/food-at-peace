@@ -19,7 +19,8 @@ for real calories burned, and speaks **English and 中文**. Built with Flutter.
 > + a **← Back** control (served `no-cache`). **Fully verified end-to-end (2026-06-23):** a real live-card
 > purchase credited beans via the signature-verified webhook, and **Sign in with Apple (web)** works (the
 > Services ID `com.foodatpeace.web` is registered + configured; the backend already trusts that audience).
-> Both the @handle deposit-address path and Apple sign-in now work.
+> Both the @handle deposit-address path and Apple sign-in now work. A shareable
+> **`/recharge?h=<handle>`** deep-link opens the page pre-targeted at that account.
 > **Build 62** makes the **Circle tab scroll as one page** (Instagram-style): the stories strip is now
 > the scrolling header of the feed, so it scrolls **away** as you go down — instead of a fixed strip over
 > a separately-scrolling feed, which wasted permanent vertical space. The whole tab is one `ListView`
