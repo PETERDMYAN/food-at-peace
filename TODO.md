@@ -610,7 +610,9 @@ is now a single plated dish so the AI estimate reads cleanly (~420 kcal, not a 2
   path** (e.g. Garmin Connect / Health API: OAuth + activity/energy pull) so Garmin active-energy &
   activity are available directly — including on **Android / no-HealthKit** — and surfaced in the **Data
   Sources** screen alongside Apple Watch / iPhone. Feed it into the same `energyOut` pipeline used by the
-  targets engine.
+  targets engine. **📋 Step guide + build plan:** [`GARMIN_INTEGRATION.md`](GARMIN_INTEGRATION.md)
+  (2026-06-24) — ⛔ **blocked on you** applying to Garmin's **gated** Health API (manual approval); the
+  backend + app build (Part B) is ready to start the day you hand over the Consumer Key/Secret.
 - [x] **Stripe integration for web recharge — LIVE (2026-06-23)** — Stripe account activated and **live
   keys in SSM** (`sk_live_` + live `whsec_`); `/recharge/checkout` now creates real **`cs_live_`** sessions
   (no Stripe Products needed — prices are inline `price_data`). The **25-bean pack is S$0.50** (Stripe's
@@ -643,10 +645,12 @@ is now a single plated dish so the AI estimate reads cleanly (~420 kcal, not a 2
   (`test_list_circle_serves_live_name_after_a_rename`); (2) a nickname-only edit re-registers the name via
   the new `CircleNotifier.syncCircleName()` ([`providers.dart`](lib/src/providers/providers.dart), called
   from [`edit_profile_dialog.dart`](lib/src/features/settings/edit_profile_dialog.dart)) so the me-card +
-  **future** posts pick up the new name; (3) old posts self-heal via the 3-day TTL. Backend deployed to the
-  **v2** stack + smoke-verified (`/circle/list` → 401, function alive); the **prod** backend deploy and the
-  app change ride the **1.0.3** release cutover. @roro stays branded "Roro" — its me-card is unchanged, and
-  read-live only diverges from the cache *after* a rename.
+  **future** posts pick up the new name; (3) old posts self-heal via the 3-day TTL. Backend is **deployed to
+  v2 + prod (2026-06-24)** + smoke-verified on both (`/circle/list` → 401, function alive); it's
+  backward-compatible (same response shape, fresher value), so it helps the **live 1.0.2 app** on a handle
+  change today — only the **app change** (nickname-only re-register) rides the **1.0.3** release cutover.
+  @roro stays branded "Roro" — its me-card is unchanged, and read-live only diverges from the cache *after*
+  a rename.
 
 1. **Beans IAP** *(in progress)* — the paywall still **dev-stubs** purchases (credits
    locally; a reinstall resets the balance). **Done:** `in_app_purchase` added +
