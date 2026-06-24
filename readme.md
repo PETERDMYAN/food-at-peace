@@ -204,18 +204,15 @@ for real calories burned, and speaks **English and 中文**. Built with Flutter.
 > shows in your circle **You** avatar + story header. Build (18) added the full-screen
 > **Food story** + per-entry meal photos; (17) the first Circle-stories cut + the **Haiku**
 > photo-analysis model (~3–4× cheaper, server-wide), a real **25-Bean** IAP (`beans_25`), a
-> **rate-the-app prompt** (5th open), and **`purchase` analytics**; it becomes the 1.0.2
-> submission after 1.0.1 clears review.
-> Active development is on the **`v3`** branch, which adds: AI photo estimates
-> **in your app language** (EN/中文), the **Circle of Food** social layer (friends
-> by `@handle`, **invite universal link + QR with one-tap mutual connect**, a
-> **Manage circle** screen, privacy-gated friend trends, and a 3-day photo
-> **"stories"** feed with emoji reactions), a **real owner-analytics** backend,
-> daily meal reminders, and a **Beans** credit wallet. Day-to-day dev still runs
-> against the **isolated `food-at-peace-vision-proxy-v2` stack**, while the public
-> 1.0.1 release points at the **migrated prod stack** (the v2 backend was deployed
-> onto prod additively on 2026-06-16, leaving 1.0.0 users' data intact) — see
-> `CLAUDE.md` / [`backend/README.md`](backend/README.md).
+> **rate-the-app prompt** (5th open), and **`purchase` analytics**. All of this — plus the
+> **Circle of Food** social layer (friends by `@handle`, invite universal link + QR, a Manage
+> circle screen, privacy-gated friend trends, the 3-day photo **stories** feed with emoji
+> reactions), a **real owner-analytics** backend, daily reminders, and the **Beans** wallet —
+> **shipped in 1.0.2 (build 62), approved & live 2026-06-23** (tag `v1.0.2`). The repo is now a
+> single `main` (the old `v2`/`v3` branches are retired) plus release branches like `1.0.2`.
+> Dev runs against the **isolated `food-at-peace-vision-proxy-v2` stack**; the live app points
+> at the **migrated prod stack** (`6m19l2b025`) — see `CLAUDE.md` /
+> [`backend/README.md`](backend/README.md).
 > The **invite links are live**: `foodatpeace.app` is registered + hosted on AWS
 > (Route53 + CloudFront/HTTPS) serving the AASA + a smart `/i/<handle>` page (app
 > installed → opens the app · not installed → App Store · WeChat → tap ••• (top-right)
