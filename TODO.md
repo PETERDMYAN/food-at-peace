@@ -619,6 +619,17 @@ is now a single plated dish so the AI estimate reads cleanly (~420 kcal, not a 2
   `/recharge/checkout` returns `{configured:false}` and the page shows a graceful "not on yet". Steps in
   [`store/RECHARGE.md`](store/RECHARGE.md).
 
+**Added 2026-06-24 (requested):**
+- [ ] **Cancel / refund the tested Stripe purchase** — a test recharge purchase was made through Stripe
+  Checkout and should be reversed. The checkout session is a one-time payment (`"mode": "payment"` in
+  [`recharge.py`](backend/src/recharge.py)), so the action is a **refund/delete**, not a subscription
+  cancel. Do it in the **Stripe Dashboard** (correct Test/Live mode → Payments → the payment → Refund,
+  or just delete if it's a test-mode payment — test-mode money isn't real, nothing was actually charged).
+  Claude can't do this from the repo session: no Stripe API key / MCP tool / AWS access here (the key
+  lives in SSM `/food-at-peace/stripe-secret-key`). Note: there's **no refund/cancel endpoint** in
+  `recharge.py` today (and `refund` analytics is still deferred — see §1) — building one is optional
+  follow-up if reversals need to be self-serve.
+
 1. **Beans IAP** *(in progress)* — the paywall still **dev-stubs** purchases (credits
    locally; a reinstall resets the balance). **Done:** `in_app_purchase` added +
    `IapService` ([`lib/src/data/iap_service.dart`](lib/src/data/iap_service.dart),
