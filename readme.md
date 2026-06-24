@@ -5,8 +5,10 @@ or by **snapping a photo** — see how much you can still eat today, and keep an
 on your protein and saturated-fat quotas. Connects to **Apple Health / Garmin**
 for real calories burned, and speaks **English and 中文**. Built with Flutter.
 
-> **Status:** **v1.0.1 (14) is approved & live on the App Store** (the CN name is **食之安**).
-> Repo is now a single `main` branch; the live build is tagged **`v1.0.1`** (commit `1c6ca03`).
+> **Status:** **v1.0.2 (62) is approved & live on the App Store** (approved 2026-06-23; the CN name is **食之安**).
+> The live build is tagged **`v1.0.2`** (commit `54166a7`); prior live was `v1.0.1` (`1c6ca03`). Web Beans
+> recharge at `foodatpeace.app/recharge` is also fully live (Stripe live keys, webhook verified, Sign in with
+> Apple on the web, shareable `/recharge/<handle>` links).
 > **Web recharge (new, this session):** a standalone Stripe top-up page at **`foodatpeace.app/recharge`**
 > credits the same server Beans ledger via a signature-verified, idempotent webhook — a no-Apple-cut
 > path that also covers Android/web users with no StoreKit. Now **deployed to prod** (`6m19l2b025`)
