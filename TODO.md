@@ -624,7 +624,7 @@ is now a single plated dish so the AI estimate reads cleanly (~420 kcal, not a 2
   [`store/RECHARGE.md`](store/RECHARGE.md).
 
 **Added 2026-06-23 (requested):**
-- [ ] **Renaming yourself doesn't update what friends see (Circle name drift)** — your **profile
+- [x] **Renaming yourself doesn't update what friends see (Circle name drift)** — your **profile
   nickname** (`profile.name` — what *you* see in the handle card / Settings) and your **Circle directory
   name** (`me.name` in CircleTable — what *others* see) are decoupled. The circle name is written only by
   `/circle/register`, which the client calls just on first handle-claim and when you **change your
@@ -638,6 +638,15 @@ is now a single plated dish so the AI estimate reads cleanly (~420 kcal, not a 2
   posts); have `list_circle` return each friend's **live** me-card name (not the cached edge name);
   old posts self-heal via the 3-day TTL. (Or, if first-party accounts should stay branded, make that an
   intentional documented exception.)
+  **✅ FIXED 2026-06-24 (on `main`):** (1) [`list_circle`](backend/src/circle.py) now serves each friend's
+  **live** me-card name (falling back to the cached edge name) + a regression test
+  (`test_list_circle_serves_live_name_after_a_rename`); (2) a nickname-only edit re-registers the name via
+  the new `CircleNotifier.syncCircleName()` ([`providers.dart`](lib/src/providers/providers.dart), called
+  from [`edit_profile_dialog.dart`](lib/src/features/settings/edit_profile_dialog.dart)) so the me-card +
+  **future** posts pick up the new name; (3) old posts self-heal via the 3-day TTL. Backend deployed to the
+  **v2** stack + smoke-verified (`/circle/list` → 401, function alive); the **prod** backend deploy and the
+  app change ride the **1.0.3** release cutover. @roro stays branded "Roro" — its me-card is unchanged, and
+  read-live only diverges from the cache *after* a rename.
 
 1. **Beans IAP** *(in progress)* — the paywall still **dev-stubs** purchases (credits
    locally; a reinstall resets the balance). **Done:** `in_app_purchase` added +

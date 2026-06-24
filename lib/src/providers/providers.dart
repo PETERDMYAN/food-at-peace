@@ -1135,6 +1135,24 @@ class CircleNotifier extends Notifier<List<Friend>> {
     return SetHandleResult.ok;
   }
 
+  /// Push the viewer's current display name to the Circle directory so
+  /// connected friends see the up-to-date name. The friend list reads each
+  /// friend's live me-card name server-side, so re-registering the *current*
+  /// handle with the new name is all that's needed on a rename. Best-effort;
+  /// a no-op when signed out or before a handle is claimed.
+  Future<void> syncCircleName() async {
+    if (!_online) return;
+    final handle = _prefs.getString(_myHandleKey);
+    if (handle == null || handle.isEmpty) return;
+    try {
+      await ref
+          .read(circleClientProvider)
+          .register(_token!, handle, name: ref.read(profileProvider).name);
+    } catch (_) {
+      // Best-effort — the next refresh / handle change will retry.
+    }
+  }
+
   Future<void> _refresh() async {
     final token = _token;
     if (token == null || token.isEmpty) return;

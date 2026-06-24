@@ -91,6 +91,31 @@ class FakeCircleTable:
             lhs, rhs = (s.strip() for s in assign.split("="))
             item[names.get(lhs, lhs)] = vals[rhs.strip()]
 
+    def query(self, KeyConditionExpression=None, **kw):
+        # Minimal support for `pk = <v> AND begins_with(sk, <prefix>)`.
+        pk_val, sk_prefix = None, ""
+
+        def walk(cond):
+            nonlocal pk_val, sk_prefix
+            expr = cond.get_expression()
+            op, vals = expr["operator"], expr["values"]
+            if op == "AND":
+                for v in vals:
+                    walk(v)
+            elif op == "=" and getattr(vals[0], "name", None) == "pk":
+                pk_val = vals[1]
+            elif op == "begins_with" and getattr(vals[0], "name", None) == "sk":
+                sk_prefix = vals[1]
+
+        walk(KeyConditionExpression)
+        return {
+            "Items": [
+                dict(v)
+                for (pk, sk), v in self.items.items()
+                if pk == pk_val and sk.startswith(sk_prefix)
+            ]
+        }
+
 
 @pytest.fixture
 def circle_table(monkeypatch):
@@ -159,6 +184,23 @@ def test_connect_rejects_self(circle_table):
     with pytest.raises(circle.ProxyError) as e:
         circle.connect("u_a", {"handle": "alex"})
     assert e.value.status == 400
+
+
+# --- name-drift: the friend list serves each friend's *live* me-card name -----
+def test_list_circle_serves_live_name_after_a_rename(circle_table):
+    # A invites B -> B has an incoming request from A, name cached as "Alex".
+    circle.register("u_a", {"handle": "alex", "name": "Alex"})
+    circle.register("u_b", {"handle": "mia", "name": "Mia"})
+    circle.invite("u_a", {"handle": "mia"})
+    assert _edge(circle_table, "u_b", "u_a")["name"] == "Alex"  # cached at invite
+
+    # A renames by re-registering the SAME handle with a new name. The name
+    # cached on the edge is now stale...
+    circle.register("u_a", {"handle": "alex", "name": "Alex Rivera"})
+    assert _edge(circle_table, "u_b", "u_a")["name"] == "Alex"
+    # ...but B's circle list serves A's *live* me-card name instead.
+    out = circle.list_circle("u_b")
+    assert out["incoming"][0]["name"] == "Alex Rivera"
 
 
 # --- follow the creator (@roro): request -> Roro accepts -> mutual friends ----

@@ -425,9 +425,13 @@ def list_circle(uid):
     for edge in resp.get("Items", []):
         other = edge["sk"].split("#", 1)[1]
         status = edge.get("status")
+        # Read the friend's *live* display name from their me-card so a later
+        # rename is reflected for connected friends; fall back to the name
+        # cached on the edge at connect-time if the card is missing.
+        live = _my_card(other)
         friend = {
             "id": other,
-            "name": edge.get("name"),
+            "name": (live or {}).get("name") or edge.get("name"),
             "handle": edge.get("handle"),
             "status": status,
             "photoUrl": _profile_photo_url(other),

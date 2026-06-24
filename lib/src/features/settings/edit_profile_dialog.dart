@@ -153,6 +153,10 @@ Future<void> showEditProfileDialog(BuildContext context, WidgetRef ref) async {
         SetHandleResult.error => t.handleError,
       };
       messenger.showSnackBar(SnackBar(content: Text(msg)));
+    } else if (newName != (p2.name ?? '')) {
+      // Handle unchanged but the display name changed — push it to the Circle
+      // directory so connected friends see the new name (best-effort).
+      await ref.read(circleProvider.notifier).syncCircleName();
     }
     // Write edited height/weight back to Apple Health (best-effort).
     if (ref.read(healthConnectedProvider)) {

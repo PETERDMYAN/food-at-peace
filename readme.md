@@ -9,6 +9,10 @@ for real calories burned, and speaks **English and 中文**. Built with Flutter.
 > The live build is tagged **`v1.0.2`** (commit `54166a7`); prior live was `v1.0.1` (`1c6ca03`). Web Beans
 > recharge at `foodatpeace.app/recharge` is also fully live (Stripe live keys, webhook verified, Sign in with
 > Apple on the web, shareable `/recharge/<handle>` links).
+> **Next (1.0.3, dev on `main`):** the **Circle name-drift** fix — renaming yourself now propagates to what
+> friends see (`list_circle` serves each friend's *live* me-card name; a nickname-only edit re-registers it).
+> Backend is deployed to the **v2** stack + smoke-verified; the prod backend deploy + the app change ride
+> the 1.0.3 release cutover.
 > **Web recharge (new, this session):** a standalone Stripe top-up page at **`foodatpeace.app/recharge`**
 > credits the same server Beans ledger via a signature-verified, idempotent webhook — a no-Apple-cut
 > path that also covers Android/web users with no StoreKit. Now **deployed to prod** (`6m19l2b025`)
