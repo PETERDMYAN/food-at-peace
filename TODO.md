@@ -660,6 +660,17 @@ is now a single plated dish so the AI estimate reads cleanly (~420 kcal, not a 2
   [`store/RECHARGE.md`](store/RECHARGE.md).
 
 **Added 2026-06-24 (requested):**
+- [ ] **Ship the Circle reactor-name + push-localization fix** (code done on branch
+  `claude/cancel-stripe-test-purchase-bqiwrq`, see "🛠️ In flight" for details). Action items:
+  1. **Deploy to prod** (can't run from the repo session — AWS creds there are proxy placeholders):
+     `python3 backend/scripts/deploy_push_l10n_prod.py --dry-run` then without `--dry-run`. Updates only
+     the prod Posts + Circle Lambdas, preserving bundled deps. → fixes the live **"Someone"** immediately
+     (server-side only, no app update needed).
+  2. **Run `flutter analyze` + `flutter test`** locally (Flutter wasn't available in the session) to
+     validate the client edits (`circle_client.dart`, `home_shell.dart`).
+  3. **Cut a new client build** so the app starts sending its `lang` on device registration — the
+     localized push only reaches a user after they install a build that sends it (older installs stay
+     English by design).
 - [ ] **Cancel / refund the tested Stripe purchase** — a test recharge purchase was made through Stripe
   Checkout and should be reversed. The checkout session is a one-time payment (`"mode": "payment"` in
   [`recharge.py`](backend/src/recharge.py)), so the action is a **refund/delete**, not a subscription
