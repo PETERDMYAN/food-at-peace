@@ -69,6 +69,27 @@ def device_tokens(circle_table, uid):
         return []
 
 
+def user_lang(circle_table, uid, default="en"):
+    """[uid]'s preferred language (e.g. 'en' / 'zh'), read from any of their
+    registered device rows, so a push can be localized to the recipient. Returns
+    [default] when no device carries a lang (older clients didn't send one) or on
+    any failure — keeping the pre-localization English behavior."""
+    try:
+        from boto3.dynamodb.conditions import Key
+
+        resp = circle_table.query(
+            KeyConditionExpression=Key("pk").eq(f"user#{uid}")
+            & Key("sk").begins_with("device#")
+        )
+        for item in resp.get("Items", []):
+            lang = (item.get("lang") or "").strip()
+            if lang:
+                return lang
+    except Exception:  # noqa: BLE001
+        pass
+    return default
+
+
 def send(get_secret, tokens, title, body):
     """Best-effort: push {title, body} to each token. Never raises."""
     if not tokens or not APNS_TEAM_ID or not APNS_BUNDLE_ID:

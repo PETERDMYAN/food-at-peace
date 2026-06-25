@@ -124,10 +124,17 @@ class _HomeShellState extends ConsumerState<HomeShell>
     final prefs = ref.read(sharedPreferencesProvider);
     final device = prefs.getString('apns_device_token');
     if (device == null || device.isEmpty) return;
-    if (prefs.getString('apns_device_token_synced') == device) return;
+    // The app's current language, so the server can localize pushes to this user.
+    // Re-sync when the token OR the language changes (the sentinel embeds both),
+    // so switching language updates the stored preference too.
+    final lang =
+        ref.read(localeProvider)?.languageCode ??
+        WidgetsBinding.instance.platformDispatcher.locale.languageCode;
+    final stamp = '$device|$lang';
+    if (prefs.getString('apns_device_token_synced') == stamp) return;
     try {
-      await ref.read(circleClientProvider).registerDevice(token, device);
-      await prefs.setString('apns_device_token_synced', device);
+      await ref.read(circleClientProvider).registerDevice(token, device, lang: lang);
+      await prefs.setString('apns_device_token_synced', stamp);
     } catch (_) {
       // best-effort — retried on the next launch/resume
     }

@@ -48,8 +48,29 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
   cryptography/cffi, unrelated). ⏭️ **Remaining:** deploy isolated to the **prod PostsFunction**
   (`update-function-code`, like the prior posts-only deploys) — needs AWS creds, can't run from the repo
   session. ⚠️ Won't help a reactor who *still* has no backend name (never finished registering).
-  Separately noted: the reaction/shared-meal **push is hardcoded English** (not localized to the
-  recipient) — deferred unless you want it bundled.
+  Separately noted: the reaction/shared-meal **push is hardcoded English** — now addressed below.
+
+- **Localized Circle push notifications (code done, prod deploy pending)** — the APNs pushes
+  (reaction / shared-meal / friend-request / accept) were **hardcoded English** regardless of the
+  recipient's app language. Now recipient-language-aware: the client sends its language on device
+  registration (`registerDevice(..., lang:)` → `_registerPushToken` re-syncs when the token *or* language
+  changes), `circle.py register_device` stores `lang` on the device row, `apns.user_lang` resolves it, and
+  a new **`backend/src/pushmsg.py`** picks the `en`/`zh` template (strings mirror the client l10n keys
+  `circleSharedMeal`/`circleReactionNotif`/`circleRequestNotif`/`circleAcceptedNotif`). All additive +
+  backward-compatible: no `lang` → English (the prior behavior), so the shipped 1.0.x app is unaffected.
+  Touches `posts.py` (2 pushes), `circle.py` (2 pushes + register_device), `apns.py`, new `pushmsg.py`,
+  plus the client (`circle_client.dart`, `home_shell.dart`). Tests: `test_pushmsg.py` (en/zh/fallback/
+  region-suffix/missing-param) + `test_push.py` (lang stored on device, `user_lang` read+default). 158
+  backend tests pass. ⚠️ The localized push only reaches a user **after** they install a client build that
+  sends `lang`; older installs keep getting English (by design).
+- **Prod deploy of both fixes above (pending — needs AWS creds outside the repo session)** — the repo
+  session's AWS credentials are proxy placeholders (`InvalidClientTokenId` on any signed call), so the
+  deploy can't run from here. Ready-to-run, dependency-preserving deploy:
+  **`python3 backend/scripts/deploy_push_l10n_prod.py`** (downloads each function's current package,
+  overwrites only `posts.py`/`circle.py`/`apns.py` + adds `pushmsg.py`, re-uploads — keeps the bundled
+  httpx/ecdsa/etc.). Targets the **prod** Posts + Circle functions only (no full `sam deploy`); `--dry-run`
+  to inspect first. (Flutter wasn't available in the session, so `flutter analyze`/`flutter test` still
+  need a local run before shipping the client build.)
 
 ## ✅ Shipped on v2
 

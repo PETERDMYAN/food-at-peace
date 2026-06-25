@@ -89,8 +89,10 @@ class CircleClient {
 
   /// Register this device's APNs token so the server can push friend-meal /
   /// request / reaction alerts. Idempotent server-side (deduped by token).
-  Future<int> registerDevice(String token, String deviceToken) =>
-      _post(token, '/circle/register-device', {'token': deviceToken});
+  /// [lang] (the app's language, e.g. 'en' / 'zh') lets the server localize
+  /// those pushes to this user; omitted → server defaults to English.
+  Future<int> registerDevice(String token, String deviceToken, {String? lang}) =>
+      _post(token, '/circle/register-device', {'token': deviceToken, 'lang': ?lang});
 
   /// One-tap mutual connect from an invite link/QR. The inviter consented by
   /// sharing the link, so this connects both sides immediately. Idempotent.

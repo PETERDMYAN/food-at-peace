@@ -28,6 +28,7 @@ import re
 import time
 import datetime
 
+import pushmsg
 from common import ProxyError, _get_secret, _header, _parse_body, _response
 from session import verify_session_token
 
@@ -309,7 +310,12 @@ def invite(uid, body):
     ).get("Item", {}).get("handle") or normalize_handle(body.get("handle"))
     _put_edge(uid, tid, "@" + target_handle, target.get("name"), "outgoing")
     _put_edge(tid, uid, "@" + mine["handle"], mine.get("name"), "incoming")
-    _push(tid, f"{mine.get('name') or '@' + mine['handle']} wants to join your circle 👋")
+    _push(
+        tid,
+        pushmsg.text(
+            "invite", _lang(tid), name=mine.get("name") or "@" + mine["handle"]
+        ),
+    )
     return {"status": "outgoing"}
 
 
@@ -364,7 +370,9 @@ def respond(uid, body):
         mine = _my_card(uid)
         _push(
             other,
-            f"{(mine or {}).get('name') or 'A friend'} accepted — you're connected 🎉",
+            pushmsg.text(
+                "accept", _lang(other), name=(mine or {}).get("name") or "A friend"
+            ),
         )
         return {"status": "connected"}
     # decline
@@ -384,11 +392,17 @@ def remove(uid, body):
 
 def register_device(uid, body):
     """Store an APNs device token for the account (so we can push to it). Tokens
-    are deduped by value (the sk) and cleaned up on the next push failure."""
+    are deduped by value (the sk) and cleaned up on the next push failure. An
+    optional `lang` (e.g. 'en' / 'zh') is recorded so pushes to this user can be
+    localized to their app language; absent → server defaults to English."""
     token = (body.get("token") or "").strip()
     if not token or len(token) > 200:
         raise ProxyError(400, "Missing device token.")
-    _circle().put_item(Item={"pk": f"user#{uid}", "sk": f"device#{token}"})
+    item = {"pk": f"user#{uid}", "sk": f"device#{token}"}
+    lang = (body.get("lang") or "").strip()[:16]
+    if lang:
+        item["lang"] = lang
+    _circle().put_item(Item=item)
     return {"status": "registered"}
 
 
@@ -400,6 +414,16 @@ def _push(to_uid, title, body=""):
         apns.notify(_get_secret, _circle(), to_uid, title, body)
     except Exception:  # noqa: BLE001
         pass
+
+
+def _lang(to_uid):
+    """The recipient's app language for a localized push ('en' on any failure)."""
+    try:
+        import apns
+
+        return apns.user_lang(_circle(), to_uid)
+    except Exception:  # noqa: BLE001
+        return "en"
 
 
 def list_circle(uid):

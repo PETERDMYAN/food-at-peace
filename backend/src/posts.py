@@ -22,6 +22,7 @@ import os
 import time
 import uuid
 
+import pushmsg
 from common import ProxyError, _get_secret, _header, _parse_body, _response
 from session import verify_session_token
 
@@ -162,6 +163,16 @@ def _push(to_uid, title, body=""):
         pass
 
 
+def _lang(to_uid):
+    """The recipient's app language for a localized push ('en' on any failure)."""
+    try:
+        import apns
+
+        return apns.user_lang(_circle(), to_uid)
+    except Exception:  # noqa: BLE001
+        return "en"
+
+
 # --- Operations -------------------------------------------------------------
 
 def create_post(uid, body):
@@ -200,9 +211,10 @@ def create_post(uid, body):
             "expiresAt": expires,
         }
     )
-    # Tell connected friends a new meal landed in their circle (best-effort).
+    # Tell connected friends a new meal landed in their circle (best-effort),
+    # each in their own app language.
     for friend in _connected_ids(uid):
-        _push(friend, f"{me['name']} shared a meal 🍵")
+        _push(friend, pushmsg.text("shared_meal", _lang(friend), name=me["name"]))
     return {"postId": post_id, "expiresAt": expires}
 
 
@@ -330,7 +342,7 @@ def react(uid, body):
     # from the client's feed entry).
     owner = (body.get("authorId") or "").strip()
     if owner and owner != uid:
-        _push(owner, f"{reactor} reacted {emoji} to your meal")
+        _push(owner, pushmsg.text("reaction", _lang(owner), name=reactor, emoji=emoji))
     return {"myReaction": emoji}
 
 

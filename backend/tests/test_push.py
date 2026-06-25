@@ -54,3 +54,20 @@ def test_circle_push_never_raises_when_apns_unconfigured(circle_table):
     # _push wraps apns; with no APNS_TEAM_ID/tokens it must be a silent no-op so
     # the invite/accept flows never break on a push failure.
     circle._push("u1", "hello")
+
+
+def test_register_device_stores_lang(circle_table):
+    circle.register_device("u1", {"token": "tok-zh", "lang": "zh"})
+    assert circle_table.items[("user#u1", "device#tok-zh")]["lang"] == "zh"
+
+
+def test_register_device_without_lang_omits_it(circle_table):
+    # Old clients don't send lang → the row simply has none (no crash, defaults en).
+    circle.register_device("u1", {"token": "tok-plain"})
+    assert "lang" not in circle_table.items[("user#u1", "device#tok-plain")]
+
+
+def test_user_lang_reads_from_device_then_defaults(circle_table):
+    assert apns.user_lang(circle_table, "u1") == "en"  # no devices → default
+    circle.register_device("u1", {"token": "t1", "lang": "zh"})
+    assert apns.user_lang(circle_table, "u1") == "zh"
