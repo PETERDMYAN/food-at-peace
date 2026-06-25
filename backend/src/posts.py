@@ -112,6 +112,14 @@ def _user_card(uid):
     return {"handle": item.get("handle"), "name": item.get("name") or "Someone"}
 
 
+def _current_name(uid):
+    """The user's CURRENT circle display name, or None if they haven't claimed a
+    handle yet. Unlike `_user_card`, this does NOT substitute the generic
+    "Someone" fallback, so callers can prefer it but fall back to a stored value."""
+    item = _circle().get_item(Key={"pk": f"user#{uid}", "sk": "me"}).get("Item") or {}
+    return item.get("name")
+
+
 def _profile_photo_url(uid):
     """A presigned GET URL for [uid]'s profile photo (the reserved
     `meal/<uid>/__profile__.jpg` object in the durable meal-photo store), or None
@@ -217,7 +225,13 @@ def _reactions_for(post_id, viewer_id, owner_view):
         if reactor == viewer_id:
             mine = emoji
         if owner_view:
-            reactors.append({"name": r.get("reactorName") or "Someone", "emoji": emoji})
+            # Resolve the reactor's CURRENT circle name rather than the value
+            # frozen onto the reaction row at react-time (mirrors how author
+            # names are resolved in _user_posts). So a friend who reacted before
+            # claiming a handle — or who has since renamed — no longer shows as a
+            # stale "Someone". Falls back to the stored name, then the generic.
+            name = _current_name(reactor) or r.get("reactorName") or "Someone"
+            reactors.append({"name": name, "emoji": emoji})
     return counts, mine, reactors
 
 

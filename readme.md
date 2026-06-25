@@ -7,6 +7,11 @@ for real calories burned, and speaks **English and 中文**. Built with Flutter.
 
 > **Status:** **v1.0.1 (14) is approved & live on the App Store** (the CN name is **食之安**).
 > Repo is now a single `main` branch; the live build is tagged **`v1.0.1`** (commit `1c6ca03`).
+> **Circle fix (this session):** the feed/notification now show a reactor's **current** name instead of
+> a stale **"Someone"** — `posts.py` re-resolves the reactor's circle name at read time (it was frozen
+> at react-time, so anyone who reacted before claiming a handle stuck as "Someone"). Backend code +
+> tests done; **awaiting an isolated prod PostsFunction deploy** to go live (read-path only, response
+> shape unchanged → 1.0.x contract intact).
 > **Web recharge (new, this session):** a standalone Stripe top-up page at **`foodatpeace.app/recharge`**
 > credits the same server Beans ledger via a signature-verified, idempotent webhook — a no-Apple-cut
 > path that also covers Android/web users with no StoreKit. Now **deployed to prod** (`6m19l2b025`)

@@ -32,6 +32,25 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
   --no-confirm-changeset --parameter-overrides AppleClientId=com.foodatpeace.foodAtPeace
 ```
 
+## 🛠️ In flight
+
+- **Circle reactor name shows "Someone" → resolve current name (code done, prod deploy pending)** — a
+  friend's reaction read as **"Someone"** in the owner's feed *and* in the APNs push. Root cause: the
+  reactor's name is **denormalized onto the reaction row at react-time** (`posts.py react` →
+  `reactorName = _user_card(uid)["name"]`) and `_reactions_for` returned that stored value verbatim — so
+  anyone who reacted **before claiming a @handle** (brand-new account, or post-reinstall before
+  `_ensureHandle` re-registers) was frozen as "Someone" forever, even after they got a name. (Post
+  *author* names were already fixed to re-resolve; reactions were missed — see the build-note at
+  `_user_posts`.) **Fix:** new `_current_name(uid)` helper; `_reactions_for` now prefers the reactor's
+  **current** circle name, falling back to the stored value, then "Someone". Read-path only, response
+  shape unchanged → **1.0.x contract intact**. Tests: `test_feed_reactor_name_resolves_to_current_not_stale`
+  (current-wins + stored-fallback); 132 backend tests pass (`test_auth.py` un-collectable in this env —
+  cryptography/cffi, unrelated). ⏭️ **Remaining:** deploy isolated to the **prod PostsFunction**
+  (`update-function-code`, like the prior posts-only deploys) — needs AWS creds, can't run from the repo
+  session. ⚠️ Won't help a reactor who *still* has no backend name (never finished registering).
+  Separately noted: the reaction/shared-meal **push is hardcoded English** (not localized to the
+  recipient) — deferred unless you want it bundled.
+
 ## ✅ Shipped on v2
 
 - **Locale-aware AI analysis** — the photo estimate (name/items/portion/notes) comes

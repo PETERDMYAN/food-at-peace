@@ -83,6 +83,37 @@ def test_feed_uses_current_author_name_not_stale(monkeypatch):
     assert out[0]["authorHandle"] == "currenthandle"
 
 
+def test_feed_reactor_name_resolves_to_current_not_stale(monkeypatch):
+    """A reaction freezes the reactor's name at react-time; the owner's feed must
+    instead show the reactor's CURRENT circle name — so a friend who reacted
+    before claiming a handle (stored 'Someone') no longer reads as 'Someone' once
+    they have a name. Falls back to the stored value when there's no current one."""
+
+    class _Q:
+        def query(self, **kw):
+            return {
+                "Items": [
+                    {"sk": "react#u_named", "emoji": "❤️", "reactorName": "Someone"},
+                    {"sk": "react#u_blank", "emoji": "👍", "reactorName": "OldStored"},
+                ]
+            }
+
+    names = {"u_named": "Eva"}  # u_blank has no current circle name
+
+    class _Circle:
+        def get_item(self, Key):
+            uid = Key["pk"].split("#", 1)[1]
+            return {"Item": {"name": names[uid]}} if uid in names else {}
+
+    monkeypatch.setattr(posts, "_posts", lambda: _Q())
+    monkeypatch.setattr(posts, "_circle", lambda: _Circle())
+
+    _counts, _mine, reactors = posts._reactions_for("p1", "viewer1", True)
+    by_emoji = {r["emoji"]: r["name"] for r in reactors}
+    assert by_emoji["❤️"] == "Eva"  # current name, not the stale stored "Someone"
+    assert by_emoji["👍"] == "OldStored"  # no current name → stored fallback
+
+
 def test_feed_includes_author_profile_photo_url(monkeypatch):
     """Each post carries the author's presigned profile-photo URL (one presign per
     author) so the feed card avatar matches the friend strip; null when unset."""
