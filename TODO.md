@@ -806,6 +806,12 @@ Shipped/complete — only optional or release-time tails remain:
   product** (Ready to Submit, Apple ID 6780952980) **to the 1.0.2 submission** once 1.0.1
   clears review. The prod `iap.py` validation is already live (additive, backward-compatible
   — doesn't touch the 1.0.0/v2 contract).
+- **Vision-model cost/accuracy spike** — `backend/tools/vision_benchmark.py` (dev-only,
+  not deployed) scores food-photo nutrition accuracy across Claude Sonnet 4.6 / Haiku 4.5
+  / GLM-4.6V / Qwen-VL on a labelled photo set, reusing the production `log_food` schema.
+  Finding so far: DeepSeek has **no API vision** (non-starter); Haiku 4.5 is the low-risk
+  cost lever (~3× cheaper, same vendor/tool format). **Next (you):** run it on a real
+  labelled set to decide if any switch is worth it — until then, stay on Sonnet 4.6.
 
 ## 📱 Device-only QA (QA_REPORT §5)
 

@@ -1,0 +1,3 @@
+# Dev-only deps for vision_benchmark.py (NOT bundled into the Lambda build).
+anthropic>=0.40        # Claude path — official SDK (sonnet, haiku)
+openai>=1.40           # OpenAI-compatible path — GLM (Z.ai), Qwen (DashScope)
