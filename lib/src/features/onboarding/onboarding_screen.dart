@@ -98,10 +98,12 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
 
   Future<void> _signInWithApple() async {
     setState(() => _appleBusy = true);
+    var ok = false;
     try {
       await ref.read(authProvider.notifier).signIn();
       final name = ref.read(profileProvider).name;
       if (name != null && name.isNotEmpty) _name.text = name;
+      ok = true;
     } on SignInCancelled {
       // user dismissed the Apple sheet — no-op
     } on AuthException catch (e) {
@@ -110,6 +112,12 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
       if (mounted) _toast(AppLocalizations.of(context).signInFailed);
     } finally {
       if (mounted) setState(() => _appleBusy = false);
+    }
+    // Signed in: let the "✓ Signed in" state register for a beat, then auto-
+    // advance to the next onboarding step (no manual "Continue" needed).
+    if (ok) {
+      await Future.delayed(const Duration(milliseconds: 700));
+      if (mounted && _page == 0) _next();
     }
   }
 
@@ -240,6 +248,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
                       _NamePage(
                         nameController: _name,
                         busy: _appleBusy,
+                        signedIn: ref.watch(authProvider) != null,
                         onApple: _appleBusy ? null : _signInWithApple,
                         onChanged: (_) => setState(() {}),
                       ),
@@ -365,12 +374,17 @@ class _NamePage extends StatelessWidget {
   const _NamePage({
     required this.nameController,
     required this.busy,
+    required this.signedIn,
     required this.onApple,
     required this.onChanged,
   });
 
   final TextEditingController nameController;
   final bool busy;
+
+  /// True once Sign in with Apple has stored a session — swaps the Apple button
+  /// for a clear "signed in" confirmation so onboarding doesn't look stuck.
+  final bool signedIn;
   final VoidCallback? onApple;
   final ValueChanged<String> onChanged;
 
@@ -398,6 +412,37 @@ class _NamePage extends StatelessWidget {
                           color: Colors.white,
                         ),
                       ),
+                    ),
+                  )
+                : signedIn
+                ? Container(
+                    height: 54,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(28),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.35),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.check_circle,
+                          color: Colors.white,
+                          size: 22,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          t.onboardingSignedIn,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 17,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
                     ),
                   )
                 : SignInWithAppleButton(

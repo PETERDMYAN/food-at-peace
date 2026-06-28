@@ -56,6 +56,7 @@
   "onboardingNameTitle": "What should we call you?",
   "onboardingNameBody": "Sign in with Apple to bring your name in, or just type it. We'll greet you by name each day.",
   "onboardingNameLabel": "Your name",
+  "onboardingSignedIn": "Signed in with Apple",
   "onboardingNameManual": "Or enter it manually",
   "onboardingGoalTitle": "What's your goal?",
   "onboardingGoalBody": "This sets your daily calorie gap. You can change it anytime.",
@@ -518,6 +519,56 @@
   "@feedUnfollowed": {
     "placeholders": { "name": { "type": "String" } }
   },
+  "commentsTitle": "Comments",
+  "feedComment": "Comment",
+  "commentsEmpty": "No comments yet.",
+  "commentHint": "Add a comment…",
+  "commentReplyHint": "Reply to {name}…",
+  "@commentReplyHint": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "commentSend": "Send",
+  "signInToComment": "Sign in (Settings) to comment",
+  "commentError": "Couldn't post your comment. Please try again.",
+  "commentPrivacyViewer": "Private — only you and {name} can see this.",
+  "@commentPrivacyViewer": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "commentPrivacyOwner": "Private — each person sees only their own comments.",
+  "commentDelete": "Delete comment",
+  "commentDeleteConfirm": "Delete this comment for everyone? This can't be undone.",
+  "commentResend": "Failed to send — tap to retry",
+  "commentAudiencePublic": "Everyone",
+  "commentAudiencePrivate": "Private",
+  "commentAudienceOnly": "Only {name}",
+  "@commentAudienceOnly": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "commentAudienceYouAnd": "Only you & {name}",
+  "@commentAudienceYouAnd": {
+    "placeholders": { "name": { "type": "String" } }
+  },
+  "delete": "Delete",
+  "viewAllComments": "View all {count} comments",
+  "@viewAllComments": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "commentPublicHint": "Comment (everyone sees)…",
+  "commentOwnerHint": "Comment, or @name for a private reply…",
+  "commentsPublic": "Everyone can see",
+  "timeJustNow": "just now",
+  "timeMinutesAgo": "{count, plural, =1{1 minute ago} other{{count} minutes ago}}",
+  "@timeMinutesAgo": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "timeHoursAgo": "{count, plural, =1{1 hour ago} other{{count} hours ago}}",
+  "@timeHoursAgo": {
+    "placeholders": { "count": { "type": "int" } }
+  },
+  "timeDaysAgo": "{count, plural, =1{1 day ago} other{{count} days ago}}",
+  "@timeDaysAgo": {
+    "placeholders": { "count": { "type": "int" } }
+  },
   "sectionSuggested": "Suggested to follow",
   "sectionOfficial": "Official account",
   "sectionOfficials": "Officials",
@@ -588,6 +639,8 @@
   "circleEmpty": "Your circle is empty. Share your invite link to add friends.",
   "circleActivity": "Circle activity",
   "circleActivitySubtitle": "Get notified when a friend shares a meal",
+  "commentNotify": "Comments & mentions",
+  "commentNotifySubtitle": "Get notified when a friend comments on, replies to, or @-mentions you",
   "circleSharedMeal": "{name} shared a meal 🍵",
   "@circleSharedMeal": {
     "placeholders": { "name": { "type": "String" } }

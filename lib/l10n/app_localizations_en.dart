@@ -129,6 +129,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get onboardingNameLabel => 'Your name';
 
   @override
+  String get onboardingSignedIn => 'Signed in with Apple';
+
+  @override
   String get onboardingNameManual => 'Or enter it manually';
 
   @override
@@ -1113,6 +1116,120 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get commentsTitle => 'Comments';
+
+  @override
+  String get feedComment => 'Comment';
+
+  @override
+  String get commentsEmpty => 'No comments yet.';
+
+  @override
+  String get commentHint => 'Add a comment…';
+
+  @override
+  String commentReplyHint(String name) {
+    return 'Reply to $name…';
+  }
+
+  @override
+  String get commentSend => 'Send';
+
+  @override
+  String get signInToComment => 'Sign in (Settings) to comment';
+
+  @override
+  String get commentError => 'Couldn\'t post your comment. Please try again.';
+
+  @override
+  String commentPrivacyViewer(String name) {
+    return 'Private — only you and $name can see this.';
+  }
+
+  @override
+  String get commentPrivacyOwner =>
+      'Private — each person sees only their own comments.';
+
+  @override
+  String get commentDelete => 'Delete comment';
+
+  @override
+  String get commentDeleteConfirm =>
+      'Delete this comment for everyone? This can\'t be undone.';
+
+  @override
+  String get commentResend => 'Failed to send — tap to retry';
+
+  @override
+  String get commentAudiencePublic => 'Everyone';
+
+  @override
+  String get commentAudiencePrivate => 'Private';
+
+  @override
+  String commentAudienceOnly(String name) {
+    return 'Only $name';
+  }
+
+  @override
+  String commentAudienceYouAnd(String name) {
+    return 'Only you & $name';
+  }
+
+  @override
+  String get delete => 'Delete';
+
+  @override
+  String viewAllComments(int count) {
+    return 'View all $count comments';
+  }
+
+  @override
+  String get commentPublicHint => 'Comment (everyone sees)…';
+
+  @override
+  String get commentOwnerHint => 'Comment, or @name for a private reply…';
+
+  @override
+  String get commentsPublic => 'Everyone can see';
+
+  @override
+  String get timeJustNow => 'just now';
+
+  @override
+  String timeMinutesAgo(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count minutes ago',
+      one: '1 minute ago',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String timeHoursAgo(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count hours ago',
+      one: '1 hour ago',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String timeDaysAgo(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count days ago',
+      one: '1 day ago',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get sectionSuggested => 'Suggested to follow';
 
   @override
@@ -1278,6 +1395,13 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get circleActivitySubtitle =>
       'Get notified when a friend shares a meal';
+
+  @override
+  String get commentNotify => 'Comments & mentions';
+
+  @override
+  String get commentNotifySubtitle =>
+      'Get notified when a friend comments on, replies to, or @-mentions you';
 
   @override
   String circleSharedMeal(String name) {

@@ -32,6 +32,92 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
   --no-confirm-changeset --parameter-overrides AppleClientId=com.foodatpeace.foodAtPeace
 ```
 
+## ✅ Circle comments (private threads + owner public + @mention + delete + preview + sheet UX/speed) + relative time + story-fix + admin-grant — **live on v2 + prod, shipping as 1.1.0, TestFlight builds 63–75**
+
+Comments on Circle feed posts, modelled as **private per-commenter threads** with the post
+**owner as the hub**: the owner sees *every* commenter's thread and replies into each; a
+commenter sees **only their own** thread (their comments + the owner's replies), never another
+commenter's. New comment → push to the owner; owner reply → push to that commenter. The **owner
+can delete any comment** (a commenter, their own). Additive + backward-compatible (new routes +
+a per-viewer `commentCount` feed field; old clients ignore it).
+
+- **Backend (live on v2 AND prod):** `POST /circle/comment`, `/circle/comments`, `/circle/comment/delete`
+  in [`posts.py`](backend/src/posts.py); comment rows in `PostsTable` (`pk="post#<id>"`,
+  `sk="comment#<threadUser>#…"`, same 3-day TTL); routes in [`template.yaml`](backend/template.yaml).
+  Ownership server-authoritative (`_find_post`) → a spoofed `postAuthorId` can't leak another thread.
+  [`test_posts.py`](backend/tests/test_posts.py) encodes **A sees 1, B sees 2, owner sees 3** + delete auth.
+- **App (build 63):** `CircleComment`/`CircleCommentThread`/`CircleComments` models, `PostsClient.comment|comments|deleteComment`,
+  `postCommentsProvider`, `_CommentsSheet` (+ delete control) in
+  [`circle_feed_screen.dart`](lib/src/features/circle/circle_feed_screen.dart). EN + 中文.
+  Widget tests: [`circle_comments_test.dart`](test/circle_comments_test.dart).
+- **Stories-strip ring fix (build 63):** a friend with no shared posts no longer shows a false "unseen
+  stories" ring — `friendHasStory` gates the ring, new users get a plain avatar
+  ([`circle_strip.dart`](lib/src/features/circle/circle_strip.dart), [`story_avatar.dart`](lib/src/widgets/story_avatar.dart);
+  test [`circle_story_ring_test.dart`](test/circle_story_ring_test.dart)).
+- **Inline comment preview (build 64):** each feed card previews the most recent comments *visible to that
+  viewer* (privacy-scoped server-side via `recentComments`) + a **"View all N comments"** link; tap → the
+  full sheet. Additive feed field. ([`circle_feed_screen.dart`](lib/src/features/circle/circle_feed_screen.dart),
+  [`posts.py`](backend/src/posts.py)).
+- **Owner admin-grant (live on prod):** `POST /beans/grant` (admin-token gated, SSM `/food-at-peace/admin-token`)
+  credits a Beans ledger by @handle ([`beans.py`](backend/src/beans.py)). Granted `foodie` +100 ×2 → **288**.
+- **Beans-ledger sync fix:** the admin grant first wrote a numeric `ts`, which the app parses as a String →
+  its whole `/beans` fetch crashed (balance never updated). The grant now writes ISO `ts`, and `/beans`
+  **normalizes** any numeric `ts` / off-model type on read, repairing existing rows for all clients.
+- **Owner PUBLIC comment (build 65):** the post owner can post a comment **everyone sees** (stored under a
+  `__public__` thread sentinel, returned in a separate `public` array) — distinct from a private reply; a
+  non-owner can never broadcast. Plus **relative timestamps** ("x minutes/hours/days ago") on feed posts +
+  the food story ([`relative_time.dart`](lib/src/util/relative_time.dart)).
+- **Guarded by** the **`circle-comments-privacy`** skill (now covers public comments). Full suites green:
+  backend **169**, Flutter **181**.
+- **Comments sheet UX (build 66):** the sheet is now **~3/5 of the screen** with a **close ✕** (it could grow
+  full-height + be un-closable); the owner's view shows each commenter's **thread first with its reply box**,
+  public composer pinned at the bottom; and `postCommentsProvider` is **autoDispose + invalidated on open** so
+  a freshly-added comment shows on reopen (`circle_feed_screen.dart`, `providers.dart`). Client-only.
+- **One composer + @mention + speed (build 67):** the owner's sheet now has a **single** box — a plain
+  comment is **public**; "**@handle …**" is a **private reply** (tap a thread to prefill the @mention; the
+  header shows the handle). And opening is **instant**: `postCommentsProvider` is no longer autoDispose, so a
+  reopen shows the cached threads immediately and silently refreshes (no spinner each click).
+- **@mention picker + tap target (build 68):** typing **@** opens a **local** mention picker (built from the
+  already-loaded commenters — no server call); tapping inserts "@handle ". And the **whole comment area** on a
+  feed card is now one tap target to open the sheet.
+- **Optimistic posting + one ranked list + delete-for-everyone (build 70):** a posted comment appears
+  **immediately** (sending spinner), sent in the background; on failure it stays with a **retry icon** (tap to
+  resend), and on success the optimistic bubble is replaced by the real refetched row. The sheet now shows
+  **one time-ranked list** of every comment the viewer may see (no split sections) with a small **audience tag**
+  per comment ("Everyone" / "Only PY" / "Private"), the visibility rule still enforced server-side. **Delete is
+  for everyone** (server hard-delete). Client-only; analyze + 182 Flutter + 169 backend tests green.
+- **Clearer private tag (build 71):** a commenter's private comment now reads **"仅你和〈作者〉可见" / "Only you
+  & 〈owner〉"** (new `commentAudienceYouAnd` string) instead of a bare **私密/"Private"**, so the tag names the
+  one other person who can see it (the post owner). Client-only; analyze + tests green.
+- **Owner @-mentions a friend to start a private thread + push (build 72):** the owner's `@`-mention picker now
+  also lists **connected circle friends** (`_mentionCandidates` merges loaded threads + `circleProvider`), so on
+  a brand-new post the owner can `@`someone who hasn't commented and **open a private thread** seen only by that
+  friend + the owner. **Backend (posts.py)** relaxes the owner-reply check: a `threadUser` with no prior comment
+  is allowed when it's a **connected friend** (`owner_started_thread`), and that friend gets a **push** ("mentioned
+  you in a comment"; a later reply into the thread reads as "replied to your comment"). **Additive + backward-
+  compatible** (old reply-into-existing-thread path unchanged; no 1.0.2 endpoint touched). **Live on v2 + prod**
+  (changeset preview confirmed byte-identical template, `AppleClientId` preserved, post-deploy 401 smoke-test).
+  analyze + 183 Flutter + 170 backend green.
+- **Onboarding "Signed in ✓" confirmation (build 73):** Sign in with Apple *worked* on first onboarding (token
+  verified, session stored) but the welcome page never showed it — it kept showing the Apple button (and on a
+  reinstall Apple returns a null name, so even the name field didn't change), reading as "still asks me to
+  connect." `_NamePage` now watches `authProvider` and swaps the button for a **"Signed in with Apple ✓"** state.
+  Client-only; analyze + 183 Flutter green. **VALID on TestFlight.**
+- **Comments & mentions notification toggle (build 74):** a new Reminders-screen switch (*评论与@提及* / "Comments
+  & mentions") to mute/enable **comment / reply / @-mention** pushes — a **server-enforced per-user pref**
+  (`commentNotifyProvider` → `POST /circle/notify-prefs` → `notifyprefs` row; `posts.py._comment_notify_ok`
+  gates each push). Additive + backward-compatible (absent → ON). **Live on v2 + prod** (changeset preview:
+  only `+ Add` was the new route's invoke permission; `AppleClientId` preserved; prod 401 smoke-tests clean).
+  analyze + 183 Flutter + 173 backend green. **VALID on TestFlight.**
+- **Onboarding auto-advance + Reminders count fix (build 75, client-only):** (1) Sign in with Apple now
+  **auto-advances** to the next onboarding step after a brief beat (no manual *Continue*); (2) the Settings
+  **提醒** summary counted only meal reminders — now counts **every enabled switch** (meals + Circle activity +
+  Comments & mentions), so "N on" matches what's actually on. analyze + 183 Flutter green.
+- ⏳ **Remaining:** released as **1.1.0** (feature release — new comments system, not a patch). TestFlight
+  build **75** (1.1.0) — verify on device, then submit to the App Store + tag **`v1.1.0`**. (Build 68
+  / 1.0.3 got stuck in Apple processing; 1.1.0+69→…→75 supersede it.)
+  Google Sign-In is designed ([`GOOGLE_SIGNIN.md`](GOOGLE_SIGNIN.md)), pending your Google Cloud OAuth client.
+
 ## ✅ Shipped on v2
 
 - **Locale-aware AI analysis** — the photo estimate (name/items/portion/notes) comes

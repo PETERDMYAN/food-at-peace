@@ -881,11 +881,17 @@ class _RemindersTile extends ConsumerWidget {
     final t = AppLocalizations.of(context);
     final scheme = Theme.of(context).colorScheme;
     final enabled = ref.watch(remindersEnabledProvider);
-    final activeCount = ref
-        .watch(remindersProvider)
-        .where((r) => r.enabled)
-        .length;
-    final status = enabled ? t.remindersActive(activeCount) : t.remindersOff;
+    // "N on" reflects every enabled notification switch on the Reminders screen:
+    // the meal reminders (only when the master is on) + the two Circle toggles
+    // (activity + comments) — which used to be left out of the count.
+    final mealsOn = enabled
+        ? ref.watch(remindersProvider).where((r) => r.enabled).length
+        : 0;
+    final circleOn = ref.watch(circleNotifyProvider) ? 1 : 0;
+    final commentOn = ref.watch(commentNotifyProvider) ? 1 : 0;
+    final activeCount = mealsOn + circleOn + commentOn;
+    final status =
+        activeCount > 0 ? t.remindersActive(activeCount) : t.remindersOff;
     return Card(
       child: InkWell(
         borderRadius: BorderRadius.circular(26),

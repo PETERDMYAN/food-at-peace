@@ -12,8 +12,9 @@ class PostsException implements Exception {
   String toString() => message;
 }
 
-/// HTTP client for the Circle photo feed (`/circle/post|feed|react`),
-/// authenticated with the app session token.
+/// HTTP client for the Circle photo feed
+/// (`/circle/post|feed|react|comment|comments`), authenticated with the app
+/// session token.
 class PostsClient {
   PostsClient({required this.baseUrl, http.Client? httpClient})
     : _http = httpClient ?? http.Client();
@@ -95,6 +96,73 @@ class PostsClient {
     if (resp.statusCode != 200) throw PostsException(_messageFrom(resp));
     return (jsonDecode(utf8.decode(resp.bodyBytes)) as Map)['myReaction']
         as String?;
+  }
+
+  /// The comment threads visible to the caller on a post. The post owner gets
+  /// every commenter's thread; a commenter gets only their own (empty until they
+  /// comment). [postAuthorId] is the post's `authorId` from the feed entry.
+  Future<CircleComments> comments({
+    required String postId,
+    required String postAuthorId,
+    required String token,
+  }) async {
+    final resp = await _http.post(
+      Uri.parse('$_base/circle/comments'),
+      headers: _headers(token),
+      body: jsonEncode({'postId': postId, 'postAuthorId': postAuthorId}),
+    );
+    if (resp.statusCode != 200) throw PostsException(_messageFrom(resp));
+    return CircleComments.fromJson(
+      (jsonDecode(utf8.decode(resp.bodyBytes)) as Map).cast<String, dynamic>(),
+    );
+  }
+
+  /// Add a comment to a post. A commenter omits [threadUser] (their own private
+  /// thread is implied); the post owner either replies INTO one commenter's
+  /// thread ([threadUser] = that commenter) or posts a [public] comment everyone
+  /// sees ([public] = true). [public] is only honoured for the post owner.
+  Future<void> comment({
+    required String postId,
+    required String postAuthorId,
+    required String text,
+    String? threadUser,
+    bool public = false,
+    required String token,
+  }) async {
+    final resp = await _http.post(
+      Uri.parse('$_base/circle/comment'),
+      headers: _headers(token),
+      body: jsonEncode({
+        'postId': postId,
+        'postAuthorId': postAuthorId,
+        'text': text,
+        if (threadUser != null && threadUser.isNotEmpty) 'threadUser': threadUser,
+        if (public) 'public': true,
+      }),
+    );
+    if (resp.statusCode != 200) throw PostsException(_messageFrom(resp));
+  }
+
+  /// Delete a comment. The post owner may delete any comment on their post; a
+  /// commenter may delete their own. [threadUser] scopes it to the private thread.
+  Future<void> deleteComment({
+    required String postId,
+    required String postAuthorId,
+    required String commentId,
+    required String threadUser,
+    required String token,
+  }) async {
+    final resp = await _http.post(
+      Uri.parse('$_base/circle/comment/delete'),
+      headers: _headers(token),
+      body: jsonEncode({
+        'postId': postId,
+        'postAuthorId': postAuthorId,
+        'commentId': commentId,
+        'threadUser': threadUser,
+      }),
+    );
+    if (resp.statusCode != 200) throw PostsException(_messageFrom(resp));
   }
 
   String _messageFrom(http.Response r) {

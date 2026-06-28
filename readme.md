@@ -9,10 +9,72 @@ for real calories burned, and speaks **English and 中文**. Built with Flutter.
 > The live build is tagged **`v1.0.2`** (commit `54166a7`); prior live was `v1.0.1` (`1c6ca03`). Web Beans
 > recharge at `foodatpeace.app/recharge` is also fully live (Stripe live keys, webhook verified, Sign in with
 > Apple on the web, shareable `/recharge/<handle>` links).
-> **Next (1.0.3, dev on `main`):** the **Circle name-drift** fix — renaming yourself now propagates to what
+> **Next (1.1.0, dev on `main`):** the **Circle name-drift** fix — renaming yourself now propagates to what
 > friends see (`list_circle` serves each friend's *live* me-card name; a nickname-only edit re-registers it).
 > The backend (read-live) is now **live on v2 + prod** (2026-06-24, backward-compatible — same response
 > shape); only the app change (nickname-only re-register) rides the 1.0.3 cutover.
+> **Circle comments + more (this session — shipping as 1.1.0, TestFlight builds 63–75):** Circle feed posts can
+> now be **commented on**, as **private per-commenter threads** with the post owner as the hub — the **owner**
+> sees every commenter's thread and replies into each; a **commenter** sees only their *own* thread (their
+> comments + the owner's replies), never another commenter's. A new comment pushes the owner; an owner reply
+> pushes that commenter. The **post owner can delete any comment** (a commenter, their own). Also in build 63:
+> the **stories-strip ring bug** is fixed — a friend with no shared posts no longer shows a false "unseen
+> stories" ring (`friendHasStory` gates the ring; new users render a plain avatar). **Build 64** adds an
+> **inline comment preview** on each feed card — the most recent few comments *visible to that viewer* + a
+> **"View all N comments"** link — plus a **Beans-ledger fix**: an early admin grant wrote a numeric `ts` the
+> app's parser (`ts as String`) choked on, crashing the whole `/beans` fetch; the response now normalizes any
+> numeric `ts` / off-model type, so balances sync again (e.g. `foodie` → 288). **Build 65** lets the **post
+> owner post a PUBLIC comment** everyone sees (stored under a `__public__` thread sentinel), distinct from a
+> private reply — a non-owner can never broadcast — and adds **relative timestamps** ("5 minutes ago" / "3
+> hours ago" / "2 days ago") to feed posts + the food story. Backend is **additive +
+> live on v2 AND prod** (new `/circle/comment`, `/circle/comments`, `/circle/comment/delete` routes; comment
+> rows reuse `PostsTable`'s 3-day TTL; a per-viewer `commentCount` on the feed — old clients ignore it; the
+> 1.0.2 contract was verified intact via changeset preview, `AppleClientId` preserved). Privacy invariant
+> locked by the **`circle-comments-privacy`** skill; backend + widget tests green (`test_posts.py` encodes
+> "A sees 1, B sees 2, owner sees 3").
+> **Builds 66–70 — comments UX polish (all client-only; backend unchanged):** the comment sheet is now ~3/5
+> of the screen with a close ✕; there's a **single composer** (owner types `@handle` for a private reply, plain
+> text = public) with a **local `@`-mention picker** (no server round-trip); the **whole comment area on a card
+> is tappable** to open the sheet; comment fetches were de-spinnered (cached + `skipLoadingOnReload`) so reopen
+> is instant. **Build 70** is the last polish pass: comments are **posted optimistically** — your message shows
+> at once with a sending spinner, then a **retry icon if the send fails** (tap to resend), replaced by the real
+> row on success; the sheet shows **one time-ranked list** of every comment the viewer may see, each carrying a
+> small **audience tag** ("Everyone" / "Only PY" / "Private") rather than split sections; and **delete removes a
+> comment for everyone** (server hard-delete). Analyze + 182 Flutter + 169 backend tests green.
+> **Build 71 — clearer private tag:** a commenter's private comment now reads **"Only you & 〈owner〉"**
+> (e.g. *仅你和 Eva 可见*) instead of a bare **"Private"**, so the audience is self-explanatory (it names the post
+> owner — the only other person who can see it). Client-only string/label change.
+> **Build 72 — owner can @-mention a friend to start a private thread + push on @-mention:** previously the
+> **owner** could only privately reply to someone who had *already* commented — so on a brand-new post there was
+> no way to begin a private comment. Now the owner's `@`-mention picker also lists **connected circle friends**
+> (not just existing commenters), and `@`-mentioning one **opens a fresh private thread** visible to only that
+> friend + the owner; that friend gets a **push** ("〈owner〉 mentioned you in a comment 💬"; a follow-up into the
+> now-existing thread reads as "replied to your comment"). Backend change is **additive + backward-compatible**
+> (the owner-reply path now *also* accepts a connected friend with no prior comment — old clients that only reply
+> into existing threads are unaffected; no 1.0.2 endpoint touched). analyze + 183 Flutter + 170 backend green.
+> **Build 73 — onboarding "Signed in ✓" confirmation (sign-in *looked* broken):** Sign in with Apple actually
+> *worked* on first onboarding (server verified the token, session stored), but the welcome page never reflected
+> it — it kept showing the Apple button with no confirmation (and on a reinstall Apple returns a null name, so
+> even the name field didn't change), so it read as "it still asks me to connect." The page now swaps the Apple
+> button for a **"Signed in with Apple ✓"** state once a session exists (`_NamePage` watches `authProvider`).
+> Client-only; no auth-flow or backend change. analyze + 183 Flutter tests green.
+> **Build 74 — Comments & mentions notification toggle (Reminders screen):** a new switch next to *Circle
+> activity* — **"Comments & mentions / Get notified when a friend comments on, replies to, or @-mentions you"**
+> (中文: *评论与@提及*). Unlike the master Circle toggle (which gates device registration), this is a **per-user
+> server-enforced preference**: the client syncs it to a new **`POST /circle/notify-prefs`** (`{comments}`),
+> stored on a `notifyprefs` row, and **posts.py checks it before sending** each comment / reply / @-mention push
+> (`_comment_notify_ok`). **Additive + backward-compatible** — absent pref → ON, so existing users are
+> unaffected; no 1.0.2 endpoint touched. analyze + 183 Flutter + 173 backend tests green.
+> **Build 75 — onboarding auto-advances after sign-in + Reminders count fix (both client-only):** (1) once Sign
+> in with Apple succeeds, the welcome page now **auto-advances** to the next step after a brief beat (so the
+> "Signed in ✓" registers) instead of waiting for a manual *Continue*. (2) The Settings **提醒 / Reminders**
+> summary ("N on") used to count **only meal reminders**, ignoring the two Circle notification switches — so 4
+> meals + Circle + Comments all on showed "4". It now counts **every enabled switch** on that screen (meals when
+> the master is on + Circle activity + Comments & mentions). analyze + 183 Flutter tests green.
+> **Owner admin-grant (new, live on prod):** an authenticated owner-only **`POST /beans/grant`** endpoint
+> (admin-token gated, SSM `/food-at-peace/admin-token`) credits a user's Beans ledger by @handle. **Google
+> Sign-In is designed** (new-user + bind-existing, both directions, web included) — see
+> [`GOOGLE_SIGNIN.md`](GOOGLE_SIGNIN.md); blocked only on a Google Cloud OAuth client (yours to create).
 > **Web recharge (new, this session):** a standalone Stripe top-up page at **`foodatpeace.app/recharge`**
 > credits the same server Beans ledger via a signature-verified, idempotent webhook — a no-Apple-cut
 > path that also covers Android/web users with no StoreKit. Now **deployed to prod** (`6m19l2b025`)

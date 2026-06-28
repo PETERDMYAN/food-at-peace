@@ -392,6 +392,19 @@ def register_device(uid, body):
     return {"status": "registered"}
 
 
+def set_notify_prefs(uid, body):
+    """Per-user push-notification preferences. Currently just `comments` —
+    whether to be pushed when a friend comments on / replies to / @-mentions you.
+    Stored on a single row; absent → ON (so existing users are unaffected). Read
+    by posts.py before sending a comment push."""
+    comments = body.get("comments")
+    on = True if comments is None else bool(comments)
+    _circle().put_item(
+        Item={"pk": f"user#{uid}", "sk": "notifyprefs", "comments": on}
+    )
+    return {"comments": on}
+
+
 def _push(to_uid, title, body=""):
     """Best-effort Apple push to one user's devices (never raises)."""
     try:
@@ -458,6 +471,7 @@ def handler(event, context):
         op = {
             "register": register,
             "register-device": register_device,
+            "notify-prefs": set_notify_prefs,
             "invite": invite,
             "connect": connect,
             "respond": respond,

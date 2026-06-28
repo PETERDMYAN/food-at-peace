@@ -7,6 +7,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:food_at_peace/l10n/app_localizations.dart';
 
+import '../../util/relative_time.dart';
+
 import '../../data/eva_wisdom.dart';
 import '../../data/meal_photos.dart';
 import '../../data/profile_photo.dart';
@@ -165,6 +167,7 @@ class CircleStrip extends ConsumerWidget {
                     colorSeed: roroFriend.id.hashCode,
                     imageUrl: roroFriend.photoUrl,
                     imageCacheKey: roroFriend.id,
+                    story: friendHasStory(roroFriend, feedPosts),
                     seen: seen.contains(friendStorySeenKey(roroFriend, feedPosts)),
                     official: !viewerIsRoro,
                     onTap: () => openFriendStory(context, ref, roroFriend),
@@ -179,6 +182,9 @@ class CircleStrip extends ConsumerWidget {
                     colorSeed: f.id.hashCode,
                     imageUrl: f.photoUrl,
                     imageCacheKey: f.id,
+                    // A friend with no shared posts has no story → plain avatar,
+                    // no false "unseen stories" ring.
+                    story: friendHasStory(f, feedPosts),
                     seen: seen.contains(friendStorySeenKey(f, feedPosts)),
                     onTap: () => openFriendStory(context, ref, f),
                   ),
@@ -707,6 +713,19 @@ String _initialsFor(String name) {
 String myPublicStoryKey(List<CirclePost> posts) =>
     posts.isEmpty ? 'you:noposts' : 'you:${posts.first.postId}:${posts.length}';
 
+/// Whether [friend] has an active circle story right now — at least one of their
+/// shared photo posts is in the current feed window. A friend who hasn't shared
+/// anything (e.g. a brand-new user) has NO story, so their strip avatar must not
+/// show a story ring. Matches by real id OR @handle, exactly like
+/// [openFriendStory] and [friendStorySeenKey].
+bool friendHasStory(Friend friend, List<CirclePost> feedPosts) {
+  final handle = friend.handle.replaceFirst('@', '').toLowerCase();
+  return feedPosts.any((p) =>
+      (p.photoUrl ?? '').isNotEmpty &&
+      (p.authorId == friend.id ||
+          (handle.isNotEmpty && (p.authorHandle ?? '').toLowerCase() == handle)));
+}
+
 /// Seen-ring key for a friend's story: their newest shared post + count (keyed by
 /// the friend id so it's stable), so the ring greys out once viewed and flips
 /// back to unseen when they share something new. Empty = no story to mark.
@@ -1143,11 +1162,8 @@ class _FoodStoryPageState extends ConsumerState<_FoodStoryPage> {
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
-    final ml = MaterialLocalizations.of(context);
     final entry = widget.entry;
-    final when =
-        '${ml.formatMediumDate(entry.timestamp)} · '
-        '${ml.formatTimeOfDay(TimeOfDay.fromDateTime(entry.timestamp))}';
+    final when = relativeTime(t, entry.timestamp);
     final header = _storyHeader(
       t.foodStory,
       when,
@@ -1406,6 +1422,9 @@ class _PostStoryPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
     final kcal = t.kcalValue('${post.calories}');
+    final when = post.createdAt > 0
+        ? relativeTime(t, DateTime.fromMillisecondsSinceEpoch(post.createdAt))
+        : '';
     return Stack(
       fit: StackFit.expand,
       children: [
@@ -1434,7 +1453,7 @@ class _PostStoryPage extends StatelessWidget {
               children: [
                 _storyHeader(
                   title,
-                  '',
+                  when,
                   StoryAvatar(
                     imageBytes: photoBytes,
                     imageUrl: photoUrl,

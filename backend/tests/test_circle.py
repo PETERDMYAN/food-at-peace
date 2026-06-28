@@ -14,6 +14,23 @@ def test_normalize_handle_rejects_bad():
             circle.normalize_handle(bad)
 
 
+def test_set_notify_prefs_writes_row(monkeypatch):
+    saved = {}
+
+    class _C:
+        def put_item(self, Item=None):
+            saved.clear()
+            saved.update(Item)
+
+    monkeypatch.setattr(circle, "_circle", lambda: _C())
+    # Explicit off is stored as comments=False on the user's prefs row.
+    assert circle.set_notify_prefs("u1", {"comments": False}) == {"comments": False}
+    assert saved == {"pk": "user#u1", "sk": "notifyprefs", "comments": False}
+    # Absent → ON (backward-compatible default).
+    assert circle.set_notify_prefs("u1", {}) == {"comments": True}
+    assert saved["comments"] is True
+
+
 def test_compute_target_uses_override():
     assert circle.compute_target({"calorieGoalOverride": 2222}) == 2222.0
 

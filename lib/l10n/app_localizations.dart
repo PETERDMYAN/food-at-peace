@@ -302,6 +302,12 @@ abstract class AppLocalizations {
   /// **'Your name'**
   String get onboardingNameLabel;
 
+  /// No description provided for @onboardingSignedIn.
+  ///
+  /// In en, this message translates to:
+  /// **'Signed in with Apple'**
+  String get onboardingSignedIn;
+
   /// No description provided for @onboardingNameManual.
   ///
   /// In en, this message translates to:
@@ -2054,6 +2060,162 @@ abstract class AppLocalizations {
   /// **'Unfollowed {name}.'**
   String feedUnfollowed(String name);
 
+  /// No description provided for @commentsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Comments'**
+  String get commentsTitle;
+
+  /// No description provided for @feedComment.
+  ///
+  /// In en, this message translates to:
+  /// **'Comment'**
+  String get feedComment;
+
+  /// No description provided for @commentsEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No comments yet.'**
+  String get commentsEmpty;
+
+  /// No description provided for @commentHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Add a comment…'**
+  String get commentHint;
+
+  /// No description provided for @commentReplyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Reply to {name}…'**
+  String commentReplyHint(String name);
+
+  /// No description provided for @commentSend.
+  ///
+  /// In en, this message translates to:
+  /// **'Send'**
+  String get commentSend;
+
+  /// No description provided for @signInToComment.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in (Settings) to comment'**
+  String get signInToComment;
+
+  /// No description provided for @commentError.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t post your comment. Please try again.'**
+  String get commentError;
+
+  /// No description provided for @commentPrivacyViewer.
+  ///
+  /// In en, this message translates to:
+  /// **'Private — only you and {name} can see this.'**
+  String commentPrivacyViewer(String name);
+
+  /// No description provided for @commentPrivacyOwner.
+  ///
+  /// In en, this message translates to:
+  /// **'Private — each person sees only their own comments.'**
+  String get commentPrivacyOwner;
+
+  /// No description provided for @commentDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete comment'**
+  String get commentDelete;
+
+  /// No description provided for @commentDeleteConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete this comment for everyone? This can\'t be undone.'**
+  String get commentDeleteConfirm;
+
+  /// No description provided for @commentResend.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to send — tap to retry'**
+  String get commentResend;
+
+  /// No description provided for @commentAudiencePublic.
+  ///
+  /// In en, this message translates to:
+  /// **'Everyone'**
+  String get commentAudiencePublic;
+
+  /// No description provided for @commentAudiencePrivate.
+  ///
+  /// In en, this message translates to:
+  /// **'Private'**
+  String get commentAudiencePrivate;
+
+  /// No description provided for @commentAudienceOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Only {name}'**
+  String commentAudienceOnly(String name);
+
+  /// No description provided for @commentAudienceYouAnd.
+  ///
+  /// In en, this message translates to:
+  /// **'Only you & {name}'**
+  String commentAudienceYouAnd(String name);
+
+  /// No description provided for @delete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get delete;
+
+  /// No description provided for @viewAllComments.
+  ///
+  /// In en, this message translates to:
+  /// **'View all {count} comments'**
+  String viewAllComments(int count);
+
+  /// No description provided for @commentPublicHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Comment (everyone sees)…'**
+  String get commentPublicHint;
+
+  /// No description provided for @commentOwnerHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Comment, or @name for a private reply…'**
+  String get commentOwnerHint;
+
+  /// No description provided for @commentsPublic.
+  ///
+  /// In en, this message translates to:
+  /// **'Everyone can see'**
+  String get commentsPublic;
+
+  /// No description provided for @timeJustNow.
+  ///
+  /// In en, this message translates to:
+  /// **'just now'**
+  String get timeJustNow;
+
+  /// No description provided for @timeMinutesAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 minute ago} other{{count} minutes ago}}'**
+  String timeMinutesAgo(int count);
+
+  /// No description provided for @timeHoursAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 hour ago} other{{count} hours ago}}'**
+  String timeHoursAgo(int count);
+
+  /// No description provided for @timeDaysAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 day ago} other{{count} days ago}}'**
+  String timeDaysAgo(int count);
+
   /// No description provided for @sectionSuggested.
   ///
   /// In en, this message translates to:
@@ -2353,6 +2515,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Get notified when a friend shares a meal'**
   String get circleActivitySubtitle;
+
+  /// No description provided for @commentNotify.
+  ///
+  /// In en, this message translates to:
+  /// **'Comments & mentions'**
+  String get commentNotify;
+
+  /// No description provided for @commentNotifySubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Get notified when a friend comments on, replies to, or @-mentions you'**
+  String get commentNotifySubtitle;
 
   /// No description provided for @circleSharedMeal.
   ///

@@ -1452,6 +1452,28 @@ final circleFeedProvider = FutureProvider<List<CirclePost>>((ref) async {
   return client.officialFeed(proxyAppToken);
 });
 
+/// The comment threads visible to the viewer for one post — every commenter's
+/// thread if they own the post, otherwise just their own private thread (empty
+/// until they comment). Keyed by (postId, authorId) so a post's comment sheet
+/// refetches only that post. Empty when signed out / no proxy.
+// Not autoDispose: the comments stay cached after the sheet closes, so reopening
+// is instant (the sheet shows the cached threads, then silently refreshes).
+final postCommentsProvider =
+    FutureProvider.family<CircleComments, ({String postId, String authorId})>((
+  ref,
+  arg,
+) async {
+  final token = ref.watch(authProvider)?.token;
+  if (proxyBaseUrl.isEmpty || token == null || token.isEmpty) {
+    return const CircleComments();
+  }
+  return ref.read(postsClientProvider).comments(
+        postId: arg.postId,
+        postAuthorId: arg.authorId,
+        token: token,
+      );
+});
+
 /// Posts the viewer has locally hidden via Report or Unfollow. Persisted so a
 /// reported/blocked post stays gone across launches even though the feed itself
 /// is server-driven. Apple Guideline 1.2 (UGC safety): reported content must
@@ -1532,6 +1554,49 @@ class CircleNotifyNotifier extends Notifier<bool> {
 
 final circleNotifyProvider = NotifierProvider<CircleNotifyNotifier, bool>(
   CircleNotifyNotifier.new,
+);
+
+/// Whether to be pushed when a friend **comments on / replies to / @-mentions**
+/// you in the Circle. Independent of the friend-meal toggle. Persisted locally
+/// AND synced to the server (which gates the comment push), so muting actually
+/// stops the notification rather than just hiding a local switch. Default on.
+class CommentNotifyNotifier extends Notifier<bool> {
+  static const _prefsKey = 'comment_notify_enabled';
+
+  @override
+  bool build() =>
+      ref.read(sharedPreferencesProvider).getBool(_prefsKey) ?? true;
+
+  Future<bool> enable() async {
+    state = true;
+    await ref.read(sharedPreferencesProvider).setBool(_prefsKey, true);
+    await _sync(true);
+    return ref.read(notificationServiceProvider).requestPermission();
+  }
+
+  Future<void> disable() async {
+    state = false;
+    await ref.read(sharedPreferencesProvider).setBool(_prefsKey, false);
+    await _sync(false);
+  }
+
+  /// Best-effort push of the preference to the server (gates comment pushes).
+  /// Silent on failure — re-synced on the next toggle.
+  Future<void> _sync(bool comments) async {
+    final token = ref.read(authProvider)?.token;
+    if (token == null || token.isEmpty || proxyBaseUrl.isEmpty) return;
+    try {
+      await ref
+          .read(circleClientProvider)
+          .setNotifyPrefs(token, comments: comments);
+    } catch (_) {
+      /* best-effort — server defaults to ON, so a missed mute retries next toggle */
+    }
+  }
+}
+
+final commentNotifyProvider = NotifierProvider<CommentNotifyNotifier, bool>(
+  CommentNotifyNotifier.new,
 );
 
 /// Whether the OS currently permits notifications (a status check, no prompt).

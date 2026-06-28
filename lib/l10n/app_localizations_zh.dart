@@ -125,6 +125,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get onboardingNameLabel => '你的名字';
 
   @override
+  String get onboardingSignedIn => '已通过 Apple 登录';
+
+  @override
   String get onboardingNameManual => '或手动输入';
 
   @override
@@ -1079,6 +1082,115 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get commentsTitle => '评论';
+
+  @override
+  String get feedComment => '评论';
+
+  @override
+  String get commentsEmpty => '还没有评论。';
+
+  @override
+  String get commentHint => '添加评论…';
+
+  @override
+  String commentReplyHint(String name) {
+    return '回复 $name…';
+  }
+
+  @override
+  String get commentSend => '发送';
+
+  @override
+  String get signInToComment => '登录（在设置中）后即可评论';
+
+  @override
+  String get commentError => '评论发送失败，请重试。';
+
+  @override
+  String commentPrivacyViewer(String name) {
+    return '私密 — 只有你和 $name 能看到。';
+  }
+
+  @override
+  String get commentPrivacyOwner => '私密 — 每个人只能看到自己的评论。';
+
+  @override
+  String get commentDelete => '删除评论';
+
+  @override
+  String get commentDeleteConfirm => '为所有人删除这条评论？此操作无法撤销。';
+
+  @override
+  String get commentResend => '发送失败 — 点击重试';
+
+  @override
+  String get commentAudiencePublic => '所有人可见';
+
+  @override
+  String get commentAudiencePrivate => '私密';
+
+  @override
+  String commentAudienceOnly(String name) {
+    return '仅 $name 可见';
+  }
+
+  @override
+  String commentAudienceYouAnd(String name) {
+    return '仅你和$name可见';
+  }
+
+  @override
+  String get delete => '删除';
+
+  @override
+  String viewAllComments(int count) {
+    return '查看全部 $count 条评论';
+  }
+
+  @override
+  String get commentPublicHint => '评论（所有人可见）…';
+
+  @override
+  String get commentOwnerHint => '评论（公开），或 @某人 私密回复…';
+
+  @override
+  String get commentsPublic => '所有人可见';
+
+  @override
+  String get timeJustNow => '刚刚';
+
+  @override
+  String timeMinutesAgo(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 分钟前',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String timeHoursAgo(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 小时前',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String timeDaysAgo(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count 天前',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get sectionSuggested => '推荐关注';
 
   @override
@@ -1239,6 +1351,12 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get circleActivitySubtitle => '好友分享餐食时通知我';
+
+  @override
+  String get commentNotify => '评论与@提及';
+
+  @override
+  String get commentNotifySubtitle => '好友评论、回复或@我时通知我';
 
   @override
   String circleSharedMeal(String name) {

@@ -17,6 +17,10 @@ Parameters:
     Type: String
     Default: /food-at-peace/app-token
     Description: SSM SecureString parameter that holds the shared app token.
+  AdminTokenParam:
+    Type: String
+    Default: /food-at-peace/admin-token
+    Description: SSM SecureString holding the owner-only admin token (POST /beans/grant).
   MetricsTokenParam:
     Type: String
     Default: /food-at-peace/metrics-token
@@ -290,7 +294,9 @@ Resources:
       Environment:
         Variables:
           BEANS_TABLE: !Ref BeansTable
+          CIRCLE_TABLE: !Ref CircleTable
           SESSION_KEY_PARAM: !Ref SessionKeyParam
+          ADMIN_TOKEN_PARAM: !Ref AdminTokenParam
       Policies:
         - Statement:
             - Sid: ReadWriteBeans
@@ -301,11 +307,17 @@ Resources:
                 - dynamodb:Query
               Resource:
                 - !GetAtt BeansTable.Arn
+            - Sid: ReadCircleForGrant
+              Effect: Allow
+              Action: dynamodb:GetItem
+              Resource:
+                - !GetAtt CircleTable.Arn
             - Sid: ReadSessionKey
               Effect: Allow
               Action: ssm:GetParameter
               Resource:
                 - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter${SessionKeyParam}
+                - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter${AdminTokenParam}
             - Sid: DecryptSecureStrings
               Effect: Allow
               Action: kms:Decrypt
@@ -325,6 +337,12 @@ Resources:
           Properties:
             ApiId: !Ref VisionApi
             Path: /beans
+            Method: POST
+        GrantBeans:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref VisionApi
+            Path: /beans/grant
             Method: POST
 
   # Apple IAP receipt validation: POST /iap/validate verifies the receipt with
@@ -683,6 +701,12 @@ Resources:
             ApiId: !Ref VisionApi
             Path: /circle/register-device
             Method: POST
+        NotifyPrefs:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref VisionApi
+            Path: /circle/notify-prefs
+            Method: POST
         Invite:
           Type: HttpApi
           Properties:
@@ -830,6 +854,24 @@ Resources:
           Properties:
             ApiId: !Ref VisionApi
             Path: /circle/react
+            Method: POST
+        Comment:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref VisionApi
+            Path: /circle/comment
+            Method: POST
+        Comments:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref VisionApi
+            Path: /circle/comments
+            Method: POST
+        DeleteComment:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref VisionApi
+            Path: /circle/comment/delete
             Method: POST
 
   # Durable per-user meal photos — full-resolution originals, NO lifecycle expiry

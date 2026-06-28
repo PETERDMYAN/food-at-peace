@@ -92,6 +92,11 @@ class CircleClient {
   Future<int> registerDevice(String token, String deviceToken) =>
       _post(token, '/circle/register-device', {'token': deviceToken});
 
+  /// Sync the user's comment-notification preference to the server so it can
+  /// mute (or re-enable) comment / reply / @-mention pushes. Idempotent.
+  Future<int> setNotifyPrefs(String token, {required bool comments}) =>
+      _post(token, '/circle/notify-prefs', {'comments': comments});
+
   /// One-tap mutual connect from an invite link/QR. The inviter consented by
   /// sharing the link, so this connects both sides immediately. Idempotent.
   /// Returns the connected friend's display name (or the handle) for the toast.

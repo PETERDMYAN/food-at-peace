@@ -65,6 +65,20 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen> {
     }
   }
 
+  Future<void> _toggleComments(bool value) async {
+    setState(() => _busy = true);
+    try {
+      if (value) {
+        await ref.read(commentNotifyProvider.notifier).enable();
+        ref.invalidate(notificationsAllowedProvider);
+      } else {
+        await ref.read(commentNotifyProvider.notifier).disable();
+      }
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
   Future<void> _editTime(Reminder r) async {
     final picked = await showTimePicker(
       context: context,
@@ -185,6 +199,29 @@ class _RemindersScreenState extends ConsumerState<RemindersScreen> {
               onChanged: _busy ? null : _toggleCircle,
               secondary: IconTile(
                 icon: Icons.group_outlined,
+                color: scheme.primary,
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          // Comment notifications — friends commenting on / replying to / @-mentioning
+          // you. Synced to the server, which gates the push (so muting really mutes).
+          Card(
+            child: SwitchListTile(
+              contentPadding: const EdgeInsets.fromLTRB(16, 4, 12, 4),
+              title: Text(
+                t.commentNotify,
+                style: Theme.of(context).textTheme.titleSmall,
+              ),
+              subtitle: Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(t.commentNotifySubtitle),
+              ),
+              isThreeLine: true,
+              value: ref.watch(commentNotifyProvider),
+              onChanged: _busy ? null : _toggleComments,
+              secondary: IconTile(
+                icon: Icons.mode_comment_outlined,
                 color: scheme.primary,
               ),
             ),

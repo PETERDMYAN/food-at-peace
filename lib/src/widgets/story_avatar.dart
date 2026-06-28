@@ -18,6 +18,7 @@ class StoryAvatar extends StatelessWidget {
     this.ring = true,
     this.muted = false,
     this.seen = false,
+    this.story = true,
     this.onTap,
     this.badgeCount = 0,
     this.colorSeed,
@@ -48,6 +49,12 @@ class StoryAvatar extends StatelessWidget {
   /// Story already viewed → a plain grey ring instead of the colourful gradient
   /// (Instagram-style "seen" state). Ignored when [ring] is false or [muted].
   final bool seen;
+
+  /// Whether this avatar currently HAS a story to show. False → a plain avatar
+  /// with a thin neutral outline (no story ring at all), so a friend who hasn't
+  /// shared anything doesn't look like they have stories. Ignored when [ring] is
+  /// false. Defaults true (every existing avatar behaves as before).
+  final bool story;
   final VoidCallback? onTap;
   final int badgeCount;
 
@@ -124,28 +131,51 @@ class StoryAvatar extends StatelessWidget {
               )
             : bubble);
 
-    Widget avatar = ring
-        ? Container(
-            padding: const EdgeInsets.all(2.5),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              // Colourful ring = unseen; plain grey = already viewed (or muted
-              // for pending invites).
-              gradient: (muted || seen) ? null : _ring,
-              color: muted
-                  ? scheme.outline
-                  : (seen ? scheme.outlineVariant : null),
-            ),
-            child: Container(
-              padding: const EdgeInsets.all(2),
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: scheme.surface,
-              ),
-              child: inner,
-            ),
-          )
-        : DottedCircle(size: size + 9, color: scheme.outline, child: inner);
+    final Widget avatar0;
+    if (!ring) {
+      avatar0 = DottedCircle(size: size + 9, color: scheme.outline, child: inner);
+    } else if (!story && !muted) {
+      // No active story → a plain avatar with a thin neutral outline. NOT the
+      // colourful "unseen" ring (which would falsely signal stories) and NOT the
+      // dashed "Add" circle. Same footprint as the ring so the strip stays aligned.
+      avatar0 = Container(
+        padding: const EdgeInsets.all(2.5),
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(color: scheme.outlineVariant, width: 1.5),
+        ),
+        child: Container(
+          padding: const EdgeInsets.all(2),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: scheme.surface,
+          ),
+          child: inner,
+        ),
+      );
+    } else {
+      avatar0 = Container(
+        padding: const EdgeInsets.all(2.5),
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          // Colourful ring = unseen; plain grey = already viewed (or muted
+          // for pending invites).
+          gradient: (muted || seen) ? null : _ring,
+          color: muted
+              ? scheme.outline
+              : (seen ? scheme.outlineVariant : null),
+        ),
+        child: Container(
+          padding: const EdgeInsets.all(2),
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: scheme.surface,
+          ),
+          child: inner,
+        ),
+      );
+    }
+    Widget avatar = avatar0;
 
     if (badgeCount > 0) {
       avatar = Stack(

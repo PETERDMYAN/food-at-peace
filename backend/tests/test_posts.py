@@ -181,3 +181,333 @@ def test_official_feed_empty_when_no_official_account(monkeypatch):
 
     monkeypatch.setattr(posts, "_circle", lambda: _Circle())
     assert posts.official_feed() == {"posts": []}
+
+
+# --- Comments: private per-commenter threads, owner is the hub ---------------
+
+
+def _cond(expr):
+    """Extract (pk_eq, sk_begins_with) from a boto3 KeyConditionExpression so the
+    in-memory fake can answer Query the way DynamoDB would."""
+    pk = sk = None
+
+    def walk(node):
+        nonlocal pk, sk
+        e = node.get_expression()
+        op, vals = e["operator"], e["values"]
+        if op == "AND":
+            for v in vals:
+                walk(v)
+        elif op == "=" and getattr(vals[0], "name", None) == "pk":
+            pk = vals[1]
+        elif op == "begins_with" and getattr(vals[0], "name", None) == "sk":
+            sk = vals[1]
+
+    walk(expr)
+    return pk, sk
+
+
+class _CommentTable:
+    """A minimal pk/sk DynamoDB stand-in that understands begins_with Query +
+    Select=COUNT + ScanIndexForward, enough to exercise the comment logic."""
+
+    def __init__(self):
+        self.items = {}
+
+    def put_item(self, Item):
+        self.items[(Item["pk"], Item["sk"])] = Item
+
+    def get_item(self, Key):
+        k = (Key["pk"], Key["sk"])
+        return {"Item": self.items[k]} if k in self.items else {}
+
+    def delete_item(self, Key):
+        self.items.pop((Key["pk"], Key["sk"]), None)
+
+    def query(self, KeyConditionExpression=None, Select=None,
+              ScanIndexForward=True, Limit=None, **kw):
+        pk, prefix = _cond(KeyConditionExpression)
+        rows = [
+            v for (p, s), v in self.items.items()
+            if p == pk and (prefix is None or s.startswith(prefix))
+        ]
+        rows.sort(key=lambda r: r["sk"], reverse=not ScanIndexForward)
+        if Limit is not None:
+            rows = rows[:Limit]
+        if Select == "COUNT":
+            return {"Count": len(rows)}
+        return {"Items": rows}
+
+
+@pytest.fixture
+def cfake(monkeypatch):
+    t = _CommentTable()
+    # A and B are friends of the owner; "stranger" is not connected.
+    friends = {"A": ["owner"], "B": ["owner"], "owner": ["A", "B"], "stranger": []}
+    clock = {"t": 1000}
+
+    def now_ms():
+        clock["t"] += 1  # strictly increasing → deterministic thread ordering
+        return clock["t"]
+
+    monkeypatch.setattr(posts, "_posts", lambda: t)
+    monkeypatch.setattr(posts, "_user_card", lambda uid: {"handle": uid, "name": uid.upper()})
+    monkeypatch.setattr(posts, "_connected_ids", lambda uid: friends.get(uid, []))
+    monkeypatch.setattr(posts, "_push", lambda *a, **k: None)
+    monkeypatch.setattr(posts, "_now_ms", now_ms)
+    monkeypatch.setattr(posts, "_now_s", lambda: 1)
+    # The post everyone comments on (owner's), seeded so _find_post resolves it.
+    t.put_item(Item={"pk": "feed#owner", "sk": "post#1#p1", "postId": "p1", "expiresAt": 10**12})
+    return t
+
+
+def _texts(listing):
+    return [c["text"] for th in listing["threads"] for c in th["comments"]]
+
+
+def test_comment_threads_are_private_per_commenter(cfake):
+    """The spec example: A comments once, B comments once, owner replies to B
+    once → owner sees 3, A sees 1, B sees 2; no one sees another's thread."""
+    posts.create_comment("A", {"postId": "p1", "postAuthorId": "owner", "text": "a1"})
+    posts.create_comment("B", {"postId": "p1", "postAuthorId": "owner", "text": "b1"})
+    posts.create_comment(
+        "owner", {"postId": "p1", "postAuthorId": "owner", "text": "re b", "threadUser": "B"}
+    )
+
+    owner_view = posts.list_comments("owner", {"postId": "p1", "postAuthorId": "owner"})
+    assert owner_view["isOwner"] is True
+    assert len(owner_view["threads"]) == 2
+    assert sorted(_texts(owner_view)) == ["a1", "b1", "re b"]  # all 3
+
+    a_view = posts.list_comments("A", {"postId": "p1", "postAuthorId": "owner"})
+    assert a_view["isOwner"] is False
+    assert len(a_view["threads"]) == 1
+    assert _texts(a_view) == ["a1"]  # only A's own — never B's
+
+    b_view = posts.list_comments("B", {"postId": "p1", "postAuthorId": "owner"})
+    assert len(b_view["threads"]) == 1
+    assert _texts(b_view) == ["b1", "re b"]  # their comment + owner's reply
+    assert b_view["threads"][0]["comments"][1]["isOwner"] is True
+
+
+def test_comment_count_matches_per_viewer_visibility(cfake):
+    posts.create_comment("A", {"postId": "p1", "postAuthorId": "owner", "text": "a1"})
+    posts.create_comment("B", {"postId": "p1", "postAuthorId": "owner", "text": "b1"})
+    posts.create_comment(
+        "owner", {"postId": "p1", "postAuthorId": "owner", "text": "re b", "threadUser": "B"}
+    )
+    assert posts._comment_count("p1", "owner", True) == 3
+    assert posts._comment_count("p1", "A", False) == 1
+    assert posts._comment_count("p1", "B", False) == 2
+    assert posts._comment_count("p1", None, False) == 0  # signed-out feed
+
+
+def test_friend_with_no_comment_sees_empty_not_others(cfake):
+    posts.create_comment("A", {"postId": "p1", "postAuthorId": "owner", "text": "a1"})
+    # B is a connected friend but hasn't commented → empty, NOT A's thread.
+    b_view = posts.list_comments("B", {"postId": "p1", "postAuthorId": "owner"})
+    assert b_view["threads"] == []
+
+
+def test_owner_can_start_a_private_thread_by_mentioning_a_friend(cfake):
+    # No threadUser (and not public) → the owner must choose someone.
+    with pytest.raises(posts.ProxyError):
+        posts.create_comment("owner", {"postId": "p1", "postAuthorId": "owner", "text": "hi"})
+    # @-mentioning a CONNECTED friend who hasn't commented yet opens a fresh
+    # private thread — only the owner + B can see it.
+    posts.create_comment(
+        "owner", {"postId": "p1", "postAuthorId": "owner", "text": "hi B", "threadUser": "B"}
+    )
+    b_view = posts.list_comments("B", {"postId": "p1", "postAuthorId": "owner"})
+    assert _texts(b_view) == ["hi B"]
+    assert b_view["threads"][0]["comments"][0]["isOwner"] is True
+    # A different friend (A) must NOT see B's private thread.
+    a_view = posts.list_comments("A", {"postId": "p1", "postAuthorId": "owner"})
+    assert a_view["threads"] == []
+    # But the owner can't open a private thread toward a NON-connected user.
+    with pytest.raises(posts.ProxyError):
+        posts.create_comment(
+            "owner",
+            {"postId": "p1", "postAuthorId": "owner", "text": "hi", "threadUser": "stranger"},
+        )
+
+
+def test_owner_mention_pushes_friend_then_reads_as_reply(cfake, monkeypatch):
+    pushes = []
+    monkeypatch.setattr(posts, "_push", lambda to, title, body="": pushes.append((to, title)))
+    # Opening the thread via @-mention pings B as a mention…
+    posts.create_comment(
+        "owner", {"postId": "p1", "postAuthorId": "owner", "text": "hi B", "threadUser": "B"}
+    )
+    assert pushes[-1][0] == "B" and "mentioned you" in pushes[-1][1]
+    # …and a follow-up into the now-existing thread reads as a reply.
+    posts.create_comment(
+        "owner", {"postId": "p1", "postAuthorId": "owner", "text": "again", "threadUser": "B"}
+    )
+    assert pushes[-1][0] == "B" and "replied to your comment" in pushes[-1][1]
+
+
+def test_comment_notify_ok_reads_pref(monkeypatch):
+    class _C:
+        def __init__(self, item):
+            self._item = item
+
+        def get_item(self, Key=None):
+            return {"Item": self._item} if self._item is not None else {}
+
+    monkeypatch.setattr(posts, "_circle", lambda: _C(None))
+    assert posts._comment_notify_ok("u") is True  # absent → on
+    monkeypatch.setattr(posts, "_circle", lambda: _C({"comments": False}))
+    assert posts._comment_notify_ok("u") is False  # explicitly muted
+    monkeypatch.setattr(posts, "_circle", lambda: _C({"comments": True}))
+    assert posts._comment_notify_ok("u") is True
+
+
+def test_muted_recipient_gets_no_comment_push(cfake, monkeypatch):
+    pushes = []
+    monkeypatch.setattr(posts, "_push", lambda to, title, body="": pushes.append(to))
+    # The owner muted comment notifications → a friend's comment doesn't push them…
+    monkeypatch.setattr(posts, "_comment_notify_ok", lambda uid: uid != "owner")
+    posts.create_comment("A", {"postId": "p1", "postAuthorId": "owner", "text": "hi"})
+    assert "owner" not in pushes
+    # …but the comment is still recorded, and an un-muted recipient (B) is pushed.
+    assert posts._comment_count("p1", "owner", True) == 1
+    posts.create_comment(
+        "owner", {"postId": "p1", "postAuthorId": "owner", "text": "hey", "threadUser": "B"}
+    )
+    assert "B" in pushes
+
+
+def test_non_friend_cannot_comment_or_view(cfake):
+    with pytest.raises(posts.ProxyError):
+        posts.create_comment("stranger", {"postId": "p1", "postAuthorId": "owner", "text": "hi"})
+    posts.create_comment("A", {"postId": "p1", "postAuthorId": "owner", "text": "a1"})
+    with pytest.raises(posts.ProxyError):
+        posts.list_comments("stranger", {"postId": "p1", "postAuthorId": "owner"})
+
+
+def test_comment_rejects_spoofed_owner_and_bad_input(cfake):
+    with pytest.raises(posts.ProxyError):  # claim B owns the post → not found under B
+        posts.create_comment("A", {"postId": "p1", "postAuthorId": "B", "text": "hi"})
+    with pytest.raises(posts.ProxyError):  # empty text
+        posts.create_comment("A", {"postId": "p1", "postAuthorId": "owner", "text": "  "})
+    with pytest.raises(posts.ProxyError):  # missing postId
+        posts.create_comment("A", {"postAuthorId": "owner", "text": "hi"})
+
+
+def test_owner_can_delete_any_comment(cfake):
+    a = posts.create_comment("A", {"postId": "p1", "postAuthorId": "owner", "text": "a1"})
+    posts.create_comment("B", {"postId": "p1", "postAuthorId": "owner", "text": "b1"})
+    assert posts.delete_comment(
+        "owner",
+        {"postId": "p1", "postAuthorId": "owner", "commentId": a["commentId"], "threadUser": "A"},
+    ) == {"deleted": True}
+    # A's thread is now empty; B's is untouched.
+    assert posts._comment_count("p1", "A", False) == 0
+    assert posts._comment_count("p1", "B", False) == 1
+    assert posts._comment_count("p1", "owner", True) == 1
+
+
+def test_commenter_deletes_own_comment_only(cfake):
+    a = posts.create_comment("A", {"postId": "p1", "postAuthorId": "owner", "text": "a1"})
+    reply = posts.create_comment(
+        "owner", {"postId": "p1", "postAuthorId": "owner", "text": "re", "threadUser": "A"}
+    )
+    # A cannot delete the owner's reply…
+    with pytest.raises(posts.ProxyError):
+        posts.delete_comment(
+            "A",
+            {"postId": "p1", "postAuthorId": "owner", "commentId": reply["commentId"], "threadUser": "A"},
+        )
+    # …nor can a different user delete A's comment…
+    with pytest.raises(posts.ProxyError):
+        posts.delete_comment(
+            "B",
+            {"postId": "p1", "postAuthorId": "owner", "commentId": a["commentId"], "threadUser": "A"},
+        )
+    # …but A can delete their own.
+    assert posts.delete_comment(
+        "A",
+        {"postId": "p1", "postAuthorId": "owner", "commentId": a["commentId"], "threadUser": "A"},
+    )["deleted"] is True
+
+
+def test_recent_comments_preview_is_per_viewer(cfake):
+    posts.create_comment("A", {"postId": "p1", "postAuthorId": "owner", "text": "a1"})
+    posts.create_comment("B", {"postId": "p1", "postAuthorId": "owner", "text": "b1"})
+    posts.create_comment(
+        "owner", {"postId": "p1", "postAuthorId": "owner", "text": "re b", "threadUser": "B"}
+    )
+
+    def texts(viewer, owner_view):
+        return [
+            posts._comment_preview(c)["text"]
+            for c in posts._visible_comments("p1", viewer, owner_view)
+        ]
+
+    assert texts("owner", True) == ["a1", "b1", "re b"]  # owner: all, chronological
+    assert texts("A", False) == ["a1"]  # A: only their own
+    assert texts("B", False) == ["b1", "re b"]  # B: theirs + owner's reply
+    assert posts._visible_comments("p1", None, False) == []  # signed out: none
+
+
+def test_owner_public_comment_is_visible_to_everyone(cfake):
+    # Owner broadcasts publicly; A comments privately; owner replies to A privately.
+    posts.create_comment(
+        "owner", {"postId": "p1", "postAuthorId": "owner", "text": "hello all", "public": True}
+    )
+    posts.create_comment("A", {"postId": "p1", "postAuthorId": "owner", "text": "a1"})
+    posts.create_comment(
+        "owner", {"postId": "p1", "postAuthorId": "owner", "text": "hi A", "threadUser": "A"}
+    )
+
+    owner_view = posts.list_comments("owner", {"postId": "p1", "postAuthorId": "owner"})
+    assert [c["text"] for c in owner_view["public"]] == ["hello all"]
+    assert sum(len(t["comments"]) for t in owner_view["threads"]) == 2  # A's thread
+
+    a_view = posts.list_comments("A", {"postId": "p1", "postAuthorId": "owner"})
+    assert [c["text"] for c in a_view["public"]] == ["hello all"]  # sees the broadcast
+    assert [c["text"] for t in a_view["threads"] for c in t["comments"]] == ["a1", "hi A"]
+
+    # B is a friend who hasn't commented → public only, NO private thread.
+    b_view = posts.list_comments("B", {"postId": "p1", "postAuthorId": "owner"})
+    assert [c["text"] for c in b_view["public"]] == ["hello all"]
+    assert b_view["threads"] == []
+
+
+def test_non_owner_cannot_broadcast_public(cfake):
+    # A is not the owner; even with public:true their comment stays PRIVATE.
+    posts.create_comment(
+        "A", {"postId": "p1", "postAuthorId": "owner", "text": "sneaky", "public": True}
+    )
+    b_view = posts.list_comments("B", {"postId": "p1", "postAuthorId": "owner"})
+    assert b_view["public"] == []  # B never sees A's "public" attempt
+    assert b_view["threads"] == []
+    a_view = posts.list_comments("A", {"postId": "p1", "postAuthorId": "owner"})
+    assert a_view["public"] == []
+    assert [c["text"] for t in a_view["threads"] for c in t["comments"]] == ["sneaky"]
+
+
+def test_visible_comments_includes_public(cfake):
+    posts.create_comment(
+        "owner", {"postId": "p1", "postAuthorId": "owner", "text": "pub", "public": True}
+    )
+    posts.create_comment("A", {"postId": "p1", "postAuthorId": "owner", "text": "a1"})
+
+    def texts(viewer, owner_view):
+        return sorted(
+            posts._comment_preview(c)["text"]
+            for c in posts._visible_comments("p1", viewer, owner_view)
+        )
+
+    assert texts("A", False) == ["a1", "pub"]  # commenter: public + own
+    assert texts("B", False) == ["pub"]  # friend, no comment: public only
+    assert texts(None, False) == ["pub"]  # signed-out: public only
+
+
+def test_delete_missing_comment_404(cfake):
+    with pytest.raises(posts.ProxyError):
+        posts.delete_comment(
+            "owner",
+            {"postId": "p1", "postAuthorId": "owner", "commentId": "nope", "threadUser": "A"},
+        )
