@@ -47,8 +47,15 @@ SESSION_KEY_PARAM = os.environ.get(
     "SESSION_KEY_PARAM", "/food-at-peace/session-signing-key"
 )
 APP_TOKEN_PARAM = os.environ.get("APP_TOKEN_PARAM", "/food-at-peace/app-token")
+# Owner-only token (shared with beans.py) that gates publishing as the official
+# account — the "push photo + text as Eva" capability.
+ADMIN_TOKEN_PARAM = os.environ.get("ADMIN_TOKEN_PARAM", "/food-at-peace/admin-token")
 # The creator's official @handle, whose posts a signed-out app may read publicly.
 OFFICIAL_HANDLE = os.environ.get("OFFICIAL_HANDLE", "roro")
+# The SECOND official account ("Eva"), a DISTINCT account from Roro. We surface
+# her posts in the feed alongside Roro's so an owner can broadcast as Eva to
+# everyone — Roro's handling is left completely untouched; Eva is only ADDED.
+EVA_HANDLE = os.environ.get("EVA_HANDLE", "eva")
 
 TTL_SECONDS = 3 * 24 * 60 * 60  # posts live 3 days
 MAX_IMAGE_BYTES = 6 * 1024 * 1024
@@ -105,6 +112,25 @@ def _app_token_ok(event):
         return bool(tok) and tok == _get_secret(APP_TOKEN_PARAM)
     except Exception:  # noqa: BLE001 — treat any secret-fetch failure as no-auth
         return False
+
+
+def _admin_ok(event):
+    """True when the request carries the owner-only admin token (same secret as
+    beans.py's /beans/grant). Gates publishing as the official account."""
+    tok = _header(event, "x-admin-token") or ""
+    try:
+        return bool(tok) and tok == _get_secret(ADMIN_TOKEN_PARAM)
+    except Exception:  # noqa: BLE001 — any secret-fetch failure → not authorised
+        return False
+
+
+def _account_uid(handle):
+    """The userId behind an official @handle, from the handle directory
+    (pk='handle#<handle>'). None if it isn't registered. Lets the owner publish as
+    a specific official account ('eva' vs 'roro' — they're separate accounts)."""
+    h = (handle or "").strip().lower().lstrip("@")
+    item = _circle().get_item(Key={"pk": f"handle#{h}", "sk": "handle"}).get("Item")
+    return (item or {}).get("userId")
 
 
 def _me(event):
@@ -181,7 +207,8 @@ def _comment_notify_ok(uid):
 
 # --- Operations -------------------------------------------------------------
 
-def create_post(uid, body):
+def _decode_image(body):
+    """Validate + decode a base64 image field. Returns (raw_bytes, media_type)."""
     image = body.get("image")
     if not isinstance(image, str) or not image:
         raise ProxyError(400, "No image provided.")
@@ -191,15 +218,16 @@ def create_post(uid, body):
         raise ProxyError(400, "Bad image.")
     if not raw or len(raw) > MAX_IMAGE_BYTES:
         raise ProxyError(413, "That image is too large.")
+    return raw, (body.get("mediaType") or "image/jpeg")
 
-    media = body.get("mediaType") or "image/jpeg"
-    name = (body.get("name") or "").strip()[:120]
-    calories = int(body.get("calories") or 0)
+
+def _store_post(uid, raw, media, name, calories):
+    """Upload the photo + write the feed row for a post by [uid]. Returns
+    {postId, expiresAt, authorName}. Shared by create_post + official_post."""
     post_id = uuid.uuid4().hex
     created = _now_ms()
     expires = _now_s() + TTL_SECONDS
     key = f"posts/{uid}/{post_id}.jpg"
-
     _s3c().put_object(Bucket=PHOTOS_BUCKET, Key=key, Body=raw, ContentType=media)
     me = _user_card(uid)
     _posts().put_item(
@@ -217,10 +245,40 @@ def create_post(uid, body):
             "expiresAt": expires,
         }
     )
+    return {"postId": post_id, "expiresAt": expires, "authorName": me["name"]}
+
+
+def create_post(uid, body):
+    raw, media = _decode_image(body)
+    name = (body.get("name") or "").strip()[:120]
+    calories = int(body.get("calories") or 0)
+    result = _store_post(uid, raw, media, name, calories)
     # Tell connected friends a new meal landed in their circle (best-effort).
     for friend in _connected_ids(uid):
-        _push(friend, f"{me['name']} shared a meal 🍵")
-    return {"postId": post_id, "expiresAt": expires}
+        _push(friend, f"{result['authorName']} shared a meal 🍵")
+    return {"postId": result["postId"], "expiresAt": result["expiresAt"]}
+
+
+def official_post(body):
+    """Owner-only: publish a photo + text post AS an official account. `handle`
+    selects WHICH account ('eva' or 'roro' — they're DISTINCT official accounts);
+    defaults to OFFICIAL_HANDLE. The post lands in that account's feed under its
+    live name. Admin-token gated; reuses the post infra (3-day TTL). `text` →
+    caption."""
+    handle = body.get("handle") or OFFICIAL_HANDLE
+    uid = _account_uid(handle)
+    if not uid:
+        raise ProxyError(404, "That account isn't registered.")
+    raw, media = _decode_image(body)
+    text = (body.get("text") or body.get("name") or "").strip()[:120]
+    calories = int(body.get("calories") or 0)
+    result = _store_post(uid, raw, media, text, calories)
+    return {
+        "postId": result["postId"],
+        "expiresAt": result["expiresAt"],
+        "author": result["authorName"],
+        "handle": handle,
+    }
 
 
 def _reactions_for(post_id, viewer_id, owner_view):
@@ -302,6 +360,12 @@ def _user_posts(author_id, viewer_id):
 
 def feed(uid):
     authors = [uid] + _connected_ids(uid)
+    # Surface the Eva official account to EVERY user (Roro already reaches all via
+    # auto-follow — his path is unchanged here; we only ADD Eva, and only if she
+    # isn't already a connection, so nothing is ever doubled).
+    eva = _account_uid(EVA_HANDLE)
+    if eva and eva not in authors:
+        authors.append(eva)
     posts = []
     for author in authors:
         posts.extend(_user_posts(author, uid))
@@ -310,16 +374,19 @@ def feed(uid):
 
 
 def official_feed():
-    """The creator's official-account posts, readable WITHOUT an account (app
-    token only) — so a signed-out / brand-new user still sees real photos in the
-    feed before logging in. Public content: only the official account's own posts."""
-    item = (
-        _circle()
-        .get_item(Key={"pk": f"handle#{OFFICIAL_HANDLE}", "sk": "handle"})
-        .get("Item")
-    )
-    uid = (item or {}).get("userId")
-    return {"posts": _user_posts(uid, None) if uid else []}
+    """The official accounts' posts, readable WITHOUT an account (app token only)
+    — so a signed-out / brand-new user still sees real photos before logging in.
+    Public content: the official accounts' own posts — Roro (unchanged) plus Eva,
+    added alongside so her broadcasts reach signed-out users too."""
+    posts = []
+    roro = _account_uid(OFFICIAL_HANDLE)  # the existing official feed, unchanged
+    if roro:
+        posts.extend(_user_posts(roro, None))
+    eva = _account_uid(EVA_HANDLE)
+    if eva:
+        posts.extend(_user_posts(eva, None))
+    posts.sort(key=lambda p: p["createdAt"], reverse=True)
+    return {"posts": posts}
 
 
 def react(uid, body):
@@ -631,6 +698,12 @@ def handler(event, context):
         # official-creator feed, so new users see real photos before logging in.
         if method == "GET" and not _bearer_token(event) and _app_token_ok(event):
             return _response(200, official_feed())
+        # Owner-only: publish a post AS the official account (admin-token gated, no
+        # session) — the "push photo + text as Eva" capability.
+        if method == "POST" and path == "official-post":
+            if not _admin_ok(event):
+                raise ProxyError(403, "Not authorized.")
+            return _response(200, official_post(_parse_body(event)))
         uid = _me(event)
         if method == "GET":
             return _response(200, feed(uid))

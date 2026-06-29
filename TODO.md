@@ -32,6 +32,26 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
   --no-confirm-changeset --parameter-overrides AppleClientId=com.foodatpeace.foodAtPeace
 ```
 
+## ✅ Eva broadcast capability (post photo+text as the official Eva account) — **live on prod, 1.1.1 / build 76**
+
+Owner-only **`POST /circle/official-post`** (admin-token gated, same token as `/beans/grant`) + reusable
+**`backend/scripts/official_post.py --handle eva --image X --text "…" [--prod]`** publishes a **photo + text
+post as a chosen official account** — **Eva** (default) or Roro; they are **DISTINCT accounts** (`handle#eva`
+vs `handle#roro`, do NOT rename/merge). The server now **surfaces Eva in the feed** (`feed` + `official_feed`
+carry Eva alongside Roro, deduped) so existing installed apps show her posts with **no update** — **Roro's path
+is untouched, Eva is only added**. Client **Official ✓ badge** now covers Eva (`kEvaHandle`/`isOfficialHandle`,
+`circle_feed_screen.dart`) — ships in **build 76**. The **Eva account was created on prod** (`handle#eva` →
+`apple:eva-1781598454`, name "Eva"). Backend additive + backward-compatible (1.0.2/1.1.0 contract intact,
+`AppleClientId` preserved, prod smoke-tested); 31 posts + 183 Flutter tests green. The 1.1.0 launch announcement
+is posted as Eva on the live feed. (Eva's daily **wisdom** persona is separate + client-side — unchanged.)
+
+### ⏳ Follow-ups requested (2026-06-29)
+- **Update App Store screenshots before the next submission** — shots **1, 4, 6 are missing the Circle tab**;
+  regenerate (incl. the Circle feed/comments) before submitting 1.1.1.
+- **Push-notification deep-linking** — tapping a push should navigate **directly** to the target and auto-load:
+  friend's **new meal** → that post in the feed; a **comment**/reply → that post's comment thread; an
+  **@mention** → the mentioned post/thread. Needs APNs payload routing data + client tap-handling + navigation.
+
 ## ✅ Circle comments (private threads + owner public + @mention + delete + preview + sheet UX/speed) + relative time + story-fix + admin-grant — **live on v2 + prod, shipping as 1.1.0, TestFlight builds 63–75**
 
 Comments on Circle feed posts, modelled as **private per-commenter threads** with the post

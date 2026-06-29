@@ -5,10 +5,18 @@ or by **snapping a photo** — see how much you can still eat today, and keep an
 on your protein and saturated-fat quotas. Connects to **Apple Health / Garmin**
 for real calories burned, and speaks **English and 中文**. Built with Flutter.
 
-> **Status:** **v1.0.2 (62) is approved & live on the App Store** (approved 2026-06-23; the CN name is **食之安**).
-> The live build is tagged **`v1.0.2`** (commit `54166a7`); prior live was `v1.0.1` (`1c6ca03`). Web Beans
-> recharge at `foodatpeace.app/recharge` is also fully live (Stripe live keys, webhook verified, Sign in with
-> Apple on the web, shareable `/recharge/<handle>` links).
+> **Status:** **1.1.0 (build 75) is approved & live on the App Store** (the Circle comments system — see below;
+> CN name **食之安**). Prior live: **v1.0.2 (62)** (`54166a7`) and `v1.0.1` (`1c6ca03`). Web Beans recharge at
+> `foodatpeace.app/recharge` is also fully live (Stripe live keys, webhook verified, Sign in with Apple on the
+> web, shareable `/recharge/<handle>` links). *(Tag `v1.1.0` is pending — created once confirmed live.)*
+> **Eva broadcast capability (1.1.1, build 76 — live on prod):** an owner-only **`POST /circle/official-post`**
+> (admin-token gated) + **`backend/scripts/official_post.py --handle eva`** publishes a **photo + text post as a
+> chosen official account** (**Eva** or Roro — they're DISTINCT accounts). The server now **surfaces the Eva
+> account in the feed** (`feed` + `official_feed` carry Eva alongside Roro — **Roro's path is untouched**;
+> Eva is only added, deduped), so an existing installed app shows Eva's posts with **no update**. The client
+> **Official ✓ badge** now covers Eva too (`kEvaHandle` / `isOfficialHandle`) — that part ships in build 76.
+> Backend additive + backward-compatible (1.0.2/1.1.0 contract intact, `AppleClientId` preserved); the Eva
+> account was created on prod (`handle#eva`). The 1.1.0 launch announcement is posted as Eva on the live feed.
 > **Next (1.1.0, dev on `main`):** the **Circle name-drift** fix — renaming yourself now propagates to what
 > friends see (`list_circle` serves each friend's *live* me-card name; a nickname-only edit re-registers it).
 > The backend (read-live) is now **live on v2 + prod** (2026-06-24, backward-compatible — same response

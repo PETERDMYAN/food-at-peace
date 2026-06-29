@@ -244,12 +244,12 @@ class _PostCard extends ConsumerWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
-                // Blue "Official" tag on the creator @roro's posts — for everyone
-                // except your own posts and the creator themselves.
+                // Blue "Official" tag on an official account's posts (Roro or
+                // Eva) — for everyone except your own posts and that account
+                // viewing itself.
                 if (!post.mine &&
-                    (post.authorHandle ?? '').toLowerCase() == kRoroHandle &&
-                    ref.watch(myCircleHandleProvider)?.toLowerCase() !=
-                        kRoroHandle) ...[
+                    isOfficialHandle(post.authorHandle) &&
+                    !isOfficialHandle(ref.watch(myCircleHandleProvider))) ...[
                   const SizedBox(width: 6),
                   const OfficialBadge(),
                 ],

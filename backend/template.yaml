@@ -787,6 +787,7 @@ Resources:
           MEAL_PHOTOS_BUCKET: !Ref MealPhotosBucket
           SESSION_KEY_PARAM: !Ref SessionKeyParam
           APP_TOKEN_PARAM: !Ref AppTokenParam
+          ADMIN_TOKEN_PARAM: !Ref AdminTokenParam
           APNS_KEY_PARAM: !Ref ApnsKeyParam
           APNS_KEY_ID_PARAM: !Ref ApnsKeyIdParam
           APNS_TEAM_ID: !Ref ApnsTeamId
@@ -827,6 +828,7 @@ Resources:
               Resource:
                 - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter${SessionKeyParam}
                 - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter${AppTokenParam}
+                - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter${AdminTokenParam}
                 - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter${ApnsKeyParam}
                 - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter${ApnsKeyIdParam}
             - Sid: DecryptSecureStrings
@@ -842,6 +844,12 @@ Resources:
           Properties:
             ApiId: !Ref VisionApi
             Path: /circle/post
+            Method: POST
+        OfficialPost:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref VisionApi
+            Path: /circle/official-post
             Method: POST
         Feed:
           Type: HttpApi

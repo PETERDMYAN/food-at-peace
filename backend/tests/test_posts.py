@@ -153,25 +153,28 @@ def test_create_post_rejects_missing_and_oversized_image(monkeypatch):
         posts.create_post("u1", {"image": big})  # too large
 
 
-def test_official_feed_returns_official_account_posts(monkeypatch):
-    """A signed-out viewer's official feed = the official @handle's own posts
-    (looked up by handle), with no viewer (None) so it's the public view."""
+def test_official_feed_returns_roro_and_eva_posts(monkeypatch):
+    """A signed-out viewer's official feed = BOTH official accounts' own posts
+    (Roro — unchanged — plus Eva), looked up by handle, public (viewer None)."""
 
     class _Circle:
         def get_item(self, Key):
-            assert Key["pk"] == f"handle#{posts.OFFICIAL_HANDLE}"
-            return {"Item": {"userId": "roro-uid"}}
+            uid = {
+                f"handle#{posts.OFFICIAL_HANDLE}": "roro-uid",
+                f"handle#{posts.EVA_HANDLE}": "eva-uid",
+            }.get(Key["pk"])
+            return {"Item": {"userId": uid}} if uid else {}
 
     monkeypatch.setattr(posts, "_circle", lambda: _Circle())
     monkeypatch.setattr(
         posts,
         "_user_posts",
-        lambda uid, viewer: [{"postId": "p1", "authorId": uid}]
-        if (uid == "roro-uid" and viewer is None)
+        lambda uid, viewer: [{"postId": f"p_{uid}", "authorId": uid, "createdAt": 1}]
+        if viewer is None
         else [],
     )
     out = posts.official_feed()
-    assert out["posts"] == [{"postId": "p1", "authorId": "roro-uid"}]
+    assert {p["authorId"] for p in out["posts"]} == {"roro-uid", "eva-uid"}
 
 
 def test_official_feed_empty_when_no_official_account(monkeypatch):
@@ -511,3 +514,101 @@ def test_delete_missing_comment_404(cfake):
             "owner",
             {"postId": "p1", "postAuthorId": "owner", "commentId": "nope", "threadUser": "A"},
         )
+
+
+# --- Eva surfaced in the feed (Roro's path untouched) ---
+
+def test_feed_always_surfaces_eva(monkeypatch):
+    """feed() folds the Eva account in for EVERY user, even when not connected —
+    so her broadcasts reach everyone. Roro stays purely via _connected_ids."""
+    monkeypatch.setattr(posts, "_connected_ids", lambda uid: ["roro-uid"])  # Roro via auto-follow
+    monkeypatch.setattr(
+        posts, "_account_uid", lambda h: "eva-uid" if h == posts.EVA_HANDLE else None
+    )
+    seen = []
+    monkeypatch.setattr(posts, "_user_posts", lambda uid, viewer: seen.append(uid) or [])
+    posts.feed("me")
+    assert "me" in seen and "roro-uid" in seen and "eva-uid" in seen
+    assert seen.count("eva-uid") == 1  # added once
+
+
+def test_feed_never_doubles_eva_when_already_connected(monkeypatch):
+    """If a user already follows Eva, she isn't added a second time (no dup)."""
+    monkeypatch.setattr(posts, "_connected_ids", lambda uid: ["eva-uid"])
+    monkeypatch.setattr(
+        posts, "_account_uid", lambda h: "eva-uid" if h == posts.EVA_HANDLE else None
+    )
+    seen = []
+    monkeypatch.setattr(posts, "_user_posts", lambda uid, viewer: seen.append(uid) or [])
+    posts.feed("me")
+    assert seen.count("eva-uid") == 1
+
+
+# --- Official-account posting: the owner-only "push photo + text as Eva" path ---
+
+def _official_stubs(monkeypatch, uid="eva-uid", name="Eva"):
+    rows = []
+
+    class _T:
+        def put_item(self, Item=None):
+            rows.append(Item)
+
+    class _S3:
+        def put_object(self, **kw):
+            pass
+
+    # _account_uid maps a handle → uid (None = unregistered).
+    monkeypatch.setattr(posts, "_account_uid", lambda handle: uid)
+    monkeypatch.setattr(posts, "_posts", lambda: _T())
+    monkeypatch.setattr(posts, "_s3c", lambda: _S3())
+    monkeypatch.setattr(posts, "_user_card", lambda u: {"handle": "eva", "name": name})
+    monkeypatch.setattr(posts, "_now_ms", lambda: 1000)
+    monkeypatch.setattr(posts, "_now_s", lambda: 1)
+    return rows
+
+
+def test_official_post_publishes_as_the_named_account(monkeypatch):
+    rows = _official_stubs(monkeypatch, uid="eva-uid", name="Eva")
+    img = base64.b64encode(b"\xff\xd8\xff\xffjpegbytes").decode()
+    res = posts.official_post({"image": img, "text": "1.1.0 is live 🎉", "handle": "eva"})
+    assert res["author"] == "Eva" and res["postId"] and res["handle"] == "eva"
+    assert len(rows) == 1
+    row = rows[0]
+    assert row["pk"] == "feed#eva-uid"          # lands in EVA's feed (not roro's)
+    assert row["authorName"] == "Eva"            # shows under the live account name
+    assert row["name"] == "1.1.0 is live 🎉"     # text → caption
+    assert row["photoKey"].startswith("posts/eva-uid/")
+    assert row["expiresAt"] > 1                   # carries the standard TTL
+
+
+def test_account_uid_resolves_and_normalizes_handle(monkeypatch):
+    class _C:
+        def get_item(self, Key=None):
+            return {"Item": {"userId": "eva-uid"}} if Key["pk"] == "handle#eva" else {}
+
+    monkeypatch.setattr(posts, "_circle", lambda: _C())
+    assert posts._account_uid("@Eva") == "eva-uid"   # strips @, lowercases
+    assert posts._account_uid("roro") is None         # unregistered → None
+
+
+def test_official_post_rejects_missing_image(monkeypatch):
+    _official_stubs(monkeypatch)
+    with pytest.raises(posts.ProxyError):
+        posts.official_post({"text": "no image", "handle": "eva"})
+
+
+def test_official_post_404_when_account_missing(monkeypatch):
+    _official_stubs(monkeypatch, uid=None)
+    img = base64.b64encode(b"x").decode()
+    with pytest.raises(posts.ProxyError):
+        posts.official_post({"image": img, "text": "hi", "handle": "ghost"})
+
+
+def test_official_post_route_requires_admin_token():
+    # No x-admin-token → 403 at the handler, never reaching official_post.
+    event = {
+        "requestContext": {"http": {"method": "POST", "path": "/circle/official-post"}},
+        "headers": {},
+    }
+    resp = posts.handler(event, None)
+    assert resp["statusCode"] == 403

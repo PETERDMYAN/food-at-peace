@@ -1357,6 +1357,18 @@ final circleProvider = NotifierProvider<CircleNotifier, List<Friend>>(
 /// The creator's real Circle @handle, surfaced under "Suggested to follow".
 const String kRoroHandle = 'roro';
 
+/// The second official account's @handle ("Eva"). A DISTINCT account from Roro —
+/// her photo/text posts are surfaced in the feed (server-side) and badged
+/// "Official" the same way Roro's are.
+const String kEvaHandle = 'eva';
+
+/// True when [handle] (with or without a leading @) is one of the official
+/// accounts (Roro or Eva), so the feed/strip can show the verified badge.
+bool isOfficialHandle(String? handle) {
+  final h = (handle ?? '').replaceFirst('@', '').toLowerCase();
+  return h == kRoroHandle || h == kEvaHandle;
+}
+
 /// Whether the user follows Eva (the built-in AI coach). Default **true** — she's
 /// part of a new circle. Unfollowing hides her story; she then appears under
 /// "Suggested" to re-follow. Persisted.
