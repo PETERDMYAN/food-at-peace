@@ -51,6 +51,27 @@ class CircleFeedBody extends ConsumerWidget {
     final t = AppLocalizations.of(context);
     final feed = ref.watch(circleFeedProvider);
 
+    // A push deep-link (tapped notification): once the feed has loaded, jump to
+    // the target post — opening its comment thread for a comment/@mention — then
+    // clear it so it fires once. HomeShell has already switched to this tab.
+    final deepLink = ref.watch(pendingDeepLinkProvider);
+    final loadedPosts = feed.asData?.value;
+    if (deepLink != null && loadedPosts != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ref.read(pendingDeepLinkProvider.notifier).clear();
+        CirclePost? target;
+        for (final p in loadedPosts) {
+          if (p.postId == deepLink.postId) {
+            target = p;
+            break;
+          }
+        }
+        if (target != null && deepLink.openComments && context.mounted) {
+          showPostCommentsSheet(context, target);
+        }
+      });
+    }
+
     // The feed content for the current state, as flat list items (so the single
     // ListView below virtualises them and the [header] scrolls with them).
     List<Widget> bodyItems() => feed.when(
@@ -442,12 +463,7 @@ class _PostCard extends ConsumerWidget {
       );
       return;
     }
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true, // keyboard lifts the sheet; sized to ~3/5 screen
-      showDragHandle: true,
-      builder: (_) => _CommentsSheet(post: post),
-    );
+    showPostCommentsSheet(context, post);
   }
 
   /// Apple Guideline 1.2: let the viewer flag objectionable content. Pick a
@@ -607,6 +623,17 @@ class _Pending {
   final bool public;
   bool sending = true;
   bool failed = false;
+}
+
+/// Open the comments sheet for [post]. Shared by a post card's tap and the push
+/// deep-link router (a tapped comment/@mention notification opens it directly).
+void showPostCommentsSheet(BuildContext context, CirclePost post) {
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true, // keyboard lifts the sheet; sized to ~3/5 screen
+    showDragHandle: true,
+    builder: (_) => _CommentsSheet(post: post),
+  );
 }
 
 class _CommentsSheet extends ConsumerStatefulWidget {

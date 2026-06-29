@@ -4,6 +4,12 @@ import UserNotifications
 
 @main
 @objc class AppDelegate: FlutterAppDelegate, FlutterImplicitEngineDelegate {
+  /// Channel to Dart for push deep-linking (tapped-notification routing).
+  private var notifChannel: FlutterMethodChannel?
+  /// A route from a tap that happened before Dart was listening (cold start) —
+  /// Dart drains it via `getInitialNotification` on launch.
+  private var pendingRoute: [String: Any]?
+
   override func application(
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
@@ -56,5 +62,45 @@ import UserNotifications
 
   func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
     GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
+    // Set up the notification deep-link channel on the engine's messenger.
+    if let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "FAPNotifications") {
+      let channel = FlutterMethodChannel(
+        name: "app.foodatpeace/notifications",
+        binaryMessenger: registrar.messenger())
+      channel.setMethodCallHandler { [weak self] call, result in
+        if call.method == "getInitialNotification" {
+          result(self?.pendingRoute)  // a cold-start tap's route (or nil)
+          self?.pendingRoute = nil
+        } else {
+          result(FlutterMethodNotImplemented)
+        }
+      }
+      notifChannel = channel
+    }
+  }
+
+  /// User TAPPED a notification → forward its route keys to Dart so the app can
+  /// deep-link (open the meal/comment/@mention). Live taps invoke the channel
+  /// directly; a cold-start tap is stashed in `pendingRoute` (Dart drains it).
+  @available(iOS 10.0, *)
+  override func userNotificationCenter(
+    _ center: UNUserNotificationCenter,
+    didReceive response: UNNotificationResponse,
+    withCompletionHandler completionHandler: @escaping () -> Void
+  ) {
+    if let route = AppDelegate.route(from: response.notification.request.content.userInfo) {
+      pendingRoute = route
+      notifChannel?.invokeMethod("onNotificationTap", arguments: route)
+    }
+    completionHandler()
+  }
+
+  /// Pull the custom deep-link keys out of a push's userInfo (nil if absent).
+  private static func route(from info: [AnyHashable: Any]) -> [String: Any]? {
+    guard let postId = info["postId"] as? String, !postId.isEmpty else { return nil }
+    var r: [String: Any] = ["postId": postId]
+    if let author = info["postAuthorId"] as? String { r["postAuthorId"] = author }
+    if let open = info["open"] as? String { r["open"] = open }
+    return r
   }
 }

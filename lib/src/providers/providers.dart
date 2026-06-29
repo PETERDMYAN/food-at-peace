@@ -1369,6 +1369,44 @@ bool isOfficialHandle(String? handle) {
   return h == kRoroHandle || h == kEvaHandle;
 }
 
+/// A pending push-notification deep-link: which Circle post to open + whether to
+/// open its comment thread. Set when the user taps a notification (live or the
+/// one that cold-launched the app); HomeShell switches to the Circle tab and
+/// `CircleFeedBody` opens the target, then clears it.
+class CircleDeepLink {
+  const CircleDeepLink({
+    required this.postId,
+    required this.postAuthorId,
+    required this.openComments,
+  });
+
+  final String postId;
+  final String postAuthorId;
+  final bool openComments; // true for comment/reply/@mention; false for meal/reaction
+
+  @override
+  bool operator ==(Object other) =>
+      other is CircleDeepLink &&
+      other.postId == postId &&
+      other.postAuthorId == postAuthorId &&
+      other.openComments == openComments;
+
+  @override
+  int get hashCode => Object.hash(postId, postAuthorId, openComments);
+}
+
+class PendingDeepLinkNotifier extends Notifier<CircleDeepLink?> {
+  @override
+  CircleDeepLink? build() => null;
+  void set(CircleDeepLink? link) => state = link;
+  void clear() => state = null;
+}
+
+final pendingDeepLinkProvider =
+    NotifierProvider<PendingDeepLinkNotifier, CircleDeepLink?>(
+      PendingDeepLinkNotifier.new,
+    );
+
 /// Whether the user follows Eva (the built-in AI coach). Default **true** — she's
 /// part of a new circle. Unfollowing hides her story; she then appears under
 /// "Suggested" to re-follow. Persisted.

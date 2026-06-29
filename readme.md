@@ -17,6 +17,11 @@ for real calories burned, and speaks **English and 中文**. Built with Flutter.
 > **Official ✓ badge** now covers Eva too (`kEvaHandle` / `isOfficialHandle`) — that part ships in build 76.
 > Backend additive + backward-compatible (1.0.2/1.1.0 contract intact, `AppleClientId` preserved); the Eva
 > account was created on prod (`handle#eva`). The 1.1.0 launch announcement is posted as Eva on the live feed.
+> **Push deep-linking (1.1.1, build 77):** tapping a push now navigates **directly** to the target — a friend's
+> **new meal**/reaction → the Circle tab on that post; a **comment / reply / @mention** → that post's **comment
+> thread**, opened automatically. APNs carries route keys (`apns.py`/`posts.py`); native iOS forwards taps over
+> a method channel (`AppDelegate.swift`, incl. cold-start) → `NotificationRouter` → `pendingDeepLinkProvider` →
+> HomeShell + `CircleFeedBody`. Additive (old clients ignore the keys). Tap-routing is device-verified.
 > **Next (1.1.0, dev on `main`):** the **Circle name-drift** fix — renaming yourself now propagates to what
 > friends see (`list_circle` serves each friend's *live* me-card name; a nickname-only edit re-registers it).
 > The backend (read-live) is now **live on v2 + prod** (2026-06-24, backward-compatible — same response

@@ -69,17 +69,20 @@ def device_tokens(circle_table, uid):
         return []
 
 
-def send(get_secret, tokens, title, body):
-    """Best-effort: push {title, body} to each token. Never raises."""
+def send(get_secret, tokens, title, body, data=None):
+    """Best-effort: push {title, body} to each token. Never raises. [data] adds
+    custom top-level keys (alongside `aps`) the app reads on tap to deep-link —
+    e.g. {"postId":…, "postAuthorId":…, "open":"comments"}."""
     if not tokens or not APNS_TEAM_ID or not APNS_BUNDLE_ID:
         return
     try:
         import httpx
 
         jwt_token = _provider_jwt(get_secret)
-        payload = json.dumps(
-            {"aps": {"alert": {"title": title, "body": body}, "sound": "default"}}
-        )
+        body_payload = {"aps": {"alert": {"title": title, "body": body}, "sound": "default"}}
+        if data:
+            body_payload.update(data)  # custom routing keys for tap deep-linking
+        payload = json.dumps(body_payload)
         headers = {
             "authorization": f"bearer {jwt_token}",
             "apns-topic": APNS_BUNDLE_ID,
@@ -99,6 +102,7 @@ def send(get_secret, tokens, title, body):
         pass
 
 
-def notify(get_secret, circle_table, uid, title, body):
-    """Convenience: look up [uid]'s tokens and push. Best-effort."""
-    send(get_secret, device_tokens(circle_table, uid), title, body)
+def notify(get_secret, circle_table, uid, title, body, data=None):
+    """Convenience: look up [uid]'s tokens and push. Best-effort. [data] carries
+    deep-link routing keys (see send)."""
+    send(get_secret, device_tokens(circle_table, uid), title, body, data=data)

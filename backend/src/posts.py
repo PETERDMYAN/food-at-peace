@@ -181,14 +181,21 @@ def _connected_ids(uid):
     ]
 
 
-def _push(to_uid, title, body=""):
-    """Best-effort Apple push to one user's devices (never raises)."""
+def _push(to_uid, title, body="", data=None):
+    """Best-effort Apple push to one user's devices (never raises). [data] carries
+    deep-link routing keys the app reads on tap (postId / postAuthorId / open)."""
     try:
         import apns
 
-        apns.notify(_get_secret, _circle(), to_uid, title, body)
+        apns.notify(_get_secret, _circle(), to_uid, title, body, data=data)
     except Exception:  # noqa: BLE001
         pass
+
+
+def _route(post_id, post_author, open_to):
+    """Deep-link payload for a push: which post to open + whether to open its
+    comments. All-string values (APNs custom keys must be JSON scalars)."""
+    return {"postId": post_id, "postAuthorId": post_author, "open": open_to}
 
 
 def _comment_notify_ok(uid):
@@ -253,9 +260,11 @@ def create_post(uid, body):
     name = (body.get("name") or "").strip()[:120]
     calories = int(body.get("calories") or 0)
     result = _store_post(uid, raw, media, name, calories)
-    # Tell connected friends a new meal landed in their circle (best-effort).
+    # Tell connected friends a new meal landed in their circle (best-effort) —
+    # tapping opens that post in the feed.
+    route = _route(result["postId"], uid, "post")
     for friend in _connected_ids(uid):
-        _push(friend, f"{result['authorName']} shared a meal 🍵")
+        _push(friend, f"{result['authorName']} shared a meal 🍵", data=route)
     return {"postId": result["postId"], "expiresAt": result["expiresAt"]}
 
 
@@ -415,7 +424,8 @@ def react(uid, body):
     # from the client's feed entry).
     owner = (body.get("authorId") or "").strip()
     if owner and owner != uid:
-        _push(owner, f"{reactor} reacted {emoji} to your meal")
+        _push(owner, f"{reactor} reacted {emoji} to your meal",
+              data=_route(post_id, owner, "post"))
     return {"myReaction": emoji}
 
 
@@ -561,6 +571,8 @@ def create_comment(uid, body):
     )
     # Best-effort push to the other side of the thread (a public broadcast has no
     # single recipient).
+    # Tapping any of these opens that post's comment thread directly.
+    route = _route(post_id, owner, "comments")
     if thread_user == _PUBLIC:
         pass
     elif is_owner:
@@ -569,11 +581,11 @@ def create_comment(uid, body):
         # haven't muted comment notifications).
         if _comment_notify_ok(thread_user):
             if owner_started_thread:
-                _push(thread_user, f"{me['name']} mentioned you in a comment 💬")
+                _push(thread_user, f"{me['name']} mentioned you in a comment 💬", data=route)
             else:
-                _push(thread_user, f"{me['name']} replied to your comment 💬")
+                _push(thread_user, f"{me['name']} replied to your comment 💬", data=route)
     elif _comment_notify_ok(owner):
-        _push(owner, f"{me['name']} commented on your meal 💬")
+        _push(owner, f"{me['name']} commented on your meal 💬", data=route)
     return {"commentId": comment_id, "createdAt": created, "public": thread_user == _PUBLIC}
 
 

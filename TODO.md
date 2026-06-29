@@ -46,11 +46,16 @@ is untouched, Eva is only added**. Client **Official ✓ badge** now covers Eva 
 is posted as Eva on the live feed. (Eva's daily **wisdom** persona is separate + client-side — unchanged.)
 
 ### ⏳ Follow-ups requested (2026-06-29)
-- **Update App Store screenshots before the next submission** — shots **1, 4, 6 are missing the Circle tab**;
+- ✅ **Push-notification deep-linking (build 77)** — tapping a push now navigates **directly** to the target:
+  a friend's **new meal**/reaction → the Circle tab on that post; a **comment**/reply/**@mention** → that post's
+  **comment thread**, opened automatically. Layers: APNs route payload (`apns.py` `data=` + `posts.py` `_route`
+  on every push) → native iOS tap handler + method channel `app.foodatpeace/notifications` (`AppDelegate.swift`,
+  incl. cold-start via `getInitialNotification`) → `NotificationRouter` → `pendingDeepLinkProvider` → HomeShell
+  switches to the Circle tab + `CircleFeedBody` opens the target via `showPostCommentsSheet`. Backend additive
+  (old clients ignore the extra payload keys). ⚠️ **Tap-routing is device-only** — verify on your phone (push
+  taps can't be exercised on the simulator). Needs the backend route payload on **prod** to work end-to-end.
+- ⏳ **Update App Store screenshots before the next submission** — shots **1, 4, 6 are missing the Circle tab**;
   regenerate (incl. the Circle feed/comments) before submitting 1.1.1.
-- **Push-notification deep-linking** — tapping a push should navigate **directly** to the target and auto-load:
-  friend's **new meal** → that post in the feed; a **comment**/reply → that post's comment thread; an
-  **@mention** → the mentioned post/thread. Needs APNs payload routing data + client tap-handling + navigation.
 
 ## ✅ Circle comments (private threads + owner public + @mention + delete + preview + sheet UX/speed) + relative time + story-fix + admin-grant — **live on v2 + prod, shipping as 1.1.0, TestFlight builds 63–75**
 

@@ -337,17 +337,20 @@ def test_owner_can_start_a_private_thread_by_mentioning_a_friend(cfake):
 
 def test_owner_mention_pushes_friend_then_reads_as_reply(cfake, monkeypatch):
     pushes = []
-    monkeypatch.setattr(posts, "_push", lambda to, title, body="": pushes.append((to, title)))
+    monkeypatch.setattr(posts, "_push", lambda to, title, body="", data=None: pushes.append((to, title, data)))
     # Opening the thread via @-mention pings B as a mention…
     posts.create_comment(
         "owner", {"postId": "p1", "postAuthorId": "owner", "text": "hi B", "threadUser": "B"}
     )
     assert pushes[-1][0] == "B" and "mentioned you" in pushes[-1][1]
+    # …carrying the deep-link route so a tap opens that post's comment thread.
+    assert pushes[-1][2] == {"postId": "p1", "postAuthorId": "owner", "open": "comments"}
     # …and a follow-up into the now-existing thread reads as a reply.
     posts.create_comment(
         "owner", {"postId": "p1", "postAuthorId": "owner", "text": "again", "threadUser": "B"}
     )
     assert pushes[-1][0] == "B" and "replied to your comment" in pushes[-1][1]
+    assert pushes[-1][2]["open"] == "comments"
 
 
 def test_comment_notify_ok_reads_pref(monkeypatch):
@@ -368,7 +371,7 @@ def test_comment_notify_ok_reads_pref(monkeypatch):
 
 def test_muted_recipient_gets_no_comment_push(cfake, monkeypatch):
     pushes = []
-    monkeypatch.setattr(posts, "_push", lambda to, title, body="": pushes.append(to))
+    monkeypatch.setattr(posts, "_push", lambda to, title, body="", data=None: pushes.append(to))
     # The owner muted comment notifications → a friend's comment doesn't push them…
     monkeypatch.setattr(posts, "_comment_notify_ok", lambda uid: uid != "owner")
     posts.create_comment("A", {"postId": "p1", "postAuthorId": "owner", "text": "hi"})

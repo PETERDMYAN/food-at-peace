@@ -4,6 +4,7 @@ import 'package:food_at_peace/l10n/app_localizations.dart';
 
 import '../../app_globals.dart';
 import '../../data/app_review_service.dart';
+import '../../data/notification_router.dart';
 import '../../data/notification_service.dart';
 import '../../data/sync_engine.dart';
 import '../../providers/providers.dart';
@@ -45,6 +46,7 @@ class _HomeShellState extends ConsumerState<HomeShell>
       _refreshReminders();
       _checkCircleActivity();
       _registerPushToken();
+      _initNotificationRouting();
       // Count this open and, on the 5th, ask for an App Store review (once).
       // Reaching the home shell means onboarding is done — no need to gate.
       ref.read(appReviewPrompterProvider).registerOpenAndMaybeAsk();
@@ -133,6 +135,21 @@ class _HomeShellState extends ConsumerState<HomeShell>
     }
   }
 
+  /// Wire push-notification taps to deep-link into the Circle: stash the tapped
+  /// notification's route so HomeShell switches to the Circle tab and the feed
+  /// opens the target post (+ its comments for a comment/@mention).
+  void _initNotificationRouting() {
+    NotificationRouter.start((route) {
+      final postId = route['postId'] as String?;
+      if (postId == null || postId.isEmpty || !mounted) return;
+      ref.read(pendingDeepLinkProvider.notifier).set(CircleDeepLink(
+            postId: postId,
+            postAuthorId: (route['postAuthorId'] as String?) ?? '',
+            openComments: route['open'] == 'comments',
+          ));
+    });
+  }
+
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
@@ -156,6 +173,11 @@ class _HomeShellState extends ConsumerState<HomeShell>
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
+    // A tapped push deep-links into the Circle — switch to that tab; the feed
+    // (CircleFeedBody) then opens the target post + its comments and clears it.
+    ref.listen(pendingDeepLinkProvider, (_, link) {
+      if (link != null && _index != 2 && mounted) setState(() => _index = 2);
+    });
     return Scaffold(
       body: IndexedStack(index: _index, children: _screens),
       // Logging food only makes sense from Today; Trends and Settings hide it.
