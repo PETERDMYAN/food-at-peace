@@ -1,4 +1,4 @@
-/// One ephemeral food-photo post in the Circle feed (expires after 3 days).
+/// One ephemeral food-photo post in the Circle feed (expires after 30 days).
 class CirclePost {
   const CirclePost({
     required this.postId,

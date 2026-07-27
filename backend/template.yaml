@@ -116,6 +116,7 @@ Resources:
           - content-type
           - x-app-token
           - x-metrics-token
+          - x-admin-token
           - authorization
         AllowMethods:
           - GET
@@ -738,22 +739,22 @@ Resources:
             Path: /circle/list
             Method: GET
 
-  # Ephemeral photo storage for circle posts — objects auto-expire after 3 days.
+  # Ephemeral photo storage for circle posts — objects auto-expire after 30 days.
   CirclePhotosBucket:
     Type: AWS::S3::Bucket
     Properties:
       LifecycleConfiguration:
         Rules:
-          - Id: expire-3-days
+          - Id: expire-30-days
             Status: Enabled
-            ExpirationInDays: 3
+            ExpirationInDays: 30
       PublicAccessBlockConfiguration:
         BlockPublicAcls: true
         BlockPublicPolicy: true
         IgnorePublicAcls: true
         RestrictPublicBuckets: true
 
-  # Circle photo posts + emoji reactions. DynamoDB TTL reaps rows after 3 days.
+  # Circle photo posts + emoji reactions. DynamoDB TTL reaps rows after 30 days.
   PostsTable:
     Type: AWS::DynamoDB::Table
     Properties:

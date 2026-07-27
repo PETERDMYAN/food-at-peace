@@ -32,6 +32,24 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
   --no-confirm-changeset --parameter-overrides AppleClientId=com.foodatpeace.foodAtPeace
 ```
 
+## ✅ Circle photo retention 3 → 30 days — **live on v2 + prod; shipping as 1.1.2 / build 78 (2026-07-27)**
+
+Shared Circle photos/posts (and their reactions + comments — all driven by the single
+`TTL_SECONDS` in [`posts.py`](backend/src/posts.py), plus the `CirclePhotosBucket`
+S3 lifecycle in [`template.yaml`](backend/template.yaml)) now live **30 days** instead of 3.
+- **Backend:** deployed to **v2** (fresh-post expiry verified = exactly +30 d) and **prod**
+  (changeset preview: bucket lifecycle Modify only — never recreated; 401 smoke tests clean).
+  All **30 live prod `PostsTable` rows backfilled +27 d** (old regime = created+3 d → new
+  created+30 d); S3 objects extend automatically (age-based lifecycle). Presigned URL TTLs
+  (6 h) deliberately untouched. 180 backend tests green.
+- **Client (build 78):** `shareToCircleHint` → "Friends in your circle see it for **30 days**" /
+  "圈子好友可见 **30 天**"; stale 3-day comments updated. Eva's **3-day story lesson window is
+  unchanged** (a deliberate client design, no longer claims to mirror the feed TTL). 183 Flutter
+  tests green; sim QA **8/8** (after widening qa_test's stale `Food at Peace 1.0` version matcher);
+  share-hint before/after captured.
+- **Discovered while shipping:** **1.1.1 (build 77) was already approved & READY_FOR_SALE** on the
+  App Store (docs previously said 1.1.0/75 was current) — so this ships as **1.1.2 (78)**.
+
 ## ✅ Eva broadcast capability (post photo+text as the official Eva account) — **live on prod, 1.1.1 / build 76**
 
 Owner-only **`POST /circle/official-post`** (admin-token gated, same token as `/beans/grant`) + reusable
@@ -54,8 +72,9 @@ is posted as Eva on the live feed. (Eva's daily **wisdom** persona is separate +
   switches to the Circle tab + `CircleFeedBody` opens the target via `showPostCommentsSheet`. Backend additive
   (old clients ignore the extra payload keys). ⚠️ **Tap-routing is device-only** — verify on your phone (push
   taps can't be exercised on the simulator). Needs the backend route payload on **prod** to work end-to-end.
-- ⏳ **Update App Store screenshots before the next submission** — shots **1, 4, 6 are missing the Circle tab**;
-  regenerate (incl. the Circle feed/comments) before submitting 1.1.1.
+- ⏳ **Update App Store screenshots** — shots **1, 4, 6 are missing the Circle tab**; regenerate (incl. the
+  Circle feed/comments). Both 1.1.1 and 1.1.2 were submitted with the inherited (1.1.0-era) screenshots, so
+  this is still open for a future submission.
 
 ## ✅ Circle comments (private threads + owner public + @mention + delete + preview + sheet UX/speed) + relative time + story-fix + admin-grant — **live on v2 + prod, shipping as 1.1.0, TestFlight builds 63–75**
 
@@ -187,7 +206,7 @@ a per-viewer `commentCount` feed field; old clients ignore it).
     is a planned **APNs push** follow-up (see Remaining).
   - **Photo feed ("stories")** — share a scanned meal (toggle, default on) to your
     circle; friends react with emojis; you receive the reactions; posts auto-expire
-    after **3 days**. ([`backend/src/posts.py`](backend/src/posts.py), `PostsTable` +
+    after **30 days** (was 3 until 1.1.2). ([`backend/src/posts.py`](backend/src/posts.py), `PostsTable` +
     an S3 photos bucket; [`posts_client.dart`](lib/src/data/posts_client.dart),
     [`circle_feed_screen.dart`](lib/src/features/circle/circle_feed_screen.dart)).
     The **story keeps the full-resolution photo**; the AI estimate uses a downscaled

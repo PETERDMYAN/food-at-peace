@@ -11,7 +11,7 @@ Usage:
 
 The admin token is read from SSM (/food-at-peace/admin-token, shared by both
 stacks) unless --token is given. The post is shown under the account's live name
-and shares the Circle 3-day TTL.
+and shares the Circle 30-day TTL.
 """
 import argparse
 import base64

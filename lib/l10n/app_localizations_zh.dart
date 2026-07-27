@@ -991,7 +991,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get shareToCircle => '分享到圈子';
 
   @override
-  String get shareToCircleHint => '圈子好友可见 3 天';
+  String get shareToCircleHint => '圈子好友可见 30 天';
 
   @override
   String get feedTitle => '圈子动态';

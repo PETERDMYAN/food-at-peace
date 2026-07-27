@@ -30,7 +30,7 @@ class PostsClient {
     'authorization': 'Bearer $token',
   };
 
-  /// Share a scanned food photo to the circle (lives 3 days).
+  /// Share a scanned food photo to the circle (lives 30 days).
   Future<void> post({
     required Uint8List imageBytes,
     required String mediaType,

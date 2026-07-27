@@ -590,9 +590,9 @@ Future<void> openCircleStories(
   required int initialStory,
   void Function(String key)? onStorySeen,
 }) {
-  // Eva's story now spans the last 3 days (newest first), mirroring the 3-day
-  // circle feed window — one calm lesson page per day, so swiping her story shows
-  // the recent days, not just today.
+  // Eva's story spans the last 3 days (newest first) — one calm lesson page per
+  // day, so swiping her story shows the recent days, not just today. (A fixed
+  // 3-day lesson window by design; feed posts themselves live 30 days.)
   final evaPages = _evaLast3DaysPages(evaLessons, lang);
   // Stories paired with their seen-keys (same order) so the viewer's
   // onStoryViewed(index) maps straight back to the right key.
@@ -610,7 +610,7 @@ Future<void> openCircleStories(
 }
 
 /// Eva's lesson pages for the last 3 days (today first), keyed to each day's
-/// deterministic lesson — same 3-day window as the circle photo feed. Empty when
+/// deterministic lesson — a fixed 3-day lesson window by design. Empty when
 /// she isn't followed (no lessons passed).
 List<Widget> _evaLast3DaysPages(List<EvaLesson> lessons, String lang) {
   if (lessons.isEmpty) return const [];

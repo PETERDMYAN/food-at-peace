@@ -5,10 +5,21 @@ or by **snapping a photo** — see how much you can still eat today, and keep an
 on your protein and saturated-fat quotas. Connects to **Apple Health / Garmin**
 for real calories burned, and speaks **English and 中文**. Built with Flutter.
 
-> **Status:** **1.1.0 (build 75) is approved & live on the App Store** (the Circle comments system — see below;
-> CN name **食之安**). Prior live: **v1.0.2 (62)** (`54166a7`) and `v1.0.1` (`1c6ca03`). Web Beans recharge at
-> `foodatpeace.app/recharge` is also fully live (Stripe live keys, webhook verified, Sign in with Apple on the
-> web, shareable `/recharge/<handle>` links). *(Tag `v1.1.0` is pending — created once confirmed live.)*
+> **Status:** **1.1.1 (build 77) is approved & live on the App Store** (Eva Official ✓ badge + push
+> deep-linking; CN name **食之安**), and **1.1.2 (build 78) — Circle photos now last 30 days — is submitted
+> to App Review** (2026-07-27). Prior live: 1.1.0 (75) `f99cb1b`, v1.0.2 (62) `54166a7`, v1.0.1 `1c6ca03`.
+> Web Beans recharge at `foodatpeace.app/recharge` is also fully live (Stripe live keys, webhook verified,
+> Sign in with Apple on the web, shareable `/recharge/<handle>` links). Tags `v1.1.0`/`v1.1.1` created with
+> the 1.1.2 ship (were pending confirmation).
+> **Circle photo retention 3 → 30 days (1.1.2, build 78):** shared Circle photos/posts (and their reactions +
+> comments — one `TTL_SECONDS` in `posts.py`, plus the `CirclePhotosBucket` S3 lifecycle) now live **30 days**
+> instead of 3. Live on **v2 AND prod** (changeset preview; a fresh post's expiry verified at exactly +30 d;
+> all 30 live prod rows backfilled +27 d so nothing posted under the 3-day regime vanishes early — S3 objects
+> extend automatically, age-based). Client (build 78): the share-to-circle hint reads **"Friends in your
+> circle see it for 30 days" / "圈子好友可见 30 天"**. Additive — no request/response shape change; presigned
+> URL TTLs (6 h) untouched; Eva's 3-day *story lesson* window is a separate client design and unchanged.
+> Sim-verified (share-hint before/after captured; QA suite 8/8 after refreshing its stale `1.0`-only version
+> matcher).
 > **Eva broadcast capability (1.1.1, build 76 — live on prod):** an owner-only **`POST /circle/official-post`**
 > (admin-token gated) + **`backend/scripts/official_post.py --handle eva`** publishes a **photo + text post as a
 > chosen official account** (**Eva** or Roro — they're DISTINCT accounts). The server now **surfaces the Eva
@@ -285,7 +296,7 @@ for real calories burned, and speaks **English and 中文**. Built with Flutter.
 > photo-analysis model (~3–4× cheaper, server-wide), a real **25-Bean** IAP (`beans_25`), a
 > **rate-the-app prompt** (5th open), and **`purchase` analytics**. All of this — plus the
 > **Circle of Food** social layer (friends by `@handle`, invite universal link + QR, a Manage
-> circle screen, privacy-gated friend trends, the 3-day photo **stories** feed with emoji
+> circle screen, privacy-gated friend trends, the 30-day photo **stories** feed with emoji
 > reactions), a **real owner-analytics** backend, daily reminders, and the **Beans** wallet —
 > **shipped in 1.0.2 (build 62), approved & live 2026-06-23** (tag `v1.0.2`). The repo is now a
 > single `main` (the old `v2`/`v3` branches are retired) plus release branches like `1.0.2`.
@@ -323,7 +334,7 @@ for real calories burned, and speaks **English and 中文**. Built with Flutter.
   handle and accept requests, **manage your circle** (connected / requests / invited),
   tap a connected friend for their
   **privacy-gated trend** (today vs target, streak, 7-day adherence) or remove them,
-  and share a scanned meal to a **3-day photo feed** where friends react with emojis
+  and share a scanned meal to a **30-day photo feed** where friends react with emojis
   (👍❤️😋🔥👏) and you receive the reactions. The story keeps the full-resolution
   photo; the AI estimate uses a downscaled copy.
 - **Trends** — daily charts for calories / protein / saturated fat vs. target, each
@@ -486,7 +497,7 @@ the system locale by default and persists a manual choice.
   connects both sides in one tap (`POST /circle/connect`), invite by handle,
   accept/decline **Requests**, a **Manage circle** screen (connected / requests /
   invited), tap a connected friend for their **privacy-gated** trend (today vs
-  target, streak, 7-day adherence) or remove them. Plus a **3-day photo feed**: share
+  target, streak, 7-day adherence) or remove them. Plus a **30-day photo feed**: share
   a scanned meal (toggle, default on), friends react with emojis and you receive the
   reactions. Backed by `circle.py` + `posts.py` (CircleTable, PostsTable, S3 photos)
   on the v2 stack; trends/feed are gated to mutually-connected friends. The in-app

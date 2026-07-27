@@ -1,9 +1,9 @@
 """Food at Peace — Circle photo feed (AWS Lambda).
 
-Ephemeral (3-day) food-photo posts shared to your Circle, with emoji reactions.
+Ephemeral (30-day) food-photo posts shared to your Circle, with emoji reactions.
 Session-token auth (same HS256 token as /sync); privacy-gated to mutually-
-connected friends. Photos live in S3 (3-day lifecycle); post + reaction rows
-live in a DynamoDB table with a 3-day TTL, so everything self-expires.
+connected friends. Photos live in S3 (30-day lifecycle); post + reaction rows
+live in a DynamoDB table with a 30-day TTL, so everything self-expires.
 
 Comments are PRIVATE per-commenter threads with the post owner as the hub: each
 non-owner commenter has a 1:1 thread with the owner. The owner sees every thread
@@ -57,7 +57,7 @@ OFFICIAL_HANDLE = os.environ.get("OFFICIAL_HANDLE", "roro")
 # everyone — Roro's handling is left completely untouched; Eva is only ADDED.
 EVA_HANDLE = os.environ.get("EVA_HANDLE", "eva")
 
-TTL_SECONDS = 3 * 24 * 60 * 60  # posts live 3 days
+TTL_SECONDS = 30 * 24 * 60 * 60  # posts live 30 days
 MAX_IMAGE_BYTES = 6 * 1024 * 1024
 MAX_COMMENT_LEN = 500
 PHOTO_URL_TTL = 6 * 60 * 60  # presigned GET valid 6h (the app refetches the feed)
@@ -272,7 +272,7 @@ def official_post(body):
     """Owner-only: publish a photo + text post AS an official account. `handle`
     selects WHICH account ('eva' or 'roro' — they're DISTINCT official accounts);
     defaults to OFFICIAL_HANDLE. The post lands in that account's feed under its
-    live name. Admin-token gated; reuses the post infra (3-day TTL). `text` →
+    live name. Admin-token gated; reuses the post infra (30-day TTL). `text` →
     caption."""
     handle = body.get("handle") or OFFICIAL_HANDLE
     uid = _account_uid(handle)

@@ -1895,7 +1895,7 @@ abstract class AppLocalizations {
   /// No description provided for @shareToCircleHint.
   ///
   /// In en, this message translates to:
-  /// **'Friends in your circle see it for 3 days'**
+  /// **'Friends in your circle see it for 30 days'**
   String get shareToCircleHint;
 
   /// No description provided for @feedTitle.

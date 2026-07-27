@@ -18,7 +18,6 @@ import 'package:food_at_peace/l10n/app_localizations.dart';
 import 'package:food_at_peace/src/data/iap_service.dart';
 import 'package:food_at_peace/src/features/circle/circle_screen.dart';
 import 'package:food_at_peace/src/features/settings/reminders_screen.dart';
-import 'package:food_at_peace/src/features/trends/trends_screen.dart';
 import 'package:food_at_peace/src/features/wallet/beans_screen.dart';
 import 'package:food_at_peace/src/providers/providers.dart';
 import 'package:food_at_peace/src/theme/app_theme.dart';
@@ -283,7 +282,7 @@ void main() {
     await beat(t);
 
     // The version footer sits at the very bottom of Profile (version-tolerant).
-    final version = find.textContaining('Food at Peace 1.0');
+    final version = find.textContaining('Food at Peace 1.');
     await t.scrollUntilVisible(
       version,
       300,

@@ -21,7 +21,7 @@ Future<void> showCircleFeed(BuildContext context) {
 }
 
 /// The circle photo feed: friends' (and your own) shared meals, with emoji
-/// reactions. Posts expire after 3 days (server-side TTL).
+/// reactions. Posts expire after 30 days (server-side TTL).
 class CircleFeedScreen extends StatelessWidget {
   const CircleFeedScreen({super.key});
 

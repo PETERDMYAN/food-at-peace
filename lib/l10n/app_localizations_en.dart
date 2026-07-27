@@ -1022,7 +1022,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get shareToCircle => 'Share to circle';
 
   @override
-  String get shareToCircleHint => 'Friends in your circle see it for 3 days';
+  String get shareToCircleHint => 'Friends in your circle see it for 30 days';
 
   @override
   String get feedTitle => 'Circle feed';
