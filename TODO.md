@@ -63,7 +63,7 @@ is untouched, Eva is only added**. Client **Official ✓ badge** now covers Eva 
 `AppleClientId` preserved, prod smoke-tested); 31 posts + 183 Flutter tests green. The 1.1.0 launch announcement
 is posted as Eva on the live feed. (Eva's daily **wisdom** persona is separate + client-side — unchanged.)
 
-### ⏳ Follow-ups requested (2026-06-29)
+### ✅ Follow-ups requested (2026-06-29) — all done
 - ✅ **Push-notification deep-linking (build 77)** — tapping a push now navigates **directly** to the target:
   a friend's **new meal**/reaction → the Circle tab on that post; a **comment**/reply/**@mention** → that post's
   **comment thread**, opened automatically. Layers: APNs route payload (`apns.py` `data=` + `posts.py` `_route`
@@ -72,9 +72,6 @@ is posted as Eva on the live feed. (Eva's daily **wisdom** persona is separate +
   switches to the Circle tab + `CircleFeedBody` opens the target via `showPostCommentsSheet`. Backend additive
   (old clients ignore the extra payload keys). ⚠️ **Tap-routing is device-only** — verify on your phone (push
   taps can't be exercised on the simulator). Needs the backend route payload on **prod** to work end-to-end.
-- ⏳ **Update App Store screenshots** — shots **1, 4, 6 are missing the Circle tab**; regenerate (incl. the
-  Circle feed/comments). Both 1.1.1 and 1.1.2 were submitted with the inherited (1.1.0-era) screenshots, so
-  this is still open for a future submission.
 
 ## ✅ Circle comments (private threads + owner public + @mention + delete + preview + sheet UX/speed) + relative time + story-fix + admin-grant — **live on v2 + prod, shipping as 1.1.0, TestFlight builds 63–75**
 
