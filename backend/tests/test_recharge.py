@@ -157,6 +157,34 @@ def test_checkout_returns_stripe_url(store, monkeypatch):
     assert seen == {"product_id": "beans_200", "beans": 200, "sgd": 3.99, "user": "apple:u1"}
 
 
+def test_checkout_web_only_8000_pack(store, monkeypatch):
+    """The S$120.99 whale pack (added 2026-08-01) is web-only — no IAP twin."""
+    seen = {}
+
+    def fake_session(secret, product_id, beans_amount, sgd, user_id):
+        seen.update(product_id=product_id, beans=beans_amount, sgd=sgd)
+        return {"id": "cs_big", "url": "https://checkout.stripe.com/c/pay/cs_big"}
+
+    monkeypatch.setattr(recharge, "_create_checkout_session", fake_session)
+    status, body = _checkout(body={"productId": "beans_8000"})
+    assert status == 200
+    assert body["url"].startswith("https://checkout.stripe.com/")
+    assert seen == {"product_id": "beans_8000", "beans": 8000, "sgd": 120.99}
+
+
+def test_checkout_delisted_300_pack_still_honored(store, monkeypatch):
+    """beans_300 left the page 2026-08-01, but a cached copy may still sell it —
+    the server mapping is append-only, so the checkout must keep working."""
+    monkeypatch.setattr(
+        recharge,
+        "_create_checkout_session",
+        lambda *a: {"id": "cs_c", "url": "https://checkout.stripe.com/c/pay/cs_c"},
+    )
+    status, body = _checkout(body={"productId": "beans_300"})
+    assert status == 200
+    assert body["url"].startswith("https://checkout.stripe.com/")
+
+
 # -------------------------- recharge by @handle --------------------------- #
 @pytest.fixture
 def circle(monkeypatch):
@@ -253,6 +281,14 @@ def test_webhook_credits_beans_once(store, captured_metrics):
     assert _balance(store) == 200
     assert len(captured_metrics) == 1
     assert captured_metrics[0] == {"type": "purchase", "beans": 200, "amountCents": 399}
+
+
+def test_webhook_credits_8000_pack(store, captured_metrics):
+    _webhook(_completed_event(product_id="beans_8000", beans_meta="8000", sid="cs_big1"))
+    assert _balance(store) == 8000
+    assert captured_metrics == [
+        {"type": "purchase", "beans": 8000, "amountCents": 12099}
+    ]
 
 
 def test_webhook_recomputes_beans_from_product_not_metadata(store):

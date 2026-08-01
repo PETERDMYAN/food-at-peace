@@ -11,6 +11,9 @@ for real calories burned, and speaks **English and 中文**. Built with Flutter.
 > Web Beans recharge at `foodatpeace.app/recharge` is also fully live (Stripe live keys, webhook verified,
 > Sign in with Apple on the web, shareable `/recharge/<handle>` links). Tags `v1.1.0`/`v1.1.1` created with
 > the 1.1.2 ship (were pending confirmation).
+> **Web recharge tiers (2026-08-01):** the 300/S$5.99 pack is delisted from the page (still honored
+> server-side for cached copies) and a web-only **8,000 beans / S$120.99** "Best value" pack was added —
+> live on prod + v2 + the published page. In-app IAP lineup (25…800) unchanged.
 > **Circle photo retention 3 → 30 days (1.1.2, build 78):** shared Circle photos/posts (and their reactions +
 > comments — one `TTL_SECONDS` in `posts.py`, plus the `CirclePhotosBucket` S3 lifecycle) now live **30 days**
 > instead of 3. Live on **v2 AND prod** (changeset preview; a fresh post's expiry verified at exactly +30 d;

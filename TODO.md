@@ -32,6 +32,21 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
   --no-confirm-changeset --parameter-overrides AppleClientId=com.foodatpeace.foodAtPeace
 ```
 
+## ✅ Web recharge tiers: 300 delisted, 8,000/S$120.99 added — **live on prod + v2 + site (2026-08-01)**
+
+- **Page** ([`recharge/index.html`](store/website/recharge/index.html)): dropped the 300-bean/S$5.99
+  card and added a web-only **8,000 beans / S$120.99** pack (~1.51¢/bean; the **Best value** badge
+  moved onto it, 800 stays S$13.98). Republished to S3 (folder + bare `recharge` key) + CloudFront
+  invalidation; verified live.
+- **Backend** ([`recharge.py`](backend/src/recharge.py)): `PRODUCTS` gained `beans_8000`;
+  **`beans_300` stays** (the mapping is append-only — cached copies of the page must still be able
+  to check out). Deployed to **v2 and prod** (changeset previewed: Lambda-code-only modifies, zero
+  adds/removes; prod's two-audience `AppleClientId` preserved). Live-verified on both stacks:
+  `beans_8000` and `beans_300` return `cs_live_` checkout sessions, a bogus id → 400.
+- **App IAP deliberately untouched** — StoreKit still sells 25…800 (`iap.py` / ASC unchanged); an
+  S$120.99 IAP would need a new ASC product + app release.
+- Tests: +3 in [`test_recharge.py`](backend/tests/test_recharge.py); 183 backend tests green.
+
 ## ✅ Circle photo retention 3 → 30 days — **live on v2 + prod; shipping as 1.1.2 / build 78 (2026-07-27)**
 
 Shared Circle photos/posts (and their reactions + comments — all driven by the single

@@ -64,13 +64,18 @@ CIRCLE_TABLE = os.environ.get("CIRCLE_TABLE", "")
 # charge is ~S$0.50, while the app's IAP stays S$0.48. Intentional divergence until
 # the app is updated to match on its next release. The web flow only sells the
 # public packs.
+#
+# Entries are append-only: a pack delisted from the page must STAY here, because a
+# cached copy of the page can still POST its productId (and Stripe can still
+# deliver a webhook for it) long after the delisting.
 PRODUCTS = {
     "beans_25": (25, 0.50),
     "beans_100": (100, 1.99),
     "beans_200": (200, 3.99),
-    "beans_300": (300, 5.99),
+    "beans_300": (300, 5.99),  # delisted from the page 2026-08-01; kept for cached pages
     "beans_500": (500, 9.48),
     "beans_800": (800, 13.98),
+    "beans_8000": (8000, 120.99),  # web-only big pack (no IAP counterpart)
 }
 
 _STRIPE_API = "https://api.stripe.com/v1/checkout/sessions"

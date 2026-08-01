@@ -41,6 +41,16 @@ Stripe (hosted Checkout) holds all card data — none touches us. Stripe is hand
 returns `{ "configured": false }` (200) and the page shows a friendly "card payments
 aren't on yet" — exactly like `iap.py`'s `unconfigured` fallback. Nothing errors.
 
+## Pack lineup (updated 2026-08-01)
+
+The page sells **25 / 100 / 200 / 500 / 800 / 8,000** beans
+(S$0.50 / 1.99 / 3.99 / 9.48 / 13.98 / **120.99**). `beans_8000` is **web-only** — there is no
+IAP twin (adding one would need an ASC product + app release). The 300/S$5.99 pack was
+**delisted from the page** on 2026-08-01, but `recharge.py`'s `PRODUCTS` still carries it:
+that mapping is **append-only**, because cached copies of the page (and late Stripe webhooks)
+can reference a delisted id long after it leaves the UI. To retire a pack, remove it from the
+page's `PACKS` array only — never delete from `PRODUCTS`.
+
 ## ⚠️ App Store 3.1.1 — keep it standalone
 
 Beans are a digital good consumed inside the iOS app, so Apple Guideline **3.1.1**
