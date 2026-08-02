@@ -74,7 +74,9 @@ This needs a **Services ID** (one-time, in the Apple Developer portal). The page
 the identifier **`com.foodatpeace.web`** (constant `APPLE_SERVICES_ID` in
 [`recharge/index.html`](website/recharge/index.html)); it's already in **both** stacks'
 accepted-audience list (`APPLE_CLIENT_ID` = `com.foodatpeace.foodAtPeace,com.foodatpeace.web`
-on prod and v2).
+on prod and v2). ⚠️ Keep the two-audience value in EVERY `sam deploy` command for either
+stack — a deploy that passes only the native id silently clobbers it and breaks web
+sign-in (v2 drifted that way mid-2026-07; restored 2026-08-02).
 
 1. **Certificates, IDs & Profiles → Identifiers → ＋ → Services IDs.** Description
    "Food at Peace Web", identifier **`com.foodatpeace.web`** (must match `APPLE_SERVICES_ID`;
@@ -114,7 +116,8 @@ on prod and v2).
    ```bash
    cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2 \
      --region ap-southeast-1 --capabilities CAPABILITY_IAM --resolve-s3 \
-     --no-confirm-changeset --parameter-overrides AppleClientId=com.foodatpeace.foodAtPeace
+     --no-confirm-changeset \
+     --parameter-overrides 'AppleClientId="com.foodatpeace.foodAtPeace,com.foodatpeace.web"'
    ```
    Note the `RechargeWebhookUrl` output, e.g.
    `https://p21hoawoi5.execute-api.ap-southeast-1.amazonaws.com/recharge/webhook`.

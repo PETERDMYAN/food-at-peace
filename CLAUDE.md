@@ -70,7 +70,7 @@ There are **two isolated AWS stacks sharing the same SSM secrets**:
 ```bash
 cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2 \
   --region ap-southeast-1 --capabilities CAPABILITY_IAM --resolve-s3 --no-confirm-changeset \
-  --parameter-overrides AppleClientId=com.foodatpeace.foodAtPeace
+  --parameter-overrides 'AppleClientId="com.foodatpeace.foodAtPeace,com.foodatpeace.web"'
 ```
 
 Secret setup (SSM Parameter Store, once per stack) and the full deploy story are in `backend/README.md`.

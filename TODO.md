@@ -29,7 +29,8 @@ Deploy v2:
 ```bash
 cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2 \
   --region ap-southeast-1 --capabilities CAPABILITY_IAM --resolve-s3 \
-  --no-confirm-changeset --parameter-overrides AppleClientId=com.foodatpeace.foodAtPeace
+  --no-confirm-changeset \
+  --parameter-overrides 'AppleClientId="com.foodatpeace.foodAtPeace,com.foodatpeace.web"'
 ```
 
 ## ✅ Web recharge tiers: 300 delisted, 8,000/S$120.99 added — **live on prod + v2 + site (2026-08-01)**
