@@ -357,9 +357,49 @@ final authClientProvider = Provider<AuthClient>(
   (ref) => AuthClient(baseUrl: proxyBaseUrl),
 );
 
+/// Raised when the app finds its stored session is no longer valid — a token
+/// that expired while the app was closed, a 401 from the server, or a renewal
+/// the server refused. Until 1.1.3 the app just signed the user out silently,
+/// which read as "the server is broken" (sync, photo backup and Circle sharing
+/// all quietly stop). Persisted so the notice survives until the user signs in
+/// again or dismisses it; rendered by `SessionExpiredBanner` in the home shell.
+class SessionExpiredNoticeNotifier extends Notifier<bool> {
+  static const _prefsKey = 'session_expired_notice';
+
+  @override
+  bool build() =>
+      ref.read(sharedPreferencesProvider).getBool(_prefsKey) ?? false;
+
+  Future<void> show() async {
+    state = true;
+    await ref.read(sharedPreferencesProvider).setBool(_prefsKey, true);
+  }
+
+  Future<void> clear() async {
+    state = false;
+    await ref.read(sharedPreferencesProvider).remove(_prefsKey);
+  }
+}
+
+final sessionExpiredNoticeProvider =
+    NotifierProvider<SessionExpiredNoticeNotifier, bool>(
+      SessionExpiredNoticeNotifier.new,
+    );
+
 /// The current signed-in [Session] (null = signed out). Loads from secure
 /// storage on build; [signIn] runs the native Apple flow + backend exchange.
+/// A stored token is renewed weekly ([refreshIfDue]) so an active user never
+/// hits the server's hard expiry.
 class AuthNotifier extends Notifier<Session?> {
+  /// A token older than this is renewed on the next launch / resume. Weekly
+  /// keeps an active user signed in indefinitely for one tiny request.
+  static const refreshAfter = Duration(days: 7);
+
+  /// After a failed renewal (offline, an older server without the route) wait
+  /// this long before trying again, rather than on every resume.
+  static const _retryAfter = Duration(hours: 1);
+  DateTime? _lastRefreshAttempt;
+
   @override
   Session? build() {
     _load();
@@ -371,9 +411,44 @@ class AuthNotifier extends Notifier<Session?> {
     final session = await store.read();
     if (session == null) return;
     if (session.isExpired) {
-      await store.delete(); // drop an expired token
-    } else {
-      state = session;
+      // The token is unusable — drop it, but SAY so rather than silently
+      // signing out (sync, photo backup and Circle sharing would all just stop).
+      await store.delete();
+      await ref.read(sessionExpiredNoticeProvider.notifier).show();
+      return;
+    }
+    state = session;
+    await refreshIfDue();
+  }
+
+  /// Renew the session token once it's older than [refreshAfter] (or of unknown
+  /// age — stored by a build before renewal existed). Best-effort: a network
+  /// blip or an older server just leaves the current token in place; only a
+  /// definitive 401 (expired / revoked) signs the user out — and tells them.
+  Future<void> refreshIfDue() async {
+    final session = state;
+    if (session == null) return;
+    final client = ref.read(authClientProvider);
+    if (client.baseUrl.isEmpty) return;
+    final now = DateTime.now();
+    final issued = session.issuedAt;
+    if (issued != null && now.difference(issued) < refreshAfter) return;
+    final last = _lastRefreshAttempt;
+    if (last != null && now.difference(last) < _retryAfter) return;
+    _lastRefreshAttempt = now;
+    try {
+      final fresh = await client.refresh(session.token);
+      // Signed out / re-signed in while the request was in flight → keep that.
+      if (state?.token != session.token) return;
+      await ref.read(sessionStoreProvider).write(fresh);
+      state = fresh;
+    } on AuthException catch (e) {
+      if (e.statusCode == 401) {
+        await signOut();
+        await ref.read(sessionExpiredNoticeProvider.notifier).show();
+      }
+    } catch (_) {
+      // transient — try again on a later launch / resume
     }
   }
 
@@ -385,6 +460,7 @@ class AuthNotifier extends Notifier<Session?> {
         .signInWithApple();
     await ref.read(sessionStoreProvider).write(session);
     state = session;
+    await ref.read(sessionExpiredNoticeProvider.notifier).clear();
     // Apple only shares the name on first sign-in — persist it on the profile
     // (which syncs to the backend) so the greeting works on every device.
     if (name != null && name.isNotEmpty) {

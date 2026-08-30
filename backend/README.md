@@ -71,10 +71,13 @@ its next cold start (or redeploy to force it).
 ```bash
 sam build
 
-# v2 (current dev stack):
+# v2 (current dev stack). Keep BOTH audiences in AppleClientId (native bundle id +
+# the web Services ID) — passing only the native id silently breaks Sign in with
+# Apple on /recharge. Same rule for any prod deploy.
 sam deploy --stack-name food-at-peace-vision-proxy-v2 \
   --region ap-southeast-1 --capabilities CAPABILITY_IAM --resolve-s3 \
-  --no-confirm-changeset --parameter-overrides AppleClientId=com.foodatpeace.foodAtPeace
+  --no-confirm-changeset \
+  --parameter-overrides 'AppleClientId="com.foodatpeace.foodAtPeace,com.foodatpeace.web"'
 
 # Production (only when intentionally shipping to the live app):
 sam deploy --guided     # first time; afterwards just `sam deploy`

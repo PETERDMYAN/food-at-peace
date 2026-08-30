@@ -8,6 +8,7 @@ import '../../data/notification_router.dart';
 import '../../data/notification_service.dart';
 import '../../data/sync_engine.dart';
 import '../../providers/providers.dart';
+import '../../widgets/session_expired_banner.dart';
 import '../add/add_entry_screen.dart';
 import '../circle/circle_screen.dart';
 import '../settings/settings_screen.dart';
@@ -159,6 +160,9 @@ class _HomeShellState extends ConsumerState<HomeShell>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
+      // Renew a week-old session token before it can ever expire (no-op when
+      // it's recent) — then sync with whatever token we hold.
+      ref.read(authProvider.notifier).refreshIfDue();
       ref.read(syncEngineProvider.notifier).syncNow();
       ref.read(profileProvider.notifier).refreshFromHealth();
       _refreshReminders();
@@ -178,8 +182,25 @@ class _HomeShellState extends ConsumerState<HomeShell>
     ref.listen(pendingDeepLinkProvider, (_, link) {
       if (link != null && _index != 2 && mounted) setState(() => _index = 2);
     });
+    // "Your sign-in expired" sits above whichever tab is showing. It already
+    // clears the status bar (SafeArea), so the tab's own app bar must not pad
+    // for it a second time while the banner is up.
+    final sessionExpired = ref.watch(sessionExpiredNoticeProvider);
     return Scaffold(
-      body: IndexedStack(index: _index, children: _screens),
+      body: Column(
+        children: [
+          if (sessionExpired)
+            const SafeArea(bottom: false, child: SessionExpiredBanner()),
+          Expanded(
+            key: const ValueKey('tabs'),
+            child: MediaQuery.removePadding(
+              context: context,
+              removeTop: sessionExpired,
+              child: IndexedStack(index: _index, children: _screens),
+            ),
+          ),
+        ],
+      ),
       // Logging food only makes sense from Today; Trends and Settings hide it.
       floatingActionButton: _index == 0
           ? FloatingActionButton.extended(

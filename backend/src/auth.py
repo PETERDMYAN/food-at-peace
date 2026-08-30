@@ -7,8 +7,15 @@ every /sync call. No Apple private key is needed for the native iOS flow: the
 identity token's audience is the app's own bundle id. No third-party packages —
 verification is done with jwtlite so the Lambda bundle stays dependency-free.
 
-Body: {"identityToken": "<jwt>", "rawNonce": "<optional>", "fullName": "<optional>"}
-Returns: {"sessionToken", "userId", "email", "expiresInSeconds"}
+POST /auth/apple
+  Body: {"identityToken": "<jwt>", "rawNonce": "<optional>", "fullName": "<optional>"}
+  Returns: {"sessionToken", "userId", "email", "expiresInSeconds"}
+
+POST /auth/refresh  (Authorization: Bearer <sessionToken>)
+  Re-mints a STILL-VALID session token for another SESSION_TTL_DAYS, so an
+  active user never hits the hard expiry (which the app can't recover from
+  without a fresh Apple sign-in). Same response shape as /auth/apple. A token
+  that is expired, forged, or revoked by an account deletion gets 401.
 """
 
 import hashlib
@@ -17,9 +24,11 @@ import os
 import time
 import urllib.request
 
+import account
 import jwtlite
-from common import ProxyError, _get_secret, _parse_body, _response
-from session import mint_session_token
+from account import DELETED_MARKER_SK, check_token_not_revoked
+from common import ProxyError, _get_secret, _header, _parse_body, _response
+from session import mint_session_token, verify_session_token
 
 APPLE_ISSUER = "https://appleid.apple.com"
 APPLE_JWKS_URL = "https://appleid.apple.com/auth/keys"
@@ -114,8 +123,44 @@ def verify_apple_identity_token(identity_token, raw_nonce=None):
     return payload
 
 
+def _is_refresh(event):
+    """True for POST /auth/refresh. Anything else (including the payload shape
+    the shipped app sends to /auth/apple, which carries no requestContext in
+    tests) takes the Apple sign-in path exactly as before."""
+    http = event.get("requestContext", {}).get("http", {})
+    path = http.get("path") or event.get("rawPath") or ""
+    return path.rstrip("/").rsplit("/", 1)[-1] == "refresh"
+
+
+def refresh_session(event):
+    raw = _header(event, "authorization") or ""
+    token = raw[7:].strip() if raw.lower().startswith("bearer ") else ""
+    if not token:
+        raise ProxyError(401, "Not authenticated.")
+    signing_key = _get_secret(SESSION_KEY_PARAM)
+    claims = verify_session_token(token, signing_key)
+    user_id = claims.get("sub")
+    if not user_id:
+        raise ProxyError(401, "Not authenticated.")
+    # Account deletion revokes every earlier-minted token (account.py). Without
+    # this check a pre-deletion token could be laundered into a fresh one and
+    # quietly resurrect the deleted account on its next sync.
+    check_token_not_revoked(claims, account._store().get(user_id, DELETED_MARKER_SK))
+    email = claims.get("email")
+    return {
+        "sessionToken": mint_session_token(
+            user_id, signing_key, SESSION_TTL_SECONDS, email=email
+        ),
+        "userId": user_id,
+        "email": email,
+        "expiresInSeconds": SESSION_TTL_SECONDS,
+    }
+
+
 def handler(event, context):
     try:
+        if _is_refresh(event):
+            return _response(200, refresh_session(event))
         body = _parse_body(event)
         identity_token = body.get("identityToken")
         if not isinstance(identity_token, str) or not identity_token:

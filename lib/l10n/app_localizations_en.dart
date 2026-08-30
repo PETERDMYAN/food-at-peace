@@ -544,6 +544,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get signInFailed => 'Sign-in failed. Please try again.';
 
   @override
+  String get sessionExpiredTitle => 'Your sign-in expired';
+
+  @override
+  String get sessionExpiredBody =>
+      'Sign in again to keep syncing and sharing meals with your circle — nothing was lost.';
+
+  @override
+  String get sessionExpiredAction => 'Sign in';
+
+  @override
+  String get sessionExpiredLater => 'Later';
+
+  @override
   String get syncNow => 'Sync now';
 
   @override

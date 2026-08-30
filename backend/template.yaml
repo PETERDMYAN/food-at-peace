@@ -74,8 +74,12 @@ Parameters:
     Description: App bundle id (used as the APNs topic).
   SessionTtlDays:
     Type: Number
-    Default: 60
-    Description: How long an issued session token stays valid (days).
+    Default: 365
+    Description: >-
+      How long an issued session token stays valid (days). The app renews a
+      token via /auth/refresh on launch/resume, so this is the ceiling for an
+      INACTIVE user; an active one never hits it. Was 60 until 2026-08-30, when
+      every June sign-in expired at once and the app silently signed everyone out.
   # App Store Connect Sales-report config for the downloads counter. These are
   # non-secret identifiers (like ApnsTeamId); only the .p8 below is a secret.
   AscKeyId:
@@ -188,8 +192,16 @@ Resources:
           APPLE_CLIENT_ID: !Ref AppleClientId
           SESSION_KEY_PARAM: !Ref SessionKeyParam
           SESSION_TTL_DAYS: !Ref SessionTtlDays
+          # /auth/refresh reads the per-user deletion marker so a revoked token
+          # can't be renewed (read-only; the row lives in SyncTable).
+          SYNC_TABLE: !Ref SyncTable
       Policies:
         - Statement:
+            - Sid: ReadRevocationMarker
+              Effect: Allow
+              Action: dynamodb:GetItem
+              Resource:
+                - !GetAtt SyncTable.Arn
             - Sid: ReadSessionKey
               Effect: Allow
               Action: ssm:GetParameter
@@ -208,6 +220,12 @@ Resources:
           Properties:
             ApiId: !Ref VisionApi
             Path: /auth/apple
+            Method: POST
+        SessionRefresh:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref VisionApi
+            Path: /auth/refresh
             Method: POST
 
   # Per-user data: one item per record. PK = userId, SK = recordType#id

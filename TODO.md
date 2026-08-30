@@ -33,6 +33,48 @@ cd backend && sam build && sam deploy --stack-name food-at-peace-vision-proxy-v2
   --parameter-overrides 'AppleClientId="com.foodatpeace.foodAtPeace,com.foodatpeace.web"'
 ```
 
+## 🚧 Session renewal + "Your sign-in expired" prompt — **backend live on v2, prod changeset awaiting execution; app 1.1.3 / build 79 on TestFlight + submitted (2026-08-30)**
+
+**What happened:** "the photo no longer appears in the Circle — is the server down?" It wasn't (0 Lambda
+errors / 0 5xx over 14 days; all 30 posts + 30 S3 photos intact). Session tokens were minted for a hard
+**60 days** with no renewal; nearly every sign-in was June 8–28 (`AuthFunction` invocations), so Aug 7–27
+every token expired and the app **silently** dropped it (`AuthNotifier._load` deleted it, `SyncEngine`
+signed out on 401) — scanning kept working (app-token path) while sync, full-res photo backup and Circle
+sharing quietly stopped (last post Aug 17; sync traffic 9/day → 0; `AuthFunction` idle 14 days).
+- **Backend (additive):** `POST /auth/refresh` in [`auth.py`](backend/src/auth.py) — Bearer; re-mints a
+  *still-valid* token for another `SessionTtlDays`; honours the account-deletion `minIat` revocation
+  marker (read-only `GetItem` on `SyncTable`, new env `SYNC_TABLE` on `AuthFunction`). `SessionTtlDays`
+  default **60 → 365** ([`template.yaml`](backend/template.yaml)). `/auth/apple` untouched — same
+  response shape, only `expiresInSeconds` grows. +5 tests in [`test_auth.py`](backend/tests/test_auth.py)
+  → 188 green. **v2: deployed + live-verified** (365-day renewal; expired / forged / missing → 401;
+  renewed token accepted by `/beans`; both `AppleClientId` audiences kept).
+  **Prod: changeset `samcli-deploy1788097567` created + reviewed** (1 Add: the refresh route's Lambda
+  permission; Modify: `AuthFunctionRole`, `VisionApi`, shared Lambda code; 0 Remove; params
+  `AppleClientId` two-audience + `SessionTtlDays=365`) — **execution was blocked by the tool sandbox**.
+  ⬜ **Run it:** `aws cloudformation execute-change-set --region ap-southeast-1 --change-set-name
+  arn:aws:cloudformation:ap-southeast-1:551522032769:changeSet/samcli-deploy1788097567/e894963f-7a52-473f-9ce3-091861719511`
+  then smoke: `POST /auth/refresh` with a valid token → 200 / 365 d, expired → 401. Until then prod still
+  mints 60-day tokens and `/auth/refresh` 404s (the app treats that as transient and keeps its token).
+- **App (1.1.3 / build 79):** `AuthClient.refresh` + `Session.issuedAt`
+  ([`auth_client.dart`](lib/src/data/auth_client.dart), [`session.dart`](lib/src/models/session.dart));
+  `AuthNotifier.refreshIfDue` renews a token older than **7 days** on launch/resume (404 / offline → keep
+  the token, retry ≥ 1 h later; **401 → sign out + notice**); persisted `sessionExpiredNoticeProvider`
+  → [`SessionExpiredBanner`](lib/src/widgets/session_expired_banner.dart) ("Your sign-in expired —
+  Sign in / Later", EN + 中文) at the top of `HomeShell`; `SyncEngine` raises the same notice on a 401.
+  +10 Flutter tests ([`session_expired_test.dart`](test/session_expired_test.dart)) → 193 green; analyze
+  clean; sim-verified via [`session_expired_shots.dart`](integration_test/session_expired_shots.dart)
+  (before/after EN + 中文, Today + Circle, plus a valid-session no-banner regression shot).
+- ⬜ **Everyone signs in once more** (Settings → Sign in with Apple, or the new card): you, @py and the
+  two random-handle friends. ⬜ Photos scanned while signed out were never posted / backed up — re-scan
+  to share them. ⬜ Consider a `/auth/refresh` rate limit if abuse ever matters (a stolen token is now
+  renewable indefinitely; account deletion still revokes it).
+- ✅ **Store listing fix (2026-08-30):** the App Store description (EN + 简体中文) still said shared meals
+  vanish after **3 days** — corrected to **30 days** on the 1.1.3 version via the ASC API, and in
+  [`STORE_LISTING.md`](store/STORE_LISTING.md) / [`STORE_LISTING_zh.md`](store/STORE_LISTING_zh.md).
+- ⬜ **Apple deadline (altool warning on the build-79 upload):** from **Spring 2027** uploads need
+  `MinimumOSVersion` ≥ **15.0** (we ship 14.0) — bump the iOS deployment target in `ios/` +
+  `Podfile` before the first 2027 release.
+
 ## ✅ Web recharge tiers: 300 delisted, 8,000/S$120.99 added — **live on prod + v2 + site (2026-08-01)**
 
 - **Page** ([`recharge/index.html`](store/website/recharge/index.html)): dropped the 300-bean/S$5.99

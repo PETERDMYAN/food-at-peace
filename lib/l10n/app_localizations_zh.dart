@@ -529,6 +529,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get signInFailed => '登录失败，请重试。';
 
   @override
+  String get sessionExpiredTitle => '登录已过期';
+
+  @override
+  String get sessionExpiredBody => '请重新登录，以继续同步数据并与圈子分享美食 — 数据不会丢失。';
+
+  @override
+  String get sessionExpiredAction => '登录';
+
+  @override
+  String get sessionExpiredLater => '稍后';
+
+  @override
   String get syncNow => '立即同步';
 
   @override

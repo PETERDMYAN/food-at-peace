@@ -284,6 +284,8 @@ class SyncEngine extends Notifier<SyncState> {
       );
     } on SessionExpired {
       await ref.read(authProvider.notifier).signOut();
+      // Tell the user (home-shell banner) rather than vanishing silently.
+      await ref.read(sessionExpiredNoticeProvider.notifier).show();
       state = state.copyWith(phase: SyncPhase.idle);
     } catch (e) {
       state = state.copyWith(

@@ -1028,6 +1028,30 @@ abstract class AppLocalizations {
   /// **'Sign-in failed. Please try again.'**
   String get signInFailed;
 
+  /// No description provided for @sessionExpiredTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your sign-in expired'**
+  String get sessionExpiredTitle;
+
+  /// No description provided for @sessionExpiredBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in again to keep syncing and sharing meals with your circle — nothing was lost.'**
+  String get sessionExpiredBody;
+
+  /// No description provided for @sessionExpiredAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in'**
+  String get sessionExpiredAction;
+
+  /// No description provided for @sessionExpiredLater.
+  ///
+  /// In en, this message translates to:
+  /// **'Later'**
+  String get sessionExpiredLater;
+
   /// No description provided for @syncNow.
   ///
   /// In en, this message translates to:

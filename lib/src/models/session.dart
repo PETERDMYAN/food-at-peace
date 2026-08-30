@@ -1,12 +1,14 @@
 /// An authenticated app session, minted by the backend (`/auth/apple`) after it
-/// verifies a Sign in with Apple identity token. The [token] is opaque to the
-/// app — it's sent as `Authorization: Bearer <token>` on every `/sync` call.
+/// verifies a Sign in with Apple identity token, and renewed by `/auth/refresh`.
+/// The [token] is opaque to the app — it's sent as a Bearer `Authorization`
+/// header on every authenticated call.
 class Session {
   const Session({
     required this.token,
     required this.userId,
     required this.expiresAt,
     this.email,
+    this.issuedAt,
   });
 
   final String token;
@@ -19,6 +21,10 @@ class Session {
 
   final DateTime expiresAt;
 
+  /// When [token] was minted or last renewed. Null for a session stored by a
+  /// build that predates renewal — treated as "old enough to renew now".
+  final DateTime? issuedAt;
+
   bool get isExpired => DateTime.now().isAfter(expiresAt);
 
   Map<String, dynamic> toJson() => {
@@ -26,6 +32,7 @@ class Session {
     'userId': userId,
     'email': email,
     'expiresAt': expiresAt.toIso8601String(),
+    'issuedAt': issuedAt?.toIso8601String(),
   };
 
   factory Session.fromJson(Map<String, dynamic> json) => Session(
@@ -33,5 +40,8 @@ class Session {
     userId: json['userId'] as String,
     email: json['email'] as String?,
     expiresAt: DateTime.parse(json['expiresAt'] as String),
+    issuedAt: json['issuedAt'] is String
+        ? DateTime.tryParse(json['issuedAt'] as String)
+        : null,
   );
 }

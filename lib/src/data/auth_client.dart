@@ -33,12 +33,11 @@ class AuthClient {
   final String baseUrl;
   final http.Client _http;
 
-  Uri get endpoint {
-    final base = baseUrl.endsWith('/')
-        ? baseUrl.substring(0, baseUrl.length - 1)
-        : baseUrl;
-    return Uri.parse('$base/auth/apple');
-  }
+  String get _base =>
+      baseUrl.endsWith('/') ? baseUrl.substring(0, baseUrl.length - 1) : baseUrl;
+
+  Uri get endpoint => Uri.parse('$_base/auth/apple');
+  Uri get refreshEndpoint => Uri.parse('$_base/auth/refresh');
 
   /// Runs the native Apple flow, then exchanges the identity token for a
   /// [Session]. Returns the session plus the user's full name — Apple only
@@ -109,14 +108,41 @@ class AuthClient {
     if (resp.statusCode != 200) {
       throw _authError(resp.statusCode, resp.body);
     }
+    return _sessionFrom(jsonDecode(resp.body) as Map<String, dynamic>);
+  }
 
-    final json = jsonDecode(resp.body) as Map<String, dynamic>;
+  /// Renews a still-valid session for another full lifetime (`/auth/refresh`),
+  /// so an active user never reaches the hard expiry. Throws [AuthException];
+  /// `statusCode` 401 means the token is expired or revoked and only a fresh
+  /// Apple sign-in can help — anything else is transient (offline, an older
+  /// server without the route) and the current token stays usable.
+  Future<Session> refresh(String token) async {
+    final http.Response resp;
+    try {
+      resp = await _http.post(
+        refreshEndpoint,
+        headers: {'authorization': 'Bearer $token'},
+      );
+    } catch (_) {
+      throw AuthException('Network error — check your connection.');
+    }
+    if (resp.statusCode != 200) {
+      throw _authError(resp.statusCode, resp.body);
+    }
+    return _sessionFrom(jsonDecode(resp.body) as Map<String, dynamic>);
+  }
+
+  /// Both endpoints answer with the same shape: {sessionToken, userId, email,
+  /// expiresInSeconds}. The token is dated from now on this device.
+  static Session _sessionFrom(Map<String, dynamic> json) {
     final expiresInSeconds = (json['expiresInSeconds'] as num?)?.toInt() ?? 0;
+    final now = DateTime.now();
     return Session(
       token: json['sessionToken'] as String,
       userId: json['userId'] as String,
       email: json['email'] as String?,
-      expiresAt: DateTime.now().add(Duration(seconds: expiresInSeconds)),
+      expiresAt: now.add(Duration(seconds: expiresInSeconds)),
+      issuedAt: now,
     );
   }
 

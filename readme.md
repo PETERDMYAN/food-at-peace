@@ -5,9 +5,18 @@ or by **snapping a photo** — see how much you can still eat today, and keep an
 on your protein and saturated-fat quotas. Connects to **Apple Health / Garmin**
 for real calories burned, and speaks **English and 中文**. Built with Flutter.
 
-> **Status:** **1.1.1 (build 77) is approved & live on the App Store** (Eva Official ✓ badge + push
-> deep-linking; CN name **食之安**), and **1.1.2 (build 78) — Circle photos now last 30 days — is submitted
-> to App Review** (2026-07-27). Prior live: 1.1.0 (75) `f99cb1b`, v1.0.2 (62) `54166a7`, v1.0.1 `1c6ca03`.
+> **Status:** **1.1.3 (build 79) — session renewal + a "Your sign-in expired" prompt — uploaded to
+> TestFlight and submitted to App Review (2026-08-30).** **1.1.2 (build 78) is approved & live on the App
+> Store** (Circle photos last 30 days; CN name **食之安**); prior live: 1.1.1 (77), 1.1.0 (75) `f99cb1b`,
+> v1.0.2 (62) `54166a7`, v1.0.1 `1c6ca03`.
+> **Why 1.1.3 (2026-08-30):** "the photo no longer appears in the Circle — is the server down?" The server
+> was fine (0 errors, every post + photo intact). Session tokens were minted for a hard **60 days** with no
+> renewal; nearly every sign-in happened June 8–28, so 60 days later (Aug 7–27) the app silently dropped
+> everyone's token — scanning kept working (app-token path) while sync, full-res photo backup and Circle
+> sharing quietly stopped. Fix: an additive **`POST /auth/refresh`** + `SessionTtlDays` **60 → 365** (live on
+> **v2**; the **prod** changeset is reviewed and waiting to be executed — see `TODO.md`), and the app now
+> renews a week-old token on every launch/resume and shows a **"Your sign-in expired — Sign in / Later"**
+> card instead of vanishing. Everyone signs in once more; from then on an active user never expires.
 > Web Beans recharge at `foodatpeace.app/recharge` is also fully live (Stripe live keys, webhook verified,
 > Sign in with Apple on the web, shareable `/recharge/<handle>` links). Tags `v1.1.0`/`v1.1.1` created with
 > the 1.1.2 ship (were pending confirmation).

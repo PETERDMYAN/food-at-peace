@@ -61,7 +61,7 @@ TARGETS THAT MAKE SENSE — AND SHOW THEIR WORK
 SHARE WITH YOUR CIRCLE
 • Build a small, private Circle of friends — invite by a link or QR code, and a single tap connects you both.
 • Share a scanned meal to your Circle and cheer each other on with quick emoji reactions.
-• Posts are ephemeral — every shared meal disappears after 3 days, and only mutually-connected friends ever see them.
+• Posts are ephemeral — every shared meal disappears after 30 days, and only mutually-connected friends ever see them.
 
 SYNC, IF YOU WANT IT
 • Optional Sign in with Apple keeps your log and profile in sync across devices.
